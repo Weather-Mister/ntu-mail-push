@@ -3,6 +3,7 @@ import json
 import poplib
 import base64
 import tempfile
+import time
 from pathlib import Path
 from email import policy
 from email.parser import BytesParser
@@ -150,6 +151,80 @@ def get_header(mailbox, message_number):
     }
 
 
+def connect_mailbox():
+    last_error = None
+
+    for attempt in range(1, 4):
+        mailbox = None
+
+        try:
+            print(
+                f"Connecting to NTU Mail — "
+                f"attempt {attempt}/3"
+            )
+
+            mailbox = poplib.POP3_SSL(
+                HOST,
+                PORT,
+                timeout=60
+            )
+
+            mailbox.user(
+                USERNAME
+            )
+
+            mailbox.pass_(
+                NTU_PASSWORD
+            )
+
+            # NTU sometimes accepts the connection
+            # but stalls on the first mailbox command.
+            _, uidl_lines, _ = mailbox.uidl()
+
+            print(
+                "Connected to NTU Mail successfully."
+            )
+
+            return mailbox, uidl_lines
+
+        except (
+            TimeoutError,
+            ConnectionError,
+            OSError,
+            poplib.error_proto
+        ) as error:
+
+            last_error = error
+
+            print(
+                f"NTU Mail attempt {attempt} failed: "
+                f"{type(error).__name__}: {error}"
+            )
+
+            if mailbox:
+                try:
+                    mailbox.quit()
+                except Exception:
+                    pass
+
+            if attempt < 3:
+                wait_seconds = 8 * attempt
+
+                print(
+                    f"Retrying in "
+                    f"{wait_seconds} seconds..."
+                )
+
+                time.sleep(
+                    wait_seconds
+                )
+
+    raise RuntimeError(
+        f"NTU Mail failed after 3 attempts: "
+        f"{last_error}"
+    )
+
+
 def send_push(messages):
     subscription = json.loads(
         PUSH_SUBSCRIPTION
@@ -167,7 +242,11 @@ def send_push(messages):
             suffix=".pem",
             delete=False
         ) as temp_file:
-            temp_file.write(pem)
+
+            temp_file.write(
+                pem
+            )
+
             temp_path = temp_file.name
 
         if len(messages) == 1:
@@ -175,10 +254,13 @@ def send_push(messages):
 
             payload = {
                 "title": "New NTU Mail",
+
                 "body":
                     f'{message["from"]} — '
                     f'{message["subject"]}',
+
                 "tag": "ntu-mail",
+
                 "url": WEBMAIL_URL
             }
 
@@ -196,29 +278,39 @@ def send_push(messages):
             payload = {
                 "title":
                     f"{len(messages)} new NTU emails",
+
                 "body": preview,
+
                 "tag": "ntu-mail",
+
                 "url": WEBMAIL_URL
             }
 
         webpush(
             subscription_info=subscription,
+
             data=json.dumps(
                 payload,
                 ensure_ascii=False
             ),
+
             vapid_private_key=temp_path,
+
             vapid_claims={
                 "sub": f"mailto:{NTU_EMAIL}"
             },
+
             ttl=86400,
+
             timeout=30
         )
 
     finally:
         if temp_path:
             try:
-                os.unlink(temp_path)
+                os.unlink(
+                    temp_path
+                )
             except FileNotFoundError:
                 pass
 
@@ -230,17 +322,10 @@ def main():
         state["seen_uids"]
     )
 
-    mailbox = poplib.POP3_SSL(
-        HOST,
-        PORT,
-        timeout=30
-    )
+    mailbox = None
 
     try:
-        mailbox.user(USERNAME)
-        mailbox.pass_(NTU_PASSWORD)
-
-        _, uidl_lines, _ = mailbox.uidl()
+        mailbox, uidl_lines = connect_mailbox()
 
         pairs = []
 
@@ -268,9 +353,12 @@ def main():
         ]
 
         # First successful run:
-        # everything already in the inbox becomes permanently old mail.
+        # everything already in the inbox
+        # becomes permanently old mail.
         if not state["initialized"]:
-            save_state(current_uids)
+            save_state(
+                current_uids
+            )
 
             print(
                 f"Baseline created with "
@@ -280,7 +368,8 @@ def main():
 
             return
 
-        # Only UIDLs that have NEVER been recorded before are new.
+        # Only messages whose UID has NEVER
+        # been stored before count as new.
         new_pairs = [
             (number, uid)
             for number, uid in pairs
@@ -291,6 +380,7 @@ def main():
             print(
                 "No new NTU mail."
             )
+
             return
 
         messages = [
@@ -302,19 +392,20 @@ def main():
             in new_pairs
         ]
 
-        # Push first.
-        # If push fails, state is not updated,
-        # so the next run retries the same new mail.
+        # Send the notification first.
+        # If push fails, we do not save the UIDs,
+        # so GitHub retries them next run.
         send_push(
             messages
         )
 
-        # Permanently remember every UID ever notified.
         new_uids = [
             uid
             for _, uid in new_pairs
         ]
 
+        # Append permanently.
+        # Read/unread status has no effect.
         updated_seen = (
             set(state["seen_uids"])
             | set(new_uids)
@@ -331,11 +422,11 @@ def main():
         )
 
     finally:
-        try:
-            mailbox.quit()
-
-        except Exception:
-            pass
+        if mailbox:
+            try:
+                mailbox.quit()
+            except Exception:
+                pass
 
 
 if __name__ == "__main__":
