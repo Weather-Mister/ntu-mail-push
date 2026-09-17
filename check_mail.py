@@ -50,12 +50,12 @@ def load_state():
         }
 
 
-def save_state(uids):
+def save_state(seen_uids):
     STATE_PATH.write_text(
         json.dumps(
             {
                 "initialized": True,
-                "seen_uids": uids
+                "seen_uids": sorted(set(seen_uids))
             },
             ensure_ascii=False,
             indent=2
@@ -115,7 +115,6 @@ def clean(value, fallback, limit):
 
 
 def get_header(mailbox, message_number):
-
     try:
         _, lines, _ = mailbox.top(
             message_number,
@@ -123,7 +122,6 @@ def get_header(mailbox, message_number):
         )
 
     except poplib.error_proto:
-
         _, lines, _ = mailbox.retr(
             message_number
         )
@@ -153,7 +151,6 @@ def get_header(mailbox, message_number):
 
 
 def send_push(messages):
-
     subscription = json.loads(
         PUSH_SUBSCRIPTION
     )
@@ -165,34 +162,27 @@ def send_push(messages):
     temp_path = None
 
     try:
-
         with tempfile.NamedTemporaryFile(
             mode="wb",
             suffix=".pem",
             delete=False
         ) as temp_file:
-
             temp_file.write(pem)
             temp_path = temp_file.name
 
         if len(messages) == 1:
-
             message = messages[0]
 
             payload = {
                 "title": "New NTU Mail",
-
                 "body":
                     f'{message["from"]} — '
                     f'{message["subject"]}',
-
                 "tag": "ntu-mail",
-
                 "url": WEBMAIL_URL
             }
 
         else:
-
             preview = "\n".join(
                 message["subject"]
                 for message in messages[:3]
@@ -206,35 +196,26 @@ def send_push(messages):
             payload = {
                 "title":
                     f"{len(messages)} new NTU emails",
-
                 "body": preview,
-
                 "tag": "ntu-mail",
-
                 "url": WEBMAIL_URL
             }
 
         webpush(
             subscription_info=subscription,
-
             data=json.dumps(
                 payload,
                 ensure_ascii=False
             ),
-
             vapid_private_key=temp_path,
-
             vapid_claims={
                 "sub": f"mailto:{NTU_EMAIL}"
             },
-
             ttl=86400,
-
             timeout=30
         )
 
     finally:
-
         if temp_path:
             try:
                 os.unlink(temp_path)
@@ -243,7 +224,6 @@ def send_push(messages):
 
 
 def main():
-
     state = load_state()
 
     seen = set(
@@ -257,19 +237,14 @@ def main():
     )
 
     try:
-
         mailbox.user(USERNAME)
-
-        mailbox.pass_(
-            NTU_PASSWORD
-        )
+        mailbox.pass_(NTU_PASSWORD)
 
         _, uidl_lines, _ = mailbox.uidl()
 
         pairs = []
 
         for line in uidl_lines:
-
             parts = (
                 line
                 .decode(
@@ -280,7 +255,6 @@ def main():
             )
 
             if len(parts) >= 2:
-
                 pairs.append(
                     (
                         int(parts[0]),
@@ -294,46 +268,29 @@ def main():
         ]
 
         # First successful run:
-        # record existing mail without notifying.
+        # everything already in the inbox becomes permanently old mail.
         if not state["initialized"]:
-
-            save_state(
-                current_uids
-            )
+            save_state(current_uids)
 
             print(
                 f"Baseline created with "
-                f"{len(current_uids)} "
-                f"existing messages. "
+                f"{len(current_uids)} existing messages. "
                 f"No notification sent."
             )
 
             return
 
+        # Only UIDLs that have NEVER been recorded before are new.
         new_pairs = [
             (number, uid)
-
-            for number, uid
-            in pairs
-
+            for number, uid in pairs
             if uid not in seen
         ]
 
         if not new_pairs:
-
-            if (
-                current_uids
-                != state["seen_uids"]
-            ):
-
-                save_state(
-                    current_uids
-                )
-
             print(
                 "No new NTU mail."
             )
-
             return
 
         messages = [
@@ -341,19 +298,30 @@ def main():
                 mailbox,
                 number
             )
-
             for number, _
             in new_pairs
         ]
 
         # Push first.
-        # Only save as seen if push succeeds.
+        # If push fails, state is not updated,
+        # so the next run retries the same new mail.
         send_push(
             messages
         )
 
+        # Permanently remember every UID ever notified.
+        new_uids = [
+            uid
+            for _, uid in new_pairs
+        ]
+
+        updated_seen = (
+            set(state["seen_uids"])
+            | set(new_uids)
+        )
+
         save_state(
-            current_uids
+            updated_seen
         )
 
         print(
@@ -363,7 +331,6 @@ def main():
         )
 
     finally:
-
         try:
             mailbox.quit()
 
