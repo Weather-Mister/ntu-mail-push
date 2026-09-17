@@ -38,16 +38,44 @@ jobs:
         run: python check_mail.py
 
       - name: Save mailbox state
+        shell: bash
         run: |
-          if [ -n "$(git status --porcelain -- state.json)" ]; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          set -e
 
+          if [ -z "$(git status --porcelain -- state.json)" ]; then
+            echo "No state change."
+            exit 0
+          fi
+
+          cp state.json /tmp/ntu-mail-state.json
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          for attempt in 1 2 3; do
+            echo "Save attempt $attempt"
+
+            git fetch origin main
+            git reset --hard origin/main
+
+            cp /tmp/ntu-mail-state.json state.json
             git add state.json
+
+            if git diff --cached --quiet; then
+              echo "State is already up to date."
+              exit 0
+            fi
+
             git commit -m "Update NTU mail state"
 
-            git pull --rebase origin main
-            git push origin main
-          else
-            echo "No state change."
-          fi
+            if git push origin HEAD:main; then
+              echo "Mailbox state saved."
+              exit 0
+            fi
+
+            echo "Remote changed while saving. Retrying..."
+            sleep 2
+          done
+
+          echo "Could not save mailbox state after 3 attempts."
+          exit 1
