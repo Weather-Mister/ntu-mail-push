@@ -1,0 +1,82 @@
+name: Check Begum NTU Mail
+
+on:
+  schedule:
+    - cron: "37 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: begum-ntu-mail-check
+  cancel-in-progress: false
+
+jobs:
+  check-mail:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Check Begum NTU mailbox
+        env:
+          NTU_EMAIL: ${{ secrets.BEGUM_NTU_EMAIL }}
+          NTU_PASSWORD: ${{ secrets.BEGUM_NTU_PASSWORD }}
+          PUSH_SUBSCRIPTION: ${{ secrets.BEGUM_PUSH_SUBSCRIPTION }}
+          VAPID_PRIVATE_KEY: ${{ secrets.BEGUM_VAPID_PRIVATE_KEY }}
+          STATE_PATH: state-begum.json
+        run: python check_mail.py
+
+      - name: Save Begum mailbox state
+        shell: bash
+        run: |
+          set -e
+
+          if [ -z "$(git status --porcelain -- state-begum.json)" ]; then
+            echo "No state change."
+            exit 0
+          fi
+
+          cp state-begum.json /tmp/begum-ntu-mail-state.json
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          for attempt in 1 2 3; do
+            echo "Save attempt $attempt"
+
+            git fetch origin main
+            git reset --hard origin/main
+
+            cp /tmp/begum-ntu-mail-state.json state-begum.json
+            git add state-begum.json
+
+            if git diff --cached --quiet; then
+              echo "State is already up to date."
+              exit 0
+            fi
+
+            git commit -m "Update Begum NTU mail state"
+
+            if git push origin HEAD:main; then
+              echo "Begum mailbox state saved."
+              exit 0
+            fi
+
+            echo "Remote changed while saving. Retrying..."
+            sleep 2
+          done
+
+          echo "Could not save Begum mailbox state after 3 attempts."
+          exit 1
