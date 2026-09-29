@@ -16,7 +16,7 @@ from pywebpush import webpush
 HOST = "msa.ntu.edu.tw"
 PORT = 995
 
-STATE_PATH = Path("state.json")
+STATE_PATH = Path(os.environ.get("STATE_PATH", "state.json"))
 WEBMAIL_URL = "https://wmail1.cc.ntu.edu.tw/rc/index.php"
 
 NTU_EMAIL = os.environ["NTU_EMAIL"].strip()
