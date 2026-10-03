@@ -4,12 +4,12 @@ on:
   push:
     branches: [main]
     paths:
-      - "sites/eren/**"
+      - "sites/**"
       - ".github/workflows/schedule-migration-check.yml"
       - ".github/workflows/deploy-schedule-pages.yml"
   pull_request:
     paths:
-      - "sites/eren/**"
+      - "sites/**"
       - ".github/workflows/schedule-migration-check.yml"
       - ".github/workflows/deploy-schedule-pages.yml"
   workflow_dispatch:
@@ -21,27 +21,55 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - name: Checkout
+        uses: actions/checkout@v6
+
       - name: Check JavaScript syntax
         run: |
           node --check sites/eren/app.js
           node --check sites/eren/sw.js
-      - name: Validate manifest
-        run: python -m json.tool sites/eren/manifest.webmanifest >/dev/null
-      - name: Check PWA assets
+          node --check sites/begum/app.js
+          node --check sites/begum/sw.js
+
+      - name: Validate manifests
         run: |
-          test -f sites/eren/index.html
-          test -f sites/eren/styles.css
-          test -f sites/eren/app.js
-          test -f sites/eren/sw.js
-          test -f sites/eren/favicon.svg
-          test -f sites/eren/manifest.webmanifest
+          python -m json.tool sites/eren/manifest.webmanifest >/dev/null
+          python -m json.tool sites/begum/manifest.webmanifest >/dev/null
+
+      - name: Check required PWA assets
+        run: |
+          for app in eren begum; do
+            test -f "sites/$app/index.html"
+            test -f "sites/$app/styles.css"
+            test -f "sites/$app/app.js"
+            test -f "sites/$app/sw.js"
+            test -f "sites/$app/favicon.svg"
+            test -f "sites/$app/manifest.webmanifest"
+            test -f "sites/$app/vendor/ffmpeg/ffmpeg.js"
+            test -f "sites/$app/vendor/ffmpeg/814.ffmpeg.js"
+          done
           test -f sites/eren/schedule-icon-180.png
           test -f sites/eren/schedule-icon-512.png
-          test -f sites/eren/vendor/ffmpeg/ffmpeg.js
-          test -f sites/eren/vendor/ffmpeg/814.ffmpeg.js
+          test -f sites/begum/apple-touch-icon.png
+          test -f sites/begum/icon-512.png
+
       - name: Reject Hatchable runtime dependencies
         run: |
-          if grep -R -n -E 'hatchable\.site|__HATCHABLE__' sites/eren; then exit 1; fi
-      - name: Check root PWA excludes Begum path
-        run: grep -q "ROOT + 'begum/'" sites/eren/sw.js
+          if grep -R -n -E 'hatchable\.site|__HATCHABLE__' sites; then
+            echo "Hatchable dependency found in GitHub build."
+            exit 1
+          fi
+
+      - name: Enforce app isolation
+        run: |
+          if grep -n -E '(href|src)="/' sites/begum/index.html; then
+            echo "Root-scoped Begum asset found."
+            exit 1
+          fi
+          if grep -n "serviceWorker.register('/" sites/begum/app.js; then
+            echo "Root-scoped Begum service worker found."
+            exit 1
+          fi
+          grep -q "begum-ntu-manual-todos-v1" sites/begum/app.js
+          grep -q "begum-schedule-github" sites/begum/sw.js
+          grep -q "ROOT + 'begum/'" sites/eren/sw.js

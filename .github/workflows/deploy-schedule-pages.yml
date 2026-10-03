@@ -1,10 +1,10 @@
-name: Deploy NTU Schedule to GitHub Pages
+name: Deploy NTU Schedules to GitHub Pages
 
 on:
   push:
     branches: [main]
     paths:
-      - "sites/eren/**"
+      - "sites/**"
       - ".github/workflows/deploy-schedule-pages.yml"
   workflow_dispatch:
 
@@ -25,10 +25,24 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v4
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Build isolated Pages artifact
+        run: |
+          rm -rf _site
+          mkdir -p _site/begum
+          cp -R sites/eren/. _site/
+          cp -R sites/begum/. _site/begum/
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload schedule sites
+        uses: actions/upload-pages-artifact@v4
         with:
-          path: sites/eren
-      - id: deployment
+          path: _site
+
+      - name: Deploy
+        id: deployment
         uses: actions/deploy-pages@v4
