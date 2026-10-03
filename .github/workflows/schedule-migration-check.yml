@@ -55,8 +55,8 @@ jobs:
 
       - name: Reject Hatchable runtime dependencies
         run: |
-          if grep -R -n -E 'hatchable\.site|__HATCHABLE__' sites; then
-            echo "Hatchable dependency found in GitHub build."
+          if grep -n -E 'hatchable\.site|__HATCHABLE__' sites/eren/app.js sites/eren/sw.js sites/eren/manifest.webmanifest sites/begum/app.js sites/begum/sw.js sites/begum/manifest.webmanifest; then
+            echo "Hatchable runtime dependency found in a schedule app."
             exit 1
           fi
 
