@@ -689,3 +689,28 @@ button:focus-visible,a:focus-visible,label:has(+ input:focus-visible){outline:3p
   .hanzi-widget-slot .hanzi-streak-row strong{font-size:32px}
   .hanzi-widget-slot .hanzi-next-char{font-size:37px}
 }
+
+/* GitHub migration: private backend pairing */
+.pairing-form{
+  display:grid;
+  gap:10px;
+  margin-top:16px;
+}
+.pairing-input{
+  width:100%;
+  min-height:46px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:var(--card);
+  color:var(--text);
+  padding:11px 13px;
+  font:inherit;
+  outline:none;
+}
+.pairing-input:focus{
+  border-color:#263f77;
+  box-shadow:0 0 0 3px rgba(38,63,119,.12);
+}
+.pairing-form .map-button{
+  margin-top:0;
+}
