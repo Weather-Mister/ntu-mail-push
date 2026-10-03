@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#263f77" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="NTU Schedule" />
+  <title>NTU Schedule</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/api/icon-180" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <style>
+    :root{--bg:#f6f3ed;--card:#fffdfa;--text:#1f2328;--muted:#77746f;--line:#e4dfd7;--accent:#263f77;--accent-soft:#e9edf7;--shadow:0 10px 30px rgba(45,39,31,.08)}
+    *{box-sizing:border-box}html,body{background:var(--bg)}body{margin:0;color:var(--text);font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}.app-shell{width:min(760px,100%);margin:0 auto;padding:22px 16px calc(34px + env(safe-area-inset-bottom))}.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}.topbar-actions{display:flex;align-items:center;gap:7px}.refresh-page-button{width:30px;height:30px;border:0;border-radius:9px;background:transparent;color:#8f8b84;padding:0;font-size:17px;line-height:1;display:grid;place-items:center;cursor:pointer}.eyebrow{margin:0 0 4px;font-size:11px;line-height:1.2;font-weight:800;letter-spacing:.14em;color:var(--muted)}h1{font-size:31px;line-height:1.02;letter-spacing:-.04em;margin:0;font-weight:800}.today-button{border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:999px;padding:10px 15px;min-height:42px;font-weight:700}.home-button{display:inline-flex;align-items:center;gap:6px;text-decoration:none;white-space:nowrap;font-size:14px}.next-class{background:#20293b;color:white;border-radius:20px;padding:17px 18px;margin-bottom:16px;min-height:88px;display:flex;justify-content:space-between;align-items:center;gap:16px}.day-strip{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;margin-bottom:23px}.day-strip button{border:0;background:transparent;border-radius:16px;min-height:59px;padding:8px 2px}.day-strip button.active{background:var(--accent);color:white}.schedule-list{display:flex;flex-direction:column;gap:10px}
+  </style>
+  <link rel="stylesheet" href="/styles.css?v=110" />
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">NTU · FALL 2026</p>
+        <h1>My Schedule</h1>
+      </div>
+      <div class="topbar-actions">
+        <button id="pageRefreshButton" class="refresh-page-button" type="button" aria-label="Refresh page">↻</button>
+        <button id="placesButton" class="today-button places-button" type="button" aria-haspopup="dialog" aria-label="Open saved places"><span class="places-button-icon" aria-hidden="true">⌖</span><span>Places</span></button>
+      </div>
+    </header>
+
+    <div class="desktop-status-row">
+      <section id="nextClass" class="next-class" aria-live="polite"></section>
+      <section id="hanziWidgetSlot" class="hanzi-widget-slot" aria-label="Hanzi Steps progress"></section>
+    </div>
+
+    <div class="desktop-workspace">
+      <aside class="desktop-day-rail">
+        <p class="desktop-rail-label">WEEK</p>
+        <nav class="day-strip" aria-label="Choose day">
+          <button type="button" data-day="1"><span>Mon</span><small>15</small></button>
+          <button type="button" data-day="2"><span>Tue</span><small>16</small></button>
+          <button type="button" data-day="3"><span>Wed</span><small>17</small></button>
+          <button type="button" data-day="4"><span>Thu</span><small>18</small></button>
+          <button type="button" data-day="5"><span>Fri</span><small>19</small></button>
+          <button type="button" data-day="6"><span>Sat</span><small>20</small></button>
+        </nav>
+      </aside>
+
+      <div class="planning-column">
+      <div class="schedule-column">
+        <section class="day-heading">
+          <div>
+            <p id="selectedDate" class="selected-date"></p>
+            <h2 id="selectedDay">Monday</h2>
+          </div>
+          <p id="classCount" class="class-count"></p>
+        </section>
+
+        <section id="scheduleList" class="schedule-list" aria-live="polite"></section>
+      </div>
+        <section class="todo-section" aria-labelledby="todoHeading">
+          <div class="todo-heading-row">
+            <div>
+              <p class="todo-eyebrow">TO DO</p>
+              <h3 id="todoHeading">Manual tasks</h3>
+            </div>
+            <span id="todoCount" class="todo-count">0 tasks</span>
+          </div>
+          <form id="todoForm" class="todo-form">
+            <input id="todoInput" type="text" maxlength="140" autocomplete="off" placeholder="Add a task…" aria-label="New to-do item" />
+            <button type="submit">Add</button>
+          </form>
+          <div id="todoList" class="todo-list" aria-live="polite"></div>
+          <button id="todoMoreButton" class="desktop-more-button" type="button" hidden>Show more</button>
+        </section>
+      </div>
+
+      <aside class="utility-column">
+        <section class="cool-section" aria-labelledby="coolHeading">
+          <div class="cool-heading-row">
+            <div>
+              <p class="cool-eyebrow">NTU COOL</p>
+              <h3 id="coolHeading">Upcoming deadlines</h3>
+            </div>
+            <button id="coolRefresh" class="cool-refresh" type="button">Refresh</button>
+          </div>
+          <div id="coolDeadlines" class="cool-deadlines" aria-live="polite">
+            <div class="cool-status">Syncing deadlines…</div>
+          </div>
+        </section>
+
+
+      </aside>
+
+      <div id="transferHomeAnchor" aria-hidden="true"></div>
+      <section class="transfer-section" aria-labelledby="transferHeading">
+        <span id="transferStatusDot" class="transfer-status-dot is-ok" aria-hidden="true"></span>
+        <div class="transfer-heading-row">
+          <div>
+            <p class="transfer-eyebrow">DEVICE TRANSFER</p>
+            <h3 id="transferHeading">Phone ↔ PC</h3>
+          </div>
+          <button id="transferRefresh" class="transfer-refresh" type="button" aria-label="Refresh transfers">Refresh</button>
+        </div>
+        <form id="transferForm" class="transfer-form">
+          <textarea id="transferText" maxlength="20000" rows="3" placeholder="Paste text or a link…" aria-label="Text or link to transfer"></textarea>
+          <div class="transfer-compose-row">
+            <label class="transfer-file-button" for="transferFileInput" aria-label="Add file" title="Add file">
+              <span aria-hidden="true">＋</span>
+              <span id="transferFileLabel">Add file</span>
+            </label>
+            <input id="transferFileInput" class="visually-hidden" type="file" multiple />
+            <button id="transferSendButton" class="transfer-send-button" type="submit">Send</button>
+          </div>
+          <p id="transferStatus" class="transfer-status" aria-live="polite">Synced</p>
+        </form>
+        <div id="transferList" class="transfer-list" aria-live="polite">
+          <div class="transfer-empty">Loading transfer inbox…</div>
+        </div>
+        <button id="transferMoreButton" class="desktop-more-button" type="button" hidden>Show more</button>
+      </section>
+    </div>
+
+    <div id="quickAccessRow" class="quick-access-row">
+    <section class="study-hub" aria-labelledby="studyHubHeading">
+      <div class="study-hub-heading">
+        <p class="study-hub-eyebrow">QUICK ACCESS</p>
+        <h3 id="studyHubHeading">Study hub</h3>
+      </div>
+      <div class="study-hub-grid">
+        <a class="hub-app hub-hanzi" href="https://weather-mister.github.io/hanzi-steps/" target="_blank" rel="noopener noreferrer external" aria-label="Open Hanzi Steps">
+          <span class="hub-icon" aria-hidden="true"><img src="https://weather-mister.github.io/hanzi-steps/favicon.svg" alt=""></span>
+          <span class="hub-label">Hanzi Steps</span>
+        </a>
+        <a class="hub-app hub-mech" href="https://weather-mister.github.io/eng-math-lab/" target="_blank" rel="noopener noreferrer external" aria-label="Open Eng Math Lab">
+          <span class="hub-icon" aria-hidden="true"><img src="https://weather-mister.github.io/eng-math-lab/favicon.svg" alt=""></span>
+          <span class="hub-label">Eng Math Lab</span>
+        </a>
+        <a class="hub-app hub-statics" href="https://weather-mister.github.io/statics-lab/" target="_blank" rel="noopener noreferrer external" aria-label="Open Statics Lab">
+          <span class="hub-icon" aria-hidden="true"><img src="/hub-statics.svg" alt=""></span>
+          <span class="hub-label">Statics Lab</span>
+        </a>
+        <a class="hub-app hub-psych" href="https://weather-mister.github.io/psychology-lab/" target="_blank" rel="noopener noreferrer external" aria-label="Open Psychology Lab">
+          <span class="hub-icon" aria-hidden="true"><img src="https://weather-mister.github.io/psychology-lab/favicon.svg" alt=""></span>
+          <span class="hub-label">Psychology Lab</span>
+        </a>
+        <a class="hub-app hub-materials" href="https://weather-mister.github.io/materials/" target="_blank" rel="noopener noreferrer external" aria-label="Open Engineering Materials Lab">
+          <span class="hub-icon" aria-hidden="true"><img src="https://weather-mister.github.io/materials/favicon.svg" alt=""></span>
+          <span class="hub-label">Materials Lab</span>
+        </a>
+        <a class="hub-app hub-pdf" href="https://weather-mister.github.io/i-weather-pdf/" target="_blank" rel="noopener noreferrer external" aria-label="Open I Weather PDF">
+          <span class="hub-icon" aria-hidden="true"><img src="https://weather-mister.github.io/i-weather-pdf/favicon.svg" alt=""></span>
+          <span class="hub-label">I Weather PDF</span>
+        </a>
+      </div>
+    </section>
+
+    <section id="ntuHubSection" class="study-hub ntu-hub" aria-labelledby="ntuHubHeading">
+      <div class="study-hub-heading ntu-hub-heading">
+        <h3 id="ntuHubHeading">NTU</h3>
+        <button id="mailAlertButton" class="mail-alert-button" type="button" aria-haspopup="dialog" aria-label="Mail alerts">
+          <span class="mail-alert-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6.5 9.5a5.5 5.5 0 0 1 11 0v3.2l1.5 2.1H5l1.5-2.1V9.5Z"/><path d="M10 18h4"/></svg></span>
+          <span id="mailAlertStatus" class="visually-hidden">Set up iPhone notifications</span>
+        </button>
+      </div>
+      <div class="study-hub-grid ntu-hub-grid">
+        <a class="hub-app" href="https://my.ntu.edu.tw/" target="_blank" rel="noopener noreferrer external" aria-label="Open myNTU">
+          <span class="hub-icon ntu-service-icon ntu-my-icon" aria-hidden="true"><svg viewBox="0 0 44 44"><path d="M12.5 34V17.5L22 11l9.5 6.5V34"/><path d="M9 34h26M17 34V23h10v11"/><path d="M15 16V11h4v2.3"/></svg></span>
+          <span class="hub-label">myNTU</span>
+        </a>
+        <a class="hub-app" href="https://cool.ntu.edu.tw/" target="_blank" rel="noopener noreferrer external" aria-label="Open NTU COOL">
+          <span class="hub-icon ntu-service-icon ntu-cool-icon" aria-hidden="true"><svg viewBox="0 0 44 44"><path d="M9 14.5 22 9l13 5.5L22 20 9 14.5Z"/><path d="M14 17.5V25c0 3.1 3.6 5.5 8 5.5s8-2.4 8-5.5v-7.5"/><path d="M35 15v9"/><circle cx="35" cy="26" r="1.5"/></svg></span>
+          <span class="hub-label">NTU COOL</span>
+        </a>
+        <a class="hub-app" href="https://wmail1.cc.ntu.edu.tw/rc/index.php" target="_blank" rel="noopener noreferrer external" aria-label="Open NTU Mail">
+          <span class="hub-icon ntu-service-icon ntu-mail-icon" aria-hidden="true"><svg viewBox="0 0 44 44"><rect x="9" y="12" width="26" height="20" rx="3"/><path d="m11 15 11 8 11-8"/></svg></span>
+          <span class="hub-label">NTU Mail</span>
+        </a>
+      </div>
+      <!-- Mail alerts control moved into the NTU heading. -->
+    </section>
+    </div>
+
+    <aside class="unscheduled-note" hidden>
+      <div class="note-icon">i</div>
+      <div>
+        <strong>Unscheduled course</strong>
+        <p>International Companions for Learning is not displayed in the official timetable.</p>
+      </div>
+    </aside>
+  </main>
+
+  <dialog id="placesDialog" class="lesson-dialog places-dialog">
+    <div class="dialog-sheet">
+      <button id="closePlacesDialog" class="close-dialog" type="button" aria-label="Close">×</button>
+      <span class="dialog-dot places-dot"></span>
+      <p class="dialog-day">GOOGLE MAPS</p>
+      <h3>Places</h3>
+      <div class="places-grid">
+        <a class="place-link" href="https://maps.app.goo.gl/5UjB1mboHGqLUTYD6?g_st=ic" target="_blank" rel="noopener noreferrer external" aria-label="Open Banana in Google Maps">
+          <span class="place-icon place-banana" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5.5c.1 5.7 3.7 10.5 9.1 11.8 1.1.3 2.1-.8 1.6-1.9-.6-1.4-1.6-2.8-3-4.1-2.2-2.1-3.4-4.2-3.5-6.2"/><path d="M8 5.5c.1-1 .8-1.7 1.7-1.7h1.6c.8 0 1.5.6 1.6 1.4"/><path d="M9.3 14.8c2.1.2 4.2-.4 5.9-1.7"/></svg></span>
+          <span class="place-name">Banana</span>
+        </a>
+        <a class="place-link" href="https://www.google.com/maps/search/?api=1&query=National+Taiwan+University+College+of+Social+Sciences" target="_blank" rel="noopener noreferrer external" aria-label="Open NTU Social Sciences in Google Maps">
+          <span class="place-icon place-social" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 20h16M6 20V9l6-4 6 4v11M9 20v-6h6v6M8 10h.01M12 10h.01M16 10h.01"/></svg></span>
+          <span class="place-name">Social Sciences</span>
+        </a>
+        <a class="place-link" href="https://www.google.com/maps/search/?api=1&query=Taipei+Mandarin+Center+TMC+297+Section+3+Roosevelt+Road+Taipei" target="_blank" rel="noopener noreferrer external" aria-label="Open Taipei Mandarin Center in Google Maps">
+          <span class="place-icon place-mandarin" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 5h14v11H9l-4 3V5Z"/><path d="M9 9h6M9 12h4"/></svg></span>
+          <span class="place-name">Mandarin Center</span>
+        </a>
+        <a class="place-link" href="https://www.google.com/maps/search/?api=1&query=Gongguan+MRT+Station+Taipei" target="_blank" rel="noopener noreferrer external" aria-label="Open Gongguan MRT Station in Google Maps">
+          <span class="place-icon place-mrt" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="15" rx="3"/><path d="M8 8h8M9 13h.01M15 13h.01M8 21l2-3M16 21l-2-3"/></svg></span>
+          <span class="place-name">Gongguan MRT</span>
+        </a>
+        <a class="place-link" href="https://www.google.com/maps/search/?api=1&query=National+Taiwan+University+Main+Library" target="_blank" rel="noopener noreferrer external" aria-label="Open NTU Main Library in Google Maps">
+          <span class="place-icon place-library" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 20h16M6 17h12M7 17V9M11 17V9M15 17V9M19 17V9M4 8l8-4 8 4H4Z"/></svg></span>
+          <span class="place-name">Main Library</span>
+        </a>
+        <a class="place-link" href="https://maps.app.goo.gl/LdBacJ5jNVS8Hs4F7?g_st=ic" target="_blank" rel="noopener noreferrer external" aria-label="Open Carrefour in Google Maps">
+          <span class="place-icon place-carrefour" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 7h14l-1 7H8L6.5 4H4"/><circle cx="9" cy="18" r="1"/><circle cx="17" cy="18" r="1"/></svg></span>
+          <span class="place-name">Carrefour</span>
+        </a>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="transferSaveDialog" class="lesson-dialog transfer-save-dialog">
+    <div class="dialog-sheet">
+      <button id="closeTransferSaveDialog" class="close-dialog" type="button" aria-label="Close">×</button>
+      <span class="dialog-dot" style="background:#47796b"></span>
+      <p class="dialog-day">IPHONE SAVE</p>
+      <h3 id="transferSaveName">File ready</h3>
+      <p id="transferSaveMeta" class="dialog-time"></p>
+      <div class="location-box">
+        <span class="pin" style="color:#47796b">↓</span>
+        <div>
+          <strong>Ready to save</strong>
+          <p id="transferSaveHint">Tap the button below, then choose “Save to Files” in the iOS share sheet.</p>
+        </div>
+      </div>
+      <button id="transferNativeSaveButton" class="map-button" style="--dialog-color:#47796b;background:#47796b" type="button">Save to Files</button>
+    </div>
+  </dialog>
+  <dialog id="lessonDialog" class="lesson-dialog">
+    <div class="dialog-sheet">
+      <button id="closeDialog" class="close-dialog" type="button" aria-label="Close">×</button>
+      <span id="dialogCourseDot" class="dialog-dot"></span>
+      <p id="dialogDay" class="dialog-day"></p>
+      <h3 id="dialogTitle"></h3>
+      <p id="dialogTime" class="dialog-time"></p>
+      <div class="location-box">
+        <span class="pin">⌖</span>
+        <div>
+          <strong>Class location</strong>
+          <p id="dialogLocation">Google Maps link not added yet.</p>
+        </div>
+      </div>
+      <button id="mapButton" class="map-button" type="button">Open in Google Maps</button>
+      <button id="meetingButton" class="map-button" type="button" hidden>Online meeting link coming soon</button>
+    </div>
+  </dialog>
+
+  <dialog id="mailAlertDialog" class="lesson-dialog mail-alert-dialog">
+    <div class="dialog-sheet">
+      <button id="closeMailAlertDialog" class="close-dialog" type="button" aria-label="Close">×</button>
+      <span class="dialog-dot mail-alert-dot"></span>
+      <p class="dialog-day">NTU MAIL</p>
+      <h3>Mail alerts</h3>
+      <p id="pushSetupStatus" class="dialog-time">Checking notification support…</p>
+      <button id="enablePushButton" class="map-button mail-primary-button" type="button">Enable notifications</button>
+      <button id="testPushButton" class="mail-secondary-button" type="button" disabled>Test after GitHub setup</button>
+      <details id="githubSetup" class="github-setup">
+        <summary>GitHub setup for later</summary>
+        <p>Add these as private GitHub Actions secrets when you create the repo.</p>
+        <div class="secret-row"><span>PUSH_SUBSCRIPTION</span><code id="pushSubscriptionValue">Enable notifications first</code><button type="button" data-copy-target="pushSubscriptionValue">Copy</button></div>
+        <div class="secret-row"><span>VAPID_PRIVATE_KEY</span><code id="vapidPrivateValue">Loading…</code><button type="button" data-copy-target="vapidPrivateValue">Copy</button></div>
+      </details>
+    </div>
+  </dialog>
+
+  <script src="/vendor/ffmpeg/ffmpeg.js?v=1"></script>
+  <script src="/app.js?v=106"></script>
+</body>
+</html>
