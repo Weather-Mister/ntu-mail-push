@@ -1,12 +1,10 @@
 name: Deploy NTU Schedule to GitHub Pages
-# Pages enabled; touch to trigger first successful deployment
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
     paths:
-      - "docs/**"
+      - "sites/eren/**"
       - ".github/workflows/deploy-schedule-pages.yml"
   workflow_dispatch:
 
@@ -27,17 +25,10 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload schedule site
-        uses: actions/upload-pages-artifact@v4
+      - uses: actions/checkout@v6
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
         with:
-          path: docs
-
-      - name: Deploy
-        id: deployment
+          path: sites/eren
+      - id: deployment
         uses: actions/deploy-pages@v4

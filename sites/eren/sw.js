@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ntu-schedule-github-v2';
+const CACHE_NAME = 'ntu-schedule-github-v3';
 const NTU_MAIL_URL = 'https://wmail1.cc.ntu.edu.tw/rc/index.php';
 const ROOT = new URL(self.registration.scope).pathname;
 const asset = path => ROOT + (path.startsWith('/') ? path.slice(1) : path);
@@ -14,8 +14,8 @@ const APP_SHELL = [
   asset('manifest.webmanifest?v=2'),
   asset('favicon.svg'),
   asset('hub-statics.svg'),
-  asset('icon-180.png'),
-  asset('icon-512.png')
+  asset('schedule-icon-180.png'),
+  asset('schedule-icon-512.png')
 ];
 
 self.addEventListener('install', event => {
@@ -29,7 +29,7 @@ self.addEventListener('install', event => {
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))))
+      .then(keys => Promise.all(keys.filter(key => key.startsWith('ntu-schedule-') && key !== CACHE_NAME).map(key => caches.delete(key))))
       .then(() => self.clients.claim())
   );
 });
@@ -40,6 +40,7 @@ self.addEventListener('fetch', event => {
 
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
+  if (url.pathname.startsWith(ROOT + 'begum/')) return;
 
   if (request.mode === 'navigate'){
     event.respondWith(

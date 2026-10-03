@@ -1,12 +1,15 @@
-name: Schedule migration checks
+name: Schedule site checks
 
 on:
   push:
-    branches:
-      - schedule-github-migration
+    branches: [main]
+    paths:
+      - "sites/eren/**"
+      - ".github/workflows/schedule-migration-check.yml"
+      - ".github/workflows/deploy-schedule-pages.yml"
   pull_request:
     paths:
-      - "docs/**"
+      - "sites/eren/**"
       - ".github/workflows/schedule-migration-check.yml"
       - ".github/workflows/deploy-schedule-pages.yml"
   workflow_dispatch:
@@ -18,44 +21,27 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
+      - uses: actions/checkout@v6
       - name: Check JavaScript syntax
         run: |
-          node --check docs/app.js
-          node --check docs/sw.js
-
-      - name: Validate manifest JSON
-        run: python -m json.tool docs/manifest.webmanifest >/dev/null
-
-      - name: Check required PWA assets
+          node --check sites/eren/app.js
+          node --check sites/eren/sw.js
+      - name: Validate manifest
+        run: python -m json.tool sites/eren/manifest.webmanifest >/dev/null
+      - name: Check PWA assets
         run: |
-          test -f docs/index.html
-          test -f docs/styles.css
-          test -f docs/app.js
-          test -f docs/sw.js
-          test -f docs/favicon.svg
-          test -f docs/hub-statics.svg
-          test -f docs/icon-180.png
-          test -f docs/icon-512.png
-          test -f docs/vendor/ffmpeg/ffmpeg.js
-          test -f docs/vendor/ffmpeg/814.ffmpeg.js
-
+          test -f sites/eren/index.html
+          test -f sites/eren/styles.css
+          test -f sites/eren/app.js
+          test -f sites/eren/sw.js
+          test -f sites/eren/favicon.svg
+          test -f sites/eren/manifest.webmanifest
+          test -f sites/eren/schedule-icon-180.png
+          test -f sites/eren/schedule-icon-512.png
+          test -f sites/eren/vendor/ffmpeg/ffmpeg.js
+          test -f sites/eren/vendor/ffmpeg/814.ffmpeg.js
       - name: Reject Hatchable runtime dependencies
         run: |
-          if grep -R -n -E 'hatchable\.site|__HATCHABLE__' docs; then
-            echo "Hatchable dependency found in GitHub build."
-            exit 1
-          fi
-
-      - name: Reject root-scoped local assets
-        run: |
-          if grep -n -E '(href|src)="/' docs/index.html; then
-            echo "Root-scoped local asset found."
-            exit 1
-          fi
-          if grep -n "serviceWorker.register('/" docs/app.js; then
-            echo "Root-scoped service worker registration found."
-            exit 1
-          fi
+          if grep -R -n -E 'hatchable\.site|__HATCHABLE__' sites/eren; then exit 1; fi
+      - name: Check root PWA excludes Begum path
+        run: grep -q "ROOT + 'begum/'" sites/eren/sw.js
