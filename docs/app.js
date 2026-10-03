@@ -1,0 +1,1696 @@
+const courses = {
+  mechanism: { name: 'Mechanism', color: '#b55d50', location: '繡山講堂' },
+  engmath: { name: 'Engineering Mathematics (1)', color: '#5f67af', location: 'Room 114' },
+  statics: { name: 'Statics', color: '#b07838', location: '繡山講堂' },
+  intro: { name: 'Introduction to Mechanical Engineering', color: '#47796b', location: 'Room B113' },
+  materials: { name: 'Engineering Materials', color: '#7a629e', location: '進學講堂' },
+  pe: { name: 'Health Related Physical Fitness', color: '#4382a0', location: 'F-I' },
+  psychology: { name: 'General Psychology', color: '#aa5f86', location: 'Room 102' },
+  chinese: { name: 'General Chinese Language Course (I)', color: '#537a49', location: 'Room 406' },
+  english: { name: 'Academic English for Science and Engineering – Reading and Writing', color: '#4f6f93', location: 'Room 312' },
+  icl: { name: 'ICL', color: '#c94747', location: 'Location TBA' }
+};
+
+const mapLinks = {
+  mechanism: 'https://www.google.com/maps/search/?api=1&query=%E6%A9%9F%E6%A2%B0%E7%B3%BB%E9%A4%A8%2F%E5%AE%97%E5%80%AC%E7%AB%A0%E9%A4%A8',
+  engmath: 'https://maps.app.goo.gl/x4yDgcQJRQ7apkH26',
+  statics: 'https://www.google.com/maps/search/?api=1&query=%E6%A9%9F%E6%A2%B0%E7%B3%BB%E9%A4%A8%2F%E5%AE%97%E5%80%AC%E7%AB%A0%E9%A4%A8',
+  intro: 'https://maps.app.goo.gl/x4yDgcQJRQ7apkH26',
+  materials: 'https://www.google.com/maps/search/?api=1&query=%E6%A9%9F%E6%A2%B0%E7%B3%BB%E9%A4%A8%2F%E5%AE%97%E5%80%AC%E7%AB%A0%E9%A4%A8',
+  pe: 'https://maps.app.goo.gl/QUxR9sY5Yv2X1bwo7',
+  psychology: 'https://maps.app.goo.gl/67JR7tQVG6QehZ6m9',
+  chinese: 'https://maps.app.goo.gl/oRx5Z94PqURWoG6d7',
+  english: 'https://maps.app.goo.gl/xW3eeFvFCxZ1USdt5',
+  icl: ''
+};
+
+const meetingLinks = {
+  icl: 'https://meet.google.com/exs-vbjn-vpq'
+};
+
+const NTU_MAIL_URL = 'https://wmail1.cc.ntu.edu.tw/rc/index.php';
+
+const schedule = {
+  1: [
+    { course:'mechanism', start:'09:10', end:'10:00', period:'2' },
+    { course:'engmath', start:'10:20', end:'12:10', period:'3–4' },
+    { course:'psychology', start:'14:20', end:'17:20', period:'7–9' },
+    { course:'chinese', start:'18:25', end:'21:05', period:'A–C' }
+  ],
+  2: [
+    { course:'statics', start:'10:20', end:'12:10', period:'3–4' },
+    { course:'intro', start:'13:20', end:'14:10', period:'6' },
+    { course:'materials', start:'15:30', end:'17:20', period:'8–9' }
+  ],
+  3: [
+    { course:'engmath', start:'09:10', end:'10:00', period:'2' },
+    { course:'mechanism', start:'10:20', end:'12:10', period:'3–4' },
+    { course:'chinese', start:'18:25', end:'21:05', period:'A–C' }
+  ],
+  4: [
+    { course:'materials', start:'09:10', end:'10:00', period:'2' },
+    { course:'pe', start:'10:20', end:'12:10', period:'3–4' }
+  ],
+  5: [
+    { course:'english', start:'13:20', end:'15:10', period:'6–7' }
+  ],
+  6: []
+};
+
+const specialSchedule = {
+  '2026-09-24': [{ course:'icl', start:'16:20', end:'17:00' }],
+  '2026-10-01': [{ course:'icl', start:'16:20', end:'17:00' }],
+  '2026-10-08': [{ course:'icl', start:'16:20', end:'17:00' }],
+  '2026-10-22': [{ course:'icl', start:'16:20', end:'17:00' }],
+  '2026-10-29': [{ course:'icl', start:'16:20', end:'17:00' }],
+  '2026-11-05': [{ course:'icl', start:'16:20', end:'17:00' }],
+  '2026-11-12': [{ course:'icl', start:'16:20', end:'17:00' }],
+  '2026-12-03': [{ course:'icl', start:'16:20', end:'17:00' }],
+  '2026-12-10': [{ course:'icl', start:'16:20', end:'17:00' }],
+  '2026-12-17': [{ course:'icl', start:'16:20', end:'17:00' }]
+};
+
+const dateReminders = {
+  '2026-11-09': { title:'ICL trip', text:'ICL trip · Nov 9–10', color:'#c94747' },
+  '2026-11-10': { title:'ICL trip', text:'ICL trip · Nov 9–10', color:'#c94747' }
+};
+
+const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const shortMonths = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const nowForWeek = new Date();
+const baseWeekMonday = new Date(nowForWeek);
+const dayOffset = (nowForWeek.getDay() + 6) % 7;
+baseWeekMonday.setDate(nowForWeek.getDate() - dayOffset);
+baseWeekMonday.setHours(12, 0, 0, 0);
+
+const list = document.getElementById('scheduleList');
+const selectedDayEl = document.getElementById('selectedDay');
+const selectedDateEl = document.getElementById('selectedDate');
+const classCountEl = document.getElementById('classCount');
+const nextClassEl = document.getElementById('nextClass');
+const hanziWidgetSlot = document.getElementById('hanziWidgetSlot');
+const dayButtons = [...document.querySelectorAll('[data-day]')];
+const dialog = document.getElementById('lessonDialog');
+const closeDialog = document.getElementById('closeDialog');
+const mapButton = document.getElementById('mapButton');
+const meetingButton = document.getElementById('meetingButton');
+const coolDeadlinesEl = document.getElementById('coolDeadlines');
+const coolRefreshButton = document.getElementById('coolRefresh');
+const todoForm = document.getElementById('todoForm');
+const todoInput = document.getElementById('todoInput');
+const todoList = document.getElementById('todoList');
+const todoCount = document.getElementById('todoCount');
+const todoMoreButton = document.getElementById('todoMoreButton');
+const transferForm = document.getElementById('transferForm');
+const transferText = document.getElementById('transferText');
+const transferFileInput = document.getElementById('transferFileInput');
+const transferFileLabel = document.getElementById('transferFileLabel');
+const transferSendButton = document.getElementById('transferSendButton');
+const transferStatus = document.getElementById('transferStatus');
+const transferStatusDot = document.getElementById('transferStatusDot');
+const transferList = document.getElementById('transferList');
+const transferRefresh = document.getElementById('transferRefresh');
+const transferMoreButton = document.getElementById('transferMoreButton');
+const transferSection = document.querySelector('.transfer-section');
+const transferHomeAnchor = document.getElementById('transferHomeAnchor');
+const utilityColumn = document.querySelector('.utility-column');
+const quickAccessRow = document.getElementById('quickAccessRow');
+const ntuHubSection = document.getElementById('ntuHubSection');
+const transferSaveDialog = document.getElementById('transferSaveDialog');
+const closeTransferSaveDialog = document.getElementById('closeTransferSaveDialog');
+const transferSaveName = document.getElementById('transferSaveName');
+const transferSaveMeta = document.getElementById('transferSaveMeta');
+const transferSaveHint = document.getElementById('transferSaveHint');
+const transferNativeSaveButton = document.getElementById('transferNativeSaveButton');
+const pageRefreshButton = document.getElementById('pageRefreshButton');
+const placesButton = document.getElementById('placesButton');
+const placesDialog = document.getElementById('placesDialog');
+const closePlacesDialog = document.getElementById('closePlacesDialog');
+const mailAlertButton = document.getElementById('mailAlertButton');
+const mailAlertStatus = document.getElementById('mailAlertStatus');
+const mailAlertDialog = document.getElementById('mailAlertDialog');
+const closeMailAlertDialog = document.getElementById('closeMailAlertDialog');
+const pushSetupStatus = document.getElementById('pushSetupStatus');
+const enablePushButton = document.getElementById('enablePushButton');
+const testPushButton = document.getElementById('testPushButton');
+const pushSubscriptionValue = document.getElementById('pushSubscriptionValue');
+const vapidPrivateValue = document.getElementById('vapidPrivateValue');
+
+let selectedDay = normalizeDay(new Date().getDay());
+let dialogLesson = null;
+let coolEvents = [];
+let coolExpanded = false;
+const COOL_DONE_KEY = 'ntu-cool-done-v1';
+const COOL_CACHE_KEY = 'ntu-cool-events-v1';
+const TODO_KEY = 'ntu-manual-todos-v1';
+const TODO_MIGRATED_KEY = 'ntu-manual-todos-synced-v1';
+const TODO_PENDING_KEY = 'ntu-manual-todos-pending-v1';
+let coolDone = loadCoolDone();
+let todos = loadTodos();
+let transferItems = [];
+let todoExpanded = false;
+let transferExpanded = false;
+const preparedTransferFiles = new Map();
+let activePreparedTransferId = null;
+let hanziWidgetData = null;
+let hanziWidgetLoading = false;
+let hanziWidgetError = false;
+
+function isIOSDevice(){
+  return /iPad|iPhone|iPod/.test(navigator.userAgent)
+    || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+function updateTransferStatusDot(){
+  if (!transferStatusDot || !transferStatus) return;
+  const text = String(transferStatus.textContent || '').toLowerCase();
+  const isError = /could not|failed|error/.test(text);
+  transferStatusDot.classList.toggle('is-error', isError);
+  transferStatusDot.classList.toggle('is-ok', !isError);
+}
+
+updateTransferStatusDot();
+if (transferStatus){
+  new MutationObserver(updateTransferStatusDot).observe(transferStatus, { childList:true, characterData:true, subtree:true });
+}
+
+const desktopTransferQuery = window.matchMedia('(min-width: 860px)');
+
+function placeTransferForViewport(){
+  const ntuHub = document.getElementById('ntuHubSection');
+  const dayRail = document.querySelector('.desktop-day-rail');
+  const quickAccess = document.getElementById('quickAccessRow');
+  const hubParent = desktopTransferQuery.matches ? dayRail : quickAccess;
+  if (ntuHub && hubParent && ntuHub.parentElement !== hubParent) hubParent.appendChild(ntuHub);
+  if (!transferSection || !transferHomeAnchor) return;
+
+  if (desktopTransferQuery.matches && utilityColumn){
+    if (transferSection.parentElement !== utilityColumn){
+      utilityColumn.appendChild(transferSection);
+    }
+  } else if (transferSection.previousElementSibling !== transferHomeAnchor){
+    transferHomeAnchor.after(transferSection);
+  }
+}
+
+placeTransferForViewport();
+desktopTransferQuery.addEventListener?.('change', () => {
+  placeTransferForViewport();
+  renderCoolDeadlines();
+});
+
+function normalizeDay(day){
+  if (day === 0) return 1;
+  return Math.min(6, Math.max(1, day));
+}
+
+function minutes(time){
+  const [h,m] = time.split(':').map(Number);
+  return h * 60 + m;
+}
+
+function displayTime(time){
+  const [h,m] = time.split(':').map(Number);
+  const suffix = h >= 12 ? 'PM' : 'AM';
+  const hour = h % 12 || 12;
+  return `${hour}:${String(m).padStart(2,'0')} ${suffix}`;
+}
+
+function lessonStartDate(date, lesson){
+  const d = new Date(date);
+  const [h,m] = lesson.start.split(':').map(Number);
+  d.setHours(h, m, 0, 0);
+  return d;
+}
+
+function lessonEndDate(date, lesson){
+  const d = new Date(date);
+  const [h,m] = lesson.end.split(':').map(Number);
+  d.setHours(h, m, 0, 0);
+  return d;
+}
+
+function countdownText(startAt){
+  const diffMinutes = Math.max(0, Math.ceil((startAt.getTime() - Date.now()) / 60000));
+  if (diffMinutes < 60) return `in ${diffMinutes} min`;
+  const hours = Math.floor(diffMinutes / 60);
+  const mins = diffMinutes % 60;
+  return mins ? `in ${hours} hr ${mins} min` : `in ${hours} hr`;
+}
+
+function dateForDay(day){
+  const d = new Date(baseWeekMonday);
+  d.setDate(baseWeekMonday.getDate() + day - 1);
+  return d;
+}
+
+const mechanismNoOnsiteDates = new Set([
+  '2026-09-09',
+  '2026-09-23',
+  '2026-10-28',
+  '2026-11-18',
+  '2026-12-02'
+]);
+
+function dateKey(date){
+  const year = date.getFullYear();
+  const month = String(date.getMonth()+1).padStart(2,'0');
+  const day = String(date.getDate()).padStart(2,'0');
+  return `${year}-${month}-${day}`;
+}
+
+function lessonsForDate(date, day = date.getDay()){
+  const regular = day >= 1 && day <= 6 ? (schedule[day] || []) : [];
+  const special = specialSchedule[dateKey(date)] || [];
+  return [...regular, ...special].sort((a,b) => minutes(a.start) - minutes(b.start));
+}
+
+function escapeHtml(value = ''){
+  return String(value)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#039;');
+}
+
+function loadCoolDone(){
+  try {
+    const saved = JSON.parse(localStorage.getItem(COOL_DONE_KEY) || '[]');
+    return new Set(Array.isArray(saved) ? saved : []);
+  } catch (error) {
+    return new Set();
+  }
+}
+
+function saveCoolDone(){
+  try {
+    localStorage.setItem(COOL_DONE_KEY, JSON.stringify([...coolDone]));
+  } catch (error) {}
+}
+
+function loadTodos(){
+  try {
+    const saved = JSON.parse(localStorage.getItem(TODO_KEY) || '[]');
+    return Array.isArray(saved) ? saved.filter(item => item && typeof item.text === 'string') : [];
+  } catch (error) {
+    return [];
+  }
+}
+
+function saveTodos(){
+  try {
+    localStorage.setItem(TODO_KEY, JSON.stringify(todos));
+  } catch (error) {}
+}
+
+function loadTodoPending(){
+  try {
+    const saved = JSON.parse(localStorage.getItem(TODO_PENDING_KEY) || '[]');
+    return Array.isArray(saved) ? saved : [];
+  } catch (error) {
+    return [];
+  }
+}
+
+function saveTodoPending(ops){
+  try {
+    localStorage.setItem(TODO_PENDING_KEY, JSON.stringify(ops));
+  } catch (error) {}
+}
+
+function queueTodoOp(op){
+  const ops = loadTodoPending();
+  ops.push(op);
+  saveTodoPending(ops.slice(-200));
+}
+
+async function todoApi(path, body){
+  const response = await fetch(path, {
+    method: body ? 'POST' : 'GET',
+    headers: body ? { 'Content-Type':'application/json' } : undefined,
+    body: body ? JSON.stringify(body) : undefined,
+    cache:'no-store'
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || 'Task sync failed');
+  return data;
+}
+
+async function flushTodoPending(){
+  const ops = loadTodoPending();
+  if (!ops.length) return true;
+
+  for (let index = 0; index < ops.length; index += 1){
+    const op = ops[index];
+    try {
+      if (op.type === 'create') await todoApi('/api/todos/create', op.task);
+      if (op.type === 'update') await todoApi('/api/todos/update', { id:op.id, done:Boolean(op.done) });
+      if (op.type === 'delete') await todoApi('/api/todos/delete', { id:op.id });
+    } catch (error) {
+      saveTodoPending(ops.slice(index));
+      return false;
+    }
+  }
+
+  saveTodoPending([]);
+  return true;
+}
+
+async function syncTodos(){
+  try {
+    const migrated = localStorage.getItem(TODO_MIGRATED_KEY) === '1';
+
+    if (!migrated){
+      if (todos.length){
+        await todoApi('/api/todos/import', {
+          tasks:todos.map(item => ({
+            id:String(item.id || ''),
+            text:String(item.text || ''),
+            done:Boolean(item.done)
+          }))
+        });
+      }
+      localStorage.setItem(TODO_MIGRATED_KEY, '1');
+    }
+
+    const pendingFlushed = await flushTodoPending();
+    if (!pendingFlushed) return;
+
+    const data = await todoApi('/api/todos/list');
+    todos = Array.isArray(data.tasks) ? data.tasks : [];
+    saveTodos();
+    renderTodos();
+  } catch (error) {
+    renderTodos();
+  }
+}
+
+function renderTodos(){
+  if (!todoList || !todoCount) return;
+
+  const openCount = todos.filter(item => !item.done).length;
+  todoCount.textContent = `${openCount} ${openCount === 1 ? 'task' : 'tasks'}`;
+  todoList.classList.toggle('is-expanded', todoExpanded);
+  if (todoMoreButton){
+    todoMoreButton.hidden = todos.length <= 3;
+    todoMoreButton.textContent = todoExpanded ? 'Show less' : `Show more (${Math.max(0, todos.length - 3)})`;
+  }
+
+  if (!todos.length){
+    todoList.innerHTML = '<div class="todo-empty">No manual tasks yet.</div>';
+    return;
+  }
+
+  todoList.innerHTML = todos.map(item => `
+    <article class="todo-item ${item.done ? 'done' : ''}" data-todo-id="${escapeHtml(item.id)}">
+      <button class="todo-check" type="button" aria-label="${item.done ? 'Mark as not done' : 'Mark as done'}" aria-pressed="${item.done}">✓</button>
+      <span class="todo-text">${escapeHtml(item.text)}</span>
+      <button class="todo-delete" type="button" aria-label="Delete task">×</button>
+    </article>`).join('');
+
+  todoList.querySelectorAll('.todo-item').forEach(itemEl => {
+    const id = itemEl.dataset.todoId;
+    const check = itemEl.querySelector('.todo-check');
+    const remove = itemEl.querySelector('.todo-delete');
+
+    check?.addEventListener('click', () => void toggleTodo(id));
+    remove?.addEventListener('click', () => void removeTodo(id));
+  });
+}
+
+async function addTodo(text){
+  const cleanText = String(text || '').trim();
+  if (!cleanText) return;
+
+  const task = {
+    id: globalThis.crypto?.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2,8)}`,
+    text: cleanText.slice(0, 500),
+    done: false
+  };
+
+  todos.unshift(task);
+  saveTodos();
+  renderTodos();
+
+  try {
+    await todoApi('/api/todos/create', task);
+  } catch (error) {
+    queueTodoOp({ type:'create', task });
+  }
+}
+
+async function toggleTodo(id){
+  const item = todos.find(todo => todo.id === id);
+  if (!item) return;
+
+  item.done = !item.done;
+  saveTodos();
+  renderTodos();
+
+  try {
+    await todoApi('/api/todos/update', { id, done:item.done });
+  } catch (error) {
+    queueTodoOp({ type:'update', id, done:item.done });
+  }
+}
+
+async function removeTodo(id){
+  const existing = todos.find(todo => todo.id === id);
+  if (!existing) return;
+
+  todos = todos.filter(todo => todo.id !== id);
+  saveTodos();
+  renderTodos();
+
+  try {
+    await todoApi('/api/todos/delete', { id });
+  } catch (error) {
+    queueTodoOp({ type:'delete', id });
+  }
+}
+
+function transferTime(value){
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  const today = new Date();
+  const sameDay = date.toDateString() === today.toDateString();
+  return sameDay
+    ? date.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' })
+    : date.toLocaleDateString([], { month:'short', day:'numeric' });
+}
+
+function transferSize(bytes){
+  const value = Number(bytes || 0);
+  if (value < 1024) return `${value} B`;
+  if (value < 1024 * 1024) return `${Math.round(value / 1024)} KB`;
+  return `${(value / (1024 * 1024)).toFixed(value >= 10 * 1024 * 1024 ? 0 : 1)} MB`;
+}
+
+function renderTransfers(){
+  if (!transferList) return;
+  transferList.classList.toggle('is-expanded', transferExpanded);
+  if (transferMoreButton){
+    transferMoreButton.hidden = transferItems.length <= 2;
+    transferMoreButton.textContent = transferExpanded ? 'Show less' : `Show more (${Math.max(0, transferItems.length - 2)})`;
+  }
+  if (!transferItems.length){
+    transferList.innerHTML = '<div class="transfer-empty">Nothing here yet. Send something from your phone or PC.</div>';
+    return;
+  }
+
+  transferList.innerHTML = transferItems.map(item => {
+    const isFile = item.kind === 'file';
+    const isLink = item.kind === 'link';
+    const title = isFile ? (item.filename || 'File') : (item.content || '');
+    const meta = isFile
+      ? `${transferSize(item.bytes)} · ${transferTime(item.createdAt)}`
+      : `${isLink ? 'Link' : 'Text'} · ${transferTime(item.createdAt)}`;
+    const icon = isFile ? '↓' : (isLink ? '↗' : 'T');
+    const hasDirectFile = isFile && Boolean(item.url);
+    const hasChunks = isFile && Number(item.chunkCount || 0) > 0;
+    const openAction = hasDirectFile
+      ? `<a class="transfer-action" href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer external">Open ↗</a><a class="transfer-action" href="${escapeHtml(item.downloadUrl || item.url)}" target="_blank" rel="noopener noreferrer external">Download</a>`
+      : hasChunks
+        ? `<button class="transfer-action" type="button" data-transfer-action="download" data-id="${escapeHtml(item.id)}">${isIOSDevice() ? (preparedTransferFiles.has(item.id) ? 'Save' : 'Prepare') : 'Download'}</button>`
+        : isLink
+          ? `<a class="transfer-action" href="${escapeHtml(item.content)}" target="_blank" rel="noopener noreferrer external">Open ↗</a>`
+          : '';
+    const copyAction = !isFile
+      ? `<button class="transfer-action" type="button" data-transfer-action="copy" data-id="${escapeHtml(item.id)}">Copy</button>`
+      : '';
+
+    return `
+      <article class="transfer-item">
+        <div class="transfer-kind ${isFile ? 'transfer-kind-file' : ''}" aria-hidden="true">${icon}</div>
+        <div class="transfer-copy">
+          <div class="transfer-title" title="${escapeHtml(title)}">${escapeHtml(title)}</div>
+          <div class="transfer-meta">${escapeHtml(meta)}</div>
+        </div>
+        <div class="transfer-actions">
+          ${openAction}
+          ${copyAction}
+          <button class="transfer-action transfer-delete" type="button" data-transfer-action="delete" data-id="${escapeHtml(item.id)}" aria-label="Delete transfer">×</button>
+        </div>
+      </article>`;
+  }).join('');
+}
+
+async function loadTransfers(silent = false){
+  if (!transferList) return;
+  if (!silent) {
+    if (transferRefresh) transferRefresh.disabled = true;
+    if (transferStatus) transferStatus.textContent = 'Syncing transfer inbox…';
+  }
+  try {
+    const response = await fetch('/api/transfer/list', { cache:'no-store' });
+    if (!response.ok) throw new Error('Could not sync');
+    const data = await response.json();
+    transferItems = Array.isArray(data.items) ? data.items : [];
+    renderTransfers();
+    if (transferStatus && (!silent || transferStatusDot?.classList.contains('is-error'))) transferStatus.textContent = 'Synced';
+  } catch (error) {
+    if (!silent && transferStatus) transferStatus.textContent = 'Could not sync transfers right now.';
+  } finally {
+    if (transferRefresh) transferRefresh.disabled = false;
+  }
+}
+
+async function sendTransferText(content){
+  const response = await fetch('/api/transfer/text', {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json' },
+    body:JSON.stringify({ content })
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || 'Could not send text');
+}
+
+let ffmpegConverter = null;
+let ffmpegConverterLoading = null;
+let ffmpegCoreBlobUrls = null;
+
+function isMovFile(file){
+  return /\.mov$/i.test(file?.name || '') || String(file?.type || '').toLowerCase() === 'video/quicktime';
+}
+
+async function remoteBlobUrl(url, mimeType){
+  const response = await fetch(url, { cache:'force-cache' });
+  if (!response.ok) throw new Error('Could not load the video converter.');
+  const blob = await response.blob();
+  return URL.createObjectURL(new Blob([blob], { type:mimeType }));
+}
+
+async function getFfmpegConverter(){
+  if (ffmpegConverter?.loaded) return ffmpegConverter;
+  if (ffmpegConverterLoading) return ffmpegConverterLoading;
+
+  ffmpegConverterLoading = (async () => {
+    if (!globalThis.FFmpegWASM?.FFmpeg) throw new Error('Video converter did not load.');
+
+    if (transferStatus) transferStatus.textContent = 'Preparing MOV → MP4 converter…';
+    if (!ffmpegCoreBlobUrls){
+      const base = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd';
+      const [coreURL, wasmURL] = await Promise.all([
+        remoteBlobUrl(`${base}/ffmpeg-core.js`, 'text/javascript'),
+        remoteBlobUrl(`${base}/ffmpeg-core.wasm`, 'application/wasm')
+      ]);
+      ffmpegCoreBlobUrls = { coreURL, wasmURL };
+    }
+
+    const ffmpeg = new globalThis.FFmpegWASM.FFmpeg();
+    await ffmpeg.load(ffmpegCoreBlobUrls);
+    ffmpegConverter = ffmpeg;
+    return ffmpeg;
+  })();
+
+  try {
+    return await ffmpegConverterLoading;
+  } catch (error) {
+    ffmpegConverterLoading = null;
+    throw error;
+  }
+}
+
+async function convertMovToMp4(file){
+  const ffmpeg = await getFfmpegConverter();
+  const token = globalThis.crypto?.randomUUID
+    ? crypto.randomUUID().replace(/-/g, '')
+    : `${Date.now()}${Math.random().toString(36).slice(2)}`;
+  const inputDir = `/mov-${token}`;
+  const inputPath = `${inputDir}/${file.name}`;
+  const outputPath = `converted-${token}.mp4`;
+  const outputName = file.name.replace(/\.mov$/i, '') + '.mp4';
+  let mounted = false;
+
+  try {
+    if (transferStatus) transferStatus.textContent = `Converting ${file.name} to MP4…`;
+    await ffmpeg.createDir(inputDir);
+
+    try {
+      await ffmpeg.mount(globalThis.FFmpegWASM.FFFSType.WORKERFS, { files:[file] }, inputDir);
+      mounted = true;
+    } catch (error) {
+      await ffmpeg.writeFile(inputPath, new Uint8Array(await file.arrayBuffer()));
+    }
+
+    let result = await ffmpeg.exec([
+      '-i', inputPath,
+      '-map', '0:v:0?',
+      '-map', '0:a:0?',
+      '-c', 'copy',
+      '-movflags', '+faststart',
+      outputPath
+    ]);
+
+    if (result !== 0){
+      try { await ffmpeg.deleteFile(outputPath); } catch (error) {}
+      if (transferStatus) transferStatus.textContent = `Re-encoding ${file.name} for MP4 compatibility…`;
+      result = await ffmpeg.exec([
+        '-i', inputPath,
+        '-map', '0:v:0?',
+        '-map', '0:a:0?',
+        '-c:v', 'libx264',
+        '-preset', 'ultrafast',
+        '-crf', '23',
+        '-pix_fmt', 'yuv420p',
+        '-c:a', 'aac',
+        '-b:a', '160k',
+        '-movflags', '+faststart',
+        outputPath
+      ]);
+    }
+
+    if (result !== 0) throw new Error(`Could not convert ${file.name} to MP4.`);
+    const data = await ffmpeg.readFile(outputPath);
+    return new File([data], outputName, { type:'video/mp4', lastModified:Date.now() });
+  } finally {
+    try { await ffmpeg.deleteFile(outputPath); } catch (error) {}
+    if (mounted){
+      try { await ffmpeg.unmount(inputDir); } catch (error) {}
+    } else {
+      try { await ffmpeg.deleteFile(inputPath); } catch (error) {}
+    }
+    try { await ffmpeg.deleteDir(inputDir); } catch (error) {}
+  }
+}
+
+async function sendTransferFile(file, onProgress){
+  const CHUNK_SIZE = 4 * 1024 * 1024;
+
+  if (file.size <= CHUNK_SIZE){
+    const form = new FormData();
+    form.append('file', file, file.name);
+    const response = await fetch('/api/transfer/upload', { method:'POST', body:form });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || `Could not send ${file.name}`);
+    onProgress?.(1, 1);
+    return;
+  }
+
+  const uploadId = globalThis.crypto?.randomUUID
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+
+  for (let index = 0; index < totalChunks; index += 1){
+    const start = index * CHUNK_SIZE;
+    const chunk = file.slice(start, Math.min(start + CHUNK_SIZE, file.size));
+    const form = new FormData();
+    form.append('chunk', chunk, `${file.name}.part${index}`);
+    form.append('uploadId', uploadId);
+    form.append('index', String(index));
+    form.append('totalChunks', String(totalChunks));
+    form.append('totalBytes', String(file.size));
+
+    const response = await fetch('/api/transfer/upload-chunk', { method:'POST', body:form });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || `Could not send ${file.name}`);
+    onProgress?.(index + 1, totalChunks);
+  }
+
+  const response = await fetch('/api/transfer/finalize', {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json' },
+    body:JSON.stringify({
+      uploadId,
+      totalChunks,
+      totalBytes:file.size,
+      filename:file.name,
+      contentType:file.type || 'application/octet-stream'
+    })
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || `Could not finish ${file.name}`);
+}
+
+async function prepareTransferFile(item, button){
+  const count = Number(item?.chunkCount || 0);
+  const oldText = button?.textContent || (isIOSDevice() ? 'Save' : 'Download');
+  if (button){
+    button.disabled = true;
+    button.textContent = '0%';
+  }
+
+  try {
+    const chunks = [];
+    let received = 0;
+
+    if (count > 0){
+      for (let index = 0; index < count; index += 1){
+        const response = await fetch(`/api/transfer/chunk?id=${encodeURIComponent(item.id)}&index=${index}`, { cache:'no-store' });
+        if (!response.ok) throw new Error('Could not download file');
+        const blob = await response.blob();
+        chunks.push(blob);
+        received += Number(blob.size || 0);
+
+        if (button){
+          const expected = Number(item.bytes || 0);
+          const pct = expected
+            ? Math.min(100, Math.round((received / expected) * 100))
+            : Math.round(((index + 1) / count) * 100);
+          button.textContent = `${pct}%`;
+        }
+      }
+    } else {
+      const response = await fetch(`/api/transfer/file?id=${encodeURIComponent(item.id)}`, { cache:'no-store' });
+      if (!response.ok) throw new Error('Could not download file');
+      const blob = await response.blob();
+      chunks.push(blob);
+      received = Number(blob.size || 0);
+      if (button) button.textContent = '100%';
+    }
+
+    const expected = Number(item.bytes || 0);
+    if (expected && received !== expected) throw new Error('Downloaded file was incomplete. Please try again.');
+
+    return new File(
+      chunks,
+      item.filename || 'file',
+      { type:item.contentType || chunks[0]?.type || 'application/octet-stream', lastModified:Date.now() }
+    );
+  } finally {
+    if (button){
+      button.disabled = false;
+      button.textContent = oldText;
+    }
+  }
+}
+
+function isPdfTransferFile(file){
+  return String(file?.type || '').toLowerCase() === 'application/pdf'
+    || /\.pdf$/i.test(String(file?.name || ''));
+}
+
+function openPreparedTransferFile(file){
+  const objectUrl = URL.createObjectURL(file);
+  const anchor = document.createElement('a');
+  anchor.href = objectUrl;
+  anchor.target = '_blank';
+  anchor.rel = 'noopener';
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  setTimeout(() => URL.revokeObjectURL(objectUrl), 300000);
+}
+
+function showPreparedTransferDialog(item, file){
+  activePreparedTransferId = item.id;
+  const isPdf = isPdfTransferFile(file);
+  if (transferSaveName) transferSaveName.textContent = file.name;
+  if (transferSaveMeta) transferSaveMeta.textContent = transferSize(file.size);
+  if (transferSaveHint){
+    transferSaveHint.textContent = isPdf
+      ? 'Tap “Open PDF”, then use the Share button in the PDF viewer to save it to Files.'
+      : 'Tap “Save to Files”, then choose “Save to Files” in the iOS share sheet.';
+  }
+  if (transferNativeSaveButton){
+    transferNativeSaveButton.disabled = false;
+    transferNativeSaveButton.textContent = isPdf ? 'Open PDF' : 'Save to Files';
+  }
+
+  if (transferSaveDialog){
+    if (typeof transferSaveDialog.showModal === 'function') transferSaveDialog.showModal();
+    else transferSaveDialog.setAttribute('open','');
+  }
+}
+
+async function downloadTransferFile(item, button){
+  if (isIOSDevice()){
+    let prepared = preparedTransferFiles.get(item.id);
+
+    if (!prepared){
+      prepared = await prepareTransferFile(item, button);
+      preparedTransferFiles.set(item.id, prepared);
+      renderTransfers();
+    }
+
+    showPreparedTransferDialog(item, prepared);
+    if (transferStatus) transferStatus.textContent = `${prepared.name} is ready to save.`;
+    return;
+  }
+
+  const file = await prepareTransferFile(item, button);
+  const objectUrl = URL.createObjectURL(file);
+  const anchor = document.createElement('a');
+  anchor.href = objectUrl;
+  anchor.download = file.name;
+  anchor.rel = 'noopener';
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  setTimeout(() => URL.revokeObjectURL(objectUrl), 60000);
+  if (transferStatus) transferStatus.textContent = `${file.name} downloaded.`;
+}
+
+async function submitTransfers(event){
+  event?.preventDefault();
+  if (!transferForm || !transferSendButton) return;
+
+  const text = String(transferText?.value || '').trim();
+  const files = [...(transferFileInput?.files || [])];
+  if (!text && !files.length){
+    if (transferStatus) transferStatus.textContent = 'Paste text, a link, or choose a file first.';
+    return;
+  }
+
+  const oversized = files.find(file => file.size > 100 * 1024 * 1024);
+  if (oversized){
+    if (transferStatus) transferStatus.textContent = `${oversized.name} is over the 100 MB limit.`;
+    return;
+  }
+
+  transferSendButton.disabled = true;
+  try {
+    let completed = 0;
+    const total = (text ? 1 : 0) + files.length;
+
+    if (text){
+      if (transferStatus) transferStatus.textContent = `Sending ${completed + 1} of ${total}…`;
+      await sendTransferText(text);
+      completed += 1;
+    }
+
+    for (const file of files){
+      let uploadFile = file;
+
+      if (isMovFile(file)){
+        uploadFile = await convertMovToMp4(file);
+        if (uploadFile.size > 100 * 1024 * 1024){
+          throw new Error(`${uploadFile.name} is over the 100 MB limit after conversion.`);
+        }
+      }
+
+      if (transferStatus) transferStatus.textContent = `Sending ${completed + 1} of ${total}: ${uploadFile.name}`;
+      await sendTransferFile(uploadFile, (done, count) => {
+        if (!transferStatus) return;
+        const pct = Math.round((done / count) * 100);
+        transferStatus.textContent = `Sending ${completed + 1} of ${total}: ${uploadFile.name} · ${pct}%`;
+      });
+      completed += 1;
+    }
+
+    if (transferText) transferText.value = '';
+    if (transferFileInput) transferFileInput.value = '';
+    if (transferFileLabel) transferFileLabel.textContent = 'Add file';
+    await loadTransfers(true);
+    if (transferStatus) transferStatus.textContent = total === 1 ? 'Sent. It is ready on your other device.' : `${total} items sent. They are ready on your other device.`;
+  } catch (error) {
+    if (transferStatus) transferStatus.textContent = error?.message || 'Transfer failed.';
+  } finally {
+    transferSendButton.disabled = false;
+  }
+}
+
+async function deleteTransfer(id){
+  const response = await fetch('/api/transfer/delete', {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json' },
+    body:JSON.stringify({ id })
+  });
+  if (!response.ok) throw new Error('Could not delete');
+  transferItems = transferItems.filter(item => item.id !== id);
+  renderTransfers();
+}
+
+function loadCachedCoolEvents(){
+  try {
+    const saved = JSON.parse(localStorage.getItem(COOL_CACHE_KEY) || '[]');
+    return Array.isArray(saved) ? saved : [];
+  } catch (error) {
+    return [];
+  }
+}
+
+function saveCachedCoolEvents(){
+  try {
+    localStorage.setItem(COOL_CACHE_KEY, JSON.stringify(coolEvents));
+  } catch (error) {}
+}
+
+function coolDueLabel(event){
+  const due = new Date(event.dueAt);
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const dueDay = new Date(due.getFullYear(), due.getMonth(), due.getDate());
+  const dayDiff = Math.round((dueDay - today) / 86400000);
+
+  if (event.allDay){
+    if (dayDiff === 0) return 'Due today';
+    if (dayDiff === 1) return 'Due tomorrow';
+    return `Due ${shortMonths[due.getMonth()]} ${due.getDate()}`;
+  }
+
+  const diffMinutes = Math.ceil((due.getTime() - now.getTime()) / 60000);
+  if (diffMinutes <= 0) return 'Due now';
+  if (diffMinutes < 60) return `Due in ${diffMinutes} min`;
+  if (diffMinutes < 1440){
+    const hours = Math.floor(diffMinutes / 60);
+    const mins = diffMinutes % 60;
+    return mins ? `Due in ${hours} hr ${mins} min` : `Due in ${hours} hr`;
+  }
+  if (dayDiff === 1) return `Tomorrow · ${displayTime(`${String(due.getHours()).padStart(2,'0')}:${String(due.getMinutes()).padStart(2,'0')}`)}`;
+  return `Due ${shortMonths[due.getMonth()]} ${due.getDate()}`;
+}
+
+function renderCoolDeadlineDots(){
+  dayButtons.forEach(btn => {
+    const day = Number(btn.dataset.day);
+    const key = dateKey(dateForDay(day));
+    btn.classList.toggle('has-deadline', coolEvents.some(event => event.date === key));
+  });
+}
+
+function renderCoolDeadlines(){
+  if (!coolDeadlinesEl) return;
+
+  const now = Date.now();
+  const upcoming = coolEvents
+    .filter(event => new Date(event.dueAt).getTime() >= now - 60000);
+
+  if (!upcoming.length){
+    coolDeadlinesEl.innerHTML = `<div class="cool-status">No upcoming COOL deadlines.</div>`;
+    renderCoolDeadlineDots();
+    return;
+  }
+
+  const desktopDeadlines = desktopTransferQuery.matches;
+  const visible = desktopDeadlines ? upcoming : (coolExpanded ? upcoming : upcoming.slice(0, 3));
+  const hiddenCount = Math.max(0, upcoming.length - 3);
+
+  const itemsHtml = visible.map(event => {
+    const due = new Date(event.dueAt);
+    const dateText = `${shortMonths[due.getMonth()]} ${due.getDate()}`;
+    const dayText = dayNames[due.getDay()].slice(0,3);
+    const done = coolDone.has(event.id);
+    return `
+      <article class="cool-item ${done ? 'done' : ''}">
+        <a class="cool-main" href="${escapeHtml(event.url)}" target="_blank" rel="noopener noreferrer external" aria-label="Open ${escapeHtml(event.title)} in Safari">
+          <div class="cool-date"><strong>${dateText}</strong><span>${dayText}</span></div>
+          <div class="cool-copy">
+            <p class="cool-title">${escapeHtml(event.title)}</p>
+            <p class="cool-course">${escapeHtml(event.course)}</p>
+          </div>
+          <span class="cool-due">${done ? 'Done' : escapeHtml(coolDueLabel(event))}</span>
+        </a>
+        <button class="cool-done-button ${done ? 'is-done' : ''}" type="button" data-event-id="${escapeHtml(event.id)}" aria-pressed="${done}" aria-label="${done ? 'Mark as not done' : 'Mark as done'}">✓</button>
+      </article>`;
+  }).join('');
+
+  const toggleHtml = !desktopDeadlines && upcoming.length > 3
+    ? `<button id="coolToggle" class="cool-toggle" type="button" aria-expanded="${coolExpanded}">${coolExpanded ? 'Show less' : `Show ${hiddenCount} more`}</button>`
+    : '';
+
+  coolDeadlinesEl.innerHTML = itemsHtml + toggleHtml;
+
+  const toggle = document.getElementById('coolToggle');
+  if (toggle){
+    toggle.addEventListener('click', () => {
+      coolExpanded = !coolExpanded;
+      renderCoolDeadlines();
+    });
+  }
+
+  coolDeadlinesEl.querySelectorAll('.cool-done-button').forEach(button => {
+    button.addEventListener('click', () => {
+      const id = button.dataset.eventId;
+      if (!id) return;
+      if (coolDone.has(id)) coolDone.delete(id);
+      else coolDone.add(id);
+      saveCoolDone();
+      renderCoolDeadlines();
+    });
+  });
+
+  renderCoolDeadlineDots();
+}
+
+async function loadCoolDeadlines(force = false){
+  if (!coolDeadlinesEl) return;
+
+  if (!force){
+    const cached = loadCachedCoolEvents();
+    if (cached.length){
+      coolEvents = cached;
+      renderCoolDeadlines();
+    }
+  } else {
+    coolDeadlinesEl.innerHTML = `<div class="cool-status">Refreshing deadlines…</div>`;
+  }
+
+  if (coolRefreshButton) coolRefreshButton.disabled = true;
+
+  try {
+    const response = await fetch('/api/cool-calendar', { cache: force ? 'reload' : 'no-cache' });
+    if (!response.ok) throw new Error('COOL sync failed');
+    const data = await response.json();
+    coolEvents = Array.isArray(data.events) ? data.events : [];
+    saveCachedCoolEvents();
+    renderCoolDeadlines();
+  } catch (error) {
+    if (!coolEvents.length){
+      coolDeadlinesEl.innerHTML = `<div class="cool-status">Couldn’t sync NTU COOL right now.</div>`;
+    }
+  } finally {
+    if (coolRefreshButton) coolRefreshButton.disabled = false;
+  }
+}
+
+function isLessonInactive(day, lesson, date = dateForDay(day)){
+  if (lesson.course !== 'mechanism') return false;
+  if (day === 1) return true;
+  return day === 3 && mechanismNoOnsiteDates.has(dateKey(date));
+}
+
+function isCurrentLesson(day, lesson){
+  const now = new Date();
+  if (now.getDay() !== day || isLessonInactive(day, lesson, now)) return false;
+  const nowMin = now.getHours()*60 + now.getMinutes();
+  return nowMin >= minutes(lesson.start) && nowMin <= minutes(lesson.end);
+}
+
+function isLessonCompleted(day, lesson, date = dateForDay(day)){
+  if (isLessonInactive(day, lesson, date)) return false;
+  const now = new Date();
+  const lessonDate = new Date(date);
+  lessonDate.setHours(0,0,0,0);
+  const today = new Date(now);
+  today.setHours(0,0,0,0);
+  if (lessonDate < today) return true;
+  if (lessonDate > today) return false;
+  const nowMin = now.getHours()*60 + now.getMinutes();
+  return nowMin > minutes(lesson.end);
+}
+
+function renderDay(){
+  const date = dateForDay(selectedDay);
+  const lessons = lessonsForDate(date, selectedDay);
+  selectedDayEl.textContent = dayNames[selectedDay];
+  selectedDateEl.textContent = `${shortMonths[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+  classCountEl.textContent = `${lessons.length} ${lessons.length === 1 ? 'class' : 'classes'}`;
+
+  dayButtons.forEach(btn => {
+    const day = Number(btn.dataset.day);
+    btn.classList.toggle('active', day === selectedDay);
+    btn.classList.toggle('today', day === new Date().getDay());
+    btn.querySelector('small').textContent = dateForDay(day).getDate();
+    btn.setAttribute('aria-pressed', day === selectedDay ? 'true' : 'false');
+  });
+
+  const reminder = dateReminders[dateKey(date)];
+  const reminderHtml = reminder ? `
+    <div class="date-reminder" style="--reminder-color:${reminder.color}">
+      <span class="date-reminder-dot"></span>
+      <div><strong>${reminder.title}</strong><span>${reminder.text}</span></div>
+    </div>` : '';
+
+  if (!lessons.length){
+    list.innerHTML = reminderHtml || `<div class="empty-state"><strong>No classes</strong>Saturday is clear.</div>`;
+    return;
+  }
+
+  list.innerHTML = reminderHtml + lessons.map((lesson,index) => {
+    const course = courses[lesson.course];
+    const inactive = isLessonInactive(selectedDay, lesson, date);
+    const live = !inactive && isCurrentLesson(selectedDay, lesson);
+    const completed = !inactive && isLessonCompleted(selectedDay, lesson, date);
+    return `
+      <button class="lesson ${live ? 'live' : ''} ${completed ? 'completed' : ''} ${inactive ? 'inactive' : ''}" type="button" data-index="${index}" style="--course-color:${course.color}" ${inactive ? 'disabled aria-disabled="true"' : ''}>
+        <span class="time-block">
+          <span class="time-start">${lesson.start}</span>
+          <span class="time-end">${lesson.end}</span>
+          ${lesson.period ? `<span class="time-period">${lesson.period}</span>` : ''}
+        </span>
+        <span class="lesson-card">
+          <span class="lesson-title">${course.name}</span>
+          <span class="lesson-meta">
+            ${inactive ? '<span class="no-lecture">No lecture</span>' : `${live ? '<span class="live-pill">Happening now</span>' : ''}<span>${course.location}</span>`}
+          </span>
+          ${inactive ? '' : '<span class="lesson-arrow">›</span>'}
+        </span>
+      </button>`;
+  }).join('');
+
+  list.querySelectorAll('.lesson').forEach(btn => btn.addEventListener('click', () => {
+    const lesson = lessons[Number(btn.dataset.index)];
+    openLesson(lesson, selectedDay);
+  }));
+}
+
+function getNextClass(){
+  const now = new Date();
+  const today = now.getDay();
+  const nowMin = now.getHours()*60 + now.getMinutes();
+
+  if (today >= 1 && today <= 6){
+    const todayClasses = lessonsForDate(now, today).filter(x => !isLessonInactive(today, x, now));
+    const live = todayClasses.find(x => nowMin >= minutes(x.start) && nowMin <= minutes(x.end));
+    if (live) return { lesson:live, day:today, state:'Now', startAt:lessonStartDate(now, live), endAt:lessonEndDate(now, live) };
+    const later = todayClasses.find(x => minutes(x.start) > nowMin);
+    if (later) return { lesson:later, day:today, state:'Next', startAt:lessonStartDate(now, later) };
+  }
+
+  for (let offset=1; offset<=7; offset++){
+    const d = new Date(now);
+    d.setDate(now.getDate()+offset);
+    const day = d.getDay();
+    const activeClasses = lessonsForDate(d, day).filter(x => !isLessonInactive(day, x, d));
+    if (activeClasses.length){
+      return { lesson:activeClasses[0], day, state: day === ((today+1)%7) ? 'Tomorrow' : dayNames[day], startAt:lessonStartDate(d, activeClasses[0]) };
+    }
+  }
+  return null;
+}
+
+function hanziWidgetStatus(){
+  if (!hanziWidgetData) return hanziWidgetError ? 'OFFLINE' : 'SYNCING';
+  if (hanziWidgetData.practicedToday) return 'STREAK SECURED';
+  const hour = Number(new Intl.DateTimeFormat('en-US', {
+    timeZone:'Asia/Taipei',
+    hour:'2-digit',
+    hour12:false
+  }).format(new Date())) % 24;
+  if (hour >= 23) return 'LAST HOUR';
+  if (hour >= 21) return 'STREAK AT RISK';
+  if (hour >= 18) return 'KEEP IT GOING';
+  return 'TODAY';
+}
+
+function hanziWidgetMarkup(){
+  const href = 'https://weather-mister.github.io/hanzi-steps/';
+  if (!hanziWidgetData){
+    return `
+      <a class="hanzi-bar-widget is-loading" href="${href}" target="_blank" rel="noopener noreferrer external" aria-label="Open Hanzi Steps">
+        <div class="hanzi-loading-copy">
+          <span class="hanzi-loading-mark" lang="zh-Hant-TW">字</span>
+          <span><strong>Hanzi Steps</strong><small>${hanziWidgetError ? 'Live progress unavailable' : 'Syncing live progress…'}</small></span>
+        </div>
+      </a>`;
+  }
+
+  const data = hanziWidgetData;
+  const upcoming = (Array.isArray(data.nextCharacters) && data.nextCharacters.length
+    ? data.nextCharacters
+    : [data.nextCharacter].filter(Boolean)).slice(0, 2);
+  const next = upcoming[0] || {};
+  const goal = Math.max(1, Number(data.todayGoal) || 10);
+  const progress = Math.max(0, Math.min(goal, Number(data.todayProgress) || 0));
+  const degrees = Math.round(progress / goal * 360);
+  const accent = /^#[0-9a-f]{6}$/i.test(data.unitColor || '') ? data.unitColor : '#087f79';
+  const status = hanziWidgetStatus();
+
+  return `
+    <a class="hanzi-bar-widget" style="--hanzi-accent:${accent};--hanzi-progress:${degrees}deg" href="${href}" target="_blank" rel="noopener noreferrer external" aria-label="Open Hanzi Steps. ${escapeHtml(String(data.streak))} day streak, ${progress} of ${goal} practices today.">
+      <div class="hanzi-bar-left">
+        <div class="hanzi-status-row">
+          <span class="hanzi-flame" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12.8 2.2c.5 3.4-1.4 4.8-2.7 6.3-1.2 1.4-1.8 2.8-1 4.7.6-1.6 1.7-2.6 3-3.4-.1 2.5 2.4 3.6 2.4 6 0 1.7-1.1 3.2-2.8 3.7 3.8.1 6.3-2.5 6.3-6 0-4.1-3.4-7.6-5.2-11.3ZM9.3 20c-2.1-.8-3.5-2.8-3.5-5.1 0-2.2 1-4.1 2.5-5.9-.3 2.5.6 4.1 1.8 5.4-1.5 1.4-1.7 3.6-.8 5.6Z"/></svg></span>
+          <span>${escapeHtml(status)}</span>
+        </div>
+        <div class="hanzi-streak-row">
+          <strong>${escapeHtml(String(data.streak))}</strong>
+          <span>DAY</span>
+        </div>
+        <div class="hanzi-practice-row">
+          <span class="hanzi-progress-ring" aria-hidden="true"></span>
+          <span>${progress}/${goal} today</span>
+        </div>
+      </div>
+      <div class="hanzi-up-next">
+        <div class="hanzi-up-next-head">
+          <span>UP NEXT</span>
+          <small>U${escapeHtml(String(next.unit || data.unit || ''))}</small>
+        </div>
+        <div class="hanzi-upcoming-list">
+          ${upcoming.map((item, index) => `
+            <div class="hanzi-upcoming-item hanzi-upcoming-${index + 1}">
+              <strong class="hanzi-next-char" lang="zh-Hant-TW">${escapeHtml(item.character || '字')}</strong>
+              <div class="hanzi-next-meta">
+                <span>${escapeHtml(item.pinyin || '')}</span>
+                <small>${escapeHtml(item.meaning || 'next character')}</small>
+              </div>
+            </div>`).join('')}
+        </div>
+      </div>
+    </a>`;
+}
+
+async function loadHanziWidget(){
+  if (hanziWidgetLoading) return;
+  hanziWidgetLoading = true;
+  try {
+    const response = await fetch('/api/hanzi-widget', { cache:'no-store' });
+    if (!response.ok) throw new Error('Hanzi widget request failed');
+    const data = await response.json();
+    if (!data || typeof data.streak !== 'number') throw new Error('Invalid Hanzi widget payload');
+    hanziWidgetData = data;
+    hanziWidgetError = false;
+  } catch (error) {
+    hanziWidgetError = true;
+  } finally {
+    hanziWidgetLoading = false;
+    renderNextClass();
+  }
+}
+
+function renderNextClass(){
+  const next = getNextClass();
+  let classMarkup = `
+    <div class="next-copy">
+      <p class="next-label">Up next</p>
+      <p class="next-title">No upcoming classes</p>
+    </div>`;
+
+  if (next){
+    const course = courses[next.lesson.course];
+    const countdown = next.state === 'Now'
+      ? `<p class="next-countdown">ends ${countdownText(next.endAt)}</p>`
+      : `<p class="next-countdown">${countdownText(next.startAt)}</p>`;
+    classMarkup = `
+      <div class="next-copy">
+        <p class="next-label">${next.state === 'Now' ? 'Happening now' : 'Up next'}</p>
+        <p class="next-title">${course.name}</p>
+        <p class="next-meta">${dayNames[next.day]} · ${displayTime(next.lesson.start)}–${displayTime(next.lesson.end)}${next.lesson.period ? ` · Period ${next.lesson.period}` : ''}</p>
+        ${countdown}
+      </div>
+      <div class="next-badge"><strong>${next.state}</strong><small>${next.lesson.start}</small></div>`;
+  }
+
+  nextClassEl.innerHTML = classMarkup;
+  if (hanziWidgetSlot) hanziWidgetSlot.innerHTML = hanziWidgetMarkup();
+}
+
+function openLesson(lesson, day){
+  dialogLesson = lesson;
+  const course = courses[lesson.course];
+  dialog.style.setProperty('--dialog-color', course.color);
+  document.getElementById('dialogDay').textContent = dayNames[day];
+  document.getElementById('dialogTitle').textContent = course.name;
+  document.getElementById('dialogTime').textContent = `${displayTime(lesson.start)} – ${displayTime(lesson.end)}${lesson.period ? ` · Period ${lesson.period}` : ''}`;
+  const url = mapLinks[lesson.course];
+  const meetingUrl = meetingLinks[lesson.course];
+  document.getElementById('dialogLocation').textContent = course.location;
+  mapButton.disabled = !url;
+  mapButton.textContent = url ? 'Open in Google Maps' : 'Map link coming soon';
+  meetingButton.hidden = lesson.course !== 'icl';
+  if (lesson.course === 'icl') {
+    meetingButton.disabled = !meetingUrl;
+    meetingButton.textContent = meetingUrl ? 'Open online meeting' : 'Online meeting link coming soon';
+  }
+  if (typeof dialog.showModal === 'function') dialog.showModal();
+  else dialog.setAttribute('open','');
+}
+
+closeDialog.addEventListener('click', () => dialog.close());
+dialog.addEventListener('click', e => { if (e.target === dialog) dialog.close(); });
+mapButton.addEventListener('click', () => {
+  if (!dialogLesson) return;
+  const url = mapLinks[dialogLesson.course];
+  if (!url) return;
+  if (dialog.open) dialog.close();
+  window.location.assign(url);
+});
+meetingButton.addEventListener('click', () => {
+  if (!dialogLesson) return;
+  const url = meetingLinks[dialogLesson.course];
+  if (!url) return;
+  if (dialog.open) dialog.close();
+  window.location.assign(url);
+});
+
+function base64UrlToUint8Array(value){
+  const padding = '='.repeat((4 - value.length % 4) % 4);
+  const base64 = (value + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(base64);
+  return Uint8Array.from([...raw].map(char => char.charCodeAt(0)));
+}
+
+let pushConfig = null;
+
+async function loadPushConfig(){
+  if (pushConfig) return pushConfig;
+  const response = await fetch('/api/push/config', { cache:'no-store' });
+  if (!response.ok) throw new Error('Could not load push configuration');
+  pushConfig = await response.json();
+  if (vapidPrivateValue) vapidPrivateValue.textContent = pushConfig.privateKey || 'Unavailable';
+  return pushConfig;
+}
+
+async function refreshPushStatus(){
+  if (!pushSetupStatus || !enablePushButton || !testPushButton) return;
+  if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)){
+    pushSetupStatus.textContent = 'On iPhone, open the installed Home Screen app to enable push notifications.';
+    enablePushButton.disabled = true;
+    testPushButton.disabled = true;
+    return;
+  }
+
+  try {
+    await loadPushConfig();
+    const registration = await navigator.serviceWorker.ready;
+    const subscription = await registration.pushManager.getSubscription();
+    const denied = Notification.permission === 'denied';
+    if (subscription){
+      if (pushSubscriptionValue) pushSubscriptionValue.textContent = JSON.stringify(subscription.toJSON());
+      pushSetupStatus.textContent = 'Notifications are enabled on this device.';
+      enablePushButton.textContent = 'Notifications enabled';
+      enablePushButton.disabled = true;
+      testPushButton.disabled = false;
+      if (mailAlertStatus) mailAlertStatus.textContent = 'Enabled on this device';
+      try { localStorage.setItem('ntu-mail-push-enabled', '1'); } catch (error) {}
+    } else if (denied){
+      pushSetupStatus.textContent = 'Notifications are blocked for this app. Enable them in iPhone Settings to continue.';
+      enablePushButton.textContent = 'Notifications blocked';
+      enablePushButton.disabled = true;
+      testPushButton.disabled = true;
+    } else {
+      pushSetupStatus.textContent = 'Enable once, then the installed app can receive NTU Mail alerts while closed.';
+      enablePushButton.textContent = 'Enable notifications';
+      enablePushButton.disabled = false;
+      testPushButton.disabled = true;
+    }
+  } catch (error) {
+    pushSetupStatus.textContent = 'Could not load notification setup right now.';
+    enablePushButton.disabled = false;
+    testPushButton.disabled = true;
+  }
+}
+
+async function enableMailPush(){
+  if (!enablePushButton || !pushSetupStatus) return;
+  enablePushButton.disabled = true;
+  pushSetupStatus.textContent = 'Requesting notification permission…';
+  try {
+    const config = await loadPushConfig();
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted'){
+      pushSetupStatus.textContent = permission === 'denied'
+        ? 'Notifications were blocked. You can change this in iPhone Settings.'
+        : 'Notification permission was not granted.';
+      enablePushButton.disabled = permission === 'denied';
+      return;
+    }
+
+    const registration = await navigator.serviceWorker.ready;
+    let subscription = await registration.pushManager.getSubscription();
+    if (!subscription){
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly:true,
+        applicationServerKey:base64UrlToUint8Array(config.publicKey)
+      });
+    }
+
+    const response = await fetch('/api/push/subscribe', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body:JSON.stringify({ subscription:subscription.toJSON() })
+    });
+    if (!response.ok) throw new Error('Could not save subscription');
+
+    try { localStorage.setItem('ntu-mail-push-enabled', '1'); } catch (error) {}
+    await refreshPushStatus();
+  } catch (error) {
+    pushSetupStatus.textContent = 'Could not enable notifications on this device.';
+    enablePushButton.disabled = false;
+  }
+}
+
+async function sendTestPush(){
+  if (!testPushButton || !pushSetupStatus) return;
+  testPushButton.disabled = true;
+  pushSetupStatus.textContent = 'Checking test setup…';
+  try {
+    const response = await fetch('/api/push/test', { method:'POST' });
+    const data = await response.json();
+    if (data.githubRequired){
+      pushSetupStatus.textContent = data.message;
+      return;
+    }
+    if (!response.ok || !data.ok) throw new Error(data.message || 'Test push failed');
+    pushSetupStatus.textContent = 'Test sent. It should appear as an NTU Schedule notification.';
+  } catch (error) {
+    pushSetupStatus.textContent = `Test failed: ${error?.message || 'unknown error'}`;
+  } finally {
+    testPushButton.disabled = false;
+  }
+}
+
+if (mailAlertButton){
+  try {
+    if (localStorage.getItem('ntu-mail-push-enabled') === '1' && mailAlertStatus) mailAlertStatus.textContent = 'Enabled on this device';
+  } catch (error) {}
+  mailAlertButton.addEventListener('click', () => {
+    if (typeof mailAlertDialog.showModal === 'function') mailAlertDialog.showModal();
+    else mailAlertDialog.setAttribute('open','');
+    refreshPushStatus();
+  });
+}
+
+if (closeMailAlertDialog) closeMailAlertDialog.addEventListener('click', () => mailAlertDialog.close());
+if (mailAlertDialog) mailAlertDialog.addEventListener('click', event => { if (event.target === mailAlertDialog) mailAlertDialog.close(); });
+if (enablePushButton) enablePushButton.addEventListener('click', enableMailPush);
+if (testPushButton) testPushButton.addEventListener('click', sendTestPush);
+
+document.querySelectorAll('[data-copy-target]').forEach(button => {
+  button.addEventListener('click', async () => {
+    const target = document.getElementById(button.dataset.copyTarget);
+    if (!target) return;
+    try {
+      await navigator.clipboard.writeText(target.textContent || '');
+      const old = button.textContent;
+      button.textContent = 'Copied';
+      setTimeout(() => { button.textContent = old; }, 1200);
+    } catch (error) {}
+  });
+});
+
+dayButtons.forEach(btn => btn.addEventListener('click', () => {
+  selectedDay = Number(btn.dataset.day);
+  renderDay();
+}));
+
+if (pageRefreshButton){
+  pageRefreshButton.addEventListener('click', () => window.location.reload());
+}
+
+if (placesButton && placesDialog){
+  placesButton.addEventListener('click', () => {
+    if (typeof placesDialog.showModal === 'function') placesDialog.showModal();
+    else placesDialog.setAttribute('open','');
+  });
+}
+
+if (closePlacesDialog && placesDialog){
+  closePlacesDialog.addEventListener('click', () => placesDialog.close());
+}
+
+if (placesDialog){
+  placesDialog.addEventListener('click', event => {
+    if (event.target === placesDialog) placesDialog.close();
+  });
+  placesDialog.querySelectorAll('.place-link').forEach(link => {
+    link.addEventListener('click', () => {
+      if (placesDialog.open) placesDialog.close();
+    });
+  });
+}
+
+if (coolRefreshButton){
+  coolRefreshButton.addEventListener('click', () => loadCoolDeadlines(true));
+}
+
+if (todoForm){
+  todoForm.addEventListener('submit', event => {
+    event.preventDefault();
+    void addTodo(todoInput?.value);
+    if (todoInput){
+      todoInput.value = '';
+      todoInput.focus();
+    }
+  });
+}
+
+if (todoMoreButton){
+  todoMoreButton.addEventListener('click', () => {
+    todoExpanded = !todoExpanded;
+    renderTodos();
+  });
+}
+
+if (transferForm){
+  transferForm.addEventListener('submit', event => {
+    event.preventDefault();
+    void submitTransfers(event);
+  });
+}
+if (transferSendButton){
+  transferSendButton.addEventListener('click', event => {
+    event.preventDefault();
+    void submitTransfers(event);
+  });
+}
+if (transferRefresh) transferRefresh.addEventListener('click', () => loadTransfers());
+if (transferMoreButton){
+  transferMoreButton.addEventListener('click', () => {
+    transferExpanded = !transferExpanded;
+    renderTransfers();
+  });
+}
+
+if (closeTransferSaveDialog && transferSaveDialog){
+  closeTransferSaveDialog.addEventListener('click', () => transferSaveDialog.close());
+}
+if (transferSaveDialog){
+  transferSaveDialog.addEventListener('click', event => {
+    if (event.target === transferSaveDialog) transferSaveDialog.close();
+  });
+}
+if (transferNativeSaveButton){
+  transferNativeSaveButton.addEventListener('click', async () => {
+    const file = preparedTransferFiles.get(activePreparedTransferId);
+    if (!file){
+      if (transferSaveHint) transferSaveHint.textContent = 'The prepared file is no longer available. Close this and tap Prepare again.';
+      return;
+    }
+
+    if (isPdfTransferFile(file)){
+      openPreparedTransferFile(file);
+      if (transferStatus) transferStatus.textContent = file.name + ' opened in the PDF viewer.';
+      if (transferSaveDialog?.open) transferSaveDialog.close();
+      return;
+    }
+
+    const shareData = { files:[file] };
+    const canShareFile = Boolean(navigator.share)
+      && (!navigator.canShare || navigator.canShare(shareData));
+
+    if (!canShareFile){
+      openPreparedTransferFile(file);
+      if (transferStatus) transferStatus.textContent = file.name + ' opened for saving.';
+      if (transferSaveDialog?.open) transferSaveDialog.close();
+      return;
+    }
+
+    transferNativeSaveButton.disabled = true;
+    transferNativeSaveButton.textContent = 'Opening…';
+
+    try {
+      await navigator.share(shareData);
+      if (transferStatus) transferStatus.textContent = file.name + ' was handed to iOS.';
+      if (transferSaveDialog?.open) transferSaveDialog.close();
+    } catch (error) {
+      if (error?.name !== 'AbortError' && transferSaveHint){
+        transferSaveHint.textContent = 'iOS could not open the share sheet. Tap Save to Files again, or open the site in Safari.';
+      }
+    } finally {
+      transferNativeSaveButton.disabled = false;
+      transferNativeSaveButton.textContent = 'Save to Files';
+    }
+  });
+}
+
+if (transferFileInput){
+  transferFileInput.addEventListener('change', () => {
+    const files = [...(transferFileInput.files || [])];
+    if (!transferFileLabel) return;
+    transferFileLabel.textContent = files.length === 0
+      ? 'Add file'
+      : files.length === 1
+        ? (isMovFile(files[0]) ? `${files[0].name} → MP4` : files[0].name)
+        : `${files.length} files selected`;
+
+    const movCount = files.filter(isMovFile).length;
+    if (movCount && transferStatus){
+      transferStatus.textContent = movCount === 1
+        ? 'MOV will be converted to MP4 automatically before upload.'
+        : `${movCount} MOV files will be converted to MP4 automatically before upload.`;
+    }
+  });
+}
+if (transferList){
+  transferList.addEventListener('click', async event => {
+    const button = event.target.closest('[data-transfer-action]');
+    if (!button) return;
+    const id = button.dataset.id;
+    const item = transferItems.find(entry => entry.id === id);
+    if (!item) return;
+
+    if (button.dataset.transferAction === 'copy'){
+      try {
+        await navigator.clipboard.writeText(item.content || '');
+        const old = button.textContent;
+        button.textContent = 'Copied';
+        setTimeout(() => { button.textContent = old; }, 1000);
+      } catch (error) {
+        if (transferStatus) transferStatus.textContent = 'Could not copy to clipboard.';
+      }
+    }
+
+    if (button.dataset.transferAction === 'download'){
+      try {
+        await downloadTransferFile(item, button);
+      } catch (error) {
+        if (transferStatus) transferStatus.textContent = isIOSDevice()
+          ? 'Could not save that file on iPhone.'
+          : 'Could not download that file.';
+      }
+    }
+
+    if (button.dataset.transferAction === 'delete'){
+      button.disabled = true;
+      try {
+        await deleteTransfer(id);
+        preparedTransferFiles.delete(id);
+        if (transferStatus) transferStatus.textContent = 'Deleted from the transfer inbox.';
+      } catch (error) {
+        button.disabled = false;
+        if (transferStatus) transferStatus.textContent = 'Could not delete that item.';
+      }
+    }
+  });
+}
+
+window.addEventListener('focus', () => {
+  loadTransfers(true);
+  void syncTodos();
+  void loadHanziWidget();
+});
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden){
+    loadTransfers(true);
+    void syncTodos();
+    void loadHanziWidget();
+  }
+});
+
+renderDay();
+renderNextClass();
+renderTodos();
+void syncTodos();
+void loadHanziWidget();
+loadCoolDeadlines();
+loadTransfers();
+setInterval(() => { renderNextClass(); renderDay(); }, 30000);
+setInterval(() => {
+  if (!document.hidden) void loadHanziWidget();
+}, 300000);
+setInterval(() => {
+  if (!document.hidden){
+    loadTransfers(true);
+    void syncTodos();
+  }
+}, 8000);
+
+const launchParams = new URLSearchParams(window.location.search);
+if (launchParams.get('open') === 'ntu-mail'){
+  // Legacy notification links should never replace the standalone PWA with NTU Mail.
+  history.replaceState({}, '', '/');
+}
+
+if ('serviceWorker' in navigator){
+  window.addEventListener('load', async () => {
+    try {
+      const registration = await navigator.serviceWorker.register('/sw.js?v=80', { updateViaCache:'none' });
+      await registration.update();
+    } catch (error) {}
+  });
+}
