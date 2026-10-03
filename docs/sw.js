@@ -1,7 +1,7 @@
 const CACHE_NAME = 'ntu-schedule-github-v1';
 const NTU_MAIL_URL = 'https://wmail1.cc.ntu.edu.tw/rc/index.php';
 const ROOT = new URL(self.registration.scope).pathname;
-const asset = path => ROOT + path.replace(/^\\/+/, '');
+const asset = path => ROOT + (path.startsWith('/') ? path.slice(1) : path);
 const ICON_URL = new URL('icon-180.png', self.registration.scope).href;
 
 const APP_SHELL = [
