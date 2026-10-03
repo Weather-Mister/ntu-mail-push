@@ -30,6 +30,66 @@ const meetingLinks = {
 
 const NTU_MAIL_URL = 'https://wmail1.cc.ntu.edu.tw/rc/index.php';
 
+const SCHEDULE_API_URL = 'https://evckshjtzikuusnkdnjn.supabase.co/functions/v1/ntu-schedule-api';
+const SCHEDULE_PAIRING_KEY = 'ntu-schedule-pairing-key-v1';
+let schedulePairingKey = '';
+
+try {
+  const launchUrl = new URL(window.location.href);
+  const launchPair = launchUrl.searchParams.get('pair');
+  if (launchPair && launchPair.length >= 32 && launchPair.length <= 200){
+    localStorage.setItem(SCHEDULE_PAIRING_KEY, launchPair);
+    launchUrl.searchParams.delete('pair');
+    history.replaceState({}, '', launchUrl.pathname + launchUrl.search + launchUrl.hash);
+  }
+  schedulePairingKey = localStorage.getItem(SCHEDULE_PAIRING_KEY) || '';
+} catch (error) {}
+
+function scheduleApiUrl(route, query = {}){
+  const url = new URL(SCHEDULE_API_URL);
+  url.searchParams.set('route', route);
+  Object.entries(query).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) url.searchParams.set(key, String(value));
+  });
+  return url.toString();
+}
+
+function showPairingDialog(message = ''){
+  if (pairingStatus && message) pairingStatus.textContent = message;
+  if (!pairingDialog) return;
+  if (typeof pairingDialog.showModal === 'function'){
+    if (!pairingDialog.open) pairingDialog.showModal();
+  } else {
+    pairingDialog.setAttribute('open', '');
+  }
+}
+
+function requirePairing(){
+  if (schedulePairingKey) return schedulePairingKey;
+  showPairingDialog('Enter the pairing key once on this device to sync private schedule data.');
+  throw new Error('Pairing required');
+}
+
+async function scheduleFetch(route, options = {}, query = {}){
+  const key = requirePairing();
+  const headers = new Headers(options.headers || {});
+  headers.set('x-schedule-key', key);
+
+  const response = await fetch(scheduleApiUrl(route, query), {
+    ...options,
+    headers
+  });
+
+  if (response.status === 401){
+    schedulePairingKey = '';
+    try { localStorage.removeItem(SCHEDULE_PAIRING_KEY); } catch (error) {}
+    showPairingDialog('This device is no longer paired. Enter the pairing key again.');
+  }
+
+  return response;
+}
+
+
 const schedule = {
   1: [
     { course:'mechanism', start:'09:10', end:'10:00', period:'2' },
@@ -135,6 +195,13 @@ const enablePushButton = document.getElementById('enablePushButton');
 const testPushButton = document.getElementById('testPushButton');
 const pushSubscriptionValue = document.getElementById('pushSubscriptionValue');
 const vapidPrivateValue = document.getElementById('vapidPrivateValue');
+
+const pairingDialog = document.getElementById('pairingDialog');
+const closePairingDialog = document.getElementById('closePairingDialog');
+const pairingForm = document.getElementById('pairingForm');
+const pairingInput = document.getElementById('pairingInput');
+const pairingStatus = document.getElementById('pairingStatus');
+
 
 let selectedDay = normalizeDay(new Date().getDay());
 let dialogLesson = null;
@@ -326,7 +393,8 @@ function queueTodoOp(op){
 }
 
 async function todoApi(path, body){
-  const response = await fetch(path, {
+  const route = String(path || '').replace(/^\\/api\\//, '');
+  const response = await scheduleFetch(route, {
     method: body ? 'POST' : 'GET',
     headers: body ? { 'Content-Type':'application/json' } : undefined,
     body: body ? JSON.stringify(body) : undefined,
@@ -543,7 +611,7 @@ async function loadTransfers(silent = false){
     if (transferStatus) transferStatus.textContent = 'Syncing transfer inbox…';
   }
   try {
-    const response = await fetch('/api/transfer/list', { cache:'no-store' });
+    const response = await scheduleFetch('transfer/list', { cache:'no-store' });
     if (!response.ok) throw new Error('Could not sync');
     const data = await response.json();
     transferItems = Array.isArray(data.items) ? data.items : [];
@@ -557,7 +625,7 @@ async function loadTransfers(silent = false){
 }
 
 async function sendTransferText(content){
-  const response = await fetch('/api/transfer/text', {
+  const response = await scheduleFetch('transfer/text', {
     method:'POST',
     headers:{ 'Content-Type':'application/json' },
     body:JSON.stringify({ content })
@@ -681,7 +749,7 @@ async function sendTransferFile(file, onProgress){
   if (file.size <= CHUNK_SIZE){
     const form = new FormData();
     form.append('file', file, file.name);
-    const response = await fetch('/api/transfer/upload', { method:'POST', body:form });
+    const response = await scheduleFetch('transfer/upload', { method:'POST', body:form });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(data.error || `Could not send ${file.name}`);
     onProgress?.(1, 1);
@@ -703,13 +771,13 @@ async function sendTransferFile(file, onProgress){
     form.append('totalChunks', String(totalChunks));
     form.append('totalBytes', String(file.size));
 
-    const response = await fetch('/api/transfer/upload-chunk', { method:'POST', body:form });
+    const response = await scheduleFetch('transfer/upload-chunk', { method:'POST', body:form });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(data.error || `Could not send ${file.name}`);
     onProgress?.(index + 1, totalChunks);
   }
 
-  const response = await fetch('/api/transfer/finalize', {
+  const response = await scheduleFetch('transfer/finalize', {
     method:'POST',
     headers:{ 'Content-Type':'application/json' },
     body:JSON.stringify({
@@ -738,7 +806,7 @@ async function prepareTransferFile(item, button){
 
     if (count > 0){
       for (let index = 0; index < count; index += 1){
-        const response = await fetch(`/api/transfer/chunk?id=${encodeURIComponent(item.id)}&index=${index}`, { cache:'no-store' });
+        const response = await scheduleFetch('transfer/chunk', { cache:'no-store' }, { id:item.id, index });
         if (!response.ok) throw new Error('Could not download file');
         const blob = await response.blob();
         chunks.push(blob);
@@ -753,7 +821,9 @@ async function prepareTransferFile(item, button){
         }
       }
     } else {
-      const response = await fetch(`/api/transfer/file?id=${encodeURIComponent(item.id)}`, { cache:'no-store' });
+      const response = item.url
+        ? await fetch(item.url, { cache:'no-store' })
+        : await scheduleFetch('transfer/file', { cache:'no-store' }, { id:item.id });
       if (!response.ok) throw new Error('Could not download file');
       const blob = await response.blob();
       chunks.push(blob);
@@ -903,7 +973,7 @@ async function submitTransfers(event){
 }
 
 async function deleteTransfer(id){
-  const response = await fetch('/api/transfer/delete', {
+  const response = await scheduleFetch('transfer/delete', {
     method:'POST',
     headers:{ 'Content-Type':'application/json' },
     body:JSON.stringify({ id })
@@ -1041,7 +1111,7 @@ async function loadCoolDeadlines(force = false){
   if (coolRefreshButton) coolRefreshButton.disabled = true;
 
   try {
-    const response = await fetch('/api/cool-calendar', { cache: force ? 'reload' : 'no-cache' });
+    const response = await scheduleFetch('cool-calendar', { cache: force ? 'reload' : 'no-cache' });
     if (!response.ok) throw new Error('COOL sync failed');
     const data = await response.json();
     coolEvents = Array.isArray(data.events) ? data.events : [];
@@ -1238,7 +1308,7 @@ async function loadHanziWidget(){
   if (hanziWidgetLoading) return;
   hanziWidgetLoading = true;
   try {
-    const response = await fetch('/api/hanzi-widget', { cache:'no-store' });
+    const response = await scheduleFetch('hanzi-widget', { cache:'no-store' });
     if (!response.ok) throw new Error('Hanzi widget request failed');
     const data = await response.json();
     if (!data || typeof data.streak !== 'number') throw new Error('Invalid Hanzi widget payload');
@@ -1328,7 +1398,7 @@ let pushConfig = null;
 
 async function loadPushConfig(){
   if (pushConfig) return pushConfig;
-  const response = await fetch('/api/push/config', { cache:'no-store' });
+  const response = await scheduleFetch('push/config', { cache:'no-store' });
   if (!response.ok) throw new Error('Could not load push configuration');
   pushConfig = await response.json();
   if (vapidPrivateValue) vapidPrivateValue.textContent = pushConfig.privateKey || 'Unavailable';
@@ -1399,7 +1469,7 @@ async function enableMailPush(){
       });
     }
 
-    const response = await fetch('/api/push/subscribe', {
+    const response = await scheduleFetch('push/subscribe', {
       method:'POST',
       headers:{ 'Content-Type':'application/json' },
       body:JSON.stringify({ subscription:subscription.toJSON() })
@@ -1419,7 +1489,7 @@ async function sendTestPush(){
   testPushButton.disabled = true;
   pushSetupStatus.textContent = 'Checking test setup…';
   try {
-    const response = await fetch('/api/push/test', { method:'POST' });
+    const response = await scheduleFetch('push/test', { method:'POST' });
     const data = await response.json();
     if (data.githubRequired){
       pushSetupStatus.textContent = data.message;
@@ -1449,6 +1519,53 @@ if (closeMailAlertDialog) closeMailAlertDialog.addEventListener('click', () => m
 if (mailAlertDialog) mailAlertDialog.addEventListener('click', event => { if (event.target === mailAlertDialog) mailAlertDialog.close(); });
 if (enablePushButton) enablePushButton.addEventListener('click', enableMailPush);
 if (testPushButton) testPushButton.addEventListener('click', sendTestPush);
+
+if (closePairingDialog) closePairingDialog.addEventListener('click', () => {
+  if (schedulePairingKey) pairingDialog?.close();
+});
+if (pairingDialog) pairingDialog.addEventListener('cancel', event => {
+  if (!schedulePairingKey) event.preventDefault();
+});
+if (pairingForm) pairingForm.addEventListener('submit', async event => {
+  event.preventDefault();
+  const candidate = String(pairingInput?.value || '').trim();
+  if (candidate.length < 32 || candidate.length > 200){
+    if (pairingStatus) pairingStatus.textContent = 'That pairing key is not valid.';
+    return;
+  }
+
+  const submit = pairingForm.querySelector('button[type="submit"]');
+  if (submit) submit.disabled = true;
+  if (pairingStatus) pairingStatus.textContent = 'Pairing…';
+
+  try {
+    const response = await fetch(scheduleApiUrl('status'), {
+      headers:{ 'x-schedule-key':candidate },
+      cache:'no-store'
+    });
+    if (!response.ok) throw new Error('Pairing key not recognized.');
+
+    schedulePairingKey = candidate;
+    localStorage.setItem(SCHEDULE_PAIRING_KEY, candidate);
+    if (pairingInput) pairingInput.value = '';
+    if (pairingStatus) pairingStatus.textContent = 'Paired.';
+    pairingDialog?.close();
+
+    void syncTodos();
+    void loadHanziWidget();
+    void loadCoolDeadlines(true);
+    void loadTransfers();
+  } catch (error) {
+    if (pairingStatus) pairingStatus.textContent = error?.message || 'Could not pair this device.';
+  } finally {
+    if (submit) submit.disabled = false;
+  }
+});
+
+if (!schedulePairingKey){
+  queueMicrotask(() => showPairingDialog());
+}
+
 
 document.querySelectorAll('[data-copy-target]').forEach(button => {
   button.addEventListener('click', async () => {
@@ -1683,13 +1800,13 @@ setInterval(() => {
 const launchParams = new URLSearchParams(window.location.search);
 if (launchParams.get('open') === 'ntu-mail'){
   // Legacy notification links should never replace the standalone PWA with NTU Mail.
-  history.replaceState({}, '', '/');
+  history.replaceState({}, '', window.location.pathname);
 }
 
 if ('serviceWorker' in navigator){
   window.addEventListener('load', async () => {
     try {
-      const registration = await navigator.serviceWorker.register('/sw.js?v=80', { updateViaCache:'none' });
+      const registration = await navigator.serviceWorker.register('./sw.js?v=92', { updateViaCache:'none' });
       await registration.update();
     } catch (error) {}
   });
