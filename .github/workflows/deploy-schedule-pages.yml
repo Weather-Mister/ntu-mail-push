@@ -1,4 +1,5 @@
 name: Deploy NTU Schedule to GitHub Pages
+# Pages enabled; touch to trigger first successful deployment
 
 on:
   push:
