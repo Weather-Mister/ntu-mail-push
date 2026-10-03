@@ -1,18 +1,19 @@
 {
   "name": "NTU Schedule",
   "short_name": "Schedule",
-  "start_url": "/",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#f6f3ed",
   "theme_color": "#263f77",
   "icons": [
     {
-      "src": "/api/icon-180",
+      "src": "./icon-180.png",
       "sizes": "180x180",
       "type": "image/png"
     },
     {
-      "src": "/api/icon-512",
+      "src": "./icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
