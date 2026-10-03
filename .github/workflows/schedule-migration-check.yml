@@ -1,0 +1,61 @@
+name: Schedule migration checks
+
+on:
+  push:
+    branches:
+      - schedule-github-migration
+  pull_request:
+    paths:
+      - "docs/**"
+      - ".github/workflows/schedule-migration-check.yml"
+      - ".github/workflows/deploy-schedule-pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Check JavaScript syntax
+        run: |
+          node --check docs/app.js
+          node --check docs/sw.js
+
+      - name: Validate manifest JSON
+        run: python -m json.tool docs/manifest.webmanifest >/dev/null
+
+      - name: Check required PWA assets
+        run: |
+          test -f docs/index.html
+          test -f docs/styles.css
+          test -f docs/app.js
+          test -f docs/sw.js
+          test -f docs/favicon.svg
+          test -f docs/hub-statics.svg
+          test -f docs/icon-180.png
+          test -f docs/icon-512.png
+          test -f docs/vendor/ffmpeg/ffmpeg.js
+          test -f docs/vendor/ffmpeg/814.ffmpeg.js
+
+      - name: Reject Hatchable runtime dependencies
+        run: |
+          if grep -R -n -E 'hatchable\.site|__HATCHABLE__' docs; then
+            echo "Hatchable dependency found in GitHub build."
+            exit 1
+          fi
+
+      - name: Reject root-scoped local assets
+        run: |
+          if grep -n -E '(href|src)="/' docs/index.html; then
+            echo "Root-scoped local asset found."
+            exit 1
+          fi
+          if grep -n "serviceWorker.register('/" docs/app.js; then
+            echo "Root-scoped service worker registration found."
+            exit 1
+          fi
