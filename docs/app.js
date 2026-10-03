@@ -393,7 +393,7 @@ function queueTodoOp(op){
 }
 
 async function todoApi(path, body){
-  const route = String(path || '').replace(/^\\/api\\//, '');
+  const route = String(path || '').startsWith('/api/') ? String(path).slice(5) : String(path || '');
   const response = await scheduleFetch(route, {
     method: body ? 'POST' : 'GET',
     headers: body ? { 'Content-Type':'application/json' } : undefined,
