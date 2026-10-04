@@ -1266,7 +1266,7 @@ function hanziWidgetMarkup(){
   const goal = Math.max(1, Number(data.todayGoal) || 10);
   const progress = Math.max(0, Math.min(goal, Number(data.todayProgress) || 0));
   const degrees = Math.round(progress / goal * 360);
-  const accent = /^#[0-9a-f]{6}$/i.test(data.unitColor || '') ? data.unitColor : '#087f79';
+  const accent = /^#[0-9a-f]{6}$/i.test(data.unitColor || '') ? data.unitColor : '#456f9f';
   const status = hanziWidgetStatus();
 
   return `
