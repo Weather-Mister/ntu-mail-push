@@ -336,8 +336,7 @@ button:focus-visible,a:focus-visible,label:has(+ input:focus-visible){outline:3p
   .next-class-main .next-meta{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
   .hanzi-bar-widget{
-    --hanzi-accent:#456f9f;
-    --hanzi-ink:#345477;
+    --hanzi-accent:#087f79;
     --hanzi-progress:0deg;
     display:grid;
     grid-template-columns:minmax(118px,.9fr) minmax(155px,1.15fr);
@@ -377,7 +376,7 @@ button:focus-visible,a:focus-visible,label:has(+ input:focus-visible){outline:3p
     align-items:center;
     gap:4px;
     min-width:0;
-    color:var(--hanzi-ink);
+    color:var(--hanzi-accent);
     font-size:7px;
     line-height:1;
     font-weight:900;
@@ -439,7 +438,7 @@ button:focus-visible,a:focus-visible,label:has(+ input:focus-visible){outline:3p
     justify-content:space-between;
     gap:6px;
     min-width:0;
-    color:var(--hanzi-ink);
+    color:var(--hanzi-accent);
     font-size:7px;
     line-height:1;
     font-weight:900;
@@ -456,7 +455,7 @@ button:focus-visible,a:focus-visible,label:has(+ input:focus-visible){outline:3p
     letter-spacing:-.04em;
   }
   .hanzi-next-meta{display:flex;flex-direction:column;min-width:0;gap:2px}
-  .hanzi-next-meta span{color:var(--hanzi-ink);font-size:9px;line-height:1;font-weight:850}
+  .hanzi-next-meta span{color:var(--hanzi-accent);font-size:9px;line-height:1;font-weight:850}
   .hanzi-next-meta small{
     max-width:100%;
     color:#826f5a;
@@ -468,12 +467,12 @@ button:focus-visible,a:focus-visible,label:has(+ input:focus-visible){outline:3p
     text-overflow:ellipsis;
   }
 
-  .hanzi-bar-widget.is-loading{--hanzi-accent:#756f66;--hanzi-ink:#756f66;grid-template-columns:1fr}
+  .hanzi-bar-widget.is-loading{--hanzi-accent:#756f66;grid-template-columns:1fr}
   .hanzi-loading-copy{display:flex;align-items:center;gap:9px;padding:2px 8px;min-width:0}
   .hanzi-loading-mark{
     width:35px;height:35px;display:grid;place-items:center;flex:0 0 35px;
     border-radius:10px;background:rgba(255,255,255,.55);
-    color:var(--hanzi-ink);font-size:22px;font-weight:800
+    color:var(--hanzi-accent);font-size:22px;font-weight:800
   }
   .hanzi-loading-copy span:last-child{display:flex;flex-direction:column;min-width:0;gap:2px}
   .hanzi-loading-copy strong{font-size:11px;line-height:1.1}
@@ -531,8 +530,7 @@ button:focus-visible,a:focus-visible,label:has(+ input:focus-visible){outline:3p
     min-height:92px;
   }
   .hanzi-widget-slot .hanzi-bar-widget{
-    --hanzi-accent:#456f9f;
-    --hanzi-ink:#345477;
+    --hanzi-accent:#087f79;
     --hanzi-progress:0deg;
     display:grid;
     grid-template-columns:minmax(116px,.78fr) minmax(0,1.35fr);

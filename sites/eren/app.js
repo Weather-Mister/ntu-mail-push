@@ -1267,11 +1267,10 @@ function hanziWidgetMarkup(){
   const progress = Math.max(0, Math.min(goal, Number(data.todayProgress) || 0));
   const degrees = Math.round(progress / goal * 360);
   const accent = /^#[0-9a-f]{6}$/i.test(data.unitColor || '') ? data.unitColor : '#456f9f';
-  const ink = /^#[0-9a-f]{6}$/i.test(data.unitInkColor || '') ? data.unitInkColor : '#345477';
   const status = hanziWidgetStatus();
 
   return `
-    <a class="hanzi-bar-widget" style="--hanzi-accent:${accent};--hanzi-ink:${ink};--hanzi-progress:${degrees}deg" href="${href}" target="_blank" rel="noopener noreferrer external" aria-label="Open Hanzi Steps. ${escapeHtml(String(data.streak))} day streak, ${progress} of ${goal} practices today.">
+    <a class="hanzi-bar-widget" style="--hanzi-accent:${accent};--hanzi-progress:${degrees}deg" href="${href}" target="_blank" rel="noopener noreferrer external" aria-label="Open Hanzi Steps. ${escapeHtml(String(data.streak))} day streak, ${progress} of ${goal} practices today.">
       <div class="hanzi-bar-left">
         <div class="hanzi-status-row">
           <span class="hanzi-flame" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12.8 2.2c.5 3.4-1.4 4.8-2.7 6.3-1.2 1.4-1.8 2.8-1 4.7.6-1.6 1.7-2.6 3-3.4-.1 2.5 2.4 3.6 2.4 6 0 1.7-1.1 3.2-2.8 3.7 3.8.1 6.3-2.5 6.3-6 0-4.1-3.4-7.6-5.2-11.3ZM9.3 20c-2.1-.8-3.5-2.8-3.5-5.1 0-2.2 1-4.1 2.5-5.9-.3 2.5.6 4.1 1.8 5.4-1.5 1.4-1.7 3.6-.8 5.6Z"/></svg></span>
