@@ -336,7 +336,7 @@ button:focus-visible,a:focus-visible,label:has(+ input:focus-visible){outline:3p
   .next-class-main .next-meta{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
   .hanzi-bar-widget{
-    --hanzi-accent:#087f79;
+    --hanzi-accent:#456f9f;
     --hanzi-progress:0deg;
     display:grid;
     grid-template-columns:minmax(118px,.9fr) minmax(155px,1.15fr);
@@ -530,7 +530,7 @@ button:focus-visible,a:focus-visible,label:has(+ input:focus-visible){outline:3p
     min-height:92px;
   }
   .hanzi-widget-slot .hanzi-bar-widget{
-    --hanzi-accent:#087f79;
+    --hanzi-accent:#456f9f;
     --hanzi-progress:0deg;
     display:grid;
     grid-template-columns:minmax(116px,.78fr) minmax(0,1.35fr);
