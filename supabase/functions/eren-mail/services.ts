@@ -1,6 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 import { safeHtml, inlineImages } from './render.ts';
 export { safeHtml } from './render.ts';
+import { threadCache } from './memory.ts';
+let memoryEpoch=0;
+const accessTokens=new Map<string,{value:string;until:number}>(),tokenRequests=new Map<string,Promise<any>>();
+export function clearMailMemory(workspace='') {memoryEpoch++;for(const key of accessTokens.keys())if(key.startsWith(workspace))accessTokens.delete(key);for(const key of tokenRequests.keys())if(key.startsWith(workspace))tokenRequests.delete(key);threadCache.deletePrefix(workspace);}
+export function invalidateThread(workspace:string,accountId:string,threadId:string) {threadCache.deletePrefix(`${workspace}:${accountId}:${threadId}:`);}
 import { header, address, senderName, bodies, plainText, classify, unsubscribeInfo, b64url, AI_SYSTEM } from './domain.mjs';
 export class MailError extends Error { constructor(public status:number, message:string, public code='mail_error') { super(message); } }
 export const check = (result:any) => { if(result.error) throw new MailError(503,'Mail storage is temporarily unavailable. Your draft has not been discarded.'); return result.data; };
@@ -8,8 +13,7 @@ export const db = () => createClient(Deno.env.get('SUPABASE_URL')!,Deno.env.get(
 export async function hash(s:string) { return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s))),b=>b.toString(16).padStart(2,'0')).join(''); }
 export const random = () => b64url(crypto.getRandomValues(new Uint8Array(32)));
 export const secret = async (admin:any,name:string,value:string|null=null,remove=false) => check(await admin.rpc('eren_mail_secret',{p_name:name,p_value:value,p_delete:remove}));
-export async function config(admin:any,workspace:string) {
- const names=['GOOGLE_CLIENT_ID','GOOGLE_CLIENT_SECRET','GEMINI_API_KEY','GEMINI_MODEL'];
+export async function config(admin:any,workspace:string,names=['GOOGLE_CLIENT_ID','GOOGLE_CLIENT_SECRET','GEMINI_API_KEY','GEMINI_MODEL']) {
  const values=await Promise.all(names.map(async n=>Deno.env.get('MAIL_'+n)||await secret(admin,`eren-mail:${workspace}:config:${n}`)||''));
  return Object.fromEntries(names.map((n,i)=>[n,values[i]]));
 }
@@ -41,31 +45,57 @@ export async function tokenRequest(params:Record<string,string>) {
  return data;
 }
 export async function gmailClient(admin:any,account:any) {
- const cfg=await config(admin,account.workspace_hash), refresh=await secret(admin,account.secret_name);
- if(!refresh) throw new MailError(401,'Reconnect this Gmail account.','reauthorize');
- let token;
- try { token=await tokenRequest({client_id:cfg.GOOGLE_CLIENT_ID,client_secret:cfg.GOOGLE_CLIENT_SECRET,refresh_token:refresh,grant_type:'refresh_token'}); }
- catch(e) { if(e.code==='reauthorize') check(await admin.from('eren_mail_accounts').update({status:'reauthorize',sync_error:'Reconnect account'}).eq('id',account.id));throw e; }
- return async (path:string,method='GET',body?:any) => {
-  const r=await fetch('https://gmail.googleapis.com/gmail/v1/users/me/'+path,{method,headers:{Authorization:'Bearer '+token.access_token,'Content-Type':'application/json'},body:body===undefined?undefined:JSON.stringify(body),signal:AbortSignal.timeout(20000)});
+ const key=account.workspace_hash+':'+account.id+':'+account.secret_name;
+ let token=accessTokens.get(key);
+ if(!token||token.until<=Date.now()) {
+  let pending=tokenRequests.get(key);
+  if(!pending) {
+   const epoch=memoryEpoch;
+   pending=(async()=>{
+    const [cfg,refresh]=await Promise.all([config(admin,account.workspace_hash,['GOOGLE_CLIENT_ID','GOOGLE_CLIENT_SECRET']),secret(admin,account.secret_name)]);
+    if(!refresh)throw new MailError(401,'Reconnect this Gmail account.','reauthorize');
+    let response;
+    try{response=await tokenRequest({client_id:cfg.GOOGLE_CLIENT_ID,client_secret:cfg.GOOGLE_CLIENT_SECRET,refresh_token:refresh,grant_type:'refresh_token'});}
+    catch(e){if(e.code==='reauthorize')check(await admin.from('eren_mail_accounts').update({status:'reauthorize',sync_error:'Reconnect account'}).eq('id',account.id));throw e;}
+    const value={value:response.access_token,until:Date.now()+Math.max(0,Math.min(900,Number(response.expires_in)||300)-60)*1000};
+    if(accessTokens.size>=64)accessTokens.delete(accessTokens.keys().next().value!);
+    if(epoch===memoryEpoch)accessTokens.set(key,value);return value;
+   })();tokenRequests.set(key,pending);
+  }
+  try{token=await pending;}finally{if(tokenRequests.get(key)===pending)tokenRequests.delete(key);}
+ }
+ const accessToken=token.value;
+ const api=async (path:string,method='GET',body?:any) => {
+  const r=await fetch('https://gmail.googleapis.com/gmail/v1/users/me/'+path,{method,headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},body:body===undefined?undefined:JSON.stringify(body),signal:AbortSignal.timeout(20000)});
   if(!r.ok) {
+   if(r.status===401)accessTokens.delete(key);
    // Do not expose Google's response: it can contain mail data and credentials.
    await r.body?.cancel();
    throw new MailError(r.status,r.status===404?'Message no longer exists in Gmail.':r.status===429?'Gmail is rate limiting requests. Try again shortly.':'Gmail could not complete this request.','gmail_error');
   }
   return r.status===204?{}:await r.json();
  };
+ return Object.assign(api,{mailAccountKey:account.workspace_hash+':'+account.id});
 }
 export async function accountRules(admin:any,account:any) {
  const rows=check(await admin.from('eren_mail_rules').select('*').eq('workspace_hash',account.workspace_hash).eq('enabled',true));
  return rows.filter((r:any)=>!r.account_id||r.account_id===account.id);
 }
-export function messageView(m:any,rules:any[],inherited:any={},externalImages=false) {
- const content=bodies(m.payload), c=classify(m,rules,inherited), html=content.html?safeHtml(content.html,{externalImages,inlineImages:inlineImages(m.payload)}):'';
+export function cachedOverviews(rows:any[],accounts:any[]) {
+ const allowed=new Map(accounts.map(a=>[a.id,a])),threads=new Map<string,any[]>();
+ for(const row of rows){if(!allowed.has(row.account_id))continue;const key=row.account_id+':'+row.thread_id;if(!threads.has(key))threads.set(key,[]);threads.get(key)!.push(row);}
+ return [...threads.values()].map(rows=>{
+  rows.sort((a,b)=>b.internal_date-a.internal_date);
+  const row=rows.find(r=>r.labels.includes('INBOX'))||rows[0],account=allowed.get(row.account_id)!;
+  return {id:row.id,threadId:row.thread_id,accountId:row.account_id,accountName:account.display_name,sender:row.sender_name,email:row.sender,subject:row.subject,snippet:row.snippet,timestamp:rows[0].internal_date,labels:[...new Set(rows.flatMap(r=>r.labels))],classification:row.classification,count:rows.length};
+ }).filter(m=>!m.labels.includes('TRASH')&&!m.labels.includes('SPAM')).sort((a,b)=>b.timestamp-a.timestamp);
+}
+export function messageView(m:any,rules:any[],inherited:any={},externalImages=true,summaryOnly=false) {
+ const content=bodies(m.payload), c=classify(m,rules,inherited), html=!summaryOnly&&content.html?safeHtml(content.html,{externalImages,inlineImages:inlineImages(m.payload)}):'';
  return {id:m.id,threadId:m.threadId,from:header(m,'From'),sender:senderName(header(m,'From')),email:address(header(m,'From')),to:header(m,'To'),cc:header(m,'Cc'),replyTo:header(m,'Reply-To')||header(m,'From'),subject:header(m,'Subject')||'(no subject)',timestamp:Number(m.internalDate),labels:m.labelIds||[],snippet:m.snippet||'',classification:c,unsubscribe:unsubscribeInfo(m),text:content.text||plainText(content.html),html,hasExternalImages:html.includes('data-external-image'),externalImages,attachments:content.attachments};
 }
-export function threadMessageViews(messages:any[],rules:any[],externalMessageId='') {
- const views=messages.map(m=>messageView(m,rules,{},m.id===externalMessageId));
+export function threadMessageViews(messages:any[],rules:any[],summaryOnly=false) {
+ const views=messages.map(m=>messageView(m,rules,{},true,summaryOnly));
  const latest=[...views].reverse().find(v=>!v.labels.includes('DRAFT'));
  if(latest?.labels.includes('SENT')) {
   for(const v of views) {
@@ -78,7 +108,7 @@ export function threadMessageViews(messages:any[],rules:any[],externalMessageId=
 export async function cacheMessages(admin:any,account:any,messages:any[],rules:any[]) {
  if(!messages.length) return;
  // Thread rules are the authoritative context inheritance; inferred context stays conservative.
- const rows=messages.map(m=>{const v=messageView(m,rules);return {account_id:account.id,id:m.id,thread_id:m.threadId,sender:v.email,sender_name:v.sender,subject:v.subject,snippet:v.snippet,internal_date:v.timestamp,labels:v.labels,classification:v.classification,list_id:v.unsubscribe.listId,updated_at:new Date().toISOString()};});
+ const rows=messages.map(m=>{const v=messageView(m,rules,{},false,true);return {account_id:account.id,id:m.id,thread_id:m.threadId,sender:v.email,sender_name:v.sender,subject:v.subject,snippet:v.snippet,internal_date:v.timestamp,labels:v.labels,classification:v.classification,list_id:v.unsubscribe.listId,updated_at:new Date().toISOString()};});
  check(await admin.from('eren_mail_messages').upsert(rows,{onConflict:'account_id,id'}));
 }
 export async function mapLimit(items:any[],fn:(v:any)=>Promise<any>,n=4) {
@@ -87,7 +117,11 @@ export async function mapLimit(items:any[],fn:(v:any)=>Promise<any>,n=4) {
 }
 export async function fullThread(api:any,id:string,loadImages=false) {
  if(!/^[a-zA-Z0-9_-]{1,200}$/.test(id||'')) throw new MailError(400,'Invalid thread.');
- const t=await api('threads/'+encodeURIComponent(id)+'?format=full');
+ const cacheKey=api.mailAccountKey?api.mailAccountKey+':'+id+':full':'';
+ const ready=loadImages&&cacheKey?threadCache.get(cacheKey+'images'):undefined;if(ready)return ready;
+ const cached=cacheKey?threadCache.get(cacheKey):undefined;
+ const t=cached||await api('threads/'+encodeURIComponent(id)+'?format=full');
+ if(!cached&&cacheKey)threadCache.set(cacheKey,t);
  t.messages=(t.messages||[]).sort((a:any,b:any)=>Number(a.internalDate)-Number(b.internalDate));
  // Gmail may put a large text-only body in a body attachment; retrieve it too.
  let imageBytes=0,imageCount=0;
@@ -102,10 +136,11 @@ export async function fullThread(api:any,id:string,loadImages=false) {
     imageCount++;imageBytes+=p.body.size;
     if(p.body.attachmentId&&!p.body.data) {try{p.body.data=(await api(`messages/${m.id}/attachments/${encodeURIComponent(p.body.attachmentId)}`)).data;}catch{/* Text and other mail remain readable if an image fails. */}}
    }
-   for(const child of p.parts||[]) await visit(child);
+   await mapLimit(p.parts||[],visit,4);
   }
   await visit(m.payload||{});
  }
+ if(loadImages&&cacheKey)threadCache.set(cacheKey+'images',t);
  return t;
 }
 export async function revise(admin:any,account:any,input:any) {

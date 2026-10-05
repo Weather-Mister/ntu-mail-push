@@ -4,7 +4,21 @@
   const API='https://evckshjtzikuusnkdnjn.supabase.co/functions/v1/eren-mail';
   const PREF='eren-mail-preferences-v1', DRAFT='eren-mail-draft-v1', OAUTH='eren-mail-oauth-v1';
   const state={filter:'inbox',account:'all',query:'',accounts:[],messages:[],selected:null,thread:null,cursor:{},hasMore:false,history:[],redo:[],replyContext:null,loadVersion:0,readVersion:0,composeVersion:0,editVersion:0,busySend:false,busyAi:false,requestId:null,requestPayload:null,draftId:null};
-  let dialog,shell,listEl,readerEl,searchEl,accountEls=[],toastTimer,searchTimer,draftTimer,draftSaveChain=Promise.resolve(),status={},rules=[];
+  const pageCache=new Map(),threadCache=new Map(),threadRequests=new Map();
+  let cacheOwner='',cacheEpoch=0,initialized=false,preferenceTimer;
+  const viewKey=()=>JSON.stringify([state.account,state.filter,state.query]);
+  const threadKey=m=>m.accountId+':'+m.threadId;
+  function clearMailCache(){cacheEpoch++;pageCache.clear();threadCache.clear();threadRequests.clear();}
+  function ownCache(){const owner=typeof requirePairing==='function'?requirePairing():'';if(cacheOwner&&cacheOwner!==owner){clearMailCache();state.readVersion++;state.loadVersion++;initialized=false;state.accounts=[];state.messages=[];state.thread=null;}cacheOwner=owner;return owner;}
+  function putCache(cache,key,value,limit=20){cache.delete(key);cache.set(key,{value,at:Date.now()});while(cache.size>limit)cache.delete(cache.keys().next().value);}
+  async function fetchThread(m,force=false){
+    const key=threadKey(m),cached=threadCache.get(key);if(!force&&cached&&Date.now()-cached.at<45000)return cached.value;
+    if(threadRequests.has(key))return threadRequests.get(key);
+    const owner=cacheOwner,epoch=cacheEpoch;const pending=api('thread',null,{accountId:m.accountId,threadId:m.threadId}).then(t=>{if(owner===cacheOwner&&epoch===cacheEpoch&&t.messages.reduce((n,m)=>n+(m.html?.length||0)+(m.text?.length||0),0)<2000000)putCache(threadCache,key,t,6);return t;});threadRequests.set(key,pending);
+    try{return await pending;}finally{if(threadRequests.get(key)===pending)threadRequests.delete(key);}
+  }
+  function prefetchReaders(){if(!dialog.open)return;state.messages.slice(0,3).forEach(m=>fetchThread(m).catch(()=>{}));}
+  let dialog,shell,listEl,readerEl,searchEl,accountEls=[],toastTimer,searchTimer,draftTimer,draftSaveChain=Promise.resolve(),status={types:['University','Personal','Finance','Shopping','Travel','Work','Security','Login Code','Receipt / Order','Newsletter','Promotion','Account Notification','Social','Other'],priorities:['High','Normal','Low','Muted'],actions:['Needs reply','Deadline','Waiting','FYI','No action']},rules=[];
   const escapeHtml=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
   const $=s=>dialog.querySelector(s), $$=s=>[...dialog.querySelectorAll(s)];
   const views={inbox:'Inbox',important:'Important',reply:'Needs reply',codes:'Codes',low:'Low',all:'All mail',blocked:'Blocked',archived:'Archived',sent:'Sent',drafts:'Drafts',outbox:'Outbox'};
@@ -24,7 +38,7 @@
   function notice(text=''){const el=$('#mailxNotice');el.textContent=text;el.hidden=!text;}
   function showToast(text){const el=$('#mailxToast');el.textContent=text;el.classList.add('is-visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('is-visible'),5000);}
   const guarded=fn=>async(...args)=>{try{return await fn(...args);}catch(e){showToast(e.message);}};
-  function remember(){const p={account:state.account,filter:state.filter};try{localStorage.setItem(PREF,JSON.stringify(p));}catch{}api('preferences',p).catch(()=>{});}
+  function remember(){const p={account:state.account,filter:state.filter};try{localStorage.setItem(PREF,JSON.stringify(p));}catch{}clearTimeout(preferenceTimer);preferenceTimer=setTimeout(()=>api('preferences',p).catch(()=>{}),700);}
   function renderFilters(){
     $$('[data-mailx-filter]').forEach(b=>b.classList.toggle('is-active',state.filter===b.dataset.mailxFilter));
     $$('[data-mailx-mobile-filter]').forEach(b=>b.classList.toggle('is-active',state.filter===b.dataset.mailxMobileFilter));
@@ -39,59 +53,61 @@
     $$('[data-row]').forEach(b=>b.addEventListener('click',guarded(()=>selectMessage(state.messages[Number(b.dataset.row)]))));
     $('#mailxMore')?.addEventListener('click',guarded(()=>loadMail(true)));
   }
-  async function loadMail(more=false){
-    if(['drafts','outbox'].includes(state.filter))return loadSpecial();
-    const version=++state.loadVersion;notice('Loading mail…');$('#mailxRefresh').disabled=true;
+  async function loadMail(more=false,force=false){
+    ownCache();if(['drafts','outbox'].includes(state.filter))return loadSpecial();
+    const version=++state.loadVersion,key=viewKey(),cached=pageCache.get(key);
+    if(!more&&cached){Object.assign(state,cached.value);renderList();if(!force&&Date.now()-cached.at<30000){notice('');prefetchReaders();return;}}
+    else if(!more){state.messages=state.messages.filter(m=>(state.account==='all'||m.accountId===state.account)&&matchesView(m,state.filter));state.hasMore=false;renderList();}
+    notice('Updating mailbox…');$('#mailxRefresh').disabled=true;
     try{
       const data=await api('mail',null,{accountId:state.account,filter:state.filter,q:state.query,cursor:JSON.stringify(more?state.cursor:{})});
       if(version!==state.loadVersion)return;
       const rows=more?[...state.messages,...data.messages]:data.messages;
-      state.messages=[...new Map(rows.map(m=>[m.accountId+':'+m.threadId,m])).values()].sort((a,b)=>b.timestamp-a.timestamp);
-      state.cursor=data.cursor;state.hasMore=data.hasMore;renderList();
+      state.messages=[...new Map(rows.map(m=>[threadKey(m),m])).values()].sort((a,b)=>b.timestamp-a.timestamp);
+      state.cursor=data.cursor;state.hasMore=data.hasMore;putCache(pageCache,key,{messages:state.messages,cursor:state.cursor,hasMore:state.hasMore});renderList();prefetchReaders();
       notice(data.errors?.map(e=>accountName(e.accountId)+': '+e.error).join(' · ')||'');
     }catch(e){if(version===state.loadVersion)notice(e.message);}
     finally{if(version===state.loadVersion)$('#mailxRefresh').disabled=false;}
   }
+  function matchesView(m,filter){const l=m.labels,c=m.classification;if(['all','archived','sent','blocked','codes','low'].includes(filter))return filter==='all'||filter==='archived'&&!l.includes('INBOX')&&!l.includes('DRAFT')||filter==='sent'&&l.includes('SENT')||filter==='blocked'&&c.blocked||filter==='codes'&&c.type==='Login Code'||filter==='low'&&['Low','Muted'].includes(c.priority);if(c.blocked)return false;return l.includes('INBOX')&&(filter==='important'?c.priority==='High':filter==='reply'?c.action==='Needs reply':c.priority!=='Muted');}
   function blankReader(){readerEl.innerHTML='<div class="mailx-reader-empty"><div class="mailx-reader-empty-icon">✉</div><strong>Select a message</strong><span>Your connected accounts, together.</span></div>';}
   async function selectMessage(m){
-    const version=++state.readVersion;state.selected=m.accountId+':'+m.threadId;state.thread=null;shell.classList.add('is-reading');renderList();
-    readerEl.innerHTML='<div class="mailx-reader-toolbar"><button class="mailx-action mailx-reader-back" id="mailxLoadingBack">← Back</button></div><div class="mailx-empty-list">Opening thread…</div>';
-    $('#mailxLoadingBack').onclick=()=>{state.readVersion++;shell.classList.remove('is-reading','is-reader-focused');};
+    ownCache();const version=++state.readVersion,key=threadKey(m),cached=threadCache.get(key);state.selected=key;shell.classList.add('is-reading');renderList();
+    if(cached){state.thread=cached.value;renderReader();}else{
+      state.thread=null;readerEl.innerHTML='<div class="mailx-reader-toolbar"><button class="mailx-action mailx-reader-back" id="mailxLoadingBack">← Back</button></div><div class="mailx-empty-list">Opening thread…</div>';
+      $('#mailxLoadingBack').onclick=()=>{state.readVersion++;shell.classList.remove('is-reading','is-reader-focused');};
+    }
     try{
-      const thread=await api('thread',null,{accountId:m.accountId,threadId:m.threadId});if(version!==state.readVersion)return;
-      state.thread=thread;renderReader();
-      if(m.labels.includes('UNREAD'))api('modify',{accountId:m.accountId,threadId:m.threadId,action:'read'}).then(()=>{m.labels=m.labels.filter(x=>x!=='UNREAD');if(version===state.readVersion)renderList();}).catch(e=>showToast('Read state could not be saved: '+e.message));
-    }catch(e){if(version===state.readVersion){readerEl.insertAdjacentHTML('beforeend',`<p class="mailx-inline-error">${escapeHtml(e.message)}</p>`);}}
+      const thread=await fetchThread(m);if(version!==state.readVersion)return;
+      if(state.thread!==thread){state.thread=thread;renderReader();}
+      if(m.labels.includes('UNREAD')){
+        m.labels=m.labels.filter(x=>x!=='UNREAD');renderList();
+        api('modify',{accountId:m.accountId,threadId:m.threadId,action:'read'}).catch(e=>{if(!m.labels.includes('UNREAD'))m.labels.push('UNREAD');if(version===state.readVersion)renderList();showToast('Read state could not be saved: '+e.message);});
+      }
+    }catch(e){if(version===state.readVersion){if(cached)showToast('Showing the saved view: '+e.message);else readerEl.insertAdjacentHTML('beforeend',`<p class="mailx-inline-error">${escapeHtml(e.message)}</p>`);}}
   }
   function currentMessage(){return state.thread?.messages.at(-1);}
   function renderReader(){
     const t=state.thread;if(!t)return blankReader();const m=currentMessage(),account=state.accounts.find(a=>a.id===t.accountId),incoming=[...t.messages].reverse().find(x=>address(x.email)!==address(account?.email))||m;
     const c=incoming.classification,unsub=incoming.unsubscribe,archived=!t.messages.some(x=>x.labels.includes('INBOX'));
     const focused=shell.classList.contains('is-reader-focused');
-    readerEl.innerHTML=`<div class="mailx-reader-scroll"><div class="mailx-reader-toolbar"><button class="mailx-action mailx-reader-back" data-action="back" aria-label="Back to mail list">←</button><button class="mailx-action" data-action="archive">${archived?'Unarchive':'Archive'}</button><button class="mailx-action" data-action="mute">Mute</button><button class="mailx-action danger" data-action="block">Block</button>${unsub.web||unsub.mailto?'<button class="mailx-action good" data-action="unsubscribe">Unsubscribe</button>':''}<button class="mailx-action" data-action="unread">Unread</button><span class="mailx-toolbar-spacer"></span><button class="mailx-action mailx-focus-action" data-action="focus" aria-pressed="${focused?'true':'false'}">${focused?'Exit focus':'Focus'}</button></div><div class="mailx-reader-head"><div class="mailx-reader-title-row"><h2 class="mailx-reader-subject">${escapeHtml(m.subject)}</h2><div class="mailx-reader-head-actions"><button class="mailx-action" data-action="classify">Rule</button><button class="mailx-action" data-action="sender">Sender</button></div></div><div class="mailx-reader-tags"><span class="mailx-account">${escapeHtml(accountName(t.accountId))}</span><span class="mailx-chip">${escapeHtml(c.type)}</span><span class="mailx-chip">${escapeHtml(c.context||'No context')}</span>${chipsFor(incoming)}</div></div>${t.messages.map((msg,i)=>`<article class="mailx-thread-message"><details ${i===t.messages.length-1?'open':''}><summary><span><strong>${escapeHtml(msg.sender)}</strong> · ${escapeHtml(time(msg.timestamp))}</span></summary><details class="mailx-message-meta"><summary>Message details</summary><div class="mailx-sender-row"><div class="mailx-sender-details"><div class="mailx-sender-email">From: ${escapeHtml(msg.from)}</div><div class="mailx-recipient-line">To: ${escapeHtml(msg.to)}${msg.cc?' · Cc: '+escapeHtml(msg.cc):''}</div><div class="mailx-recipient-line">${escapeHtml(accountName(t.accountId))}</div></div></div></details>${msg.classification.code?`<div class="mailx-login-card ${Date.now()-msg.timestamp>3600000?'is-old-code':''}"><div class="mailx-login-label">${Date.now()-msg.timestamp>3600000?'OLDER CODE · MAY HAVE EXPIRED':'VERIFICATION CODE'}</div><div class="mailx-login-code">${escapeHtml(msg.classification.code)}</div><button class="mailx-copy-code" data-copy="${i}">Copy code</button></div>`:''}${msg.html?`${msg.hasExternalImages?`<div class="mailx-image-notice"><span>External images are hidden. Loading them may let the sender know you opened this email.</span><button class="mailx-action" data-images="${i}">Show external images</button></div>`:msg.externalImages?'<div class="mailx-image-notice">External images enabled for this message.</div>':''}<iframe class="mailx-html-body" data-body="${i}" sandbox="allow-popups allow-popups-to-escape-sandbox" referrerpolicy="no-referrer" title="Email body from ${escapeHtml(msg.sender)}"></iframe><details class="mailx-text-alternative"><summary>Plain text / accessible view</summary><div class="mailx-mail-body">${escapeHtml(msg.text)}</div></details>`:`<div class="mailx-mail-body">${escapeHtml(msg.text||'(No text body)')}</div>`}${msg.attachments.length?`<div class="mailx-attachments">${msg.attachments.map((a,j)=>`<button class="mailx-action" data-attachment="${i}:${j}">↓ ${escapeHtml(a.filename)} · ${Math.ceil(a.size/1024)} KB</button>`).join('')}</div>`:''}<button class="mailx-action mailx-reply-inline" data-reply="${i}">Reply</button></details></article>`).join('')}<div class="mailx-reply-bar"><button class="mailx-reply-button" data-action="reply">Reply</button></div></div>`;
+    readerEl.innerHTML=`<div class="mailx-reader-scroll"><div class="mailx-reader-toolbar"><button class="mailx-action mailx-reader-back" data-action="back" aria-label="Back to mail list">←</button><button class="mailx-action" data-action="archive">${archived?'Unarchive':'Archive'}</button><button class="mailx-action" data-action="mute">Mute</button><button class="mailx-action danger" data-action="block">Block</button>${unsub.web||unsub.mailto?'<button class="mailx-action good" data-action="unsubscribe">Unsubscribe</button>':''}<button class="mailx-action" data-action="unread">Unread</button><span class="mailx-toolbar-spacer"></span><button class="mailx-action mailx-focus-action" data-action="focus" aria-pressed="${focused?'true':'false'}">${focused?'Exit focus':'Focus'}</button></div><div class="mailx-reader-head"><div class="mailx-reader-title-row"><h2 class="mailx-reader-subject">${escapeHtml(m.subject)}</h2><div class="mailx-reader-head-actions"><button class="mailx-action" data-action="classify">Rule</button><button class="mailx-action" data-action="sender">Sender</button></div></div><div class="mailx-reader-tags"><span class="mailx-account">${escapeHtml(accountName(t.accountId))}</span><span class="mailx-chip">${escapeHtml(c.type)}</span><span class="mailx-chip">${escapeHtml(c.context||'No context')}</span>${chipsFor(incoming)}</div></div>${t.messages.map((msg,i)=>`<article class="mailx-thread-message"><details ${i===t.messages.length-1?'open':''}><summary><span><strong>${escapeHtml(msg.sender)}</strong> · ${escapeHtml(time(msg.timestamp))}</span></summary><details class="mailx-message-meta"><summary>Message details</summary><div class="mailx-sender-row"><div class="mailx-sender-details"><div class="mailx-sender-email">From: ${escapeHtml(msg.from)}</div><div class="mailx-recipient-line">To: ${escapeHtml(msg.to)}${msg.cc?' · Cc: '+escapeHtml(msg.cc):''}</div><div class="mailx-recipient-line">${escapeHtml(accountName(t.accountId))}</div></div></div></details>${msg.classification.code?`<div class="mailx-login-card ${Date.now()-msg.timestamp>3600000?'is-old-code':''}"><div class="mailx-login-label">${Date.now()-msg.timestamp>3600000?'OLDER CODE · MAY HAVE EXPIRED':'VERIFICATION CODE'}</div><div class="mailx-login-code">${escapeHtml(msg.classification.code)}</div><button class="mailx-copy-code" data-copy="${i}">Copy code</button></div>`:''}${msg.html?`<iframe class="mailx-html-body" data-body="${i}" sandbox="allow-popups allow-popups-to-escape-sandbox" referrerpolicy="no-referrer" title="Email body from ${escapeHtml(msg.sender)}"></iframe><details class="mailx-text-alternative"><summary>Plain text / accessible view</summary><div class="mailx-mail-body">${escapeHtml(msg.text)}</div></details>`:`<div class="mailx-mail-body">${escapeHtml(msg.text||'(No text body)')}</div>`}${msg.attachments.length?`<div class="mailx-attachments">${msg.attachments.map((a,j)=>`<button class="mailx-action" data-attachment="${i}:${j}">↓ ${escapeHtml(a.filename)} · ${Math.ceil(a.size/1024)} KB</button>`).join('')}</div>`:''}<button class="mailx-action mailx-reply-inline" data-reply="${i}">Reply</button></details></article>`).join('')}<div class="mailx-reply-bar"><button class="mailx-reply-button" data-action="reply">Reply</button></div></div>`;
     $$('[data-body]').forEach(frame=>{frame.srcdoc=t.messages[Number(frame.dataset.body)].html;});
-    $$('[data-images]').forEach(b=>b.onclick=guarded(async()=>{
-      const msg=t.messages[Number(b.dataset.images)],version=state.readVersion;b.disabled=true;
-      try {
-        const refreshed=await api('thread',null,{accountId:t.accountId,threadId:t.threadId,externalMessageId:msg.id});
-        if(version!==state.readVersion||state.thread!==t)return;
-        const updated=refreshed.messages.find(x=>x.id===msg.id);if(!updated)throw new Error('This message is no longer available.');
-        Object.assign(msg,updated);readerEl.querySelector(`[data-body="${b.dataset.images}"]`).srcdoc=msg.html;
-        b.closest('.mailx-image-notice').textContent='External images enabled for this message.';
-      }finally{b.disabled=false;}
-    }));
     $$('[data-copy]').forEach(b=>b.onclick=guarded(async()=>{await navigator.clipboard.writeText(t.messages[+b.dataset.copy].classification.code);showToast('Code copied');}));
     $$('[data-reply]').forEach(b=>b.onclick=guarded(()=>openComposer({...t.messages[+b.dataset.reply],accountId:t.accountId,threadId:t.threadId})));
     $$('[data-attachment]').forEach(b=>b.onclick=guarded(async()=>{b.disabled=true;try{const [i,j]=b.dataset.attachment.split(':').map(Number),msg=t.messages[i],a=msg.attachments[j];const data=await api('attachment',null,{accountId:t.accountId,messageId:msg.id,attachmentId:a.id,partId:a.partId});const bytes=Uint8Array.from(atob(data.data.replace(/-/g,'+').replace(/_/g,'/')),c=>c.charCodeAt(0));const url=URL.createObjectURL(new Blob([bytes],{type:'application/octet-stream'})),link=document.createElement('a');link.href=url;link.download=data.filename;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}finally{b.disabled=false;}}));
     $$('[data-action]').forEach(b=>b.onclick=guarded(async()=>{
       const action=b.dataset.action;
       if(action==='back'){shell.classList.remove('is-reading','is-reader-focused');return;}
-      if(action==='focus'){shell.classList.toggle('is-reader-focused');renderReader();return;}
+      if(action==='focus'){const active=shell.classList.toggle('is-reader-focused');b.textContent=active?'Exit focus':'Focus';b.setAttribute('aria-pressed',String(active));return;}
       if(action==='reply')return openComposer({...incoming,accountId:t.accountId,threadId:t.threadId});
       if(action==='classify'||action==='mute'||action==='block')return ruleEditor(incoming,t.accountId,action);
       if(action==='sender')return senderDetails(incoming,t.accountId);
       if(action==='unsubscribe')return unsubscribe(incoming,t.accountId);
-      b.disabled=true;try{await api('modify',{accountId:t.accountId,threadId:t.threadId,action:action==='archive'?(archived?'unarchive':'archive'):action});showToast(action==='unread'?'Marked unread':archived?'Returned to inbox':'Archived in Gmail');shell.classList.remove('is-reading','is-reader-focused');await loadMail();}finally{b.disabled=false;}
+      b.disabled=true;const key=viewKey(),previous=state.messages.slice();state.readVersion++;state.loadVersion++;clearMailCache();
+      state.messages=state.messages.filter(m=>threadKey(m)!==threadKey(t));renderList();shell.classList.remove('is-reading','is-reader-focused');showToast(action==='unread'?'Marking unread…':archived?'Returning to inbox…':'Archiving…');
+      try{await api('modify',{accountId:t.accountId,threadId:t.threadId,action:action==='archive'?(archived?'unarchive':'archive'):action});clearMailCache();showToast(action==='unread'?'Marked unread':archived?'Returned to inbox':'Archived in Gmail');loadMail(false,true);}
+      catch(e){if(key===viewKey()){state.messages=previous;renderList();}showToast('Change failed: '+e.message);}finally{b.disabled=false;}
     }));
   }
   function address(v=''){return (v.match(/<([^<>]+)>/)?.[1]||v).trim().toLowerCase();}
@@ -149,7 +165,7 @@
       if(job.status==='uncertain')throw new Error('Delivery is uncertain. Check Outbox; do not send a duplicate.');
       showToast(job.status==='sent'?'Sent through Gmail':sendAt?'Scheduled on the server':'Send queued on the server. Check Outbox for its status.');
       api('drafts/delete',{id:state.draftId}).catch(()=>{});try{sessionStorage.removeItem(DRAFT);}catch{}
-      c.pane.classList.remove('is-open');state.requestId=null;state.requestPayload=null;state.draftId=null;state.replyContext=null;await loadMail();
+      c.pane.classList.remove('is-open');state.requestId=null;state.requestPayload=null;state.draftId=null;state.replyContext=null;clearMailCache();loadMail(false,true);
     }catch(e){$('#mailxComposeError').textContent=e.message;keepDraft();}
     finally{state.busySend=false;editing.forEach((el,i)=>el.disabled=previous[i]);$('#mailxSend').disabled=false;$('#mailxSchedule').disabled=false;$('#mailxSaveDraft').disabled=false;state.busyAi=false;c.generate.disabled=false;c.generate.textContent='Generate';}
   }
@@ -172,7 +188,7 @@
       p.querySelector('#ruleSave').onclick=sheetGuard(async()=>{
         const scope=p.querySelector('#ruleScope').value,typeMatch=p.querySelector('#ruleTypeMatch').value,value=({thread:m.threadId,sender:m.email,domain:m.email.split('@')[1],list:m.unsubscribe.listId})[scope];
         const effects=mode==='block'?{blocked:true}:mode==='mute'?{priority:'Muted'}:{type:p.querySelector('#ruleType').value,priority:p.querySelector('#rulePriority').value,context:p.querySelector('#ruleContext').value,action:p.querySelector('#ruleAction').value};
-        p.querySelector('#ruleSave').disabled=true;try{await api('rules',{accountId,scope,value,typeMatch,effects});p.remove();showToast('Rule saved. Remove it in Settings to undo.');await loadMail();if(state.thread){const updated=await api('thread',null,{accountId,threadId:state.thread.threadId});state.thread=updated;renderReader();}}finally{p.querySelector('#ruleSave').disabled=false;}
+        const saveButton=p.querySelector('#ruleSave');saveButton.disabled=true;try{await api('rules',{accountId,scope,value,typeMatch,effects});p.remove();showToast('Rule saved. Remove it in Settings to undo.');clearMailCache();const current=state.thread;await Promise.all([loadMail(false,true),current?fetchThread({accountId,threadId:current.threadId},true).then(updated=>{if(state.thread===current){state.thread=updated;renderReader();}}):Promise.resolve()]);}finally{saveButton.disabled=false;}
       });
     });
   }
@@ -203,26 +219,32 @@
     const pending=readStore(OAUTH,null);if(!pending||pending.expires<Date.now())return;
     const result=await api('oauth/finish',{state:pending.state,proof:pending.proof});
     if(result.pending)return;
-    sessionStorage.removeItem(OAUTH);showToast('Connected '+result.email);await refreshAccounts();await loadMail();
+    sessionStorage.removeItem(OAUTH);showToast('Connected '+result.email);clearMailCache();await refreshAccounts();await loadMail(false,true);
   }
   async function settings(){
-    const data=await Promise.all([api('status'),api('rules')]);status=data[0];rules=data[1].rules;
+    const loading=sheet('Mail settings','<p>Loading settings…</p>');
+    const data=await Promise.all([api('status'),api('rules')]);status=data[0];rules=data[1].rules;if(!loading.isConnected)return;
     sheet('Mail settings',`<h3>Connected accounts</h3>${state.accounts.map((a,i)=>`<div class="mailx-settings-account"><strong>${escapeHtml(a.display_name)}</strong><p>${escapeHtml(a.email)} · ${escapeHtml(a.status)}</p><small>${a.last_sync_at?'Last sync '+escapeHtml(time(a.last_sync_at)):'Initial sync pending'}${a.sync_error?' · '+escapeHtml(a.sync_error):''}</small><p><button class="mailx-action" data-rename="${i}">Rename</button> <button class="mailx-action" data-disconnect="${i}">Disconnect</button></p></div>`).join('')||'<p>No Gmail accounts connected.</p>'}<button class="mailx-send" id="mailxConnect">Connect Gmail</button><h3>Rules · reversible</h3>${rules.map((r,i)=>`<div class="mailx-rule"><span>${escapeHtml(r.scope+': '+r.match_value)}${r.type_match?' · '+escapeHtml(r.type_match):''}<br>${escapeHtml(Object.entries(r.effects).map(([k,v])=>k+': '+v).join(', '))}</span><button class="mailx-action" data-remove-rule="${i}">Remove</button></div>`).join('')||'<p>No saved rules.</p>'}<h3>Background service</h3><p>${status.health?.last_finished_at?'Last completed: '+escapeHtml(time(status.health.last_finished_at)):'Scheduler has not completed a run yet.'}</p><details ${status.configured?'':'open'}><summary>Google & Gemini setup</summary><p>Secrets are sent directly to the protected backend and stored encrypted. Existing values are never displayed.</p><p>Google callback URL:</p><code class="mailx-callback">${escapeHtml(status.redirectUri)}</code><form id="mailxConfig" autocomplete="off"><label>Google Web OAuth client ID<input name="GOOGLE_CLIENT_ID" type="text" autocomplete="off" placeholder="Leave blank to keep current"></label><label>Google client secret<input name="GOOGLE_CLIENT_SECRET" type="password" autocomplete="new-password" placeholder="Leave blank to keep current"></label><label>Gemini API key<input name="GEMINI_API_KEY" type="password" autocomplete="new-password" placeholder="Leave blank to keep current"></label><label>Gemini model<input name="GEMINI_MODEL" type="text" value="${escapeHtml(status.model||'')}" placeholder="Model ID from Google AI Studio"></label><p>AI sends only the current draft and relevant thread to Gemini when you request a revision.</p><button class="mailx-send" type="submit">Save securely</button></form><p><a href="https://console.cloud.google.com/auth/clients" target="_blank" rel="noopener noreferrer">Google OAuth configuration</a> · <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">Gemini API key</a></p></details>`,p=>{
       p.querySelector('#mailxConnect').onclick=sheetGuard(connect);
       p.querySelector('#mailxConfig').onsubmit=sheetGuard(async e=>{e.preventDefault();const form=e.target,values=Object.fromEntries(new FormData(form));const b=form.querySelector('button');b.disabled=true;try{await api('settings',values);form.reset();showToast('Settings saved securely');await settings();}finally{b.disabled=false;}});
-      p.querySelectorAll('[data-remove-rule]').forEach(b=>b.onclick=sheetGuard(async()=>{await api('rules/delete',{id:rules[+b.dataset.removeRule].id});await settings();await loadMail();}));
+      p.querySelectorAll('[data-remove-rule]').forEach(b=>b.onclick=sheetGuard(async()=>{await api('rules/delete',{id:rules[+b.dataset.removeRule].id});clearMailCache();await settings();await loadMail(false,true);}));
       p.querySelectorAll('[data-rename]').forEach(b=>b.onclick=sheetGuard(async()=>{const a=state.accounts[+b.dataset.rename],name=prompt('Account display name',a.display_name);if(!name)return;await api('accounts/rename',{accountId:a.id,name});await refreshAccounts();await settings();}));
-      p.querySelectorAll('[data-disconnect]').forEach(b=>b.onclick=sheetGuard(async()=>{const a=state.accounts[+b.dataset.disconnect];if(!confirm('Disconnect '+a.email+'? Gmail mail will remain untouched.'))return;const r=await api('accounts/disconnect',{accountId:a.id,confirm:a.email});await refreshAccounts();await settings();await loadMail();showToast(r.revoked?'Account disconnected':'Disconnected locally. Also remove this app in Google Account permissions.');}));
+      p.querySelectorAll('[data-disconnect]').forEach(b=>b.onclick=sheetGuard(async()=>{const a=state.accounts[+b.dataset.disconnect];if(!confirm('Disconnect '+a.email+'? Gmail mail will remain untouched.'))return;const r=await api('accounts/disconnect',{accountId:a.id,confirm:a.email});clearMailCache();await refreshAccounts();await settings();await loadMail(false,true);showToast(r.revoked?'Account disconnected':'Disconnected locally. Also remove this app in Google Account permissions.');}));
     });
   }
   async function refreshAccounts(){const data=await api('accounts');state.accounts=data.accounts;if(state.account!=='all'&&!state.accounts.some(a=>a.id===state.account))state.account='all';renderFilters();}
   async function openDialog(){
     if(!dialog.open)dialog.showModal();shell.classList.remove('is-reading','is-reader-focused');
     try{
-      const data=await Promise.all([api('status'),api('accounts'),api('preferences')]);status=data[0];state.accounts=data[1].accounts;
+      ownCache();
+      if(initialized){renderList();loadMail();return;}
+      const data=await api('bootstrap');state.accounts=data.accounts;
       let local={};try{local=JSON.parse(localStorage.getItem(PREF)||'{}');}catch{}
-      const pref={...data[2].preferences,...local};state.filter=views[pref.filter]?pref.filter:'inbox';state.account=state.accounts.some(a=>a.id===pref.account)?pref.account:'all';
-      $('#mailxConnection').textContent=status.configured?'Gmail':'Setup needed';renderFilters();await finishConnection();await loadMail();
+      const pref={...data.preferences,...local};state.filter=views[pref.filter]?pref.filter:'inbox';state.account=state.accounts.some(a=>a.id===pref.account)?pref.account:'all';
+      state.messages=(data.messages||[]).filter(m=>(state.account==='all'||m.accountId===state.account)&&matchesView(m,state.filter));state.hasMore=false;initialized=true;
+      $('#mailxConnection').textContent=state.accounts.length?'Gmail':'Setup';renderList();prefetchReaders();
+      api('status').then(value=>{status=value;$('#mailxConnection').textContent=status.configured?'Gmail':'Setup needed';}).catch(()=>{});
+      if(readStore(OAUTH,null))await finishConnection();else loadMail(false,true);
       const draft=readStore(DRAFT,null);if(draft&&!ce().pane.classList.contains('is-open')&&state.accounts.some(a=>a.id===draft.accountId)){notice('An unsent draft is saved on this tab.');$('#mailxNotice').insertAdjacentHTML('beforeend',' <button class="mailx-action" id="mailxResume">Resume draft</button>');$('#mailxResume').onclick=guarded(()=>openComposer(null,draft));}
       const params=new URLSearchParams(location.search);if(params.has('connect_error'))showToast('Google connection was not completed. Try connecting again.');
       if(params.has('connected')&&!readStore(OAUTH,null)&&!state.accounts.length)notice('Return to the browser or PWA where you started connecting to complete account pairing.');
@@ -237,7 +259,7 @@
     $('#mailxClose').onclick=()=>{keepDraft();dialog.close();};$('#mailxSettings').onclick=guarded(settings);
     $('#mailxComposeTop').onclick=guarded(()=>openComposer());$('#mailxComposeMain').onclick=guarded(()=>openComposer());$('#mailxComposeClose').onclick=closeComposer;
     $('#mailxGenerate').onclick=runAi;$('#mailxUndo').onclick=undoAi;$('#mailxRedo').onclick=redoAi;$('#mailxSchedule').onclick=scheduleSend;$('#mailxSend').onclick=()=>send();$('#mailxSaveDraft').onclick=guarded(()=>saveDraft());
-    $('#mailxRefresh').onclick=guarded(async()=>{await refreshAccounts();await loadMail();});$('#mailxView').onchange=e=>setFilter(e.target.value);
+    $('#mailxRefresh').onclick=guarded(async()=>{clearMailCache();await Promise.all([refreshAccounts(),loadMail(false,true)]);});$('#mailxView').onchange=e=>setFilter(e.target.value);
     $$('[data-mailx-filter]').forEach(b=>b.onclick=()=>setFilter(b.dataset.mailxFilter));$$('[data-mailx-mobile-filter]').forEach(b=>b.onclick=()=>setFilter(b.dataset.mailxMobileFilter));
     $$('[data-mailx-ai-chip]').forEach(b=>b.onclick=()=>{ce().prompt.value=b.dataset.mailxAiChip;runAi();});
     searchEl.oninput=()=>{state.query=searchEl.value;clearTimeout(searchTimer);searchTimer=setTimeout(()=>loadMail(),350);};
