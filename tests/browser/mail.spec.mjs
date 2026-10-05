@@ -121,7 +121,8 @@ test('desktop composer can be dragged without moving when editing fields',async(
  expect(Math.abs(edited.x-stable.x)).toBeLessThan(2);expect(Math.abs(edited.y-stable.y)).toBeLessThan(2);
 });
 
-test('touch swipe left archives immediately through the same Gmail action',async({page})=>{
+test('touch swipe left archives immediately through the same Gmail action',async({page},info)=>{
+ test.skip(info.project.name!=='iphone','touch-only interaction');
  const {calls}=await boot(page);
  const wrap=page.locator('[data-swipe-row="0"]');await expect(wrap).toHaveAttribute('data-swipe-enabled','1');
  await wrap.evaluate(async el=>{
