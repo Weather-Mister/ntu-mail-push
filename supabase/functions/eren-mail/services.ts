@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
-import sanitizeHtml from 'sanitize-html';
+import { safeHtml, inlineImages } from './render.ts';
+export { safeHtml } from './render.ts';
 import { header, address, senderName, bodies, plainText, classify, unsubscribeInfo, b64url, AI_SYSTEM } from './domain.mjs';
 export class MailError extends Error { constructor(public status:number, message:string, public code='mail_error') { super(message); } }
 export const check = (result:any) => { if(result.error) throw new MailError(503,'Mail storage is temporarily unavailable. Your draft has not been discarded.'); return result.data; };
@@ -59,22 +60,12 @@ export async function accountRules(admin:any,account:any) {
  const rows=check(await admin.from('eren_mail_rules').select('*').eq('workspace_hash',account.workspace_hash).eq('enabled',true));
  return rows.filter((r:any)=>!r.account_id||r.account_id===account.id);
 }
-export function safeHtml(html:string) {
- const clean=sanitizeHtml(html,{
-  allowedTags:['p','br','div','span','b','strong','i','em','u','s','blockquote','pre','code','h1','h2','h3','h4','h5','h6','ul','ol','li','table','thead','tbody','tfoot','tr','td','th','hr','a'],
-  allowedAttributes:{a:['href','title'],td:['colspan','rowspan'],th:['colspan','rowspan']},
-  allowedSchemes:['https','http','mailto'],allowProtocolRelative:false,
-  transformTags:{a:(_tag,attrs)=>({tagName:'a',attribs:{...attrs,target:'_blank',rel:'noopener noreferrer'}})},
-  nonTextTags:['script','style','textarea','noscript','iframe','object','template'],
- });
- return '<!doctype html><html><head><meta charset="utf-8"><meta name="referrer" content="no-referrer"><meta http-equiv="Content-Security-Policy" content="default-src \'none\'; img-src \'none\'; style-src \'unsafe-inline\'; base-uri \'none\'; form-action \'none\'"><style>body{font:14px/1.65 system-ui;color:#343330;margin:12px;overflow-wrap:anywhere}table{max-width:100%;border-collapse:collapse}td,th{padding:4px}pre{white-space:pre-wrap}a{color:#263f77}blockquote{border-left:2px solid #ddd;padding-left:12px;margin-left:0}</style></head><body>'+clean+'</body></html>';
+export function messageView(m:any,rules:any[],inherited:any={},externalImages=false) {
+ const content=bodies(m.payload), c=classify(m,rules,inherited), html=content.html?safeHtml(content.html,{externalImages,inlineImages:inlineImages(m.payload)}):'';
+ return {id:m.id,threadId:m.threadId,from:header(m,'From'),sender:senderName(header(m,'From')),email:address(header(m,'From')),to:header(m,'To'),cc:header(m,'Cc'),replyTo:header(m,'Reply-To')||header(m,'From'),subject:header(m,'Subject')||'(no subject)',timestamp:Number(m.internalDate),labels:m.labelIds||[],snippet:m.snippet||'',classification:c,unsubscribe:unsubscribeInfo(m),text:content.text||plainText(content.html),html,hasExternalImages:html.includes('data-external-image'),externalImages,attachments:content.attachments};
 }
-export function messageView(m:any,rules:any[],inherited:any={}) {
- const content=bodies(m.payload), c=classify(m,rules,inherited);
- return {id:m.id,threadId:m.threadId,from:header(m,'From'),sender:senderName(header(m,'From')),email:address(header(m,'From')),to:header(m,'To'),cc:header(m,'Cc'),replyTo:header(m,'Reply-To')||header(m,'From'),subject:header(m,'Subject')||'(no subject)',timestamp:Number(m.internalDate),labels:m.labelIds||[],snippet:m.snippet||'',classification:c,unsubscribe:unsubscribeInfo(m),text:content.text||plainText(content.html),html:content.html?safeHtml(content.html):'',attachments:content.attachments};
-}
-export function threadMessageViews(messages:any[],rules:any[]) {
- const views=messages.map(m=>messageView(m,rules));
+export function threadMessageViews(messages:any[],rules:any[],externalMessageId='') {
+ const views=messages.map(m=>messageView(m,rules,{},m.id===externalMessageId));
  const latest=[...views].reverse().find(v=>!v.labels.includes('DRAFT'));
  if(latest?.labels.includes('SENT')) {
   for(const v of views) {
@@ -94,15 +85,22 @@ export async function mapLimit(items:any[],fn:(v:any)=>Promise<any>,n=4) {
  const out=new Array(items.length); let index=0;
  await Promise.all(Array.from({length:Math.min(n,items.length)},async()=>{while(index<items.length){const i=index++;out[i]=await fn(items[i]);}}));return out;
 }
-export async function fullThread(api:any,id:string) {
+export async function fullThread(api:any,id:string,loadImages=false) {
  if(!/^[a-zA-Z0-9_-]{1,200}$/.test(id||'')) throw new MailError(400,'Invalid thread.');
  const t=await api('threads/'+encodeURIComponent(id)+'?format=full');
  t.messages=(t.messages||[]).sort((a:any,b:any)=>Number(a.internalDate)-Number(b.internalDate));
  // Gmail may put a large text-only body in a body attachment; retrieve it too.
+ let imageBytes=0,imageCount=0;
  for(const m of t.messages||[]) {
   async function visit(p:any) {
    if(!p.filename && /^text\/(plain|html)$/.test(p.mimeType) && p.body?.attachmentId && !p.body.data) {
     const b=await api(`messages/${m.id}/attachments/${encodeURIComponent(p.body.attachmentId)}`);p.body.data=b.data;
+   }
+   // Only raster CID images, bounded across the thread. Never fetch sender URLs.
+   const cid=(p.headers||[]).some((h:any)=>h.name.toLowerCase()==='content-id');
+   if(loadImages && cid && /^image\/(png|jpeg|gif|webp)$/.test(p.mimeType||'') && p.body?.size<=2*1024*1024 && imageCount<24 && imageBytes+p.body.size<=8*1024*1024) {
+    imageCount++;imageBytes+=p.body.size;
+    if(p.body.attachmentId&&!p.body.data) {try{p.body.data=(await api(`messages/${m.id}/attachments/${encodeURIComponent(p.body.attachmentId)}`)).data;}catch{/* Text and other mail remain readable if an image fails. */}}
    }
    for(const child of p.parts||[]) await visit(child);
   }

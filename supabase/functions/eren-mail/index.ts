@@ -119,9 +119,9 @@ export async function handle(req:Request) {
    return response({messages:results.flatMap(r=>r.messages).sort((a,b)=>b.timestamp-a.timestamp),cursor:Object.fromEntries(results.map(r=>[r.accountId,r.next])),hasMore:results.some(r=>!!r.next),errors:results.filter(r=>r.error).map(r=>({accountId:r.accountId,error:r.error}))});
   }
   if(route==='thread'&&req.method==='GET') {
-   const a=await ownedAccount(admin,workspace,get('accountId')),api=await gmailClient(admin,a),t=await fullThread(api,id(get('threadId'))),rules=await accountRules(admin,a);
+   const a=await ownedAccount(admin,workspace,get('accountId')),api=await gmailClient(admin,a),t=await fullThread(api,id(get('threadId')),true),rules=await accountRules(admin,a);
    await cacheMessages(admin,a,t.messages||[],rules);
-   return response({threadId:t.id,accountId:a.id,messages:threadMessageViews(t.messages||[],rules)});
+   return response({threadId:t.id,accountId:a.id,messages:threadMessageViews(t.messages||[],rules,get('externalMessageId'))});
   }
   if(route==='attachment'&&req.method==='GET') {
    const a=await ownedAccount(admin,workspace,get('accountId')),api=await gmailClient(admin,a),m=await api('messages/'+id(get('messageId'))+'?format=full');

@@ -4,7 +4,8 @@ const assert:any=Object.assign((ok:any,message='Assertion failed')=>{if(!ok)thro
  deepEqual:(a:any,b:any)=>{if(JSON.stringify(a)!==JSON.stringify(b))throw new Error('Not deeply equal');},
  rejects:async(fn:any)=>{let rejected=false;try{await fn();}catch{rejected=true;}if(!rejected)throw new Error('Expected rejection');}
 });
-import { safeHtml, workspaceFor, hash, revise, threadMessageViews } from '../supabase/functions/eren-mail/services.ts';
+import { safeHtml, workspaceFor, hash, revise, threadMessageViews, fullThread } from '../supabase/functions/eren-mail/services.ts';
+import { inlineImages } from '../supabase/functions/eren-mail/render.ts';
 import { deliver, enqueue, reconcile, syncAccount } from '../supabase/functions/eren-mail/jobs.ts';
 import { oauthStart, oauthFinish } from '../supabase/functions/eren-mail/oauth.ts';
 import { publicIPv4 } from '../supabase/functions/eren-mail/unsubscribe.ts';
@@ -38,6 +39,30 @@ async function fetching(fn:any,run:any){const old=globalThis.fetch;globalThis.fe
 Deno.test('HTML mail cannot execute scripts, forms, remote images or CSS tracking',()=>{
  const html=safeHtml('<script>steal()</script><img src="https://track.example.org/x"><style>@import url(https://track.test)</style><form action="https://evil.test"><input></form><a href="javascript:alert(1)">bad</a><a href="https://example.org">safe</a><p onmouseover="steal()">Hello</p><svg onload="steal()"></svg>');
  assert(!html.includes('steal'));assert(!html.includes('javascript:'));assert(!html.includes('track.'));assert(!html.includes('<form'));assert(!html.includes('<svg'));assert(html.includes("default-src 'none'"));assert(html.includes('Hello'));
+});
+Deno.test('newsletter text styling survives; CSS cannot make tracking requests',()=>{
+ const html=safeHtml('<style>@import "https://track.example.org";.hero{font-size:32px;color:#112233;background:url(https://track.example.org);position:fixed}@media screen and (max-width:600px){.hero{font-size:20px}}</style><table bgcolor="#ccddff" width="600"><tr><td style="padding:24px;text-align:center;background-color:#ccddff"><h1 class="hero" style="font-family:Arial,sans-serif;font-weight:bold">Less searching</h1><a style="background:#4066ff;border-radius:20px;color:#ffffff;padding:10px 20px" href="https://example.org">Shop</a></td></tr></table>');
+ for(const text of ['font-size:32px','font-size:20px','font-family:Arial,sans-serif','font-weight:bold','background-color:#ccddff','border-radius:20px','bgcolor="#ccddff"','class="hero"'])assert(html.includes(text),text);
+ assert(!html.includes('track.example'));assert(!html.includes('position:fixed'));assert(!html.includes('@import'));
+});
+Deno.test('external image loading requires opt-in and cannot enable scripts or unsafe sources',()=>{
+ const input='<img src="https://images.example.org/banner.png" alt="Banner" width="600"><img src="javascript:alert(1)"><img src="data:image/svg+xml,bad"><img src="https://127.0.0.1/x"><img src="https://user:pass@example.org/x"><script>alert(1)</script>';
+ const blocked=safeHtml(input),enabled=safeHtml(input,{externalImages:true});
+ assert(!blocked.includes('images.example'));assert(blocked.includes('data-external-image'));assert(enabled.includes('src="https://images.example.org/banner.png"'));assert(enabled.includes('referrerpolicy="no-referrer"'));
+ for(const text of ['javascript:','svg+xml','127.0.0.1','user:pass','<script>'])assert(!enabled.includes(text),text);
+ assert(enabled.includes("default-src 'none'"));
+});
+Deno.test('CID raster images display without remote requests; SVG or invalid attachments cannot render',()=>{
+ const data='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==';
+ const images=inlineImages({parts:[{mimeType:'image/png',headers:[{name:'Content-ID',value:'<logo@example.org>'}],body:{data}},{mimeType:'image/svg+xml',headers:[{name:'Content-ID',value:'<evil>'}],body:{data:btoa('<svg onload="alert(1)"></svg>')}},{mimeType:'image/png',headers:[{name:'Content-ID',value:'<fake>'}],body:{data:btoa('<script>bad</script>')}}]});
+ assert.equal(images.size,1);const html=safeHtml('<img src="cid:logo%40example.org"><img src="cid:evil"><img src="cid:fake">',{inlineImages:images});assert(html.includes('data:image/png;base64,'+data));assert(!html.includes('<script>'));assert(!html.includes('svg+xml'));assert(!html.includes('https:'));
+});
+Deno.test('reader retrieves inline Gmail attachments with limits; image failure preserves thread',async()=>{
+ const calls:string[]=[];
+ const make=()=>({messages:[{id:'m1',internalDate:'1',payload:{parts:[{mimeType:'image/png',headers:[{name:'Content-ID',value:'<logo>'}],body:{attachmentId:'logo',size:100}},{mimeType:'image/png',headers:[{name:'Content-ID',value:'<large>'}],body:{attachmentId:'large',size:3*1024*1024}},{mimeType:'image/png',headers:[{name:'Content-ID',value:'<broken>'}],body:{attachmentId:'broken',size:100}}]}}]});
+ const api=async(path:string)=>{calls.push(path);if(path.startsWith('threads/'))return make();if(path.endsWith('/broken'))throw new Error('image unavailable');return {data:'iVBORw0KGgo='};};
+ await fullThread(api,'thread1');assert.equal(calls.length,1);calls.length=0;
+ const t=await fullThread(api,'thread1',true);assert.equal(t.messages.length,1);assert(calls.some(x=>x.endsWith('/logo')));assert(calls.some(x=>x.endsWith('/broken')));assert(!calls.some(x=>x.endsWith('/large')));
 });
 Deno.test('SSRF filters reject private and special ranges',()=>{for(const ip of ['127.0.0.1','10.1.2.3','172.16.0.1','172.31.2.3','192.168.1.1','169.254.169.254','100.64.0.1','224.0.0.1','198.18.0.1','203.0.113.1','192.0.2.1','0.0.0.0','::1'])assert.equal(publicIPv4(ip),false,ip);assert.equal(publicIPv4('8.8.8.8'),true);});
 Deno.test('Eren workspace owns access; Begum and unknown keys cannot access Mail',async()=>{
