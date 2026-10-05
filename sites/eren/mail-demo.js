@@ -34,7 +34,7 @@
     if(!el||el.dataset.mailxDragBound)return;
     el.dataset.mailxDragBound='1';
     el.addEventListener('pointerdown',e=>{
-      if(e.isPrimary===false||(e.button!==undefined&&e.button!==0)||(hooks.canStart&&!hooks.canStart(e)))return;
+      if(e.isPrimary===false||(e.pointerType==='mouse'&&e.button!==0)||(hooks.canStart&&!hooks.canStart(e)))return;
       const id=e.pointerId,startX=e.clientX,startY=e.clientY;
       let active=true,raf=0,lastEvent=e;
       const emit=(name,ev)=>hooks[name]?.({event:ev,startX,startY,x:ev.clientX,y:ev.clientY,dx:ev.clientX-startX,dy:ev.clientY-startY});
@@ -167,7 +167,7 @@
       if(wrap.dataset.swipeEnabled!=='1')return;
       const row=wrap.querySelector('.mailx-message');let intent='',suppress=false;
       bindPointerDrag(wrap,{
-        canStart:e=>['touch','pen'].includes(e.pointerType),
+        canStart:e=>matchMedia('(max-width:860px)').matches||['touch','pen'].includes(e.pointerType),
         onStart:()=>{intent='';suppress=false;wrap.classList.remove('is-snapping','is-committing');row.style.transform='';},
         onMove:({event,dx,dy})=>{
           if(!intent&&Math.hypot(dx,dy)>8)intent=Math.abs(dx)>Math.abs(dy)*1.15?'x':'y';
@@ -232,7 +232,7 @@
       if(state.thread!==thread){state.thread=thread;renderReader();}
       if(m.labels.includes('UNREAD')){
         m.labels=m.labels.filter(x=>x!=='UNREAD');renderList();
-        api('modify',{accountId:m.accountId,threadId:m.threadId,action:'read'}).catch(e=>{if(!m.labels.includes('UNREAD'))m.labels.push('UNREAD');if(version===state.readVersion)renderList();showToast('Read state could not be saved: '+e.message);});
+        api('modify',{accountId:m.accountId,threadId:m.threadId,action:'read'}).catch(e=>{if(!m.labels.includes('UNREAD'))m.labels.push('UNREAD');if(version===state.readVersion){renderList();showToast('Read state could not be saved: '+e.message);}});
       }
     }catch(e){if(version===state.readVersion){if(cached)showToast('Showing the saved view: '+e.message);else readerEl.insertAdjacentHTML('beforeend',`<p class="mailx-inline-error">${escapeHtml(e.message)}</p>`);}}
   }
