@@ -67,7 +67,7 @@ export async function syncAccount(admin:any,account:any) {
  try {
   const api=await gmailClient(admin,account),rules=await accountRules(admin,account);
   let ids:string[]=[],next:any={},history:any;
-  if(account.history_id) {
+  if(account.history_id && !account.sync_pending) {
    try {history=await api('history?'+new URLSearchParams({startHistoryId:account.history_id,maxResults:'30',...(account.sync_page?{pageToken:account.sync_page}:{})}));}
    catch(e) {
     if(e.status!==404 && !(e.status===400 && account.sync_page)) throw e;
@@ -79,6 +79,16 @@ export async function syncAccount(admin:any,account:any) {
    ids=[...new Set<string>((history.history||[]).flatMap((h:any)=>[...(h.messages||[]),...(h.messagesAdded||[]).map((x:any)=>x.message),...(h.messagesDeleted||[]).map((x:any)=>x.message),...(h.labelsAdded||[]).map((x:any)=>x.message),...(h.labelsRemoved||[]).map((x:any)=>x.message)].map((m:any)=>m.id)))];
    next={...next,sync_page:history.nextPageToken||null,...(!history.nextPageToken?{history_id:history.historyId}:{})};
   }
+  if(account.sync_pending) {
+   ids=account.sync_pending.ids;
+   next={...account.sync_pending.next,sync_pending:null};
+  }
+  // A single Gmail history event can contain thousands of label changes.
+  // Persist the remainder; only advance the Gmail cursor after the entire page drains.
+  if(ids.length>24) {
+   next={sync_pending:{ids:ids.slice(24),next}};
+   ids=ids.slice(0,24);
+  }
   const fetchMessages=async(messageIds:string[])=>mapLimit(messageIds,async(id:string)=>{
    try {const m=await api('messages/'+id+'?format=full');await cacheMessages(admin,account,[m],rules);}
    catch(e){if(e.status===404) check(await admin.from('eren_mail_messages').delete().eq('account_id',account.id).eq('id',id));else throw e;}
@@ -86,7 +96,7 @@ export async function syncAccount(admin:any,account:any) {
   await fetchMessages(ids);
   // New-mail history is always processed before one bounded older-mail backfill page.
   // The initial cursor is active immediately, so large mailboxes don't delay new mail.
-  if(!account.history_id || account.backfill_page && !history?.nextPageToken) {
+  if(!next.sync_pending && !next.sync_page && (!account.history_id || account.backfill_page)) {
    const baseline=account.history_id||(await api('profile')).historyId;
    let page;
    try {page=await api('messages?'+new URLSearchParams({maxResults:'20',q:'-in:trash -in:spam',...(account.backfill_page?{pageToken:account.backfill_page}:{})}));}

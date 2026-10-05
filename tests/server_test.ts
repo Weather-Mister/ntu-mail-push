@@ -33,7 +33,7 @@ class MemoryDB {
  }
  rpc(name:string,args:any){if(name==='eren_mail_secret'){if(args.p_delete)delete this.secrets[args.p_name];else if(args.p_value!==null&&args.p_value!==undefined)this.secrets[args.p_name]=args.p_value;return Promise.resolve({data:args.p_value?null:this.secrets[args.p_name]||null,error:null});}throw new Error(name);}
 }
-function setup(){const db=new MemoryDB(),a={id:'11111111-1111-4111-8111-111111111111',workspace_hash:'workspace',email:'me@example.org',secret_name:'eren-mail:workspace:account:1',status:'active'};db.tables.eren_mail_accounts.push(a);db.secrets[a.secret_name]='refresh-test';db.secrets['eren-mail:workspace:config:GOOGLE_CLIENT_ID']='client';db.secrets['eren-mail:workspace:config:GOOGLE_CLIENT_SECRET']='secret-test';return {db,a};}
+function setup(){const db=new MemoryDB(),a:any={id:'11111111-1111-4111-8111-111111111111',workspace_hash:'workspace',email:'me@example.org',secret_name:'eren-mail:workspace:account:1',status:'active'};db.tables.eren_mail_accounts.push(a);db.secrets[a.secret_name]='refresh-test';db.secrets['eren-mail:workspace:config:GOOGLE_CLIENT_ID']='client';db.secrets['eren-mail:workspace:config:GOOGLE_CLIENT_SECRET']='secret-test';return {db,a};}
 async function fetching(fn:any,run:any){const old=globalThis.fetch;globalThis.fetch=fn;try{await run();}finally{globalThis.fetch=old;}}
 Deno.test('HTML mail cannot execute scripts, forms, remote images or CSS tracking',()=>{
  const html=safeHtml('<script>steal()</script><img src="https://track.example.org/x"><style>@import url(https://track.test)</style><form action="https://evil.test"><input></form><a href="javascript:alert(1)">bad</a><a href="https://example.org">safe</a><p onmouseover="steal()">Hello</p><svg onload="steal()"></svg>');
@@ -97,4 +97,17 @@ Deno.test('reply sent later changes inferred Needs reply to Waiting but preserve
  const sent={...incoming,id:'m2',labelIds:['SENT'],payload:{...incoming.payload,body:{data:b64url('Yes, Thursday.')}}};
  assert.equal(threadMessageViews([incoming,sent],[])[0].classification.action,'Waiting');
  assert.equal(threadMessageViews([incoming,sent],[{id:'r1',scope:'thread',match_value:'t1',effects:{action:'Needs reply'}}])[0].classification.action,'Needs reply');
+});
+Deno.test('large Gmail change pages resume without advancing history early or losing IDs',async()=>{
+ const {db,a}=setup();Object.assign(a,{history_id:'10'});let historyRequests=0;
+ await fetching(async(url:any)=>{
+  const u=String(url);if(u.includes('oauth2'))return Response.json({access_token:'access'});
+  if(u.includes('/history?')){historyRequests++;return Response.json({historyId:'99',history:[{messagesAdded:Array.from({length:53},(_,i)=>({message:{id:'m'+i}}))}]});}
+  const id=u.match(/\/messages\/(m\d+)/)?.[1];if(id)return Response.json({id,threadId:'t1',internalDate:'123',payload:{headers:[],mimeType:'text/plain',body:{data:b64url('Hello')}}});
+  throw new Error(u);
+ },async()=>{
+  await syncAccount(db,a);assert.equal(a.history_id,'10');assert.equal(a.sync_pending.ids.length,29);assert.equal(db.tables.eren_mail_messages.length,24);
+  await syncAccount(db,a);assert.equal(a.history_id,'10');assert.equal(a.sync_pending.ids.length,5);assert.equal(db.tables.eren_mail_messages.length,48);
+  await syncAccount(db,a);assert.equal(a.history_id,'99');assert.equal(a.sync_pending,null);assert.equal(db.tables.eren_mail_messages.length,53);assert.equal(historyRequests,1);
+ });
 });

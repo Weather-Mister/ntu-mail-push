@@ -31,7 +31,7 @@ Optional operator alternative: set Supabase Edge Function secrets `MAIL_GOOGLE_C
 
 `eren-mail-minute` invokes the mail worker every minute through Supabase Cron and pg_net, authenticated by a token generated and retained in Vault. This runs with the browser/PWA closed. It is separate from the NTU GitHub Actions notification job.
 
-The worker drains due sends first, then processes up to three accounts per run, rotating by last attempt. Each account uses a lease. Gmail History cursors synchronize changes; expired cursors recover with a new baseline. Older mail is backfilled in bounded pages while new-mail history continues first. Initial backfill can take time for large mailboxes. The live reader and Gmail search do not wait for backfill.
+The worker drains due sends first, then processes up to three accounts per run, rotating by last attempt. Each account uses a lease. Large history events are durably split into batches; the history cursor advances only after the whole page is processed. Gmail History cursors synchronize changes; expired cursors recover with a new baseline. Older mail is backfilled in bounded pages while new-mail history continues first. Initial backfill can take time for large mailboxes. The live reader and Gmail search do not wait for backfill.
 
 Sending uses a client request UUID, a server payload digest, atomic queue claims, and a stable RFC Message-ID. Replies use the original Gmail account, thread ID, subject, In-Reply-To and References fetched from Gmail on the server. The client never supplies trusted threading headers.
 
@@ -61,7 +61,7 @@ Drafts are retained on the current tab and autosaved, serialized, to encrypted s
 
 ## Deployment and checks
 
-The backend and three migrations have been deployed through the connected Supabase management API. The minute cron worker has been observed completing successfully with no connected accounts. The GitHub Pages deployment copies only `sites/eren/` and `sites/begum/`; backend sources and development dependencies cannot enter the public artifact.
+The backend and four migrations have been deployed through the connected Supabase management API. The minute cron worker has been observed completing successfully with no connected accounts. The GitHub Pages deployment copies only `sites/eren/` and `sites/begum/`; backend sources and development dependencies cannot enter the public artifact.
 
 Validation commands:
 

@@ -169,7 +169,7 @@
     sheet(m.sender,`<p>${escapeHtml(m.email)}</p><p>${related.length} threads in the loaded results</p>${Object.entries(counts).map(([t,n])=>`<p>${escapeHtml(t)} · ${n}</p>`).join('')}<button class="mailx-action" id="senderView">View all sender mail</button> <button class="mailx-action" id="senderRule">Set a type-specific rule</button>`,p=>{p.querySelector('#senderView').onclick=()=>{p.remove();searchEl.value='from:'+m.email;state.query=searchEl.value;state.account=accountId;setFilter('all');};p.querySelector('#senderRule').onclick=guarded(()=>ruleEditor(m,accountId));});
   }
   async function loadSpecial(){
-    const version=++state.loadVersion;renderFilters();notice('Loading…');$('#mailxListMeta').textContent=categoryLabel(state.filter);
+    const version=++state.loadVersion;renderFilters();notice('Loading…');$('#mailxRefresh').disabled=true;$('#mailxListMeta').textContent=categoryLabel(state.filter);
     try{
       const isDraft=state.filter==='drafts',data=await api(isDraft?'drafts':'outbox');if(version!==state.loadVersion)return;
       const rows=(isDraft?data.drafts:data.jobs).filter(r=>state.account==='all'||r.account_id===state.account);
@@ -179,6 +179,7 @@
       for(const action of ['cancel','check','restore'])$$('[data-'+action+']').forEach(b=>b.onclick=guarded(async()=>{const row=rows[+b.dataset[action]];if(action==='cancel'&&!confirm('Cancel this scheduled send?'))return;b.disabled=true;try{const data=await api('outbox/'+action,{id:row.id});if(action==='restore'){await openComposer(null,data.draft);showToast(data.note);}else{await loadSpecial();if(data.job?.error)showToast(data.job.error);}}finally{b.disabled=false;}}));
       notice('');
     }catch(e){if(version===state.loadVersion)notice(e.message);}
+    finally{if(version===state.loadVersion)$('#mailxRefresh').disabled=false;}
   }
   function setFilter(filter){state.filter=filter;state.readVersion++;shell.classList.remove('is-reading');remember();loadMail();}
   async function connect(){
