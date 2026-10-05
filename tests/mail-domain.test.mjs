@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {loginCode,classify,b64url,decodeBody,bodies,unsubscribeInfo,buildMime,validateDraft,validateEffects,AI_SYSTEM,safeWebUrl} from '../supabase/functions/eren-mail/domain.mjs';
+import {loginCode,classify,b64url,decodeBody,bodies,unsubscribeInfo,buildMime,validateDraft,validateEffects,AI_SYSTEM,safeWebUrl,normalizeAiRevision} from '../supabase/functions/eren-mail/domain.mjs';
 const message=(subject,text,extra={})=>({id:'m1',threadId:'t1',internalDate:'1700000000000',labelIds:['INBOX'],payload:{mimeType:'text/plain',headers:[{name:'Subject',value:subject},{name:'From',value:'Sender <news@food.test>'},...(extra.headers||[])],body:{data:b64url(text)}},...Object.fromEntries(Object.entries(extra).filter(([k])=>k!=='headers'))});
 test('verification codes require authentication context and explicit token placement',()=>{
  assert.equal(loginCode('Your verification code','Your verification code is 483921'), '483921');
@@ -69,4 +69,30 @@ test('rich draft validation rejects unsafe HTML and oversized attachment referen
  const draft=validateDraft({to:'friend@example.org',subject:'Hi',body:'Hello',bodyHtml:'<p onclick="x()">Hi <strong>there</strong><script>x()</script></p>',attachments:[]});
  assert.equal(draft.bodyHtml,'<p>Hi <strong>there</strong></p>');
  assert.throws(()=>validateDraft({to:'friend@example.org',subject:'Hi',body:'Hello',attachments:[{id:'11111111-1111-4111-8111-111111111111',name:'huge.bin',type:'application/octet-stream',size:9*1024*1024}]}));
+});
+
+
+test('Gemini normalization repairs HTML accidentally returned in body and preserves structure',()=>{
+ const r=normalizeAiRevision({
+  body:'<div style="font-family:Arial"><h2 style="color:red">Project Update</h2><p>Please see the key highlights below:</p><ul style="list-style:square"><li><strong>Phase 1:</strong> Completed.</li><li><em>Phase 2:</em> Testing.</li></ul><blockquote style="color:#444"><strong>Note:</strong> Upload docs.</blockquote><p>Questions? <a href="mailto:example@email.com" style="color:blue">Reach out</a>.</p>',
+  bodyHtml:''
+ });
+ assert.equal(r.bodyHtml,'<div><h2>Project Update</h2><p>Please see the key highlights below:</p><ul><li><strong>Phase 1:</strong> Completed.</li><li><em>Phase 2:</em> Testing.</li></ul><blockquote><strong>Note:</strong> Upload docs.</blockquote><p>Questions? <a href="mailto:example@email.com">Reach out</a>.</p></div>');
+ assert.match(r.body,/Project Update\n\nPlease see the key highlights below:/);
+ assert.match(r.body,/Phase 1: Completed\.\nPhase 2: Testing\./);
+ assert.match(r.body,/Note: Upload docs\./);
+ assert(!r.body.includes('<h2'));
+});
+
+test('Gemini normalization keeps plain-text line and blank-line breaks',()=>{
+ const r=normalizeAiRevision({body:'First line\r\nSecond line\r\n\r\nNew paragraph.',bodyHtml:''});
+ assert.equal(r.body,'First line\nSecond line\n\nNew paragraph.');
+ assert.equal(r.bodyHtml,'');
+});
+
+test('Gemini normalization derives matching plain text from formatted HTML',()=>{
+ const r=normalizeAiRevision({body:'wrong fallback',bodyHtml:'<p>Hello <strong>there</strong>.</p><p><br></p><p>Next paragraph.</p>'});
+ assert.equal(r.bodyHtml,'<p>Hello <strong>there</strong>.</p><p><br /></p><p>Next paragraph.</p>');
+ assert.match(r.body,/Hello there\.\n\nNext paragraph\./);
+ assert(!r.body.includes('wrong fallback'));
 });
