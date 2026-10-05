@@ -57,8 +57,8 @@ export async function deliver(admin:any,job:any) {
   const payload=JSON.parse(stored),loaded=[];let total=0;
   for(const ref of payload.attachments||[]) {
    let bytes:Uint8Array;
-   try{bytes=await getAttachmentObject(admin,outboxAttachmentPath(job.workspace_hash,job.id,ref.id));}
-   catch{throw new MailError(400,'An attachment is missing from the queued message. Restore the draft and add it again.');}
+   if(typeof ref.data==='string'){try{bytes=decodeAttachmentData(ref.data);}catch{throw new MailError(400,'An attachment is corrupted. Restore the draft and add it again.');}}
+   else{try{bytes=await getAttachmentObject(admin,outboxAttachmentPath(job.workspace_hash,job.id,ref.id));}catch{throw new MailError(400,'An attachment is missing from the queued message. Restore the draft and add it again.');}}
    total+=bytes.length;if(bytes.length!==Number(ref.size)||total>MAX_ATTACHMENT_BYTES)throw new MailError(400,'Attachments are too large or corrupted.');
    loaded.push({...ref,data:encodeAttachmentData(bytes)});
   }
