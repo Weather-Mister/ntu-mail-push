@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {loginCode,classify,b64url,decodeBody,bodies,unsubscribeInfo,buildMime,validateDraft,validateEffects,AI_SYSTEM,safeWebUrl,normalizeAiRevision} from '../supabase/functions/eren-mail/domain.mjs';
+import {loginCode,classify,b64url,decodeBody,bodies,unsubscribeInfo,buildMime,validateDraft,validateEffects,AI_SYSTEM,safeWebUrl,normalizeAiRevision,findAttachmentPart} from '../supabase/functions/eren-mail/domain.mjs';
 const message=(subject,text,extra={})=>({id:'m1',threadId:'t1',internalDate:'1700000000000',labelIds:['INBOX'],payload:{mimeType:'text/plain',headers:[{name:'Subject',value:subject},{name:'From',value:'Sender <news@food.test>'},...(extra.headers||[])],body:{data:b64url(text)}},...Object.fromEntries(Object.entries(extra).filter(([k])=>k!=='headers'))});
 test('verification codes require authentication context and explicit token placement',()=>{
  assert.equal(loginCode('Your verification code','Your verification code is 483921'), '483921');
@@ -95,4 +95,17 @@ test('Gemini normalization derives matching plain text from formatted HTML',()=>
  assert.equal(r.bodyHtml,'<p>Hello <strong>there</strong>.</p><p><br /></p><p>Next paragraph.</p>');
  assert.match(r.body,/Hello there\.\n\nNext paragraph\./);
  assert(!r.body.includes('wrong fallback'));
+});
+
+
+test('received attachment lookup prefers stable MIME partId when Gmail attachmentId changes',()=>{
+ const payload={mimeType:'multipart/mixed',parts:[
+  {partId:'0',mimeType:'text/plain',body:{data:b64url('hello')}},
+  {partId:'1',filename:'report.pdf',mimeType:'application/pdf',body:{attachmentId:'fresh-id',size:321}},
+ ]};
+ const found=findAttachmentPart(payload,'1','stale-id');
+ assert.equal(found.body.attachmentId,'fresh-id');
+ assert.equal(found.filename,'report.pdf');
+ assert.equal(findAttachmentPart(payload,'9','fresh-id'),null);
+ assert.equal(findAttachmentPart(payload,'','fresh-id').partId,'1');
 });

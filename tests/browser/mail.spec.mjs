@@ -13,7 +13,7 @@ async function boot(page,options={}){
    if(r==='status')data={configured:true,aiConfigured:true,types:['University','Promotion','Receipt / Order','Other'],priorities:['High','Normal','Low','Muted'],actions:['Needs reply','Deadline','Waiting','FYI','No action'],health:{last_finished_at:new Date().toISOString()},redirectUri:'https://api.example.org/callback'};
    if(r==='bootstrap')data={accounts,preferences:{},messages:[first,{...msg,id:'m2',threadId:'t2',accountId:'a2',sender:'Bank',subject:'Your receipt',classification:{...classification,type:'Receipt / Order',priority:'Normal',action:'FYI'}}]};if(r==='accounts')data={accounts};if(r==='preferences')data={preferences:{}};if(r==='rules')data={rules:[]};if(r==='outbox')data={jobs:[]};if(r==='drafts')data={drafts:[]};
    if(r==='mail'){if(options.mailDelay)await new Promise(r=>setTimeout(r,options.mailDelay));let messages=[first,{...msg,id:'m2',threadId:'t2',accountId:'a2',sender:'Bank',subject:'Your receipt',classification:{...classification,type:'Receipt / Order',priority:'Normal',action:'FYI'}}];if(url.searchParams.get('accountId')!=='all')messages=messages.filter(m=>m.accountId===url.searchParams.get('accountId'));data=options.mailFail?{messages:[],cursor:{a1:'',a2:''},hasMore:false,errors:accounts.map(a=>({accountId:a.id,error:'Gmail temporarily unavailable'}))}:options.partialFail?{messages:messages.filter(m=>m.accountId==='a2'),cursor:{a1:null,a2:null},hasMore:false,errors:[{accountId:'a1',threadIds:['t1'],error:'One thread temporarily unavailable'}]}:{messages,cursor:{a1:null,a2:null},hasMore:false,errors:[]};}
-   if(r==='thread'){if(options.threadDelay)await new Promise(r=>setTimeout(r,options.threadDelay));const images=true;data={threadId:url.searchParams.get('threadId'),accountId:url.searchParams.get('accountId'),messages:[{...first,threadId:url.searchParams.get('threadId'),...(options.html?{html:images?options.imagesHtml:options.html,hasExternalImages:!images,externalImages:images}: {})}]};}
+   if(r==='thread'){if(options.threadDelay)await new Promise(r=>setTimeout(r,options.threadDelay));const images=true;data={threadId:url.searchParams.get('threadId'),accountId:url.searchParams.get('accountId'),messages:[{...first,threadId:url.searchParams.get('threadId'),...(options.receivedAttachment?{attachments:[options.receivedAttachment]}:{}),...(options.html?{html:images?options.imagesHtml:options.html,hasExternalImages:!images,externalImages:images}: {})}]};}
    if(r==='ai'){
     if(options.aiDelay)await new Promise(r=>setTimeout(r,options.aiDelay));
     if(options.aiFail)return route.fulfill({status:502,contentType:'application/json',body:JSON.stringify({error:'Gemini quota exhausted. Your draft has been preserved.'})});
@@ -25,6 +25,7 @@ async function boot(page,options={}){
     if(options.attachmentFailOnce&&options._attachmentAttempts===1)return route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'Attachment upload failed'})});
     data={attachment:{id:body.id,name:body.name,type:body.type,size:body.size}};
    }
+   if(r==='attachment')data={data:options.receivedAttachmentData||Buffer.from('download me').toString('base64url'),filename:options.receivedAttachment?.filename||'attachment.txt',mimeType:options.receivedAttachment?.mimeType||'text/plain',size:options.receivedAttachment?.size||11};
    if(r==='drafts/attachment/delete')data={ok:true};
    if(r==='modify'&&options.modifyFail)return route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'Gmail unavailable'})});if(r==='send'){if(options.sendDelay)await new Promise(r=>setTimeout(r,options.sendDelay));data={job:{id:body.id,status:body.sendAt?'pending':'sent'}};}
   }else if(url.pathname.includes('ntu-schedule-api')){
@@ -221,4 +222,16 @@ test('composer defensively renders HTML returned in Gemini body instead of print
  await boot(page,{aiBody:malformed,richAiHtml:''});await composeButton(page).click();await page.locator('#mailxAiPrompt').fill('Format update');await page.locator('#mailxGenerate').click();
  await expect(page.locator('#mailxBody')).toContainText('Project Update');await expect(page.locator('#mailxBody')).not.toContainText('<h2');
  const html=await page.locator('#mailxBody').evaluate(el=>el.innerHTML);expect(html).toContain('<h2>Project Update</h2>');expect(html).not.toContain('style=');
+});
+
+
+test('received attachments download from the reader with the server filename',async({page})=>{
+ const attachment={id:'cached-attachment-id',partId:'1',filename:'report.txt',mimeType:'text/plain',size:11};
+ const {calls}=await boot(page,{receivedAttachment:attachment,receivedAttachmentData:Buffer.from('download me').toString('base64url')});
+ await page.locator('#mailxList .mailx-message').first().click();
+ const button=page.locator('[data-attachment]').first();await expect(button).toContainText('report.txt');
+ const downloadPromise=page.waitForEvent('download');await button.click();const download=await downloadPromise;
+ expect(download.suggestedFilename()).toBe('report.txt');
+ await expect(page.locator('#mailxToast')).toContainText('Downloaded report.txt');
+ const call=calls.find(c=>c.route==='attachment');expect(call).toBeTruthy();expect(call.url.searchParams.get('partId')).toBe('1');expect(call.url.searchParams.get('attachmentId')).toBe('cached-attachment-id');
 });
