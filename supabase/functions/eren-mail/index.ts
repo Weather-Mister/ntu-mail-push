@@ -155,23 +155,7 @@ export async function handle(req:Request) {
    else data=part.body?.data||'';
    if(!data)throw new MailError(404,'Attachment data is no longer available. Reopen the message and try again.');
    const filename=String(part.filename||'attachment').replace(/[\r\n\0]/g,'').slice(0,180)||'attachment';
-   const mimeType=/^[\w!#if(route==='attachment'&&req.method==='GET') {
-   const a=await ownedAccount(admin,workspace,get('accountId')),api=await gmailClient(admin,a),m=await api('messages/'+id(get('messageId'))+'?format=full');
-   const part=bodies(m.payload).attachments.find((p:any)=>p.id===get('attachmentId')&&p.partId===get('partId'));
-   if(!part)throw new MailError(404,'Attachment not found.');if(part.size>20*1024*1024)throw new MailError(413,'This attachment is over the 20 MB download limit.');
-   let data;
-   if(part.id) data=(await api(`messages/${m.id}/attachments/${encodeURIComponent(part.id)}`)).data;
-   else {const find=(p:any):any=>p.partId===part.partId?p:(p.parts||[]).map(find).find(Boolean);data=find(m.payload)?.body?.data;}
-   return response({data,filename:part.filename,mimeType:'application/octet-stream'});
-  }^.+-]+\/[\w!#if(route==='attachment'&&req.method==='GET') {
-   const a=await ownedAccount(admin,workspace,get('accountId')),api=await gmailClient(admin,a),m=await api('messages/'+id(get('messageId'))+'?format=full');
-   const part=bodies(m.payload).attachments.find((p:any)=>p.id===get('attachmentId')&&p.partId===get('partId'));
-   if(!part)throw new MailError(404,'Attachment not found.');if(part.size>20*1024*1024)throw new MailError(413,'This attachment is over the 20 MB download limit.');
-   let data;
-   if(part.id) data=(await api(`messages/${m.id}/attachments/${encodeURIComponent(part.id)}`)).data;
-   else {const find=(p:any):any=>p.partId===part.partId?p:(p.parts||[]).map(find).find(Boolean);data=find(m.payload)?.body?.data;}
-   return response({data,filename:part.filename,mimeType:'application/octet-stream'});
-  }^.+-]+$/.test(part.mimeType||'')?part.mimeType:'application/octet-stream';
+   const mimeType=/^[A-Za-z0-9][A-Za-z0-9!#$&^_.+-]*\/[A-Za-z0-9][A-Za-z0-9!#$&^_.+-]*$/.test(part.mimeType||'')?part.mimeType:'application/octet-stream';
    return response({data,filename,mimeType,size});
   }
   if(route==='modify') {
