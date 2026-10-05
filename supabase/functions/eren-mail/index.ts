@@ -15,6 +15,9 @@ const attachmentSecret=(workspace:string,draftId:string,attachmentId:string)=>'e
 const attachmentRef=(a:any)=>({id:a.id,name:a.name,type:a.type,size:a.size});
 function visible(v:any,filter:string) {
  const c=v.classification,l=v.labels;
+ if(filter==='trash')return l.includes('TRASH');
+ if(l.includes('TRASH')||l.includes('SPAM'))return false;
+ if(filter==='starred')return l.includes('STARRED');
  if(filter==='all')return true;
  if(filter==='blocked')return c.blocked;
  if(c.blocked)return false;
@@ -110,8 +113,8 @@ export async function handle(req:Request) {
     if(cursors[a.id]===null)return {messages:[],next:null,accountId:a.id};
     try {
      const [api,rules]=await Promise.all([gmailClient(admin,a),accountRules(admin,a)]);
-     const base=({inbox:'in:inbox',important:'in:inbox',reply:'in:inbox',codes:'',low:'',blocked:'',archived:'-in:inbox -in:drafts',sent:'in:sent','gmail-drafts':'in:drafts',all:''} as any)[filter]??'in:inbox';
-     const params=new URLSearchParams({maxResults:'12',q:`${base} ${query} -in:trash -in:spam`.trim()});
+     const base=({starred:'is:starred',trash:'in:trash',inbox:'in:inbox',important:'in:inbox',reply:'in:inbox',codes:'',low:'',blocked:'',archived:'-in:inbox -in:drafts',sent:'in:sent','gmail-drafts':'in:drafts',all:''} as any)[filter]??'in:inbox';
+     const params=new URLSearchParams({maxResults:'12',q:`${base} ${query} ${filter==='trash'?'':'-in:trash'} -in:spam`.trim(),...(filter==='trash'?{includeSpamTrash:'true'}:{})});
      if(cursors[a.id]) params.set('pageToken',String(cursors[a.id]).slice(0,2000));
      const page=await api('threads?'+params);
      const cachedMessages:any[]=[],failures:any[]=[];
@@ -124,7 +127,7 @@ export async function handle(req:Request) {
       const candidate=filter==='sent' ? ([...views].reverse().find((v:any)=>v.labels.includes('SENT'))||views.at(-1)) : ([...views].reverse().find((v:any)=>v.labels.includes('INBOX'))||views.at(-1));
       if(!candidate)return null;
       const labels=[...new Set<string>(views.flatMap((v:any)=>v.labels))];
-      const overview={...candidate,labels,accountId:a.id,accountName:a.display_name,count:views.length,timestamp:Math.max(...views.map((v:any)=>v.timestamp))};
+      const overview={...candidate,labels,accountId:a.id,accountName:a.display_name,count:views.length,hasAttachments:views.some((v:any)=>v.attachments?.length),timestamp:Math.max(...views.map((v:any)=>v.timestamp))};
       delete overview.html;delete overview.text;delete overview.attachments;
       return visible(overview,filter)?overview:null;
      },8);
@@ -140,10 +143,10 @@ export async function handle(req:Request) {
    return response({messages:results.flatMap(r=>r.messages).sort((a,b)=>b.timestamp-a.timestamp),cursor:Object.fromEntries(results.map(r=>[r.accountId,r.next])),hasMore:results.some(r=>!!r.next),errors:results.filter(r=>r.error).map(r=>({accountId:r.accountId,error:r.error,threadIds:r.failures?.map((f:any)=>f.threadId)}))});
   }
   if(route==='thread'&&req.method==='GET') {
-   const a=await ownedAccount(admin,workspace,get('accountId'));
-   const [api,rules]=await Promise.all([gmailClient(admin,a),accountRules(admin,a)]),t=await fullThread(api,id(get('threadId')),true);
+   const a=await ownedAccount(admin,workspace,get('accountId')),images=String(get('images')||'')==='1';
+   const [api,rules]=await Promise.all([gmailClient(admin,a),accountRules(admin,a)]),t=await fullThread(api,id(get('threadId')),images);
    defer(cacheMessages(admin,a,t.messages||[],rules));
-   return response({threadId:t.id,accountId:a.id,messages:threadMessageViews(t.messages||[],rules)});
+   return response({threadId:t.id,accountId:a.id,imagesLoaded:images,messages:threadMessageViews(t.messages||[],rules)});
   }
   if(route==='attachment'&&req.method==='GET') {
    const a=await ownedAccount(admin,workspace,get('accountId')),api=await gmailClient(admin,a),m=await api('messages/'+id(get('messageId'))+'?format=full');
@@ -157,7 +160,8 @@ export async function handle(req:Request) {
   }
   if(route==='modify') {
    mustPost(req);const a=await ownedAccount(admin,workspace,input.accountId),api=await gmailClient(admin,a);
-   const mods=({archive:{removeLabelIds:['INBOX']},unarchive:{addLabelIds:['INBOX']},read:{removeLabelIds:['UNREAD']},unread:{addLabelIds:['UNREAD']}} as any)[input.action];
+   if(['trash','untrash'].includes(input.action)){await api('threads/'+id(input.threadId)+'/'+input.action,'POST');invalidateThread(workspace,a.id,input.threadId);return response({ok:true});}
+   const mods=({star:{addLabelIds:['STARRED']},unstar:{removeLabelIds:['STARRED']},archive:{removeLabelIds:['INBOX']},unarchive:{addLabelIds:['INBOX']},read:{removeLabelIds:['UNREAD']},unread:{addLabelIds:['UNREAD']}} as any)[input.action];
    if(!mods)throw new MailError(400,'Invalid mail action.');
    await api('threads/'+id(input.threadId)+'/modify','POST',mods);invalidateThread(workspace,a.id,input.threadId);return response({ok:true});
   }
@@ -258,3 +262,4 @@ export async function handle(req:Request) {
  }catch(e){return response({error:e instanceof MailError?e.message:'Mail is temporarily unavailable. Your draft has been preserved.',code:e instanceof MailError?e.code:'internal_error'},e instanceof MailError?e.status:503);}
 }
 if(import.meta.main)Deno.serve(handle);
+

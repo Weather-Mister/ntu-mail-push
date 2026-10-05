@@ -1,0 +1,78 @@
+/* Compact mail workspace. Uses the schedule's warm paper and charcoal palette. */
+.mailx-dialog{--mail-ink:#292c30;--mail-muted:#797975;--mail-accent:#557568;width:min(1440px,calc(100vw - 32px));height:min(900px,calc(100dvh - 32px));background:#f6f5f1;border-radius:18px;box-shadow:0 12px 48px #222a321f}
+.mailx-dialog::backdrop{background:#20273052;backdrop-filter:blur(3px)}
+.mailx-dialog svg,.mailx-peek svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.mailx-topbar{gap:12px;padding:14px 18px;min-height:72px;background:#f6f5f1}
+.mailx-brand-icon{background:var(--mail-ink);border-radius:11px;width:34px;height:34px}
+.mailx-title{font-size:20px;font-weight:700}
+.mailx-topbar>.mailx-search{margin-left:24px;max-width:500px;flex:1;min-width:90px;font-size:13px;height:38px;border-color:#e3e2dc;background:#edede7}
+.mailx-topbar .mailx-compose-main{width:auto;min-height:38px;flex-shrink:0;margin:0;padding:0 16px;background:var(--mail-ink);border-radius:10px;font-size:12px;font-weight:650}
+.mailx-topbar #mailxRefresh{margin-left:auto;font-size:22px;width:38px;min-height:38px;background:transparent;border:0}
+.mailx-topbar #mailxSettings,.mailx-topbar #mailxClose{border:0;background:transparent;width:34px;padding:0;display:grid;place-items:center}
+.mailx-top-account{width:118px;font-size:11px;height:36px;background:#eceee8;border:0;color:#506458}
+.mailx-account-switch{position:relative;display:grid;place-items:center;width:34px;height:34px;flex:0 0 34px;border-radius:50%;background:#e6eade;color:#6d7d5c;font-size:12px;font-weight:650}
+.mailx-account-switch .mailx-top-account{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}.mailx-account-switch:focus-within{outline:2px solid #7c916b;outline-offset:3px}
+#mailxComposeMobile,.mailx-account-select-list{display:none!important}
+.mailx-main{grid-template-columns:64px var(--mailx-list-w,360px) 9px minmax(0,1fr);padding:0 12px 12px 0;gap:0}
+.mailx-nav{padding:16px 10px;background:transparent;display:flex;align-items:center;flex-direction:column;gap:9px;overflow:visible}
+.mailx-nav .mailx-filter{position:relative;display:grid;place-items:center;width:42px;min-height:42px;padding:0;color:#8c8e87;border-radius:12px}
+.mailx-nav .mailx-filter:hover{color:#343f37;background:#e9ebe4}
+.mailx-nav .mailx-filter.is-active{color:#405f4f;background:#e2e9df;box-shadow:none}
+.mailx-rail-count{position:absolute;top:1px;right:0;font-size:8px;line-height:15px;min-width:15px;border-radius:5px;color:#fff;background:#557568;font-weight:700}
+.mailx-rail-count:empty{display:none}.mailx-rail-divider{width:22px;border-top:1px solid #dedfd7;margin:7px 0}
+.mailx-list-pane,.mailx-reader{border:1px solid #e5e5dd;border-radius:15px;overflow:hidden;background:#fffefa}
+.mailx-list-tools{padding:14px 16px 10px;display:flex;flex-wrap:wrap;align-items:center;gap:8px;border-color:#eeeee7}
+.mailx-list-controls{display:none}.mailx-list-meta{margin:0;font-size:11px;color:#75776f;font-weight:500;flex:1}
+.mailx-list-extra{margin:0;max-width:135px}.mailx-list-extra select{border:0;background:transparent;font-size:11px;padding:5px;color:#545b52}
+#mailxNotice{flex-basis:100%;padding:0;font-size:11px}#mailxNotice[hidden]{display:none}
+.mailx-message-wrap{position:relative;border-bottom:1px solid #eeeee7;border-radius:0;flex-shrink:0}
+.mailx-message-wrap .mailx-message{display:grid;grid-template-columns:35px minmax(0,1fr);gap:11px;padding:16px 15px;border:0;border-radius:0;background:#fffefa;min-width:0}
+.mailx-message-wrap .mailx-message:hover{background:#f4f5ef}.mailx-message-wrap .mailx-message.is-selected{background:#edf1e9;box-shadow:inset 3px 0 #71866a}
+.mailx-row-content{min-width:0;display:block}.mailx-sender{font-size:14px;font-weight:550;flex:1}
+.mailx-message.is-unread .mailx-sender{font-weight:700}.mailx-message.is-unread .mailx-subject{font-weight:550}
+.mailx-avatar{width:35px;height:35px;font-size:11px;font-weight:650;border-radius:11px;background:#e9e9e2;color:#60665a}
+.mailx-avatar.tone-1{background:#e5eae1;color:#5d7054}.mailx-avatar.tone-2{background:#e8e5ec;color:#736184}.mailx-avatar.tone-3{background:#f0e6dc;color:#927555}.mailx-avatar.tone-4{background:#e2e9ed;color:#597784}
+.mailx-message-head{gap:6px}.mailx-time{font-size:9px;color:#96988e;font-weight:400;max-width:112px;overflow:hidden;text-overflow:ellipsis}
+.mailx-subject{display:block;font-size:14px;margin-top:4px;line-height:1.5;color:#363c34;font-weight:450}
+.mailx-subject small{font-size:10px;color:#858b7e}.mailx-unread-dot{display:inline-block;background:#6f8c63;width:6px;height:6px;margin:0 6px 2px 0}
+.mailx-snippet{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px;line-height:1.5;color:#888b81;margin-top:2px}
+.mailx-message-foot{margin-top:7px;min-height:14px;gap:7px;font-size:10px;color:#9a9b90}.mailx-message-foot .mailx-account{padding:0;background:transparent;color:#96998e;font-size:9px;font-weight:500}
+.mailx-row-status{font-size:9px;color:#927a55;margin-left:auto}.mailx-star-indicator{color:#a29363}.mailx-code-mini{font-size:11px;color:#5f7855}
+.mailx-row-actions{position:absolute;z-index:2;right:9px;top:9px;display:flex;gap:2px;padding:3px;border:1px solid #e2e4d9;border-radius:9px;background:#fffefa;box-shadow:0 2px 5px #30332d08;opacity:0;pointer-events:none;transition:opacity .12s}
+.mailx-message-wrap:hover .mailx-row-actions,.mailx-message-wrap:focus-within .mailx-row-actions{opacity:1;pointer-events:auto}
+.mailx-row-actions button{display:grid;place-items:center;width:30px;height:30px;background:transparent;border:0;border-radius:7px;color:#747c6c;cursor:pointer}.mailx-row-actions button:hover{background:#ecefe6;color:#343c2e}.mailx-row-actions svg{width:16px;height:16px}
+.mailx-resizer{min-width:9px}.mailx-resizer::after{background:transparent}.mailx-resizer:hover::after{background:#b4c0a8;box-shadow:none}
+.mailx-reader-toolbar{background:#fffefa;padding:12px 16px;border-color:#eeeee7;min-height:56px;overflow:visible;z-index:4}
+.mailx-action{background:transparent;border-color:#e4e6dc;color:#6b7263;min-height:32px;font-weight:550;font-size:11px;padding:0 9px}
+.mailx-reader-head{padding:22px 24px 16px}.mailx-reader-subject{font-size:24px;line-height:1.3;font-weight:650;letter-spacing:-.025em;color:#30352d}
+.mailx-reader-tags{margin-top:12px;gap:5px}.mailx-chip,.mailx-account{font-size:9px;font-weight:500;background:#f0f1e9;color:#818575}.mailx-chip.high{background:#f3eee2;color:#92744f}.mailx-chip.reply{background:#eff0e3;color:#7c8156}
+.mailx-thread-message{margin:0 24px;padding:12px 0;border-color:#ebeee2}.mailx-thread-message:last-of-type{flex:1 0 auto;min-height:0}
+.mailx-thread-details>summary{display:flex;align-items:center;gap:10px;list-style:none;min-height:50px;color:#525b48}.mailx-thread-details>summary::-webkit-details-marker{display:none}
+.mailx-thread-details>summary::after{content:'⌄';font-size:15px;color:#969c8a}.mailx-thread-details[open]>summary::after{transform:rotate(180deg)}
+.mailx-thread-summary{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}.mailx-thread-summary strong{font-size:13px;font-weight:600}.mailx-thread-summary>span{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:300px;color:#999d92}.mailx-thread-details[open]>.mailx-thread-summary>span{display:none}
+.mailx-thread-details>summary time{font-size:10px;color:#989d8f;font-weight:400}.mailx-message-meta>summary{font-weight:450;color:#909788;font-size:10px;margin-left:45px}
+.mailx-thread-details[open]>summary .mailx-thread-summary>span{display:none}
+.mailx-thread-message .mailx-mail-body{max-width:76ch}
+.mailx-reader-more{position:relative}.mailx-reader-more>summary{display:grid;place-items:center;cursor:pointer;list-style:none;width:32px;height:32px;color:#879078;border-radius:8px}.mailx-reader-more>summary::-webkit-details-marker{display:none}.mailx-reader-more[open]>summary{background:#eff2e8}.mailx-reader-more>div{position:absolute;top:36px;left:0;z-index:10;min-width:150px;background:#fffefa;border:1px solid #e2e6d7;border-radius:12px;padding:6px;box-shadow:0 6px 18px #303c251a;display:flex;flex-direction:column;gap:3px}.mailx-reader-more .mailx-action{text-align:left;border:0}.mailx-reader-head-actions:empty{display:none}
+.mailx-thread-message .mailx-mail-body{font-size:14px;line-height:1.85;color:#555d4e;padding:24px 0}.mailx-html-body{border-radius:8px}
+.mailx-reply-bar{padding:16px 24px;background:#fffefa;border-color:#eeeee7;flex-shrink:0}.mailx-reply-button{background:#30372c;border-radius:10px;min-height:38px;font-size:12px;font-weight:600;padding:0 20px}.mailx-reply-button.secondary{background:#f1f3eb;color:#58634d;border:1px solid #e2e6d9}
+.mailx-attachments{gap:8px}.mailx-attachment-download{display:flex;align-items:center;gap:10px;max-width:260px;border:1px solid #e0e5d6;border-radius:11px;background:#f8f9f3;padding:10px;cursor:pointer;color:#59634e;text-align:left}
+.mailx-file-type{display:grid;place-items:center;min-width:34px;height:40px;border-radius:7px;background:#e9edde;color:#788764;font-size:9px;font-weight:650}.mailx-attachment-download>span:last-child{min-width:0}.mailx-attachment-download strong{display:block;font-size:11px;font-weight:550;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mailx-attachment-download small{display:block;font-size:9px;color:#949c86;margin-top:4px}
+.mailx-compose{border-radius:16px;box-shadow:0 12px 40px #252f2326;border-color:#dce1d2}.mailx-compose-head{background:#f3f5ed}.mailx-send{background:#30372c}.mailx-ai-wrap{background:#f5f6f0;border-color:#e1e5d7}.mailx-ai-generate{background:#627754}.mailx-ai-label,.mailx-ai-chip{color:#7f8d70}.mailx-ai-chip{border-color:#e0e5d7}
+.mailx-reader-empty{color:#909787;font-size:12px}.mailx-reader-empty-icon{background:#edf0e6;color:#7e8c6e}.mailx-reader-empty strong{font-size:16px;color:#616d54;font-weight:550;margin-bottom:8px}
+.mailx-launch-count{position:absolute;right:-4px;top:-5px;min-width:16px;line-height:16px;border-radius:7px;background:#637957;color:white;font-size:9px;font-weight:650;padding:0 3px;box-shadow:0 0 0 2px #f6f5f1}#mailDashboardButton{position:relative;overflow:visible}
+.mailx-peek{position:fixed;width:min(320px,calc(100vw - 24px));padding:17px;background:#fffefa;border:1px solid #e4e6da;border-radius:16px;box-shadow:0 8px 30px #2634211c;z-index:1000;font-family:inherit}.mailx-peek[hidden]{display:none}.mailx-peek>strong{font-size:11px;font-weight:600;color:#929b85;display:block;margin-bottom:12px}.mailx-peek>p{font-size:12px;color:#89927c}.mailx-peek button{display:flex;width:100%;gap:10px;padding:10px 0;background:transparent;border:0;text-align:left;cursor:pointer;align-items:center}.mailx-peek button>span:last-child{display:flex;flex-direction:column;gap:3px;min-width:0}.mailx-peek b{font-size:12px;color:#4e5a40;font-weight:600}.mailx-peek button>span>span{font-size:11px;color:#8e9783;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mailx-shell.is-reader-focused .mailx-main{padding-left:12px;grid-template-columns:1fr}
+@media(max-width:1100px) and (min-width:861px){.mailx-topbar{gap:8px;padding:12px}.mailx-topbar>.mailx-search{margin-left:5px}.mailx-top-account{width:95px}.mailx-time{max-width:80px}.mailx-thread-message{margin:0 16px}.mailx-reader-head{padding:20px 16px}}
+@media(max-width:860px){
+ .mailx-dialog{width:100vw;height:100dvh;border-radius:0}.mailx-main{display:flex;padding:0}.mailx-nav{display:none}.mailx-list-pane,.mailx-reader{border:0;border-radius:0}
+ .mailx-topbar{display:flex;flex-wrap:wrap;gap:7px;padding:calc(9px + env(safe-area-inset-top)) 12px 10px;min-height:0}.mailx-brand{margin-right:auto}.mailx-brand-icon{width:30px;height:30px}.mailx-title{font-size:18px}
+ .mailx-topbar>.mailx-search{order:6;margin:3px 0 0;max-width:none;width:100%;flex:1 0 100%;height:38px;font-size:16px}.mailx-top-account{width:85px;font-size:10px;height:34px}.mailx-topbar .mailx-compose-main{padding:0 10px;min-height:34px;font-size:10px}.mailx-topbar #mailxRefresh{margin:0;width:28px;min-height:34px}.mailx-topbar #mailxSettings,.mailx-topbar #mailxClose{width:26px;min-height:34px}
+ .mailx-mobile-tabs{padding:8px 12px;background:#f6f5f1;gap:7px}.mailx-mobile-tab{font-size:11px;border:0;background:transparent;color:#929a87}.mailx-mobile-tab.is-active{background:#e1e8d9;color:#637551}
+ .mailx-shell.is-reading .mailx-topbar{display:none}.mailx-reader-toolbar{padding:calc(10px + env(safe-area-inset-top)) 12px 10px;gap:5px;overflow:visible}.mailx-reader-toolbar .mailx-action{font-size:10px;min-height:36px;padding:0 7px}
+ .mailx-list-tools{padding:10px 15px}.mailx-message-wrap .mailx-message{padding:15px 16px;grid-template-columns:36px minmax(0,1fr)}.mailx-time{max-width:none;font-size:9px}.mailx-sender{font-size:14px}
+ .mailx-row-actions{top:auto;bottom:7px;right:12px;background:transparent;border:0;box-shadow:none;padding:0;opacity:1;pointer-events:auto}.mailx-row-actions button{width:29px;height:27px}.mailx-row-actions button[data-row-action="archive"],.mailx-row-actions button[data-row-action="read"],.mailx-row-actions button[data-row-action="unread"]{display:none}.mailx-message-foot{padding-right:70px}.mailx-row-status{display:none}
+ .mailx-reader-head{padding:22px 20px 16px}.mailx-reader-subject{font-size:23px}.mailx-thread-message{margin:0 20px}.mailx-thread-details>summary time{max-width:100px;font-size:9px}.mailx-thread-summary>span{max-width:170px}.mailx-thread-message .mailx-mail-body{font-size:15px;line-height:1.8}.mailx-reply-bar{padding:14px 20px calc(14px + env(safe-area-inset-bottom))}
+ .mailx-compose{border:0;border-radius:0}.mailx-compose-foot{padding-bottom:calc(12px + env(safe-area-inset-bottom))}.mailx-peek{display:none}.mailx-shell.is-reader-focused .mailx-main{padding:0}
+}
+@media(prefers-reduced-motion:reduce){.mailx-dialog *{animation:none!important;transition:none!important;scroll-behavior:auto!important}}

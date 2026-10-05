@@ -105,8 +105,8 @@ export function cachedOverviews(rows:any[],accounts:any[]) {
  }).filter(m=>!m.labels.includes('TRASH')&&!m.labels.includes('SPAM')).sort((a,b)=>b.timestamp-a.timestamp);
 }
 export function messageView(m:any,rules:any[],inherited:any={},externalImages=true,summaryOnly=false) {
- const content=bodies(m.payload), c=classify(m,rules,inherited), html=!summaryOnly&&content.html?safeHtml(content.html,{externalImages,inlineImages:inlineImages(m.payload)}):'';
- return {id:m.id,threadId:m.threadId,from:header(m,'From'),sender:senderName(header(m,'From')),email:address(header(m,'From')),to:header(m,'To'),cc:header(m,'Cc'),replyTo:header(m,'Reply-To')||header(m,'From'),subject:header(m,'Subject')||'(no subject)',timestamp:Number(m.internalDate),labels:m.labelIds||[],snippet:m.snippet||'',classification:c,unsubscribe:unsubscribeInfo(m),text:content.text||plainText(content.html),html,hasExternalImages:html.includes('data-external-image'),externalImages,attachments:content.attachments};
+ const content=bodies(m.payload), c=classify(m,rules,inherited), hasInlineImages=/\bsrc\s*=\s*["']?cid:/i.test(content.html||''), html=!summaryOnly&&content.html?safeHtml(content.html,{externalImages,inlineImages:inlineImages(m.payload)}):'';
+ return {id:m.id,threadId:m.threadId,from:header(m,'From'),sender:senderName(header(m,'From')),email:address(header(m,'From')),to:header(m,'To'),cc:header(m,'Cc'),replyTo:header(m,'Reply-To')||header(m,'From'),subject:header(m,'Subject')||'(no subject)',timestamp:Number(m.internalDate),labels:m.labelIds||[],snippet:m.snippet||'',classification:c,unsubscribe:unsubscribeInfo(m),text:content.text||plainText(content.html),html,hasExternalImages:html.includes('data-external-image'),hasInlineImages,externalImages,attachments:content.attachments};
 }
 export function threadMessageViews(messages:any[],rules:any[],summaryOnly=false) {
  const views=messages.map(m=>messageView(m,rules,{},true,summaryOnly));
