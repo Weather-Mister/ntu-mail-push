@@ -15,7 +15,7 @@
 #mailxComposeMobile,.mailx-account-select-list{display:none!important}
 .mailx-main{grid-template-columns:64px var(--mailx-list-w,360px) 9px minmax(0,1fr);padding:0 12px 12px 0;gap:0}
 .mailx-nav{padding:16px 10px;background:transparent;display:flex;align-items:center;flex-direction:column;gap:9px;overflow:visible}
-.mailx-nav .mailx-filter{position:relative;display:grid;place-items:center;width:42px;min-height:42px;padding:0;color:#8c8e87;border-radius:12px}
+.mailx-nav .mailx-filter{position:relative;display:flex;align-items:center;justify-content:center;width:42px;height:42px;min-height:42px;padding:0;color:#8c8e87;border-radius:12px}
 .mailx-nav .mailx-filter:hover{color:#343f37;background:#e9ebe4}
 .mailx-nav .mailx-filter.is-active{color:#405f4f;background:#e2e9df;box-shadow:none}
 .mailx-rail-count{position:absolute;top:1px;right:0;font-size:8px;line-height:15px;min-width:15px;border-radius:5px;color:#fff;background:#557568;font-weight:700}

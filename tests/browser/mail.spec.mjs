@@ -274,6 +274,17 @@ test('star and reversible trash actions work without opening the reader',async({
  await row.hover();await row.locator('[data-row-action="trash"]').click();await expect(page.locator('#mailxToast')).toContainText('Moved to Trash');await page.locator('#mailxToast button').click();await expect.poll(()=>calls.some(c=>c.route==='modify'&&c.body.action==='untrash')).toBe(true);
 });
 
+test('mail rail icons are centered in their buttons',async({page},info)=>{
+ test.skip(info.project.name!=='desktop','desktop rail');
+ await boot(page);
+ const deltas=await page.locator('.mailx-nav [data-mailx-filter] svg').evaluateAll(nodes=>nodes.map(svg=>{
+   const button=svg.closest('button').getBoundingClientRect(),icon=svg.getBoundingClientRect();
+   return {x:Math.abs((button.left+button.width/2)-(icon.left+icon.width/2)),y:Math.abs((button.top+button.height/2)-(icon.top+icon.height/2))};
+ }));
+ expect(deltas.length).toBeGreaterThan(0);
+ for(const d of deltas){expect(d.x).toBeLessThan(1);expect(d.y).toBeLessThan(1);}
+});
+
 test('modern reader fits the viewport and keeps Reply and Forward available',async({page},info)=>{
  await boot(page);if(info.project.name==='desktop'){const rail=await page.locator('.mailx-nav').boundingBox();expect(rail.width).toBe(64);}await expect(page.locator('.mailx-message .mailx-avatar')).toHaveCount(2);await page.locator('[data-row="0"]').click();
  const reader=await page.locator('#mailxReader').boundingBox(),toolbar=await page.locator('.mailx-reader-toolbar').boundingBox(),reply=await page.getByRole('button',{name:'Reply',exact:true}).boundingBox(),forward=await page.getByRole('button',{name:'Forward',exact:true}).boundingBox();expect(reader.width).toBeGreaterThan(300);expect(reply.y).toBeGreaterThanOrEqual(toolbar.y);expect(reply.y+reply.height).toBeLessThanOrEqual(toolbar.y+toolbar.height+1);expect(forward.y).toBe(reply.y);expect(await page.locator('#mailDemoDialog').evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);
