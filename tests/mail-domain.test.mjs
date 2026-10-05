@@ -1,0 +1,46 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {loginCode,classify,b64url,decodeBody,bodies,unsubscribeInfo,buildMime,validateDraft,validateEffects,AI_SYSTEM,safeWebUrl} from '../supabase/functions/eren-mail/domain.mjs';
+const message=(subject,text,extra={})=>({id:'m1',threadId:'t1',internalDate:'1700000000000',labelIds:['INBOX'],payload:{mimeType:'text/plain',headers:[{name:'Subject',value:subject},{name:'From',value:'Sender <news@food.test>'},...(extra.headers||[])],body:{data:b64url(text)}},...Object.fromEntries(Object.entries(extra).filter(([k])=>k!=='headers'))});
+test('verification codes require authentication context and explicit token placement',()=>{
+ assert.equal(loginCode('Your verification code','Your verification code is 483921'), '483921');
+ assert.equal(loginCode('Sign-in verification','AB12CD is your verification code'), 'AB12CD');
+ assert.equal(loginCode('驗證碼','您的驗證碼：582193'), '582193');
+ assert.equal(loginCode('Verification','Your verification code is 8642'),'8642');
+ assert.equal(loginCode('Order receipt','Order 482991 has shipped'),null);
+ assert.equal(loginCode('Login notification','You logged in during 2026. Call 123456.'),null);
+ assert.equal(loginCode('Your verification code','Your verification code is required'),null);
+});
+test('receipts stay Normal despite List-Unsubscribe; typed promotion rules do not block receipts',()=>{
+ const h=[{name:'List-Unsubscribe',value:'<https://food.test/unsubscribe>'},{name:'List-ID',value:'promos.food.test'}];
+ const rule={id:'r',scope:'domain',match_value:'food.test',type_match:'Promotion',effects:{priority:'Muted',blocked:true}};
+ const receipt=classify(message('Your order has shipped','Receipt for your order',{headers:h}),[rule]);
+ assert.equal(receipt.type,'Receipt / Order');assert.equal(receipt.priority,'Normal');assert.equal(receipt.blocked,false);
+ const promo=classify(message('40% off','promo code TODAY',{headers:h}),[rule]);assert.equal(promo.priority,'Muted');assert.equal(promo.blocked,true);
+});
+test('manual rules override inference; specific context and action remain independent',()=>{
+ const rules=[{id:'r1',scope:'domain',match_value:'food.test',effects:{priority:'Low'}},{id:'r2',scope:'sender',match_value:'news@food.test',effects:{priority:'High',context:'Engineering Mathematics'}},{id:'r3',scope:'thread',match_value:'t1',effects:{action:'Waiting',type:'University'}}];
+ const r=classify(message('Verification code','Your verification code is 398421'),rules);
+ assert.equal(r.type,'University');assert.equal(r.priority,'High');assert.equal(r.context,'Engineering Mathematics');assert.equal(r.action,'Waiting');assert.equal(r.code,'398421');
+});
+test('uncertain mail is visible Other with Needs classification',()=>{const r=classify(message('Hello','Something new.'));assert.equal(r.type,'Other');assert.equal(r.needsClassification,true);assert.equal(r.blocked,false);});
+test('unsubscribe understands HTTPS, one-click and mailto without inventing availability',()=>{
+ const r=unsubscribeInfo(message('Test','',{headers:[{name:'List-Unsubscribe',value:'<https://mail.example.org/unsub?id=1>, <mailto:leave@list.example.org?subject=Unsubscribe&body=Remove%20me>'},{name:'List-Unsubscribe-Post',value:'List-Unsubscribe=One-Click'}]}));
+ assert.equal(r.oneClick,true);assert.equal(r.mailto.body,'Remove me');assert.equal(r.web,'https://mail.example.org/unsub?id=1');
+ assert.equal(unsubscribeInfo(message('Test','Unsubscribe here!')).web,null);
+ for(const url of ['javascript:alert(1)','http://safe.com','https://127.0.0.1/','https://[::1]/','https://user:pass@safe.com/','https://safe.com:444/','https://host.internal/'])assert.equal(safeWebUrl(url),null);
+});
+test('UTF-8 MIME and replies contain threading headers and complete edited body',()=>{
+ const raw=decodeBody(buildMime({to:'friend@example.org',subject:'ignored subject',body:'您好\nI can meet after 4.'},'me@example.org','request@eren-mail.invalid',{subject:'Question about Thursday',messageId:'<original@example.org>',references:'<first@example.org>'}));
+ assert.match(raw,/In-Reply-To: <original@example.org>/);assert.match(raw,/References: <first@example.org>\r\n <original@example.org>/);assert.match(raw,/Message-ID: <request@eren-mail.invalid>/);
+ const body=raw.split('\r\n\r\n')[1];assert.equal(decodeBody(body),'您好\r\nI can meet after 4.');assert.match(raw,/Subject: =\?UTF-8\?B\?/);
+});
+test('reject mail header injection and malformed rule effects',()=>{
+ for(const draft of [{to:'x@y.com\r\nBcc: evil@example.org',subject:'Hi',body:'hi'},{to:'x@y.com',subject:'Hi\nBcc: x@y.com',body:'hi'},{to:'invalid',subject:'Hi',body:'hi'}])assert.throws(()=>validateDraft(draft));
+ assert.throws(()=>validateEffects({blocked:'true'}));assert.throws(()=>validateEffects({priority:'Urgent'}));assert.throws(()=>validateEffects({account_id:'steal'}));
+});
+test('multipart traversal extracts text and attachments without conflating HTML',()=>{
+ const r=bodies({parts:[{mimeType:'multipart/alternative',parts:[{mimeType:'text/plain',body:{data:b64url('Hello 世界')}},{mimeType:'text/html',body:{data:b64url('<b>Hello 世界</b>')}}]},{partId:'2',filename:'receipt.pdf',mimeType:'application/pdf',body:{attachmentId:'att',size:42}}]});
+ assert.equal(r.text.trim(),'Hello 世界');assert.equal(r.html,'<b>Hello 世界</b>');assert.equal(r.attachments[0].filename,'receipt.pdf');
+});
+test('AI policy treats thread as untrusted context and current edited draft as authoritative',()=>{assert.match(AI_SYSTEM,/current draft is authoritative/i);assert.match(AI_SYSTEM,/never invent/i);assert.match(AI_SYSTEM,/untrusted/i);assert.match(AI_SYSTEM,/ONLY the revised email body/);});

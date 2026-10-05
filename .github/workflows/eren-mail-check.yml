@@ -1,0 +1,33 @@
+name: Eren Mail checks
+on:
+  pull_request:
+    paths: ['sites/eren/**', 'supabase/**', 'tests/**', 'package*.json', 'playwright.config.mjs', '.github/workflows/eren-mail-check.yml']
+  push:
+    branches: [main]
+    paths: ['sites/eren/**', 'supabase/**', 'tests/**', 'package*.json', 'playwright.config.mjs', '.github/workflows/eren-mail-check.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mail:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run check:mail
+      - run: npm run test:server
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:ui
+      - name: Build isolated Pages artifact
+        run: |
+          mkdir -p _site/begum
+          cp -R sites/eren/. _site/
+          cp -R sites/begum/. _site/begum/
+          test ! -e _site/supabase
+          diff -qr sites/begum _site/begum

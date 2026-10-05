@@ -1,0 +1,4 @@
+project_id = "ntu-mail-push"
+[functions.eren-mail]
+verify_jwt = false
+entrypoint = "./functions/eren-mail/index.ts"

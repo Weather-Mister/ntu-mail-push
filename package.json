@@ -1,0 +1,17 @@
+{
+  "name": "ntu-mail-push-checks",
+  "private": true,
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "test:ui": "playwright test",
+    "check:mail": "deno check --node-modules-dir=manual --config supabase/functions/eren-mail/deno.json supabase/functions/eren-mail/index.ts",
+    "test:server": "deno test --allow-env --allow-net --node-modules-dir=manual --config supabase/functions/eren-mail/deno.json tests/server_test.ts"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.58.2",
+    "@supabase/supabase-js": "2.117.2",
+    "@types/node": "24.10.1",
+    "deno": "2.9.6",
+    "sanitize-html": "2.18.0"
+  }
+}
