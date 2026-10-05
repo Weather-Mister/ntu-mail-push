@@ -43,20 +43,20 @@ test('full reader, mobile back, normal reply and safe controls',async({page},inf
  await page.screenshot({path:`test-results/${info.project.name}-composer.png`});
 });
 test('AI revisions use current manual edits; Undo and Redo preserve text',async({page})=>{
- const {calls}=await boot(page);await page.locator('#mailxComposeTop').click();await page.locator('#mailxAiPrompt').fill('Meet after 3');await page.locator('#mailxGenerate').click();await expect(page.locator('#mailxBody')).toHaveValue('I can meet after 3.');await page.locator('#mailxBody').fill('I can meet after 4.');await page.locator('#mailxAiPrompt').fill('Make warmer');await page.locator('#mailxGenerate').click();await expect(page.locator('#mailxBody')).toHaveValue('Warm: I can meet after 4.');expect(calls.filter(c=>c.route==='ai').at(-1).body.body).toBe('I can meet after 4.');await page.locator('#mailxUndo').click();await expect(page.locator('#mailxBody')).toHaveValue('I can meet after 4.');await page.locator('#mailxRedo').click();await expect(page.locator('#mailxBody')).toHaveValue('Warm: I can meet after 4.');
+ const {calls}=await boot(page);await page.locator('#mailxComposeMain').click();await page.locator('#mailxAiPrompt').fill('Meet after 3');await page.locator('#mailxGenerate').click();await expect(page.locator('#mailxBody')).toHaveValue('I can meet after 3.');await page.locator('#mailxBody').fill('I can meet after 4.');await page.locator('#mailxAiPrompt').fill('Make warmer');await page.locator('#mailxGenerate').click();await expect(page.locator('#mailxBody')).toHaveValue('Warm: I can meet after 4.');expect(calls.filter(c=>c.route==='ai').at(-1).body.body).toBe('I can meet after 4.');await page.locator('#mailxUndo').click();await expect(page.locator('#mailxBody')).toHaveValue('I can meet after 4.');await page.locator('#mailxRedo').click();await expect(page.locator('#mailxBody')).toHaveValue('Warm: I can meet after 4.');
 });
 test('AI failure keeps the draft; edits during generation win',async({page})=>{
- await boot(page,{aiFail:true});await page.locator('#mailxComposeTop').click();await page.locator('#mailxBody').fill('My current draft.');await page.locator('#mailxAiPrompt').fill('Revise');await page.locator('#mailxGenerate').click();await expect(page.locator('#mailxComposeError')).toContainText('quota');await expect(page.locator('#mailxBody')).toHaveValue('My current draft.');
+ await boot(page,{aiFail:true});await page.locator('#mailxComposeMain').click();await page.locator('#mailxBody').fill('My current draft.');await page.locator('#mailxAiPrompt').fill('Revise');await page.locator('#mailxGenerate').click();await expect(page.locator('#mailxComposeError')).toContainText('quota');await expect(page.locator('#mailxBody')).toHaveValue('My current draft.');
 });
 test('late AI response cannot overwrite typing or a different composer',async({page})=>{
- await boot(page,{aiDelay:500});await page.locator('#mailxComposeTop').click();await page.locator('#mailxBody').fill('Original');await page.locator('#mailxAiPrompt').fill('Warm');await page.locator('#mailxGenerate').click();await page.locator('#mailxBody').fill('New manual edit');await expect(page.locator('#mailxToast')).toContainText('You edited this draft');await expect(page.locator('#mailxBody')).toHaveValue('New manual edit');
+ await boot(page,{aiDelay:500});await page.locator('#mailxComposeMain').click();await page.locator('#mailxBody').fill('Original');await page.locator('#mailxAiPrompt').fill('Warm');await page.locator('#mailxGenerate').click();await page.locator('#mailxBody').fill('New manual edit');await expect(page.locator('#mailxToast')).toContainText('You edited this draft');await expect(page.locator('#mailxBody')).toHaveValue('New manual edit');
 });
 test('archive uses API; local block scope stays distinct from Spam',async({page})=>{
  const {calls}=await boot(page);await page.locator('#mailxList .mailx-message').first().click();await page.locator('[data-action="block"]').click();await page.locator('#ruleScope').selectOption('sender');await page.locator('#ruleSave').click();await expect(page.locator('#mailxSheet')).toHaveCount(0);const rule=calls.find(c=>c.route==='rules'&&c.body.effects);expect(rule.body.effects).toEqual({blocked:true});expect(rule.body.scope).toBe('sender');expect(JSON.stringify(calls)).not.toContain('SPAM');await page.locator('[data-action="archive"]').click();await expect.poll(()=>calls.some(c=>c.route==='modify'&&c.body.action==='archive')).toBeTruthy();
 });
 test('duplicate Send is disabled and scheduled sending is a server request',async({page})=>{
- const {calls}=await boot(page,{sendDelay:500});await page.locator('#mailxComposeTop').click();await page.locator('#mailxTo').fill('friend@example.org');await page.locator('#mailxSubject').fill('Hello');await page.locator('#mailxBody').fill('Daily driver test');await page.locator('#mailxSend').click();await expect(page.locator('#mailxSend')).toBeDisabled();await expect(page.locator('#mailxCompose')).toBeHidden();expect(calls.filter(c=>c.route==='send')).toHaveLength(1);
- await page.locator('#mailxComposeTop').click();await page.locator('#mailxTo').fill('friend@example.org');await page.locator('#mailxBody').fill('Scheduled');await page.locator('#mailxSchedule').click();await page.locator('#mailxSendAt').fill('2027-01-10T15:30');await page.locator('#mailxConfirmSchedule').click();await expect(page.locator('#mailxCompose')).toBeHidden();expect(calls.filter(c=>c.route==='send').at(-1).body.sendAt).toBeTruthy();
+ const {calls}=await boot(page,{sendDelay:500});await page.locator('#mailxComposeMain').click();await page.locator('#mailxTo').fill('friend@example.org');await page.locator('#mailxSubject').fill('Hello');await page.locator('#mailxBody').fill('Daily driver test');await page.locator('#mailxSend').click();await expect(page.locator('#mailxSend')).toBeDisabled();await expect(page.locator('#mailxCompose')).toBeHidden();expect(calls.filter(c=>c.route==='send')).toHaveLength(1);
+ await page.locator('#mailxComposeMain').click();await page.locator('#mailxTo').fill('friend@example.org');await page.locator('#mailxBody').fill('Scheduled');await page.locator('#mailxSchedule').click();await page.locator('#mailxSendAt').fill('2027-01-10T15:30');await page.locator('#mailxConfirmSchedule').click();await expect(page.locator('#mailxCompose')).toBeHidden();expect(calls.filter(c=>c.route==='send').at(-1).body.sendAt).toBeTruthy();
 });
 
 test('styled newsletter images load by default without a notice',async({page})=>{
@@ -85,4 +85,53 @@ test('failed refresh preserves loaded mail, remains retryable and does not leak 
 });
 test('a failed thread preserves its existing row alongside successful account results',async({page})=>{
  await boot(page,{partialFail:true});await expect(page.locator('#mailxNotice')).toContainText('One thread temporarily unavailable');await expect(page.locator('#mailxList .mailx-message')).toHaveCount(2);await expect(page.locator('#mailxList')).toContainText('Thursday meeting');await expect(page.locator('#mailxList')).toContainText('Your receipt');
+});
+
+test('workspace chrome is singular, grouped, and reader footer is structurally separate',async({page})=>{
+ await boot(page);
+ await expect(page.locator('#mailxComposeTop')).toHaveCount(0);
+ await expect(page.locator('#mailxComposeMain')).toHaveCount(1);
+ await expect(page.locator('.mailx-nav-group')).toHaveCount(4);
+ await page.locator('#mailxList .mailx-message').first().click();
+ await expect(page.locator('.mailx-reader > .mailx-reply-bar')).toHaveCount(1);
+ await expect(page.locator('.mailx-reader-scroll .mailx-reply-bar')).toHaveCount(0);
+ await expect(page.locator('.mailx-reply-inline')).toHaveCount(0);
+});
+
+test('desktop splitters resize panes and persist their widths',async({page},info)=>{
+ test.skip(info.project.name==='iphone','desktop interaction');
+ await boot(page);
+ const list=page.locator('.mailx-list-pane'),splitter=page.locator('[data-mailx-resizer="list"]');
+ const before=await list.boundingBox(),handle=await splitter.boundingBox();
+ expect(before).toBeTruthy();expect(handle).toBeTruthy();
+ await page.mouse.move(handle.x+handle.width/2,handle.y+60);await page.mouse.down();await page.mouse.move(handle.x+handle.width/2+72,handle.y+60,{steps:5});await page.mouse.up();
+ const after=await list.boundingBox();expect(after.width).toBeGreaterThan(before.width+40);
+ const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('eren-mail-layout-v1')||'{}'));
+ expect(saved.list).toBeGreaterThan(before.width+40);
+});
+
+test('desktop composer can be dragged without moving when editing fields',async({page},info)=>{
+ test.skip(info.project.name==='iphone','desktop interaction');
+ await boot(page);await page.locator('#mailxComposeMain').click();
+ const pane=page.locator('#mailxCompose'),head=page.locator('#mailxCompose .mailx-compose-head');
+ const before=await pane.boundingBox(),h=await head.boundingBox();expect(before).toBeTruthy();expect(h).toBeTruthy();
+ await page.mouse.move(h.x+120,h.y+h.height/2);await page.mouse.down();await page.mouse.move(h.x+40,h.y+h.height/2+36,{steps:5});await page.mouse.up();
+ const after=await pane.boundingBox();expect(after.x).toBeLessThan(before.x-50);expect(after.y).toBeGreaterThanOrEqual(before.y);
+ const stable=await pane.boundingBox();await page.locator('#mailxSubject').click();await page.locator('#mailxSubject').fill('Still here');const edited=await pane.boundingBox();
+ expect(Math.abs(edited.x-stable.x)).toBeLessThan(2);expect(Math.abs(edited.y-stable.y)).toBeLessThan(2);
+});
+
+test('touch swipe left archives immediately through the same Gmail action',async({page})=>{
+ const {calls}=await boot(page);
+ const wrap=page.locator('[data-swipe-row="0"]');await expect(wrap).toHaveAttribute('data-swipe-enabled','1');
+ await wrap.evaluate(async el=>{
+   const r=el.getBoundingClientRect(),id=41,y=r.top+r.height/2,start=r.right-18,end=start-Math.min(130,r.width*.35);
+   const fire=(type,x)=>el.dispatchEvent(new PointerEvent(type,{bubbles:true,cancelable:true,pointerId:id,pointerType:'touch',isPrimary:true,button:0,clientX:x,clientY:y}));
+   fire('pointerdown',start);fire('pointermove',end);
+   await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+   fire('pointerup',end);
+ });
+ await expect.poll(()=>calls.some(c=>c.route==='modify'&&c.body.action==='archive')).toBeTruthy();
+ await expect(page.locator('#mailxToast')).toContainText('Archived');
+ await expect(page.locator('#mailxToast button')).toHaveText('Undo');
 });
