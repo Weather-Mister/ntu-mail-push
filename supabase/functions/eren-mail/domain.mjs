@@ -142,7 +142,7 @@ export function sanitizeRichBody(html='') {
 
 export function validateDraft(d) {
   for (const k of ['to','subject','body']) if(typeof d[k]!=='string') throw new Error('Missing '+k);
-  const attachments=validateAttachmentRefs(d.attachments||[]),bodyHtml=d.bodyHtml==null?'':sanitizeRichBody(d.bodyHtml);
+  const refs=validateAttachmentRefs(d.attachments||[]),attachments=refs.map((a,i)=>typeof d.attachments?.[i]?.data==='string'?{...a,data:d.attachments[i].data}:a),bodyHtml=d.bodyHtml==null?'':sanitizeRichBody(d.bodyHtml);
   if (!d.to.trim() || d.to.length>2000 || d.subject.length>500 || d.body.length>100000 || (!d.body.trim()&&!attachments.length)) throw new Error('Recipient and body or attachment required; draft too large or invalid');
   if (/[\r\n]/.test(d.to+d.subject)) throw new Error('Invalid mail header');
   const recipients=d.to.split(',').map(x=>x.trim());
