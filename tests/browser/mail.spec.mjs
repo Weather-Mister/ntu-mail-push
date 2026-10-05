@@ -125,8 +125,8 @@ test('touch swipe left archives immediately through the same Gmail action',async
  const {calls}=await boot(page);
  const wrap=page.locator('[data-swipe-row="0"]');await expect(wrap).toHaveAttribute('data-swipe-enabled','1');
  await wrap.evaluate(async el=>{
-   const r=el.getBoundingClientRect(),id=41,y=r.top+r.height/2,start=r.right-18,end=start-Math.min(130,r.width*.35);
-   const fire=(type,x)=>el.dispatchEvent(new PointerEvent(type,{bubbles:true,cancelable:true,pointerId:id,pointerType:'touch',isPrimary:true,button:0,clientX:x,clientY:y}));
+   const target=el.querySelector('.mailx-message'),r=el.getBoundingClientRect(),id=41,y=r.top+r.height/2,start=r.right-18,end=start-Math.min(130,r.width*.35);
+   const fire=(type,x)=>target.dispatchEvent(new PointerEvent(type,{bubbles:true,cancelable:true,pointerId:id,pointerType:'touch',isPrimary:true,button:0,clientX:x,clientY:y}));
    fire('pointerdown',start);fire('pointermove',end);
    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
    fire('pointerup',end);
