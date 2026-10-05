@@ -18,6 +18,7 @@ function visible(v:any,filter:string) {
  if(filter==='trash')return l.includes('TRASH');
  if(l.includes('TRASH')||l.includes('SPAM'))return false;
  if(filter==='starred')return l.includes('STARRED');
+ if(filter==='unread')return l.includes('INBOX')&&l.includes('UNREAD')&&!c.blocked;
  if(filter==='all')return true;
  if(filter==='blocked')return c.blocked;
  if(c.blocked)return false;
@@ -113,7 +114,7 @@ export async function handle(req:Request) {
     if(cursors[a.id]===null)return {messages:[],next:null,accountId:a.id};
     try {
      const [api,rules]=await Promise.all([gmailClient(admin,a),accountRules(admin,a)]);
-     const base=({starred:'is:starred',trash:'in:trash',inbox:'in:inbox',important:'in:inbox',reply:'in:inbox',codes:'',low:'',blocked:'',archived:'-in:inbox -in:drafts',sent:'in:sent','gmail-drafts':'in:drafts',all:''} as any)[filter]??'in:inbox';
+     const base=({starred:'is:starred',unread:'in:inbox is:unread',trash:'in:trash',inbox:'in:inbox',important:'in:inbox',reply:'in:inbox',codes:'',low:'',blocked:'',archived:'-in:inbox -in:drafts',sent:'in:sent','gmail-drafts':'in:drafts',all:''} as any)[filter]??'in:inbox';
      const params=new URLSearchParams({maxResults:'12',q:`${base} ${query} ${filter==='trash'?'':'-in:trash'} -in:spam`.trim(),...(filter==='trash'?{includeSpamTrash:'true'}:{})});
      if(cursors[a.id]) params.set('pageToken',String(cursors[a.id]).slice(0,2000));
      const page=await api('threads?'+params);
@@ -164,6 +165,25 @@ export async function handle(req:Request) {
    const mods=({star:{addLabelIds:['STARRED']},unstar:{removeLabelIds:['STARRED']},archive:{removeLabelIds:['INBOX']},unarchive:{addLabelIds:['INBOX']},read:{removeLabelIds:['UNREAD']},unread:{addLabelIds:['UNREAD']}} as any)[input.action];
    if(!mods)throw new MailError(400,'Invalid mail action.');
    await api('threads/'+id(input.threadId)+'/modify','POST',mods);invalidateThread(workspace,a.id,input.threadId);return response({ok:true});
+  }
+  if(route==='mark-all-read') {
+   mustPost(req);
+   const which=input.accountId;
+   const accounts=which&&which!=='all'?[await ownedAccount(admin,workspace,which)]:check(await admin.from('eren_mail_accounts').select('*').eq('workspace_hash',workspace).neq('status','disconnecting').order('created_at'));
+   let total=0;
+   const results=await mapLimit(accounts,async(a:any)=>{
+    const api=await gmailClient(admin,a),ids:string[]=[];let token='';
+    for(let pageNo=0;pageNo<20;pageNo++){
+     const params=new URLSearchParams({maxResults:'500',q:'in:inbox is:unread -in:spam -in:trash'});
+     if(token)params.set('pageToken',token);
+     const page=await api('messages?'+params);
+     ids.push(...(page.messages||[]).map((m:any)=>m.id));
+     token=page.nextPageToken||'';if(!token)break;
+    }
+    for(let i=0;i<ids.length;i+=1000)await api('messages/batchModify','POST',{ids:ids.slice(i,i+1000),removeLabelIds:['UNREAD']});
+    total+=ids.length;clearMailMemory(workspace);return {accountId:a.id,count:ids.length};
+   },2);
+   return response({ok:true,count:total,accounts:results});
   }
   if(route==='rules') {
    if(req.method==='GET')return response({rules:check(await admin.from('eren_mail_rules').select('*').eq('workspace_hash',workspace).order('created_at',{ascending:false}))});

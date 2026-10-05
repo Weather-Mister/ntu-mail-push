@@ -23,7 +23,7 @@
 .mailx-list-pane,.mailx-reader{border:1px solid #e5e5dd;border-radius:15px;overflow:hidden;background:#fffefa}
 .mailx-list-tools{padding:14px 16px 10px;display:flex;flex-wrap:wrap;align-items:center;gap:8px;border-color:#eeeee7}
 .mailx-list-controls{display:none}.mailx-list-meta{margin:0;font-size:11px;color:#75776f;font-weight:500;flex:1}
-.mailx-list-extra{margin:0;max-width:135px}.mailx-list-extra select{border:0;background:transparent;font-size:11px;padding:5px;color:#545b52}
+.mailx-list-extra{margin:0;max-width:none;display:flex;align-items:center;gap:5px}.mailx-list-extra select{border:0;background:transparent;font-size:11px;padding:5px;color:#545b52}.mailx-list-extra #mailxMarkAllRead{white-space:nowrap;padding:0 8px}
 #mailxNotice{flex-basis:100%;padding:0;font-size:11px}#mailxNotice[hidden]{display:none}
 .mailx-message-wrap{position:relative;border-bottom:1px solid #eeeee7;border-radius:0;flex-shrink:0}
 .mailx-message-wrap .mailx-message{display:grid;grid-template-columns:35px minmax(0,1fr);gap:11px;padding:16px 15px;border:0;border-radius:0;background:#fffefa;min-width:0}
@@ -81,3 +81,19 @@
  .mailx-compose{border:0;border-radius:0}.mailx-compose-foot{padding-bottom:calc(12px + env(safe-area-inset-bottom))}.mailx-peek{display:none}.mailx-shell.is-reader-focused .mailx-main{padding:0}
 }
 @media(prefers-reduced-motion:reduce){.mailx-dialog *{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+
+/* Current message fills the reader instead of leaving a fixed-height mail box. */
+.mailx-reader-scroll{display:flex;flex-direction:column;min-height:0}
+.mailx-reader-head{flex:0 0 auto}
+.mailx-thread-message.is-current{display:flex;flex:1 1 auto;min-height:0;flex-direction:column}
+.mailx-thread-details.is-current[open]{display:flex;flex:1 1 auto;min-height:0;flex-direction:column}
+.mailx-thread-details.is-current>.mailx-message-meta{flex:0 0 auto}
+.mailx-thread-message.is-current>.mailx-thread-details.is-current[open]>.mailx-html-body{display:block;flex:1 1 auto;width:100%;height:100%;min-height:clamp(470px,calc(100dvh - 250px),760px);max-height:none}
+.mailx-thread-message.is-current>.mailx-thread-details.is-current[open]>.mailx-mail-body{flex:1 1 auto;min-height:0;overflow:auto}
+.mailx-thread-details.is-current>.mailx-text-alternative,
+.mailx-thread-details.is-current>.mailx-attachments{flex:0 0 auto}
+@media(max-width:860px){
+ .mailx-thread-message.is-current{min-height:0}
+ .mailx-thread-message.is-current>.mailx-thread-details.is-current[open]>.mailx-html-body{min-height:calc(100dvh - 180px)}
+}
