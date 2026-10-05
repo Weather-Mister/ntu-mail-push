@@ -319,6 +319,7 @@
   }
   async function addFiles(files){
     const list=[...files];if(!list.length)return;
+    try{await saveDraft();}catch(e){showToast('Save the draft before attaching files: '+e.message);return;}
     let used=currentAttachments.reduce((n,a)=>n+a.size,0);
     for(const file of list){
       if(currentAttachments.length>=8){showToast('You can attach up to 8 files.');break;}
