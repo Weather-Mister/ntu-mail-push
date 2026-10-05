@@ -17,8 +17,8 @@ async function boot(page,options={}){
    if(r==='ai'){
     if(options.aiDelay)await new Promise(r=>setTimeout(r,options.aiDelay));
     if(options.aiFail)return route.fulfill({status:502,contentType:'application/json',body:JSON.stringify({error:'Gemini quota exhausted. Your draft has been preserved.'})});
-    const revised=body.body?'Warm: '+body.body:'I can meet after 3.';
-    data={body:revised,...(options.richAiHtml?{bodyHtml:options.richAiHtml}:{})};
+    const revised=options.aiBody!==undefined?options.aiBody:(body.body?'Warm: '+body.body:'I can meet after 3.');
+    data={body:revised,...(options.richAiHtml!==undefined?{bodyHtml:options.richAiHtml}:{})};
    }
    if(r==='drafts/attachment'){
     options._attachmentAttempts=(options._attachmentAttempts||0)+1;
@@ -131,14 +131,13 @@ test('desktop composer can be dragged without moving when editing fields',async(
 
 test('touch swipe left archives immediately through the same Gmail action',async({page},info)=>{
  test.skip(info.project.name!=='iphone','touch-only interaction');
- const {calls}=await boot(page);
+ const {calls}=await boot(page);await expect.poll(()=>page.locator('#mailxRefresh').isDisabled()).toBe(false);
  const wrap=page.locator('[data-swipe-row="0"]');await expect(wrap).toHaveAttribute('data-swipe-enabled','1');
  await wrap.evaluate(async el=>{
-   const target=el.querySelector('.mailx-message'),r=el.getBoundingClientRect(),id=41,y=r.top+r.height/2,start=r.right-18,end=start-Math.min(130,r.width*.35);
-   const fire=(type,x)=>target.dispatchEvent(new PointerEvent(type,{bubbles:true,cancelable:true,pointerId:id,pointerType:'touch',isPrimary:true,button:0,clientX:x,clientY:y}));
-   fire('pointerdown',start);fire('pointermove',end);
-   await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
-   fire('pointerup',end);
+   const target=el.querySelector('.mailx-message'),r=el.getBoundingClientRect(),id=41,y=r.top+r.height/2,start=r.right-18,mid=start-64,end=Math.max(r.left+12,start-150);
+   const frame=()=>new Promise(resolve=>requestAnimationFrame(resolve));
+   const fire=(type,x,buttons)=>target.dispatchEvent(new PointerEvent(type,{bubbles:true,cancelable:true,pointerId:id,pointerType:'touch',isPrimary:true,button:0,buttons,clientX:x,clientY:y}));
+   fire('pointerdown',start,1);fire('pointermove',mid,1);await frame();fire('pointermove',end,1);await frame();fire('pointerup',end,0);
  });
  await expect.poll(()=>calls.some(c=>c.route==='modify'&&c.body.action==='archive')).toBeTruthy();
  await expect(page.locator('#mailxToast')).toContainText('Archived');
@@ -208,4 +207,18 @@ test('Gemini rich revisions preserve returned formatting and Undo restores prior
  await boot(page,{richAiHtml:'<p>Warm: <strong>I can meet after 4.</strong></p>'});await composeButton(page).click();await page.locator('#mailxBody').fill('I can meet after 4.');await page.locator('#mailxAiPrompt').fill('Make warmer');await page.locator('#mailxGenerate').click();
  await expect(page.locator('#mailxBody')).toContainText('Warm:');await expect.poll(()=>page.locator('#mailxBody').evaluate(el=>el.innerHTML)).toContain('<strong>');
  await page.locator('#mailxUndo').click();await expect(page.locator('#mailxBody')).toHaveText('I can meet after 4.');
+});
+
+
+test('plain Gemini line breaks render as real editor breaks',async({page})=>{
+ await boot(page,{aiBody:'First line\nSecond line\n\nNew paragraph.',richAiHtml:''});await composeButton(page).click();await page.locator('#mailxAiPrompt').fill('Keep my paragraphs');await page.locator('#mailxGenerate').click();
+ await expect.poll(()=>page.locator('#mailxBody').evaluate(el=>el.innerText)).toBe('First line\nSecond line\n\nNew paragraph.');
+ const html=await page.locator('#mailxBody').evaluate(el=>el.innerHTML);expect(html).toBe('First line<br>Second line<br><br>New paragraph.');
+});
+
+test('composer defensively renders HTML returned in Gemini body instead of printing tags',async({page})=>{
+ const malformed='<div style="font-family:Arial"><h2 style="color:red">Project Update</h2><p>Progress below:</p><ul><li><strong>Phase 1:</strong> Complete.</li><li><em>Phase 2:</em> Testing.</li></ul></div>';
+ await boot(page,{aiBody:malformed,richAiHtml:''});await composeButton(page).click();await page.locator('#mailxAiPrompt').fill('Format update');await page.locator('#mailxGenerate').click();
+ await expect(page.locator('#mailxBody')).toContainText('Project Update');await expect(page.locator('#mailxBody')).not.toContainText('<h2');
+ const html=await page.locator('#mailxBody').evaluate(el=>el.innerHTML);expect(html).toContain('<h2>Project Update</h2>');expect(html).not.toContain('style=');
 });

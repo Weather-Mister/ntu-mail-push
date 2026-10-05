@@ -6,7 +6,7 @@ let memoryEpoch=0;
 const accessTokens=new Map<string,{value:string;until:number}>(),tokenRequests=new Map<string,Promise<any>>();
 export function clearMailMemory(workspace='') {memoryEpoch++;for(const key of accessTokens.keys())if(key.startsWith(workspace))accessTokens.delete(key);for(const key of tokenRequests.keys())if(key.startsWith(workspace))tokenRequests.delete(key);threadCache.deletePrefix(workspace);}
 export function invalidateThread(workspace:string,accountId:string,threadId:string) {threadCache.deletePrefix(`${workspace}:${accountId}:${threadId}:`);}
-import { header, address, senderName, bodies, plainText, classify, unsubscribeInfo, b64url, AI_SYSTEM, sanitizeRichBody } from './domain.mjs';
+import { header, address, senderName, bodies, plainText, classify, unsubscribeInfo, b64url, AI_SYSTEM, sanitizeRichBody, normalizeAiRevision } from './domain.mjs';
 export class MailError extends Error { constructor(public status:number, message:string, public code='mail_error') { super(message); } }
 export const check = (result:any) => { if(result.error) throw new MailError(503,'Mail storage is temporarily unavailable. Your draft has not been discarded.'); return result.data; };
 export const db = () => createClient(Deno.env.get('SUPABASE_URL')!,Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,{auth:{persistSession:false,autoRefreshToken:false}});
@@ -175,7 +175,7 @@ export async function revise(admin:any,account:any,input:any) {
  const text=(candidate?.content?.parts||[]).filter((p:any)=>!p.thought).map((p:any)=>p.text||'').join('').trim();
  if(!text||candidate.finishReason!=='STOP') throw new MailError(502,'Gemini did not return a complete revision. Your draft has been preserved.');
  let parsed:any;try{parsed=JSON.parse(text);}catch{throw new MailError(502,'Gemini returned an invalid revision. Your draft has been preserved.');}
- const body=typeof parsed.body==='string'?parsed.body.trim():'',bodyHtml=typeof parsed.bodyHtml==='string'?sanitizeRichBody(parsed.bodyHtml):'';
- if(!body)throw new MailError(502,'Gemini returned an empty revision. Your draft has been preserved.');
- return {body,bodyHtml};
+ let revision;try{revision=normalizeAiRevision(parsed);}catch{throw new MailError(502,'Gemini returned unsafe or invalid formatting. Your draft has been preserved.');}
+ if(!revision.body)throw new MailError(502,'Gemini returned an empty revision. Your draft has been preserved.');
+ return revision;
 }
