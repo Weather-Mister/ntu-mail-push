@@ -3,7 +3,7 @@ import { db, check, secret, hash, config, workspaceFor, ownedAccount, gmailClien
 import { oauthStart, oauthCallback, oauthFinish } from './oauth.ts';
 import { enqueue, deliver, reconcile, tick, syncAccount } from './jobs.ts';
 import { oneClickUnsubscribe } from './unsubscribe.ts';
-import { TYPES, PRIORITIES, ACTIONS, validateEffects, validateAttachmentRefs, sanitizeRichBody, MAX_ATTACHMENT_BYTES, header, address, unsubscribeInfo, bodies, decodeBody } from './domain.mjs';
+import { TYPES, PRIORITIES, ACTIONS, validateEffects, validateAttachmentRefs, sanitizeRichBody, MAX_ATTACHMENT_BYTES, header, address, unsubscribeInfo, bodies, decodeBody, resolveAttachmentPart } from './domain.mjs';
 const ACCOUNT_FIELDS='id,email,display_name,status,last_sync_at,sync_error';
 const OUTBOX_FIELDS='id,account_id,to_address,subject,send_at,status,error,gmail_id,created_at,sent_at';
 const origin=new URL(SITE).origin;
@@ -147,12 +147,13 @@ export async function handle(req:Request) {
   }
   if(route==='attachment'&&req.method==='GET') {
    const a=await ownedAccount(admin,workspace,get('accountId')),api=await gmailClient(admin,a),m=await api('messages/'+id(get('messageId'))+'?format=full');
-   const part=bodies(m.payload).attachments.find((p:any)=>p.id===get('attachmentId')&&p.partId===get('partId'));
+   const part=resolveAttachmentPart(m.payload,String(get('attachmentId')||''),String(get('partId')||''));
    if(!part)throw new MailError(404,'Attachment not found.');if(part.size>20*1024*1024)throw new MailError(413,'This attachment is over the 20 MB download limit.');
    let data;
    if(part.id) data=(await api(`messages/${m.id}/attachments/${encodeURIComponent(part.id)}`)).data;
    else {const find=(p:any):any=>p.partId===part.partId?p:(p.parts||[]).map(find).find(Boolean);data=find(m.payload)?.body?.data;}
-   return response({data,filename:part.filename,mimeType:'application/octet-stream'});
+   if(typeof data!=='string'||!data)throw new MailError(502,'Attachment data is unavailable.');
+   return response({data,filename:part.filename,mimeType:part.mimeType||'application/octet-stream',size:part.size});
   }
   if(route==='modify') {
    mustPost(req);const a=await ownedAccount(admin,workspace,input.accountId),api=await gmailClient(admin,a);
