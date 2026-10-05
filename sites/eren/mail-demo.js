@@ -263,6 +263,10 @@
   }
   function address(v=''){return (v.match(/<([^<>]+)>/)?.[1]||v).trim().toLowerCase();}
   function ce(){return{pane:$('#mailxCompose'),title:$('#mailxComposeTitle'),context:$('#mailxComposeContext'),from:$('#mailxFrom'),to:$('#mailxTo'),subject:$('#mailxSubject'),prompt:$('#mailxAiPrompt'),body:$('#mailxBody'),generate:$('#mailxGenerate')};}
+  function setAiBusy(c,busy){
+    state.busyAi=busy;c.generate.disabled=busy;c.generate.classList.toggle('is-loading',busy);c.generate.setAttribute('aria-busy',String(busy));
+    const label=c.generate.querySelector('.mailx-ai-generate-label');if(label)label.textContent=busy?'Revising…':'Generate';
+  }
   function draftSnapshot(){const c=ce();return{id:state.draftId,accountId:c.from.value,to:c.to.value,subject:c.subject.value,body:c.body.value,threadId:state.replyContext?.threadId||null,replyMessageId:state.replyContext?.id||null};}
   function keepDraft(){if(!state.draftId)return;writeStore(DRAFT,{...draftSnapshot(),requestId:state.requestId,requestPayload:state.requestPayload});}
   async function openComposer(m=null,existing=null){
@@ -276,7 +280,7 @@
     c.to.value=existing?.to||(m?(address(m.email)===address(state.accounts.find(a=>a.id===selected)?.email)?m.to:address(m.replyTo)): '');
     c.subject.value=existing?.subject||(m?(/^re:/i.test(m.subject)?m.subject:'Re: '+m.subject):'');c.subject.readOnly=!!(m||existing?.threadId);
     if(existing?.threadId)state.replyContext={threadId:existing.threadId,id:existing.replyMessageId};
-    c.body.value=existing?.body||'';c.prompt.value='';c.generate.disabled=false;c.generate.classList.remove('is-loading');c.generate.setAttribute('aria-busy','false');c.generate.querySelector('.mailx-ai-generate-label').textContent='Generate';
+    c.body.value=existing?.body||'';c.prompt.value='';setAiBusy(c,false);
     c.title.textContent=state.replyContext?'Reply':'New message';c.context.textContent=state.replyContext?'Replying in the original Gmail thread':'AI revises the current editable draft below';
     $('#mailxComposeError').textContent='';$('#mailxDraftState').textContent='Saved on this tab as you type';
     c.pane.classList.add('is-open');requestAnimationFrame(()=>{placeFloating(c.pane,'compose');focusFloating(c.pane);});keepDraft();setTimeout(()=>c.body.focus(),30);
@@ -291,14 +295,14 @@
   async function runAi(){
     const c=ce(),instruction=c.prompt.value.trim();if(state.busyAi||state.busySend)return;
     if(!instruction){c.prompt.focus();return showToast('Tell Gemini what to write or change.');}
-    const snapshot=draftSnapshot(),version=state.composeVersion,edited=state.editVersion;state.busyAi=true;c.generate.disabled=true;c.generate.classList.add('is-loading');c.generate.setAttribute('aria-busy','true');c.generate.querySelector('.mailx-ai-generate-label').textContent='Revising…';$('#mailxComposeError').textContent='';
+    const snapshot=draftSnapshot(),version=state.composeVersion,edited=state.editVersion;setAiBusy(c,true);$('#mailxComposeError').textContent='';
     try{
       const result=await api('ai',{...snapshot,instruction});
       if(version!==state.composeVersion)return;
       if(edited!==state.editVersion||JSON.stringify(snapshot)!==JSON.stringify(draftSnapshot())){showToast('You edited this draft during generation. Your edits are kept; run AI again to include them.');return;}
       state.history.push(c.body.value);state.redo=[];c.body.value=result.body;state.editVersion++;c.prompt.value='';keepDraft();scheduleDraftSave();c.body.focus();
     }catch(e){if(version===state.composeVersion)$('#mailxComposeError').textContent=e.message;}
-    finally{if(version===state.composeVersion){state.busyAi=false;c.generate.disabled=false;c.generate.classList.remove('is-loading');c.generate.setAttribute('aria-busy','false');c.generate.querySelector('.mailx-ai-generate-label').textContent='Generate';}}
+    finally{if(version===state.composeVersion)setAiBusy(c,false);}
   }
   function undoAi(){if(state.busySend||!state.history.length)return;state.redo.push(ce().body.value);ce().body.value=state.history.pop();state.editVersion++;keepDraft();scheduleDraftSave();}
   function redoAi(){if(state.busySend||!state.redo.length)return;state.history.push(ce().body.value);ce().body.value=state.redo.pop();state.editVersion++;keepDraft();scheduleDraftSave();}
@@ -318,7 +322,7 @@
       api('drafts/delete',{id:state.draftId}).catch(()=>{});try{sessionStorage.removeItem(DRAFT);}catch{}
       c.pane.classList.remove('is-open');state.requestId=null;state.requestPayload=null;state.draftId=null;state.replyContext=null;clearMailCache();loadMail(false,true);
     }catch(e){$('#mailxComposeError').textContent=e.message;keepDraft();}
-    finally{state.busySend=false;editing.forEach((el,i)=>el.disabled=previous[i]);$('#mailxSend').disabled=false;$('#mailxSchedule').disabled=false;$('#mailxSaveDraft').disabled=false;state.busyAi=false;c.generate.disabled=false;c.generate.textContent='Generate';}
+    finally{state.busySend=false;editing.forEach((el,i)=>el.disabled=previous[i]);$('#mailxSend').disabled=false;$('#mailxSchedule').disabled=false;$('#mailxSaveDraft').disabled=false;setAiBusy(c,false);}
   }
   function sheet(title,html,onMount){
     $('#mailxSheet')?.remove();const panel=document.createElement('section');panel.id='mailxSheet';panel.className='mailx-sheet';panel.setAttribute('aria-label',title);
