@@ -43,4 +43,30 @@ test('multipart traversal extracts text and attachments without conflating HTML'
  const r=bodies({parts:[{mimeType:'multipart/alternative',parts:[{mimeType:'text/plain',body:{data:b64url('Hello 世界')}},{mimeType:'text/html',body:{data:b64url('<b>Hello 世界</b>')}}]},{partId:'2',filename:'receipt.pdf',mimeType:'application/pdf',body:{attachmentId:'att',size:42}}]});
  assert.equal(r.text.trim(),'Hello 世界');assert.equal(r.html,'<b>Hello 世界</b>');assert.equal(r.attachments[0].filename,'receipt.pdf');
 });
-test('AI policy treats thread as untrusted context and current edited draft as authoritative',()=>{assert.match(AI_SYSTEM,/current draft is authoritative/i);assert.match(AI_SYSTEM,/never invent/i);assert.match(AI_SYSTEM,/untrusted/i);assert.match(AI_SYSTEM,/ONLY the revised email body/);});
+test('AI policy treats thread as untrusted context and preserves rich draft output',()=>{assert.match(AI_SYSTEM,/current draft is authoritative/i);assert.match(AI_SYSTEM,/never invent/i);assert.match(AI_SYSTEM,/untrusted/i);assert.match(AI_SYSTEM,/bodyHtml/);assert.match(AI_SYSTEM,/Return ONLY JSON/i);});
+
+
+test('rich HTML and attachments produce multipart MIME with a plain-text fallback',()=>{
+ const data=btoa('hello attachment');
+ const raw=decodeBody(buildMime({
+  to:'friend@example.org',
+  subject:'Formatted',
+  body:'Hello world',
+  bodyHtml:'<p>Hello <strong>world</strong> <script>bad()</script></p>',
+  attachments:[{id:'11111111-1111-4111-8111-111111111111',name:'notes ü.txt',type:'text/plain',size:16,data}]
+ },'me@example.org','request@eren-mail.invalid'));
+ assert.match(raw,/Content-Type: multipart\/mixed/);
+ assert.match(raw,/Content-Type: multipart\/alternative/);
+ assert.match(raw,/Content-Type: text\/html; charset=UTF-8/);
+ assert.match(raw,/Content-Disposition: attachment/);
+ assert.match(raw,/filename\*=UTF-8''notes%20%C3%BC\.txt/);
+ assert(!raw.includes('<script>'));
+ const encodedHtml=raw.match(/Content-Type: text\/html; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n([A-Za-z0-9+/=\r\n]+)/)?.[1]||'';
+ assert(decodeBody(encodedHtml).includes('<strong>world</strong>'));
+});
+
+test('rich draft validation rejects unsafe HTML and oversized attachment references',()=>{
+ const draft=validateDraft({to:'friend@example.org',subject:'Hi',body:'Hello',bodyHtml:'<p onclick="x()">Hi <strong>there</strong><script>x()</script></p>',attachments:[]});
+ assert.equal(draft.bodyHtml,'<p>Hi <strong>there</strong></p>');
+ assert.throws(()=>validateDraft({to:'friend@example.org',subject:'Hi',body:'Hello',attachments:[{id:'11111111-1111-4111-8111-111111111111',name:'huge.bin',type:'application/octet-stream',size:9*1024*1024}]}));
+});
