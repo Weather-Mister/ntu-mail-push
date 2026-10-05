@@ -18,6 +18,7 @@ function visible(v:any,filter:string) {
  if(filter==='trash')return l.includes('TRASH');
  if(l.includes('TRASH')||l.includes('SPAM'))return false;
  if(filter==='starred')return l.includes('STARRED');
+ if(filter==='unread')return l.includes('INBOX')&&l.includes('UNREAD')&&!c.blocked;
  if(filter==='all')return true;
  if(filter==='blocked')return c.blocked;
  if(c.blocked)return false;
@@ -113,7 +114,7 @@ export async function handle(req:Request) {
     if(cursors[a.id]===null)return {messages:[],next:null,accountId:a.id};
     try {
      const [api,rules]=await Promise.all([gmailClient(admin,a),accountRules(admin,a)]);
-     const base=({starred:'is:starred',trash:'in:trash',inbox:'in:inbox',important:'in:inbox',reply:'in:inbox',codes:'',low:'',blocked:'',archived:'-in:inbox -in:drafts',sent:'in:sent','gmail-drafts':'in:drafts',all:''} as any)[filter]??'in:inbox';
+     const base=({starred:'is:starred',unread:'in:inbox is:unread',trash:'in:trash',inbox:'in:inbox',important:'in:inbox',reply:'in:inbox',codes:'',low:'',blocked:'',archived:'-in:inbox -in:drafts',sent:'in:sent','gmail-drafts':'in:drafts',all:''} as any)[filter]??'in:inbox';
      const params=new URLSearchParams({maxResults:'12',q:`${base} ${query} ${filter==='trash'?'':'-in:trash'} -in:spam`.trim(),...(filter==='trash'?{includeSpamTrash:'true'}:{})});
      if(cursors[a.id]) params.set('pageToken',String(cursors[a.id]).slice(0,2000));
      const page=await api('threads?'+params);
