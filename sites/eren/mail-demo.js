@@ -34,7 +34,7 @@
     if(!el||el.dataset.mailxDragBound)return;
     el.dataset.mailxDragBound='1';
     el.addEventListener('pointerdown',e=>{
-      if(e.isPrimary===false||(e.pointerType==='mouse'&&e.button!==0)||(hooks.canStart&&!hooks.canStart(e)))return;
+      if(e.isPrimary===false||(e.button!==undefined&&e.button!==0)||(hooks.canStart&&!hooks.canStart(e)))return;
       const id=e.pointerId,startX=e.clientX,startY=e.clientY;
       let active=true,raf=0,lastEvent=e;
       const emit=(name,ev)=>hooks[name]?.({event:ev,startX,startY,x:ev.clientX,y:ev.clientY,dx:ev.clientX-startX,dy:ev.clientY-startY});
@@ -166,7 +166,7 @@
     $$('[data-swipe-row]').forEach(wrap=>{
       if(wrap.dataset.swipeEnabled!=='1')return;
       const row=wrap.querySelector('.mailx-message');let intent='',suppress=false;
-      bindPointerDrag(wrap,{
+      bindPointerDrag(row,{
         canStart:()=>true,
         onStart:()=>{intent='';suppress=false;wrap.classList.remove('is-snapping','is-committing');row.style.transform='';},
         onMove:({event,dx,dy})=>{
