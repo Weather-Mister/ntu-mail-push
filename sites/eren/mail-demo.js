@@ -28,7 +28,7 @@
       if(t.messages.reduce((n,msg)=>n+(msg.html?.length||0)+(msg.text?.length||0),0)<2000000)putCache(threadCache,key,t,8);
       if(version===state.readVersion&&state.selected===key&&state.thread){
         state.thread=t;
-        $('[data-body]').forEach(frame=>{const i=Number(frame.dataset.body);if(frame.dataset.loaded==='1'&&t.messages[i]?.html)frame.srcdoc=t.messages[i].html;});
+        $$('[data-body]').forEach(frame=>{const i=Number(frame.dataset.body);if(frame.dataset.loaded==='1'&&t.messages[i]?.html)frame.srcdoc=t.messages[i].html;});
       }
     }).catch(()=>{}).finally(()=>{if(threadImageRequests.get(key)===pending)threadImageRequests.delete(key);});
     threadImageRequests.set(key,pending);
