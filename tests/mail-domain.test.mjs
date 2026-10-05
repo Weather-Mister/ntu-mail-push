@@ -81,7 +81,7 @@ test('rich HTML and attachments produce multipart MIME with a plain-text fallbac
 test('rich draft validation rejects unsafe HTML and oversized attachment references',()=>{
  const draft=validateDraft({to:'friend@example.org',subject:'Hi',body:'Hello',bodyHtml:'<p onclick="x()">Hi <strong>there</strong><script>x()</script></p>',attachments:[]});
  assert.equal(draft.bodyHtml,'<p>Hi <strong>there</strong></p>');
- assert.throws(()=>validateDraft({to:'friend@example.org',subject:'Hi',body:'Hello',attachments:[{id:'11111111-1111-4111-8111-111111111111',name:'huge.bin',type:'application/octet-stream',size:9*1024*1024}]}));
+ assert.throws(()=>validateDraft({to:'friend@example.org',subject:'Hi',body:'Hello',attachments:[{id:'11111111-1111-4111-8111-111111111111',name:'huge.bin',type:'application/octet-stream',size:21*1024*1024}]}));
 });
 
 
