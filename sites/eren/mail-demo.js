@@ -232,12 +232,12 @@
       p.querySelectorAll('[data-disconnect]').forEach(b=>b.onclick=sheetGuard(async()=>{const a=state.accounts[+b.dataset.disconnect];if(!confirm('Disconnect '+a.email+'? Gmail mail will remain untouched.'))return;const r=await api('accounts/disconnect',{accountId:a.id,confirm:a.email});clearMailCache();await refreshAccounts();await settings();await loadMail(false,true);showToast(r.revoked?'Account disconnected':'Disconnected locally. Also remove this app in Google Account permissions.');}));
     });
   }
-  async function refreshAccounts(){const data=await api('accounts');state.accounts=data.accounts;if(state.account!=='all'&&!state.accounts.some(a=>a.id===state.account))state.account='all';renderFilters();}
+  async function refreshAccounts(){const before=state.accounts.map(a=>a.id).join(','),data=await api('accounts');state.accounts=data.accounts;if(state.account!=='all'&&!state.accounts.some(a=>a.id===state.account))state.account='all';state.messages=state.messages.filter(m=>state.accounts.some(a=>a.id===m.accountId));if(['drafts','outbox'].includes(state.filter))renderFilters();else renderList();if(before!==state.accounts.map(a=>a.id).join(',')){clearMailCache();loadMail(false,true);}}
   async function openDialog(){
     if(!dialog.open)dialog.showModal();shell.classList.remove('is-reading','is-reader-focused');
     try{
       ownCache();
-      if(initialized){renderList();loadMail();return;}
+      if(initialized){renderList();Promise.all([refreshAccounts(),loadMail()]).catch(e=>showToast(e.message));return;}
       const data=await api('bootstrap');state.accounts=data.accounts;
       let local={};try{local=JSON.parse(localStorage.getItem(PREF)||'{}');}catch{}
       const pref={...data.preferences,...local};state.filter=views[pref.filter]?pref.filter:'inbox';state.account=state.accounts.some(a=>a.id===pref.account)?pref.account:'all';
