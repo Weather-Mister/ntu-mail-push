@@ -212,16 +212,23 @@ export async function handle(req:Request) {
   if(route==='drafts/attachment') {
    mustPost(req);await rate(admin,workspace+':attachment',30,60);
    const draftId=uuid(input.draftId,'draft ID'),attachmentId=uuid(input.id,'attachment ID');
+   const row=check(await admin.from('eren_mail_drafts').select('*').eq('id',draftId).eq('workspace_hash',workspace).maybeSingle());
+   if(!row)throw new MailError(409,'Save the draft before adding attachments.');
    const refs=validateAttachmentRefs([{id:attachmentId,name:input.name,type:input.type||'application/octet-stream',size:Number(input.size)}]),ref=refs[0];
    if(typeof input.data!=='string'||input.data.length>Math.ceil(MAX_ATTACHMENT_BYTES*4/3)+16)throw new MailError(400,'Attachment is too large.');
    const data=input.data.replace(/\s+/g,'');let bytes=0;try{bytes=atob(data).length;}catch{throw new MailError(400,'Attachment data is invalid.');}
    if(bytes!==ref.size||bytes>MAX_ATTACHMENT_BYTES)throw new MailError(400,'Attachment size does not match.');
    await secret(admin,attachmentSecret(workspace,draftId,attachmentId),JSON.stringify({...ref,data}));
+   const stored=await secret(admin,row.secret_name);if(stored){const draft=JSON.parse(stored),attachments=validateAttachmentRefs([...(draft.attachments||[]).filter((a:any)=>a.id!==ref.id),ref]);await secret(admin,row.secret_name,JSON.stringify({...draft,attachments}));}
    return response({attachment:ref});
   }
   if(route==='drafts/attachment/delete') {
    mustPost(req);const draftId=uuid(input.draftId,'draft ID'),attachmentId=uuid(input.id,'attachment ID');
-   await secret(admin,attachmentSecret(workspace,draftId,attachmentId),null,true);return response({ok:true});
+   const row=check(await admin.from('eren_mail_drafts').select('*').eq('id',draftId).eq('workspace_hash',workspace).maybeSingle());
+   if(!row)throw new MailError(404,'Draft not found.');
+   await secret(admin,attachmentSecret(workspace,draftId,attachmentId),null,true);
+   const stored=await secret(admin,row.secret_name);if(stored){const draft=JSON.parse(stored),attachments=(draft.attachments||[]).filter((a:any)=>a.id!==attachmentId);await secret(admin,row.secret_name,JSON.stringify({...draft,attachments}));}
+   return response({ok:true});
   }
   if(route==='drafts') {
    if(req.method==='GET')return response({drafts:check(await admin.from('eren_mail_drafts').select('id,account_id,subject,updated_at').eq('workspace_hash',workspace).order('updated_at',{ascending:false}).limit(100))});
