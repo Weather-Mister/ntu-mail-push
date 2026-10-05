@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {loginCode,classify,b64url,decodeBody,bodies,unsubscribeInfo,buildMime,validateDraft,validateEffects,AI_SYSTEM,safeWebUrl,normalizeAiRevision} from '../supabase/functions/eren-mail/domain.mjs';
+import {loginCode,classify,b64url,decodeBody,bodies,resolveAttachmentPart,unsubscribeInfo,buildMime,validateDraft,validateEffects,AI_SYSTEM,safeWebUrl,normalizeAiRevision} from '../supabase/functions/eren-mail/domain.mjs';
 const message=(subject,text,extra={})=>({id:'m1',threadId:'t1',internalDate:'1700000000000',labelIds:['INBOX'],payload:{mimeType:'text/plain',headers:[{name:'Subject',value:subject},{name:'From',value:'Sender <news@food.test>'},...(extra.headers||[])],body:{data:b64url(text)}},...Object.fromEntries(Object.entries(extra).filter(([k])=>k!=='headers'))});
 test('verification codes require authentication context and explicit token placement',()=>{
  assert.equal(loginCode('Your verification code','Your verification code is 483921'), '483921');
@@ -43,6 +43,12 @@ test('multipart traversal extracts text and attachments without conflating HTML'
  const r=bodies({parts:[{mimeType:'multipart/alternative',parts:[{mimeType:'text/plain',body:{data:b64url('Hello 世界')}},{mimeType:'text/html',body:{data:b64url('<b>Hello 世界</b>')}}]},{partId:'2',filename:'receipt.pdf',mimeType:'application/pdf',body:{attachmentId:'att',size:42}}]});
  assert.equal(r.text.trim(),'Hello 世界');assert.equal(r.html,'<b>Hello 世界</b>');assert.equal(r.attachments[0].filename,'receipt.pdf');
 });
+test('received attachment lookup survives Gmail rotating the opaque attachment ID',()=>{
+ const payload={parts:[{partId:'1',filename:'lecture.pdf',mimeType:'application/pdf',body:{attachmentId:'fresh-gmail-id',size:2048}}]};
+ const part=resolveAttachmentPart(payload,'stale-gmail-id','1');
+ assert.equal(part.id,'fresh-gmail-id');assert.equal(part.partId,'1');assert.equal(part.filename,'lecture.pdf');
+});
+
 test('AI policy treats thread as untrusted context and preserves rich draft output',()=>{assert.match(AI_SYSTEM,/current draft is authoritative/i);assert.match(AI_SYSTEM,/never invent/i);assert.match(AI_SYSTEM,/untrusted/i);assert.match(AI_SYSTEM,/bodyHtml/);assert.match(AI_SYSTEM,/Return ONLY JSON/i);});
 
 
