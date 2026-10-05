@@ -96,14 +96,19 @@ test('a failed thread preserves its existing row alongside successful account re
  await boot(page,{partialFail:true});await expect(page.locator('#mailxNotice')).toContainText('One thread temporarily unavailable');await expect(page.locator('#mailxList .mailx-message')).toHaveCount(2);await expect(page.locator('#mailxList')).toContainText('Thursday meeting');await expect(page.locator('#mailxList')).toContainText('Your receipt');
 });
 
-test('workspace chrome is singular, grouped, and reader footer is structurally separate',async({page})=>{
+test('reader keeps actions on top and gives the current message the content area',async({page})=>{
  await boot(page);
  await expect(page.locator('#mailxComposeTop')).toHaveCount(0);
  await expect(page.locator('#mailxComposeMain')).toHaveCount(1);
  await expect(page.locator('.mailx-nav [data-mailx-filter]')).toHaveCount(6);await expect(page.locator('[data-mailx-resizer=nav]')).toHaveCount(0);
  await page.locator('#mailxList .mailx-message').first().click();
- await expect(page.locator('.mailx-reader > .mailx-reply-bar')).toHaveCount(1);
- await expect(page.locator('.mailx-reader-scroll .mailx-reply-bar')).toHaveCount(0);
+ await expect(page.locator('.mailx-reply-bar')).toHaveCount(0);
+ await expect(page.locator('.mailx-reader-toolbar [data-action="reply"]')).toBeVisible();
+ await expect(page.locator('.mailx-reader-toolbar [data-action="forward"]')).toBeVisible();
+ const current=page.locator('.mailx-thread-message.is-current');
+ await expect(current).toHaveCount(1);
+ await expect(current.locator('.mailx-thread-details.is-current > summary')).toBeHidden();
+ await expect(current.locator('.mailx-message-meta > summary')).toBeVisible();
  await expect(page.locator('.mailx-reply-inline')).toHaveCount(0);
 });
 
@@ -254,7 +259,7 @@ test('star and reversible trash actions work without opening the reader',async({
 
 test('modern reader fits the viewport and keeps Reply and Forward available',async({page},info)=>{
  await boot(page);if(info.project.name==='desktop'){const rail=await page.locator('.mailx-nav').boundingBox();expect(rail.width).toBe(64);}await expect(page.locator('.mailx-message .mailx-avatar')).toHaveCount(2);await page.locator('[data-row="0"]').click();
- const reader=await page.locator('#mailxReader').boundingBox(),reply=await page.getByRole('button',{name:'Reply',exact:true}).boundingBox(),forward=await page.getByRole('button',{name:'Forward',exact:true}).boundingBox();expect(reader.width).toBeGreaterThan(300);expect(reply.y+reply.height).toBeLessThanOrEqual(page.viewportSize().height);expect(forward.y).toBe(reply.y);expect(await page.locator('#mailDemoDialog').evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);
+ const reader=await page.locator('#mailxReader').boundingBox(),toolbar=await page.locator('.mailx-reader-toolbar').boundingBox(),reply=await page.getByRole('button',{name:'Reply',exact:true}).boundingBox(),forward=await page.getByRole('button',{name:'Forward',exact:true}).boundingBox();expect(reader.width).toBeGreaterThan(300);expect(reply.y).toBeGreaterThanOrEqual(toolbar.y);expect(reply.y+reply.height).toBeLessThanOrEqual(toolbar.y+toolbar.height+1);expect(forward.y).toBe(reply.y);expect(await page.locator('#mailDemoDialog').evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);
  await page.screenshot({path:'test-results/'+info.project.name+'-modern-reader.png'});
 });
 
