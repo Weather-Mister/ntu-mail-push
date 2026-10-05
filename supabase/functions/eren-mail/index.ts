@@ -50,7 +50,7 @@ export async function handle(req:Request) {
   let input:any={};
   if(req.method==='POST') {
    if(!req.headers.get('Content-Type')?.includes('application/json'))throw new MailError(415,'Use JSON.');
-   const raw=await req.text(),maxBody=route==='drafts/attachment'?12*1024*1024:150000;if(raw.length>maxBody)throw new MailError(413,'Request too large.');
+   const raw=await req.text(),maxBody=route==='drafts/attachment'?28*1024*1024:150000;if(raw.length>maxBody)throw new MailError(413,'Request too large.');
    try{input=JSON.parse(raw);}catch{throw new MailError(400,'Invalid JSON.');}
    if(!input||typeof input!=='object'||Array.isArray(input))throw new MailError(400,'Invalid request.');
   }

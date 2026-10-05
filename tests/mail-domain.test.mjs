@@ -1,7 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {loginCode,classify,b64url,decodeBody,bodies,resolveAttachmentPart,unsubscribeInfo,buildMime,validateDraft,validateEffects,AI_SYSTEM,safeWebUrl,normalizeAiRevision} from '../supabase/functions/eren-mail/domain.mjs';
+import {loginCode,classify,b64url,decodeBody,bodies,resolveAttachmentPart,unsubscribeInfo,buildMime,validateDraft,validateEffects,validateAttachmentRefs,MAX_ATTACHMENT_BYTES,AI_SYSTEM,safeWebUrl,normalizeAiRevision} from '../supabase/functions/eren-mail/domain.mjs';
 const message=(subject,text,extra={})=>({id:'m1',threadId:'t1',internalDate:'1700000000000',labelIds:['INBOX'],payload:{mimeType:'text/plain',headers:[{name:'Subject',value:subject},{name:'From',value:'Sender <news@food.test>'},...(extra.headers||[])],body:{data:b64url(text)}},...Object.fromEntries(Object.entries(extra).filter(([k])=>k!=='headers'))});
+
+test('attachment validation allows up to 20 MB total and rejects more',()=>{
+ assert.equal(MAX_ATTACHMENT_BYTES,20*1024*1024);
+ const id='11111111-1111-4111-8111-111111111111';
+ assert.equal(validateAttachmentRefs([{id,name:'large.pdf',type:'application/pdf',size:20*1024*1024}])[0].size,20*1024*1024);
+ assert.throws(()=>validateAttachmentRefs([{id,name:'too-large.pdf',type:'application/pdf',size:20*1024*1024+1}]),/Invalid attachment|too large/);
+});
 test('verification codes require authentication context and explicit token placement',()=>{
  assert.equal(loginCode('Your verification code','Your verification code is 483921'), '483921');
  assert.equal(loginCode('Sign-in verification','AB12CD is your verification code'), 'AB12CD');
@@ -74,7 +81,7 @@ test('rich HTML and attachments produce multipart MIME with a plain-text fallbac
 test('rich draft validation rejects unsafe HTML and oversized attachment references',()=>{
  const draft=validateDraft({to:'friend@example.org',subject:'Hi',body:'Hello',bodyHtml:'<p onclick="x()">Hi <strong>there</strong><script>x()</script></p>',attachments:[]});
  assert.equal(draft.bodyHtml,'<p>Hi <strong>there</strong></p>');
- assert.throws(()=>validateDraft({to:'friend@example.org',subject:'Hi',body:'Hello',attachments:[{id:'11111111-1111-4111-8111-111111111111',name:'huge.bin',type:'application/octet-stream',size:9*1024*1024}]}));
+ assert.throws(()=>validateDraft({to:'friend@example.org',subject:'Hi',body:'Hello',attachments:[{id:'11111111-1111-4111-8111-111111111111',name:'huge.bin',type:'application/octet-stream',size:21*1024*1024}]}));
 });
 
 
