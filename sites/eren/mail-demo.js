@@ -291,7 +291,9 @@
   function editorText(){return ce().body.innerText.replace(/\u00a0/g,' ').replace(/\r\n?/g,'\n');}
   function editorHtml(){return ce().body.innerHTML;}
   function editorState(){return{body:editorText(),bodyHtml:editorHtml()};}
-  function setEditor(body='',html=''){const c=ce();c.body.innerHTML=html?cleanEditorHtml(html):'';if(!html)c.body.textContent=body||'';}
+  function looksLikeEditorHtml(value=''){return /<\/?(?:p|div|br|strong|b|em|i|u|s|strike|ul|ol|li|blockquote|h[1-3]|a|span)\b/i.test(String(value||''));}
+  function plainToEditorHtml(text=''){return escapeHtml(String(text||'').replace(/\r\n?/g,'\n')).replace(/\n/g,'<br>');}
+  function setEditor(body='',html=''){const c=ce(),rich=html||(!html&&looksLikeEditorHtml(body)?body:'');c.body.innerHTML=rich?cleanEditorHtml(rich):plainToEditorHtml(body);}
   function completedAttachmentRefs(){return currentAttachments.filter(a=>a.status==='done').map(({id,name,type,size})=>({id,name,type,size}));}
   function draftSnapshot(){const c=ce(),content=editorState();return{id:state.draftId,accountId:c.from.value,to:c.to.value,subject:c.subject.value,...content,attachments:completedAttachmentRefs(),threadId:state.replyContext?.threadId||null,replyMessageId:state.replyContext?.id||null};}
   function keepDraft(){if(!state.draftId)return;writeStore(DRAFT,{...draftSnapshot(),requestId:state.requestId,requestPayload:state.requestPayload});}
