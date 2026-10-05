@@ -213,7 +213,7 @@ test('Gemini rich revisions preserve returned formatting and Undo restores prior
 
 test('plain Gemini line breaks render as real editor breaks',async({page})=>{
  await boot(page,{aiBody:'First line\nSecond line\n\nNew paragraph.',richAiHtml:''});await composeButton(page).click();await page.locator('#mailxAiPrompt').fill('Keep my paragraphs');await page.locator('#mailxGenerate').click();
- await expect(page.locator('#mailxBody')).toHaveText('First line\nSecond line\n\nNew paragraph.');
+ await expect.poll(()=>page.locator('#mailxBody').evaluate(el=>el.innerText)).toBe('First line\nSecond line\n\nNew paragraph.');
  const html=await page.locator('#mailxBody').evaluate(el=>el.innerHTML);expect(html).toBe('First line<br>Second line<br><br>New paragraph.');
 });
 
