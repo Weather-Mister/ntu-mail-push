@@ -280,7 +280,7 @@
       if(state.thread!==thread){state.thread=thread;renderReader();}
       hydrateThreadImages(m,version);
       if(m.labels.includes('UNREAD')){
-        m.labels=m.labels.filter(x=>x!=='UNREAD');renderList();
+        m.labels=m.labels.filter(x=>x!=='UNREAD');if(state.filter==='unread')state.messages=state.messages.filter(x=>x!==m);renderList();
         api('modify',{accountId:m.accountId,threadId:m.threadId,action:'read'}).catch(()=>{if(!m.labels.includes('UNREAD'))m.labels.push('UNREAD');if(version===state.readVersion)renderList();});
       }
     }catch(e){if(version===state.readVersion){if(cached)showToast('Showing the saved view: '+e.message);else readerEl.insertAdjacentHTML('beforeend',`<p class="mailx-inline-error">${escapeHtml(e.message)}</p>`);}}
