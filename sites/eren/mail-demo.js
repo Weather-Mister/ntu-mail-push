@@ -6,20 +6,34 @@
   const state={filter:'inbox',account:'all',query:'',accounts:[],messages:[],selected:null,thread:null,cursor:{},hasMore:false,history:[],redo:[],replyContext:null,loadVersion:0,readVersion:0,composeVersion:0,editVersion:0,busySend:false,busyAi:false,requestId:null,requestPayload:null,draftId:null};
   let messagesKey='',bootstrapRequest=null,bootstrapAt=0;
   function bootstrap(){if(!bootstrapRequest||Date.now()-bootstrapAt>30000){bootstrapAt=Date.now();bootstrapRequest=api('bootstrap').catch(e=>{bootstrapRequest=null;throw e;});}return bootstrapRequest;}
-  const pageCache=new Map(),threadCache=new Map(),threadRequests=new Map();
+  const pageCache=new Map(),threadCache=new Map(),threadRequests=new Map(),threadImageRequests=new Map();
   let cacheOwner='',cacheEpoch=0,initialized=false,preferenceTimer;
   const viewKey=()=>JSON.stringify([state.account,state.filter,state.query]);
   const threadKey=m=>m.accountId+':'+m.threadId;
-  function clearMailCache(){bootstrapRequest=null;cacheEpoch++;pageCache.clear();threadCache.clear();threadRequests.clear();}
+  function clearMailCache(){bootstrapRequest=null;cacheEpoch++;pageCache.clear();threadCache.clear();threadRequests.clear();threadImageRequests.clear();}
   function ownCache(){const owner=typeof requirePairing==='function'?requirePairing():'';if(cacheOwner&&cacheOwner!==owner){clearMailCache();state.readVersion++;state.loadVersion++;initialized=false;state.accounts=[];state.messages=[];state.thread=null;}cacheOwner=owner;return owner;}
   function putCache(cache,key,value,limit=20){cache.delete(key);cache.set(key,{value,at:Date.now()});while(cache.size>limit)cache.delete(cache.keys().next().value);}
   async function fetchThread(m,force=false){
     const key=threadKey(m),cached=threadCache.get(key);if(!force&&cached&&Date.now()-cached.at<45000)return cached.value;
     if(threadRequests.has(key))return threadRequests.get(key);
-    const owner=cacheOwner,epoch=cacheEpoch;const pending=api('thread',null,{accountId:m.accountId,threadId:m.threadId}).then(t=>{if(owner===cacheOwner&&epoch===cacheEpoch&&t.messages.reduce((n,m)=>n+(m.html?.length||0)+(m.text?.length||0),0)<2000000)putCache(threadCache,key,t,6);return t;});threadRequests.set(key,pending);
+    const owner=cacheOwner,epoch=cacheEpoch;const pending=api('thread',null,{accountId:m.accountId,threadId:m.threadId}).then(t=>{if(owner===cacheOwner&&epoch===cacheEpoch&&t.messages.reduce((n,m)=>n+(m.html?.length||0)+(m.text?.length||0),0)<2000000)putCache(threadCache,key,t,8);return t;});threadRequests.set(key,pending);
     try{return await pending;}finally{if(threadRequests.get(key)===pending)threadRequests.delete(key);}
   }
-  function prefetchReaders(){if(!dialog.open)return;state.messages.slice(0,3).forEach(m=>fetchThread(m).catch(()=>{}));}
+  function hydrateThreadImages(m,version){
+    const key=threadKey(m),cached=threadCache.get(key)?.value;
+    if(!cached||cached.imagesLoaded||!cached.messages?.some(msg=>msg.hasInlineImages)||threadImageRequests.has(key))return;
+    const owner=cacheOwner,epoch=cacheEpoch;
+    const pending=api('thread',null,{accountId:m.accountId,threadId:m.threadId,images:1}).then(t=>{
+      if(owner!==cacheOwner||epoch!==cacheEpoch)return;
+      if(t.messages.reduce((n,msg)=>n+(msg.html?.length||0)+(msg.text?.length||0),0)<2000000)putCache(threadCache,key,t,8);
+      if(version===state.readVersion&&state.selected===key&&state.thread){
+        state.thread=t;
+        $('[data-body]').forEach(frame=>{const i=Number(frame.dataset.body);if(frame.dataset.loaded==='1'&&t.messages[i]?.html)frame.srcdoc=t.messages[i].html;});
+      }
+    }).catch(()=>{}).finally(()=>{if(threadImageRequests.get(key)===pending)threadImageRequests.delete(key);});
+    threadImageRequests.set(key,pending);
+  }
+  function prefetchReaders(){if(!dialog.open)return;state.messages.slice(0,5).forEach(m=>fetchThread(m).catch(()=>{}));}
   let dialog,shell,listEl,readerEl,searchEl,accountEls=[],toastTimer,searchTimer,draftTimer,draftSaveChain=Promise.resolve(),status={types:['University','Personal','Finance','Shopping','Travel','Work','Security','Login Code','Receipt / Order','Newsletter','Promotion','Account Notification','Social','Other'],priorities:['High','Normal','Low','Muted'],actions:['Needs reply','Deadline','Waiting','FYI','No action']},rules=[];
   const escapeHtml=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
   const $=s=>dialog.querySelector(s), $$=s=>[...dialog.querySelectorAll(s)];
@@ -264,6 +278,7 @@
     try{
       const thread=await fetchThread(m);if(version!==state.readVersion)return;
       if(state.thread!==thread){state.thread=thread;renderReader();}
+      hydrateThreadImages(m,version);
       if(m.labels.includes('UNREAD')){
         m.labels=m.labels.filter(x=>x!=='UNREAD');renderList();
         api('modify',{accountId:m.accountId,threadId:m.threadId,action:'read'}).catch(()=>{if(!m.labels.includes('UNREAD'))m.labels.push('UNREAD');if(version===state.readVersion)renderList();});
