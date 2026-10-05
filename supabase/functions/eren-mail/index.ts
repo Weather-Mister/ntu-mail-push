@@ -181,7 +181,7 @@ export async function handle(req:Request) {
      token=page.nextPageToken||'';if(!token)break;
     }
     for(let i=0;i<ids.length;i+=1000)await api('messages/batchModify','POST',{ids:ids.slice(i,i+1000),removeLabelIds:['UNREAD']});
-    total+=ids.length;clearMailMemory(workspace,a.id);return {accountId:a.id,count:ids.length};
+    total+=ids.length;clearMailMemory(workspace);return {accountId:a.id,count:ids.length};
    },2);
    return response({ok:true,count:total,accounts:results});
   }
