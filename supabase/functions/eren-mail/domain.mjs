@@ -30,6 +30,20 @@ export function bodies(payload = {}) {
   }
   visit(payload); return result;
 }
+
+export function findAttachmentPart(payload = {}, partId = '', attachmentId = '') {
+  let byPart=null,byId=null;
+  function visit(p) {
+    const downloadable=!!(p?.filename || p?.body?.attachmentId || (p?.body?.data && !/^text\//.test(p?.mimeType||'')));
+    if(downloadable) {
+      if(partId && String(p.partId||'')===String(partId)) byPart=p;
+      if(!byId && attachmentId && String(p.body?.attachmentId||'')===String(attachmentId)) byId=p;
+    }
+    for(const child of p?.parts||[]) visit(child);
+  }
+  visit(payload);
+  return byPart||(!partId?byId:null);
+}
 export function plainText(html = '') {
   return html.replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi,'').replace(/<br\s*\/?>|<\/(p|div|tr|li|h[1-6])>/gi,'\n').replace(/<[^>]*>/g,' ').replace(/&nbsp;/gi,' ').replace(/&amp;/gi,'&').replace(/&lt;/gi,'<').replace(/&gt;/gi,'>').replace(/&quot;/gi,'"').replace(/&#(\d+);/g,(_,n)=>String.fromCodePoint(Math.min(+n,0x10ffff)));
 }
