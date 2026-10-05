@@ -38,7 +38,7 @@
 .mailx-snippet{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px;line-height:1.5;color:#888b81;margin-top:2px}
 .mailx-message-foot{margin-top:7px;min-height:14px;gap:7px;font-size:10px;color:#9a9b90}.mailx-message-foot .mailx-account{padding:0;background:transparent;color:#96998e;font-size:9px;font-weight:500}
 .mailx-row-status{font-size:9px;color:#927a55;margin-left:auto}.mailx-star-indicator{color:#a29363}.mailx-code-mini{font-size:11px;color:#5f7855}
-.mailx-row-actions{position:absolute;right:9px;top:9px;display:flex;gap:2px;padding:3px;border:1px solid #e2e4d9;border-radius:9px;background:#fffefa;box-shadow:0 2px 5px #30332d08;opacity:0;pointer-events:none;transition:opacity .12s}
+.mailx-row-actions{position:absolute;z-index:2;right:9px;top:9px;display:flex;gap:2px;padding:3px;border:1px solid #e2e4d9;border-radius:9px;background:#fffefa;box-shadow:0 2px 5px #30332d08;opacity:0;pointer-events:none;transition:opacity .12s}
 .mailx-message-wrap:hover .mailx-row-actions,.mailx-message-wrap:focus-within .mailx-row-actions{opacity:1;pointer-events:auto}
 .mailx-row-actions button{display:grid;place-items:center;width:30px;height:30px;background:transparent;border:0;border-radius:7px;color:#747c6c;cursor:pointer}.mailx-row-actions button:hover{background:#ecefe6;color:#343c2e}.mailx-row-actions svg{width:16px;height:16px}
 .mailx-resizer{min-width:9px}.mailx-resizer::after{background:transparent}.mailx-resizer:hover::after{background:#b4c0a8;box-shadow:none}
