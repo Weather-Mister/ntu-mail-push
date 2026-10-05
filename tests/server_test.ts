@@ -15,7 +15,7 @@ class MemoryDB {
  tables:any={};secrets:any={};storageObjects=new Map<string,Uint8Array>();
  storage={from:(bucket:string)=>({
   upload:async(path:string,data:any)=>{const bytes=data instanceof Uint8Array?data:new Uint8Array(await data.arrayBuffer());this.storageObjects.set(bucket+'/'+path,new Uint8Array(bytes));return {data:{path},error:null};},
-  download:async(path:string)=>{const bytes=this.storageObjects.get(bucket+'/'+path);return bytes?{data:new Blob([bytes]),error:null}:{data:null,error:{message:'not found'}};},
+  download:async(path:string)=>{const bytes=this.storageObjects.get(bucket+'/'+path);if(!bytes)return {data:null,error:{message:'not found'}};const copy=new Uint8Array(bytes.length);copy.set(bytes);return {data:new Blob([copy.buffer]),error:null};},
   remove:async(paths:string[])=>{for(const path of paths)this.storageObjects.delete(bucket+'/'+path);return {data:[],error:null};}
  })};
  constructor(){this.tables={eren_mail_accounts:[],eren_mail_outbox:[],eren_mail_messages:[],eren_mail_rules:[],eren_mail_oauth:[],schedule_workspaces:[]};}
