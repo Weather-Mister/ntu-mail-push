@@ -2,17 +2,18 @@ import {test,expect} from '@playwright/test';
 const accounts=[{id:'a1',email:'first@example.org',display_name:'Personal',status:'active'},{id:'a2',email:'second@example.org',display_name:'University',status:'active'}];
 const classification={type:'University',context:'Engineering Mathematics',priority:'High',action:'Needs reply',code:null,blocked:false};
 const msg={id:'m1',threadId:'t1',accountId:'a1',sender:'Professor',from:'Professor <prof@example.org>',email:'prof@example.org',replyTo:'prof@example.org',to:'first@example.org',cc:'',subject:'Thursday meeting',timestamp:Date.now(),labels:['INBOX','UNREAD'],snippet:'Can you meet Thursday?',classification,unsubscribe:{web:null,mailto:null,listId:'',oneClick:false},text:'Can you meet Thursday?\nFull message content.',html:'',attachments:[],count:1};
+const composeButton=page=>page.locator('#mailxComposeMobile:visible, #mailxComposeMain:visible').first();
 async function boot(page,options={}){
  const calls=[],errors=[];page.on('pageerror',e=>{if(!e.message.includes("Failed to read the 'serviceWorker' property from 'Navigator'")||!e.message.includes('sandboxed'))errors.push(e.message);});
  await page.addInitScript(()=>{if(window===window.top)localStorage.setItem('ntu-schedule-pairing-key-v1','test-key-'.repeat(6));});
  await page.route('https://**/*',async route=>{
   const req=route.request(),url=new URL(req.url()),r=url.searchParams.get('route');let body={};try{body=req.postDataJSON()||{};}catch{}calls.push({route:r,body,url});
-  let data={};
+  let data={};const first=options.oldTimestamp?{...msg,timestamp:options.oldTimestamp}:msg;
   if(url.pathname.includes('/eren-mail')){
    if(r==='status')data={configured:true,aiConfigured:true,types:['University','Promotion','Receipt / Order','Other'],priorities:['High','Normal','Low','Muted'],actions:['Needs reply','Deadline','Waiting','FYI','No action'],health:{last_finished_at:new Date().toISOString()},redirectUri:'https://api.example.org/callback'};
-   if(r==='bootstrap')data={accounts,preferences:{},messages:[msg,{...msg,id:'m2',threadId:'t2',accountId:'a2',sender:'Bank',subject:'Your receipt',classification:{...classification,type:'Receipt / Order',priority:'Normal',action:'FYI'}}]};if(r==='accounts')data={accounts};if(r==='preferences')data={preferences:{}};if(r==='rules')data={rules:[]};if(r==='outbox')data={jobs:[]};if(r==='drafts')data={drafts:[]};
-   if(r==='mail'){if(options.mailDelay)await new Promise(r=>setTimeout(r,options.mailDelay));let messages=[msg,{...msg,id:'m2',threadId:'t2',accountId:'a2',sender:'Bank',subject:'Your receipt',classification:{...classification,type:'Receipt / Order',priority:'Normal',action:'FYI'}}];if(url.searchParams.get('accountId')!=='all')messages=messages.filter(m=>m.accountId===url.searchParams.get('accountId'));data=options.mailFail?{messages:[],cursor:{a1:'',a2:''},hasMore:false,errors:accounts.map(a=>({accountId:a.id,error:'Gmail temporarily unavailable'}))}:options.partialFail?{messages:messages.filter(m=>m.accountId==='a2'),cursor:{a1:null,a2:null},hasMore:false,errors:[{accountId:'a1',threadIds:['t1'],error:'One thread temporarily unavailable'}]}:{messages,cursor:{a1:null,a2:null},hasMore:false,errors:[]};}
-   if(r==='thread'){if(options.threadDelay)await new Promise(r=>setTimeout(r,options.threadDelay));const images=true;data={threadId:url.searchParams.get('threadId'),accountId:url.searchParams.get('accountId'),messages:[{...msg,threadId:url.searchParams.get('threadId'),...(options.html?{html:images?options.imagesHtml:options.html,hasExternalImages:!images,externalImages:images}: {})}]};}
+   if(r==='bootstrap')data={accounts,preferences:{},messages:[first,{...msg,id:'m2',threadId:'t2',accountId:'a2',sender:'Bank',subject:'Your receipt',classification:{...classification,type:'Receipt / Order',priority:'Normal',action:'FYI'}}]};if(r==='accounts')data={accounts};if(r==='preferences')data={preferences:{}};if(r==='rules')data={rules:[]};if(r==='outbox')data={jobs:[]};if(r==='drafts')data={drafts:[]};
+   if(r==='mail'){if(options.mailDelay)await new Promise(r=>setTimeout(r,options.mailDelay));let messages=[first,{...msg,id:'m2',threadId:'t2',accountId:'a2',sender:'Bank',subject:'Your receipt',classification:{...classification,type:'Receipt / Order',priority:'Normal',action:'FYI'}}];if(url.searchParams.get('accountId')!=='all')messages=messages.filter(m=>m.accountId===url.searchParams.get('accountId'));data=options.mailFail?{messages:[],cursor:{a1:'',a2:''},hasMore:false,errors:accounts.map(a=>({accountId:a.id,error:'Gmail temporarily unavailable'}))}:options.partialFail?{messages:messages.filter(m=>m.accountId==='a2'),cursor:{a1:null,a2:null},hasMore:false,errors:[{accountId:'a1',threadIds:['t1'],error:'One thread temporarily unavailable'}]}:{messages,cursor:{a1:null,a2:null},hasMore:false,errors:[]};}
+   if(r==='thread'){if(options.threadDelay)await new Promise(r=>setTimeout(r,options.threadDelay));const images=true;data={threadId:url.searchParams.get('threadId'),accountId:url.searchParams.get('accountId'),messages:[{...first,threadId:url.searchParams.get('threadId'),...(options.html?{html:images?options.imagesHtml:options.html,hasExternalImages:!images,externalImages:images}: {})}]};}
    if(r==='ai'){
     if(options.aiDelay)await new Promise(r=>setTimeout(r,options.aiDelay));
     if(options.aiFail)return route.fulfill({status:502,contentType:'application/json',body:JSON.stringify({error:'Gemini quota exhausted. Your draft has been preserved.'})});
@@ -43,20 +44,20 @@ test('full reader, mobile back, normal reply and safe controls',async({page},inf
  await page.screenshot({path:`test-results/${info.project.name}-composer.png`});
 });
 test('AI revisions use current manual edits; Undo and Redo preserve text',async({page})=>{
- const {calls}=await boot(page);await page.locator('#mailxComposeMain').click();await page.locator('#mailxAiPrompt').fill('Meet after 3');await page.locator('#mailxGenerate').click();await expect(page.locator('#mailxBody')).toHaveValue('I can meet after 3.');await page.locator('#mailxBody').fill('I can meet after 4.');await page.locator('#mailxAiPrompt').fill('Make warmer');await page.locator('#mailxGenerate').click();await expect(page.locator('#mailxBody')).toHaveValue('Warm: I can meet after 4.');expect(calls.filter(c=>c.route==='ai').at(-1).body.body).toBe('I can meet after 4.');await page.locator('#mailxUndo').click();await expect(page.locator('#mailxBody')).toHaveValue('I can meet after 4.');await page.locator('#mailxRedo').click();await expect(page.locator('#mailxBody')).toHaveValue('Warm: I can meet after 4.');
+ const {calls}=await boot(page);await composeButton(page).click();await page.locator('#mailxAiPrompt').fill('Meet after 3');await page.locator('#mailxGenerate').click();await expect(page.locator('#mailxBody')).toHaveValue('I can meet after 3.');await page.locator('#mailxBody').fill('I can meet after 4.');await page.locator('#mailxAiPrompt').fill('Make warmer');await page.locator('#mailxGenerate').click();await expect(page.locator('#mailxBody')).toHaveValue('Warm: I can meet after 4.');expect(calls.filter(c=>c.route==='ai').at(-1).body.body).toBe('I can meet after 4.');await page.locator('#mailxUndo').click();await expect(page.locator('#mailxBody')).toHaveValue('I can meet after 4.');await page.locator('#mailxRedo').click();await expect(page.locator('#mailxBody')).toHaveValue('Warm: I can meet after 4.');
 });
 test('AI failure keeps the draft; edits during generation win',async({page})=>{
- await boot(page,{aiFail:true});await page.locator('#mailxComposeMain').click();await page.locator('#mailxBody').fill('My current draft.');await page.locator('#mailxAiPrompt').fill('Revise');await page.locator('#mailxGenerate').click();await expect(page.locator('#mailxComposeError')).toContainText('quota');await expect(page.locator('#mailxBody')).toHaveValue('My current draft.');
+ await boot(page,{aiFail:true});await composeButton(page).click();await page.locator('#mailxBody').fill('My current draft.');await page.locator('#mailxAiPrompt').fill('Revise');await page.locator('#mailxGenerate').click();await expect(page.locator('#mailxComposeError')).toContainText('quota');await expect(page.locator('#mailxBody')).toHaveValue('My current draft.');
 });
 test('late AI response cannot overwrite typing or a different composer',async({page})=>{
- await boot(page,{aiDelay:500});await page.locator('#mailxComposeMain').click();await page.locator('#mailxBody').fill('Original');await page.locator('#mailxAiPrompt').fill('Warm');await page.locator('#mailxGenerate').click();await page.locator('#mailxBody').fill('New manual edit');await expect(page.locator('#mailxToast')).toContainText('You edited this draft');await expect(page.locator('#mailxBody')).toHaveValue('New manual edit');
+ await boot(page,{aiDelay:500});await composeButton(page).click();await page.locator('#mailxBody').fill('Original');await page.locator('#mailxAiPrompt').fill('Warm');await page.locator('#mailxGenerate').click();await page.locator('#mailxBody').fill('New manual edit');await expect(page.locator('#mailxToast')).toContainText('You edited this draft');await expect(page.locator('#mailxBody')).toHaveValue('New manual edit');
 });
 test('archive uses API; local block scope stays distinct from Spam',async({page})=>{
  const {calls}=await boot(page);await page.locator('#mailxList .mailx-message').first().click();await page.locator('[data-action="block"]').click();await page.locator('#ruleScope').selectOption('sender');await page.locator('#ruleSave').click();await expect(page.locator('#mailxSheet')).toHaveCount(0);const rule=calls.find(c=>c.route==='rules'&&c.body.effects);expect(rule.body.effects).toEqual({blocked:true});expect(rule.body.scope).toBe('sender');expect(JSON.stringify(calls)).not.toContain('SPAM');await page.locator('[data-action="archive"]').click();await expect.poll(()=>calls.some(c=>c.route==='modify'&&c.body.action==='archive')).toBeTruthy();
 });
 test('duplicate Send is disabled and scheduled sending is a server request',async({page})=>{
- const {calls}=await boot(page,{sendDelay:500});await page.locator('#mailxComposeMain').click();await page.locator('#mailxTo').fill('friend@example.org');await page.locator('#mailxSubject').fill('Hello');await page.locator('#mailxBody').fill('Daily driver test');await page.locator('#mailxSend').click();await expect(page.locator('#mailxSend')).toBeDisabled();await expect(page.locator('#mailxCompose')).toBeHidden();expect(calls.filter(c=>c.route==='send')).toHaveLength(1);
- await page.locator('#mailxComposeMain').click();await page.locator('#mailxTo').fill('friend@example.org');await page.locator('#mailxBody').fill('Scheduled');await page.locator('#mailxSchedule').click();await page.locator('#mailxSendAt').fill('2027-01-10T15:30');await page.locator('#mailxConfirmSchedule').click();await expect(page.locator('#mailxCompose')).toBeHidden();expect(calls.filter(c=>c.route==='send').at(-1).body.sendAt).toBeTruthy();
+ const {calls}=await boot(page,{sendDelay:500});await composeButton(page).click();await page.locator('#mailxTo').fill('friend@example.org');await page.locator('#mailxSubject').fill('Hello');await page.locator('#mailxBody').fill('Daily driver test');await page.locator('#mailxSend').click();await expect(page.locator('#mailxSend')).toBeDisabled();await expect(page.locator('#mailxCompose')).toBeHidden();expect(calls.filter(c=>c.route==='send')).toHaveLength(1);await expect.poll(()=>page.locator('#mailxSend').isDisabled()).toBe(false);
+ await composeButton(page).click();await page.locator('#mailxTo').fill('friend@example.org');await page.locator('#mailxBody').fill('Scheduled');await page.locator('#mailxSchedule').click();await page.locator('#mailxSendAt').fill('2027-01-10T15:30');await page.locator('#mailxConfirmSchedule').click();await expect(page.locator('#mailxCompose')).toBeHidden();expect(calls.filter(c=>c.route==='send').at(-1).body.sendAt).toBeTruthy();
 });
 
 test('styled newsletter images load by default without a notice',async({page})=>{
@@ -112,7 +113,7 @@ test('desktop splitters resize panes and persist their widths',async({page},info
 
 test('desktop composer can be dragged without moving when editing fields',async({page},info)=>{
  test.skip(info.project.name==='iphone','desktop interaction');
- await boot(page);await page.locator('#mailxComposeMain').click();
+ await boot(page);await composeButton(page).click();
  const pane=page.locator('#mailxCompose'),head=page.locator('#mailxCompose .mailx-compose-head');
  const before=await pane.boundingBox(),h=await head.boundingBox();expect(before).toBeTruthy();expect(h).toBeTruthy();
  await page.mouse.move(h.x+120,h.y+h.height/2);await page.mouse.down();await page.mouse.move(h.x+40,h.y+h.height/2+36,{steps:5});await page.mouse.up();
@@ -135,4 +136,42 @@ test('touch swipe left archives immediately through the same Gmail action',async
  await expect.poll(()=>calls.some(c=>c.route==='modify'&&c.body.action==='archive')).toBeTruthy();
  await expect(page.locator('#mailxToast')).toContainText('Archived');
  await expect(page.locator('#mailxToast button')).toHaveText('Undo');
+});
+
+
+test('mail history shows a year for messages outside the current year',async({page})=>{
+ const oldYear=new Date().getFullYear()-2,oldTimestamp=new Date(oldYear,9,2,23,5).getTime();
+ await boot(page,{oldTimestamp});
+ const oldMessage=page.locator('#mailxList .mailx-message').filter({hasText:'Thursday meeting'}).first();
+ await expect(oldMessage.locator('.mailx-time')).toContainText(String(oldYear));
+ await oldMessage.click();
+ await expect(page.locator('.mailx-thread-message').last().locator('summary').first()).toContainText(String(oldYear));
+});
+
+test('compose uses an icon draft action, clean Gemini label, and visible AI spinner',async({page})=>{
+ await boot(page,{aiDelay:500});await composeButton(page).click();
+ await expect(page.locator('#mailxSaveDraft')).toHaveAttribute('aria-label','Save draft');
+ await expect(page.locator('#mailxSaveDraft')).toHaveText('');
+ await expect(page.locator('.mailx-ai-label')).toContainText('Gemini');
+ await expect(page.locator('.mailx-ai-label')).not.toContainText('edits the body below');
+ await page.locator('#mailxAiPrompt').fill('Write a short reply');
+ await page.locator('#mailxGenerate').click();
+ await expect(page.locator('#mailxGenerate')).toHaveClass(/is-loading/);
+ await expect(page.locator('#mailxGenerate')).toHaveAttribute('aria-busy','true');
+ await expect(page.locator('.mailx-ai-spinner')).toBeVisible();
+ await expect(page.locator('.mailx-ai-generate-label')).toHaveText('Revising…');
+ await expect(page.locator('#mailxBody')).toHaveValue('I can meet after 3.');
+ await expect(page.locator('#mailxGenerate')).not.toHaveClass(/is-loading/);
+});
+
+test('mobile compose action sits in the top bar with the other controls',async({page},info)=>{
+ test.skip(info.project.name!=='iphone','mobile-only layout');
+ await boot(page);
+ await expect(page.locator('#mailxComposeMain')).toBeHidden();
+ const compose=page.locator('#mailxComposeMobile'),settings=page.locator('#mailxSettings'),close=page.locator('#mailxClose');
+ await expect(compose).toBeVisible();
+ const [c,sb,cl]=await Promise.all([compose.boundingBox(),settings.boundingBox(),close.boundingBox()]);
+ expect(c).toBeTruthy();expect(sb).toBeTruthy();expect(cl).toBeTruthy();
+ expect(Math.abs(c.y-sb.y)).toBeLessThan(3);expect(Math.abs(c.y-cl.y)).toBeLessThan(3);
+ await compose.click();await expect(page.locator('#mailxCompose')).toHaveClass(/is-open/);
 });
