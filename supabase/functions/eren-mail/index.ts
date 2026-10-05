@@ -143,10 +143,10 @@ export async function handle(req:Request) {
    return response({messages:results.flatMap(r=>r.messages).sort((a,b)=>b.timestamp-a.timestamp),cursor:Object.fromEntries(results.map(r=>[r.accountId,r.next])),hasMore:results.some(r=>!!r.next),errors:results.filter(r=>r.error).map(r=>({accountId:r.accountId,error:r.error,threadIds:r.failures?.map((f:any)=>f.threadId)}))});
   }
   if(route==='thread'&&req.method==='GET') {
-   const a=await ownedAccount(admin,workspace,get('accountId'));
-   const [api,rules]=await Promise.all([gmailClient(admin,a),accountRules(admin,a)]),t=await fullThread(api,id(get('threadId')),true);
+   const a=await ownedAccount(admin,workspace,get('accountId')),images=String(get('images')||'')==='1';
+   const [api,rules]=await Promise.all([gmailClient(admin,a),accountRules(admin,a)]),t=await fullThread(api,id(get('threadId')),images);
    defer(cacheMessages(admin,a,t.messages||[],rules));
-   return response({threadId:t.id,accountId:a.id,messages:threadMessageViews(t.messages||[],rules)});
+   return response({threadId:t.id,accountId:a.id,imagesLoaded:images,messages:threadMessageViews(t.messages||[],rules)});
   }
   if(route==='attachment'&&req.method==='GET') {
    const a=await ownedAccount(admin,workspace,get('accountId')),api=await gmailClient(admin,a),m=await api('messages/'+id(get('messageId'))+'?format=full');
