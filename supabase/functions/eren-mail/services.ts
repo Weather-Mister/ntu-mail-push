@@ -6,7 +6,7 @@ let memoryEpoch=0;
 const accessTokens=new Map<string,{value:string;until:number}>(),tokenRequests=new Map<string,Promise<any>>();
 export function clearMailMemory(workspace='') {memoryEpoch++;for(const key of accessTokens.keys())if(key.startsWith(workspace))accessTokens.delete(key);for(const key of tokenRequests.keys())if(key.startsWith(workspace))tokenRequests.delete(key);threadCache.deletePrefix(workspace);}
 export function invalidateThread(workspace:string,accountId:string,threadId:string) {threadCache.deletePrefix(`${workspace}:${accountId}:${threadId}:`);}
-import { header, address, senderName, bodies, plainText, classify, unsubscribeInfo, b64url, AI_SYSTEM } from './domain.mjs';
+import { header, address, senderName, bodies, plainText, classify, unsubscribeInfo, b64url, AI_SYSTEM, sanitizeRichBody } from './domain.mjs';
 export class MailError extends Error { constructor(public status:number, message:string, public code='mail_error') { super(message); } }
 export const check = (result:any) => { if(result.error) throw new MailError(503,'Mail storage is temporarily unavailable. Your draft has not been discarded.'); return result.data; };
 export const db = () => createClient(Deno.env.get('SUPABASE_URL')!,Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,{auth:{persistSession:false,autoRefreshToken:false}});
@@ -167,10 +167,15 @@ export async function revise(admin:any,account:any,input:any) {
   const api=await gmailClient(admin,account),t=await fullThread(api,input.threadId);
   context=(t.messages||[]).slice(-6).map((m:any)=>{const c=bodies(m.payload);return {from:header(m,'From'),to:header(m,'To'),subject:header(m,'Subject'),body:(c.text||plainText(c.html)).slice(0,6000)};});
  }
- const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${cfg.GEMINI_MODEL}:generateContent`,{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':cfg.GEMINI_API_KEY},body:JSON.stringify({systemInstruction:{parts:[{text:AI_SYSTEM}]},contents:[{role:'user',parts:[{text:JSON.stringify({threadContext:context,recipient:String(input.to||'').slice(0,2000),subject:String(input.subject||'').slice(0,500),currentEditableDraft:input.body,latestUserInstruction:input.instruction})}]}],generationConfig:{temperature:0.3,maxOutputTokens:8192}}),signal:AbortSignal.timeout(45000)});
+ let currentHtml='';try{currentHtml=sanitizeRichBody(String(input.bodyHtml||''));}catch{currentHtml='';}
+ const payload={threadContext:context,recipient:String(input.to||'').slice(0,2000),subject:String(input.subject||'').slice(0,500),currentEditableDraft:input.body,currentEditableHtml:currentHtml,latestUserInstruction:input.instruction};
+ const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${cfg.GEMINI_MODEL}:generateContent`,{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':cfg.GEMINI_API_KEY},body:JSON.stringify({systemInstruction:{parts:[{text:AI_SYSTEM}]},contents:[{role:'user',parts:[{text:JSON.stringify(payload)}]}],generationConfig:{temperature:0.3,maxOutputTokens:8192,responseMimeType:'application/json'}}),signal:AbortSignal.timeout(45000)});
  if(!r.ok) {await r.body?.cancel();throw new MailError(502,'Gemini is unavailable or its quota is exhausted. Your current draft has been preserved.');}
- const data=await r.json(), candidate=data.candidates?.[0];
- const body=(candidate?.content?.parts||[]).filter((p:any)=>!p.thought).map((p:any)=>p.text||'').join('').trim();
- if(!body||candidate.finishReason!=='STOP') throw new MailError(502,'Gemini did not return a complete revision. Your draft has been preserved.');
- return {body};
+ const data=await r.json(),candidate=data.candidates?.[0];
+ const text=(candidate?.content?.parts||[]).filter((p:any)=>!p.thought).map((p:any)=>p.text||'').join('').trim();
+ if(!text||candidate.finishReason!=='STOP') throw new MailError(502,'Gemini did not return a complete revision. Your draft has been preserved.');
+ let parsed:any;try{parsed=JSON.parse(text);}catch{throw new MailError(502,'Gemini returned an invalid revision. Your draft has been preserved.');}
+ const body=typeof parsed.body==='string'?parsed.body.trim():'',bodyHtml=typeof parsed.bodyHtml==='string'?sanitizeRichBody(parsed.bodyHtml):'';
+ if(!body)throw new MailError(502,'Gemini returned an empty revision. Your draft has been preserved.');
+ return {body,bodyHtml};
 }
