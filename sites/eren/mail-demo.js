@@ -512,7 +512,7 @@
     $('#mailxComposeMain').onclick=guarded(()=>openComposer());$('#mailxComposeMobile').onclick=guarded(()=>openComposer());$('#mailxComposeClose').onclick=closeComposer;
     $('#mailxGenerate').onclick=runAi;$('#mailxUndo').onclick=undoAi;$('#mailxRedo').onclick=redoAi;$('#mailxSchedule').onclick=scheduleSend;$('#mailxSend').onclick=()=>send();$('#mailxSaveDraft').onclick=guarded(()=>saveDraft());
     $('#mailxAttach').onclick=()=>$('#mailxAttachmentInput').click();$('#mailxAttachmentInput').onchange=e=>{addFiles(e.target.files);e.target.value='';};
-    $('[data-format-command]').forEach(b=>{b.onmousedown=e=>e.preventDefault();b.onclick=()=>formatEditor(b.dataset.formatCommand);});
+    $$('[data-format-command]').forEach(b=>{b.onmousedown=e=>e.preventDefault();b.onclick=()=>formatEditor(b.dataset.formatCommand);});
     $('#mailxBlockFormat').onchange=e=>{formatEditor('formatBlock',e.target.value);};$('#mailxLink').onmousedown=e=>e.preventDefault();$('#mailxLink').onclick=()=>{restoreEditorRange();const sel=getSelection();if(!sel||sel.isCollapsed)return showToast('Select text to turn into a link.');const href=prompt('Link URL');if(!href)return;try{const u=new URL(href);if(!['http:','https:','mailto:'].includes(u.protocol))throw 0;formatEditor('createLink',href);}catch{showToast('Use an http, https, or mailto link.');}};
     $('#mailxRefresh').onclick=guarded(async()=>{clearMailCache();await Promise.all([refreshAccounts(),loadMail(false,true)]);});$('#mailxView').onchange=e=>setFilter(e.target.value);
     $$('[data-mailx-filter]').forEach(b=>b.onclick=()=>setFilter(b.dataset.mailxFilter));$$('[data-mailx-mobile-filter]').forEach(b=>b.onclick=()=>setFilter(b.dataset.mailxMobileFilter));
