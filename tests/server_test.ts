@@ -158,3 +158,14 @@ Deno.test('large Gmail change pages resume without advancing history early or lo
   await syncAccount(db,a);assert.equal(a.history_id,'99');assert.equal(a.sync_pending,null);assert.equal(db.tables.eren_mail_messages.length,53);assert.equal(historyRequests,1);
  });
 });
+Deno.test('stale Gmail authorization refreshes once for reads; persistent 401 terminates',async()=>{
+ const {db,a}=setup();let refreshes=0,reads=0;
+ await fetching(async(url:any)=>{if(String(url).includes('oauth2')){refreshes++;return Response.json({access_token:'token'+refreshes,expires_in:3600});}reads++;return reads===1?Response.json({error:{status:'UNAUTHENTICATED'}},{status:401}):Response.json({ok:true});},async()=>{assert((await (await gmailClient(db,a))('profile')).ok);assert.equal(refreshes,2);assert.equal(reads,2);});
+ clearMailMemory();refreshes=0;reads=0;
+ await fetching(async(url:any)=>{if(String(url).includes('oauth2')){refreshes++;return Response.json({access_token:'token'+refreshes});}reads++;return Response.json({error:{status:'UNAUTHENTICATED'}},{status:401});},async()=>{await assert.rejects(()=>(gmailClient(db,a).then(api=>api('profile'))));assert.equal(reads,2);assert.equal(refreshes,2);});clearMailMemory();
+});
+Deno.test('Gmail transient reads retry; sends and permission errors never retry',async()=>{
+ const {db,a}=setup();let requests=0;
+ await fetching(async(url:any)=>{if(String(url).includes('oauth2'))return Response.json({access_token:'test',expires_in:3600});requests++;return requests===1?Response.json({error:{status:'UNAVAILABLE'}},{status:503}):Response.json({ok:true});},async()=>{assert((await (await gmailClient(db,a))('profile')).ok);assert.equal(requests,2);});
+ for(const method of ['GET','POST']){requests=0;await fetching(async()=>{requests++;return Response.json({error:{errors:[{reason:method==='POST'?'backendError':'insufficientPermissions',message:'PRIVATE CONTENT'}]}},{status:method==='POST'?503:403});},async()=>{try{await (await gmailClient(db,a))('messages/send',method,method==='POST'?{raw:'test'}:undefined);throw new Error('Expected failure');}catch(e){assert(!e.message.includes('PRIVATE CONTENT'));assert.equal(e.reason,method==='POST'?'backendError':'insufficientPermissions');}assert.equal(requests,1);});}clearMailMemory();
+});

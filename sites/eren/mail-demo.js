@@ -4,6 +4,7 @@
   const API='https://evckshjtzikuusnkdnjn.supabase.co/functions/v1/eren-mail';
   const PREF='eren-mail-preferences-v1', DRAFT='eren-mail-draft-v1', OAUTH='eren-mail-oauth-v1';
   const state={filter:'inbox',account:'all',query:'',accounts:[],messages:[],selected:null,thread:null,cursor:{},hasMore:false,history:[],redo:[],replyContext:null,loadVersion:0,readVersion:0,composeVersion:0,editVersion:0,busySend:false,busyAi:false,requestId:null,requestPayload:null,draftId:null};
+  let messagesKey='';
   const pageCache=new Map(),threadCache=new Map(),threadRequests=new Map();
   let cacheOwner='',cacheEpoch=0,initialized=false,preferenceTimer;
   const viewKey=()=>JSON.stringify([state.account,state.filter,state.query]);
@@ -56,16 +57,18 @@
   async function loadMail(more=false,force=false){
     ownCache();if(['drafts','outbox'].includes(state.filter))return loadSpecial();
     const version=++state.loadVersion,key=viewKey(),cached=pageCache.get(key);
-    if(!more&&cached){Object.assign(state,cached.value);renderList();if(!force&&Date.now()-cached.at<30000){notice('');prefetchReaders();return;}}
-    else if(!more){state.messages=state.messages.filter(m=>(state.account==='all'||m.accountId===state.account)&&matchesView(m,state.filter));state.hasMore=false;renderList();}
+    if(!more&&cached){messagesKey=key;Object.assign(state,cached.value);renderList();if(!force&&Date.now()-cached.at<30000){notice('');prefetchReaders();return;}}
+    else if(!more){state.messages=state.query&&messagesKey!==key?[]:state.messages.filter(m=>(state.account==='all'||m.accountId===state.account)&&matchesView(m,state.filter));messagesKey=key;state.hasMore=false;renderList();}
     notice('Updating mailbox…');$('#mailxRefresh').disabled=true;
     try{
       const data=await api('mail',null,{accountId:state.account,filter:state.filter,q:state.query,cursor:JSON.stringify(more?state.cursor:{})});
       if(version!==state.loadVersion)return;
-      const rows=more?[...state.messages,...data.messages]:data.messages;
+      const failed=new Map((data.errors||[]).map(e=>[e.accountId,e.threadIds]));
+      const retained=state.messages.filter(m=>failed.has(m.accountId)&&(!failed.get(m.accountId)||failed.get(m.accountId).includes(m.threadId)));
+      const rows=more?[...state.messages,...data.messages]:[...retained,...data.messages];
       state.messages=[...new Map(rows.map(m=>[threadKey(m),m])).values()].sort((a,b)=>b.timestamp-a.timestamp);
-      state.cursor=data.cursor;state.hasMore=data.hasMore;putCache(pageCache,key,{messages:state.messages,cursor:state.cursor,hasMore:state.hasMore});renderList();prefetchReaders();
-      notice(data.errors?.map(e=>accountName(e.accountId)+': '+e.error).join(' · ')||'');
+      state.cursor=data.cursor;state.hasMore=data.hasMore;if(!data.errors?.length)putCache(pageCache,key,{messages:state.messages,cursor:state.cursor,hasMore:state.hasMore});renderList();prefetchReaders();
+      notice(data.errors?.map(e=>accountName(e.accountId)+': '+e.error+' Previously loaded mail is kept; refresh to retry.').join(' · ')||'');
     }catch(e){if(version===state.loadVersion)notice(e.message);}
     finally{if(version===state.loadVersion)$('#mailxRefresh').disabled=false;}
   }
