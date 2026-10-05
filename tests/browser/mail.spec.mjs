@@ -17,8 +17,15 @@ async function boot(page,options={}){
    if(r==='ai'){
     if(options.aiDelay)await new Promise(r=>setTimeout(r,options.aiDelay));
     if(options.aiFail)return route.fulfill({status:502,contentType:'application/json',body:JSON.stringify({error:'Gemini quota exhausted. Your draft has been preserved.'})});
-    data={body:body.body?'Warm: '+body.body:'I can meet after 3.'};
+    const revised=body.body?'Warm: '+body.body:'I can meet after 3.';
+    data={body:revised,...(options.richAiHtml?{bodyHtml:options.richAiHtml}:{})};
    }
+   if(r==='drafts/attachment'){
+    options._attachmentAttempts=(options._attachmentAttempts||0)+1;
+    if(options.attachmentFailOnce&&options._attachmentAttempts===1)return route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'Attachment upload failed'})});
+    data={attachment:{id:body.id,name:body.name,type:body.type,size:body.size}};
+   }
+   if(r==='drafts/attachment/delete')data={ok:true};
    if(r==='modify'&&options.modifyFail)return route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'Gmail unavailable'})});if(r==='send'){if(options.sendDelay)await new Promise(r=>setTimeout(r,options.sendDelay));data={job:{id:body.id,status:body.sendAt?'pending':'sent'}};}
   }else if(url.pathname.includes('ntu-schedule-api')){
    if(r==='todos/list')data={tasks:[{id:'task1',text:'Existing manual task',done:false}]};
@@ -44,13 +51,13 @@ test('full reader, mobile back, normal reply and safe controls',async({page},inf
  await page.screenshot({path:`test-results/${info.project.name}-composer.png`});
 });
 test('AI revisions use current manual edits; Undo and Redo preserve text',async({page})=>{
- const {calls}=await boot(page);await composeButton(page).click();await page.locator('#mailxAiPrompt').fill('Meet after 3');await page.locator('#mailxGenerate').click();await expect(page.locator('#mailxBody')).toHaveValue('I can meet after 3.');await page.locator('#mailxBody').fill('I can meet after 4.');await page.locator('#mailxAiPrompt').fill('Make warmer');await page.locator('#mailxGenerate').click();await expect(page.locator('#mailxBody')).toHaveValue('Warm: I can meet after 4.');expect(calls.filter(c=>c.route==='ai').at(-1).body.body).toBe('I can meet after 4.');await page.locator('#mailxUndo').click();await expect(page.locator('#mailxBody')).toHaveValue('I can meet after 4.');await page.locator('#mailxRedo').click();await expect(page.locator('#mailxBody')).toHaveValue('Warm: I can meet after 4.');
+ const {calls}=await boot(page);await composeButton(page).click();await page.locator('#mailxAiPrompt').fill('Meet after 3');await page.locator('#mailxGenerate').click();await expect(page.locator('#mailxBody')).toHaveText('I can meet after 3.');await page.locator('#mailxBody').fill('I can meet after 4.');await page.locator('#mailxAiPrompt').fill('Make warmer');await page.locator('#mailxGenerate').click();await expect(page.locator('#mailxBody')).toHaveText('Warm: I can meet after 4.');expect(calls.filter(c=>c.route==='ai').at(-1).body.body).toBe('I can meet after 4.');await page.locator('#mailxUndo').click();await expect(page.locator('#mailxBody')).toHaveText('I can meet after 4.');await page.locator('#mailxRedo').click();await expect(page.locator('#mailxBody')).toHaveText('Warm: I can meet after 4.');
 });
 test('AI failure keeps the draft; edits during generation win',async({page})=>{
- await boot(page,{aiFail:true});await composeButton(page).click();await page.locator('#mailxBody').fill('My current draft.');await page.locator('#mailxAiPrompt').fill('Revise');await page.locator('#mailxGenerate').click();await expect(page.locator('#mailxComposeError')).toContainText('quota');await expect(page.locator('#mailxBody')).toHaveValue('My current draft.');
+ await boot(page,{aiFail:true});await composeButton(page).click();await page.locator('#mailxBody').fill('My current draft.');await page.locator('#mailxAiPrompt').fill('Revise');await page.locator('#mailxGenerate').click();await expect(page.locator('#mailxComposeError')).toContainText('quota');await expect(page.locator('#mailxBody')).toHaveText('My current draft.');
 });
 test('late AI response cannot overwrite typing or a different composer',async({page})=>{
- await boot(page,{aiDelay:500});await composeButton(page).click();await page.locator('#mailxBody').fill('Original');await page.locator('#mailxAiPrompt').fill('Warm');await page.locator('#mailxGenerate').click();await page.locator('#mailxBody').fill('New manual edit');await expect(page.locator('#mailxToast')).toContainText('You edited this draft');await expect(page.locator('#mailxBody')).toHaveValue('New manual edit');
+ await boot(page,{aiDelay:500});await composeButton(page).click();await page.locator('#mailxBody').fill('Original');await page.locator('#mailxAiPrompt').fill('Warm');await page.locator('#mailxGenerate').click();await page.locator('#mailxBody').fill('New manual edit');await expect(page.locator('#mailxToast')).toContainText('You edited this draft');await expect(page.locator('#mailxBody')).toHaveText('New manual edit');
 });
 test('archive uses API; local block scope stays distinct from Spam',async({page})=>{
  const {calls}=await boot(page);await page.locator('#mailxList .mailx-message').first().click();await page.locator('[data-action="block"]').click();await page.locator('#ruleScope').selectOption('sender');await page.locator('#ruleSave').click();await expect(page.locator('#mailxSheet')).toHaveCount(0);const rule=calls.find(c=>c.route==='rules'&&c.body.effects);expect(rule.body.effects).toEqual({blocked:true});expect(rule.body.scope).toBe('sender');expect(JSON.stringify(calls)).not.toContain('SPAM');await page.locator('[data-action="archive"]').click();await expect.poll(()=>calls.some(c=>c.route==='modify'&&c.body.action==='archive')).toBeTruthy();
@@ -160,7 +167,7 @@ test('compose uses an icon draft action, clean Gemini label, and visible AI spin
  await expect(page.locator('#mailxGenerate')).toHaveAttribute('aria-busy','true');
  await expect(page.locator('.mailx-ai-spinner')).toBeVisible();
  await expect(page.locator('.mailx-ai-generate-label')).toHaveText('Revising…');
- await expect(page.locator('#mailxBody')).toHaveValue('I can meet after 3.');
+ await expect(page.locator('#mailxBody')).toHaveText('I can meet after 3.');
  await expect(page.locator('#mailxGenerate')).not.toHaveClass(/is-loading/);
 });
 
@@ -174,4 +181,31 @@ test('mobile compose action sits in the top bar with the other controls',async({
  expect(c).toBeTruthy();expect(sb).toBeTruthy();expect(cl).toBeTruthy();
  expect(Math.abs(c.y-sb.y)).toBeLessThan(3);expect(Math.abs(c.y-cl.y)).toBeLessThan(3);
  await compose.click();await expect(page.locator('#mailxCompose')).toHaveClass(/is-open/);
+});
+
+
+test('rich formatting and durable attachments are included in send payload',async({page})=>{
+ const {calls}=await boot(page);await composeButton(page).click();await page.locator('#mailxTo').fill('friend@example.org');await page.locator('#mailxSubject').fill('Rich mail');await page.locator('#mailxBody').fill('Hello formatted');
+ await page.locator('#mailxBody').evaluate(el=>{const text=el.firstChild,r=document.createRange();r.setStart(text,6);r.setEnd(text,15);const s=getSelection();s.removeAllRanges();s.addRange(r);document.dispatchEvent(new Event('selectionchange'));});
+ await page.getByRole('button',{name:'Bold'}).click();
+ await expect.poll(()=>page.locator('#mailxBody').evaluate(el=>el.innerHTML)).toMatch(/<(b|strong)>formatted<\/(b|strong)>/i);
+ await page.locator('#mailxAttachmentInput').setInputFiles({name:'notes.txt',mimeType:'text/plain',buffer:Buffer.from('hello attachment')});
+ await expect(page.locator('.mailx-attachment-chip')).toContainText('notes.txt');await expect(page.locator('.mailx-attachment-chip')).toContainText(/B|KB/);
+ await expect.poll(()=>calls.filter(c=>c.route==='drafts/attachment').length).toBe(1);
+ await page.locator('#mailxSend').click();await expect(page.locator('#mailxCompose')).toBeHidden();
+ const send=calls.filter(c=>c.route==='send').at(-1).body;expect(send.draftId).toBeTruthy();expect(send.attachments).toHaveLength(1);expect(send.attachments[0].name).toBe('notes.txt');expect(send.body).toContain('Hello formatted');expect(send.bodyHtml).toMatch(/<(b|strong)>formatted<\/(b|strong)>/i);
+});
+
+test('failed attachment upload can be retried before sending',async({page})=>{
+ const {calls}=await boot(page,{attachmentFailOnce:true});await composeButton(page).click();await page.locator('#mailxTo').fill('friend@example.org');await page.locator('#mailxBody').fill('Retry test');
+ await page.locator('#mailxAttachmentInput').setInputFiles({name:'retry.txt',mimeType:'text/plain',buffer:Buffer.from('retry me')});
+ await expect(page.locator('.mailx-attachment-chip')).toHaveClass(/is-error/);await expect(page.locator('.mailx-attachment-chip')).toContainText('Retry');
+ await page.locator('[data-attachment-retry]').click();await expect(page.locator('.mailx-attachment-chip')).not.toHaveClass(/is-error/);await expect.poll(()=>calls.filter(c=>c.route==='drafts/attachment').length).toBe(2);
+ await page.locator('#mailxSend').click();await expect(page.locator('#mailxCompose')).toBeHidden();expect(calls.filter(c=>c.route==='send').at(-1).body.attachments).toHaveLength(1);
+});
+
+test('Gemini rich revisions preserve returned formatting and Undo restores prior rich HTML',async({page})=>{
+ await boot(page,{richAiHtml:'<p>Warm: <strong>I can meet after 4.</strong></p>'});await composeButton(page).click();await page.locator('#mailxBody').fill('I can meet after 4.');await page.locator('#mailxAiPrompt').fill('Make warmer');await page.locator('#mailxGenerate').click();
+ await expect(page.locator('#mailxBody')).toContainText('Warm:');await expect.poll(()=>page.locator('#mailxBody').evaluate(el=>el.innerHTML)).toContain('<strong>');
+ await page.locator('#mailxUndo').click();await expect(page.locator('#mailxBody')).toHaveText('I can meet after 4.');
 });
