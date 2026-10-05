@@ -38,3 +38,53 @@
 .mailx-dialog button:disabled{opacity:.5;cursor:wait}.mailx-dialog button:focus-visible,.mailx-dialog a:focus-visible,.mailx-dialog select:focus-visible{outline:3px solid #8299cb;outline-offset:2px}.mailx-account{max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;letter-spacing:0;background:#e8edf7;color:#36517f}.mailx-message-foot{flex-wrap:wrap}.mailx-list-extra{display:flex;gap:8px;margin-top:9px;align-items:center}.mailx-list-extra select{flex:1;min-width:0;background:#fffdfa;border:1px solid #e0dbd3;border-radius:9px;padding:7px;font:inherit;font-size:11px}.mailx-list-extra button{flex-shrink:0}#mailxNotice{padding-top:9px;font-size:11px;line-height:1.5;color:#7b503a;overflow-wrap:anywhere}.mailx-load-more{width:100%;border:0;padding:18px;background:#eef2fb;color:#263f77;font-weight:750;cursor:pointer}.mailx-thread-message{border-top:1px solid #eee9e2;padding:12px 18px}.mailx-thread-message summary{cursor:pointer;padding:9px 0;font-size:12px;line-height:1.5}.mailx-thread-message .mailx-sender-row{margin:8px 0 12px}.mailx-thread-message .mailx-mail-body{padding:12px 0;overflow-wrap:anywhere}.mailx-html-body{display:block;width:100%;height:440px;max-height:65dvh;border:0;background:#fffdfa}.mailx-text-alternative>summary{font-size:10px;color:#7b766f}.mailx-attachments{display:flex;gap:7px;flex-wrap:wrap;padding:12px 0}.mailx-attachments button{max-width:100%;overflow-wrap:anywhere;height:auto;padding:8px}.mailx-reply-inline{margin:8px 0}.mailx-reader-subject{overflow-wrap:anywhere}.mailx-reader-toolbar{flex-wrap:wrap}.is-old-code{opacity:.62}.mailx-inline-error{font-size:12px;color:#964333;line-height:1.5;padding:8px 14px;overflow-wrap:anywhere}.mailx-inline-error:empty{display:none}.mailx-field-row select{flex:1;min-width:0;border:0;background:transparent;padding:8px 0;font:inherit;font-size:12px;color:#292d32}.mailx-sheet{position:absolute;inset:12px;z-index:30;max-width:600px;margin-left:auto;background:#fffdfa;border:1px solid #ddd7ce;border-radius:19px;box-shadow:-16px 20px 70px #1c202840;display:flex;flex-direction:column;overflow:hidden}.mailx-sheet-body{padding:18px 20px;overflow:auto;flex:1;min-height:0;font-size:13px;line-height:1.6}.mailx-sheet-body h3{margin:22px 0 8px;font-size:15px}.mailx-sheet-body h3:first-child{margin-top:0}.mailx-sheet-body label{display:flex;flex-direction:column;gap:5px;margin:12px 0;color:#6e685f;font-size:12px}.mailx-sheet-body input,.mailx-sheet-body select{width:100%;border:1px solid #ddd7ce;border-radius:10px;padding:10px;background:#fff;color:#292d32;font:inherit;min-width:0}.mailx-sheet-body p{overflow-wrap:anywhere}.mailx-sheet-body button{margin-top:4px}.mailx-rule{display:flex;gap:10px;justify-content:space-between;align-items:center;border-bottom:1px solid #eee9e2;padding:10px 0;overflow-wrap:anywhere}.mailx-rule span{min-width:0}.mailx-rule button{flex-shrink:0}.mailx-settings-account{border-bottom:1px solid #eee9e2;padding:10px 0}.mailx-settings-account p{margin:4px 0}.mailx-callback{display:block;background:#f2efe9;border-radius:8px;padding:10px;overflow-wrap:anywhere;font-size:11px}.mailx-compose{min-height:0}.mailx-compose-head>div{min-width:0}.mailx-compose-fields,.mailx-ai-wrap,.mailx-editor-label,.mailx-compose-foot{flex-shrink:0}.mailx-email-body{min-height:80px}.mailx-compose-note{line-height:1.4}.mailx-toast{white-space:normal;text-align:center;max-width:90%;width:max-content;border-radius:13px}.mailx-list-controls{grid-template-columns:minmax(80px,1fr) minmax(110px,150px)}.mailx-account-select-list{width:100%;min-width:0;max-width:150px}.mailx-dialog .mailx-sheet summary{cursor:pointer}.mailx-message{transition:background .12s ease}.mailx-reader-scroll{scroll-behavior:smooth}
 @media(max-width:860px){.mailx-sheet{inset:0;max-width:none;border:0;border-radius:0}.mailx-sheet-body{padding-bottom:calc(20px + env(safe-area-inset-bottom))}.mailx-topbar{gap:7px}.mailx-brand{gap:7px}.mailx-brand-icon{width:32px;height:32px}.mailx-thread-message{padding:10px 17px}.mailx-reader-toolbar{gap:5px}.mailx-reader-toolbar button{min-height:38px}.mailx-thread-message .mailx-login-card{margin:8px 0}.mailx-html-body{height:52dvh;max-height:none}.mailx-compose-fields input,.mailx-compose-fields select,.mailx-ai-prompt,.mailx-email-body,.mailx-sheet input,.mailx-sheet select{font-size:16px}.mailx-compose-foot{gap:6px;flex-wrap:wrap}.mailx-compose-note{flex-basis:100%}.mailx-email-body{min-height:65px}.mailx-ai-prompt{min-height:48px;max-height:72px}.mailx-ai-wrap{margin-top:8px}.mailx-editor-label{padding-top:8px}.mailx-field-row{min-height:34px}.mailx-top-action{padding:0 9px}.mailx-sender{flex:1}.mailx-account{max-width:94px}.mailx-time{font-size:9px}}
 @media(prefers-reduced-motion:reduce){.mailx-dialog *{scroll-behavior:auto!important;transition:none!important}}
+
+
+/* Reader space pass: compact chrome, body-first layout, optional focus mode. */
+.mailx-reader-scroll{display:flex;flex-direction:column;overflow:auto;min-height:0;flex:1}
+.mailx-reader-toolbar{flex:0 0 auto;flex-wrap:nowrap;gap:5px;padding:7px 10px;overflow-x:auto;scrollbar-width:none}
+.mailx-reader-toolbar::-webkit-scrollbar{display:none}
+.mailx-reader-toolbar .mailx-action{flex:0 0 auto}
+.mailx-toolbar-spacer{flex:1 1 auto;min-width:6px}
+.mailx-action{min-height:30px;padding:0 7px;font-size:10.5px;border-radius:8px}
+.mailx-reader-head{padding:13px 18px 8px;flex:0 0 auto}
+.mailx-reader-title-row{display:flex;align-items:flex-start;gap:10px;min-width:0}
+.mailx-reader-subject{font-size:22px;line-height:1.12;margin:0;flex:1;min-width:0}
+.mailx-reader-head-actions{display:flex;gap:5px;flex:0 0 auto}
+.mailx-reader-tags{gap:5px;margin:7px 0 0}
+.mailx-reader-tags .mailx-chip,.mailx-reader-tags .mailx-account{padding-top:3px;padding-bottom:3px}
+.mailx-thread-message{padding:7px 18px;flex:0 0 auto}
+.mailx-thread-message>details>summary{padding:6px 0}
+.mailx-message-meta{margin:0 0 4px}
+.mailx-message-meta>summary{width:max-content;max-width:100%;padding:3px 0;color:#817a72;font-size:10px;font-weight:760}
+.mailx-message-meta .mailx-sender-row{padding:3px 0 5px}
+.mailx-thread-message:last-of-type{display:flex;flex:1 1 360px;min-height:360px;flex-direction:column}
+.mailx-thread-message:last-of-type>details[open]{display:flex;flex:1 1 auto;min-height:0;flex-direction:column}
+.mailx-thread-message:last-of-type>details[open]>.mailx-html-body{height:auto;max-height:none;min-height:360px;flex:1 1 420px}
+.mailx-thread-message:last-of-type>details[open]>.mailx-mail-body{flex:1 1 320px;min-height:260px;overflow:auto}
+.mailx-thread-message .mailx-mail-body{padding:8px 0}
+.mailx-reply-inline{align-self:flex-start;margin:6px 0 0}
+.mailx-reply-bar{flex:0 0 auto;padding:8px 18px 10px}
+.mailx-reply-button{min-height:36px}
+.mailx-shell.is-reader-focused .mailx-main{grid-template-columns:minmax(0,1fr)}
+.mailx-shell.is-reader-focused .mailx-nav,.mailx-shell.is-reader-focused .mailx-list-pane{display:none}
+.mailx-shell.is-reader-focused .mailx-reader{grid-column:1/-1}
+@media(min-width:861px){
+  .mailx-shell.is-reading .mailx-topbar{min-height:54px;padding-top:7px;padding-bottom:7px}
+}
+@media(max-width:860px){
+  .mailx-focus-action{display:none}
+  .mailx-reader-toolbar{padding:6px 8px}
+  .mailx-reader-head{padding:11px 14px 7px}
+  .mailx-reader-subject{font-size:20px}
+  .mailx-reader-head-actions{gap:4px}
+  .mailx-thread-message{padding:6px 14px}
+  .mailx-thread-message:last-of-type{min-height:calc(100dvh - 245px)}
+  .mailx-thread-message:last-of-type>details[open]>.mailx-html-body{min-height:46dvh}
+  .mailx-reply-bar{padding:7px 14px calc(10px + env(safe-area-inset-bottom))}
+}
+@media(max-width:430px){
+  .mailx-reader-title-row{gap:7px}
+  .mailx-reader-head-actions .mailx-action{padding:0 6px}
+  .mailx-reader-tags{overflow:hidden}
+}
