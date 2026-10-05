@@ -23,7 +23,7 @@
 .mailx-list-pane,.mailx-reader{border:1px solid #e5e5dd;border-radius:15px;overflow:hidden;background:#fffefa}
 .mailx-list-tools{padding:14px 16px 10px;display:flex;flex-wrap:wrap;align-items:center;gap:8px;border-color:#eeeee7}
 .mailx-list-controls{display:none}.mailx-list-meta{margin:0;font-size:11px;color:#75776f;font-weight:500;flex:1}
-.mailx-list-extra{margin:0;max-width:135px}.mailx-list-extra select{border:0;background:transparent;font-size:11px;padding:5px;color:#545b52}
+.mailx-list-extra{margin:0;max-width:none;display:flex;align-items:center;gap:5px}.mailx-list-extra select{border:0;background:transparent;font-size:11px;padding:5px;color:#545b52}.mailx-list-extra #mailxMarkAllRead{white-space:nowrap;padding:0 8px}
 #mailxNotice{flex-basis:100%;padding:0;font-size:11px}#mailxNotice[hidden]{display:none}
 .mailx-message-wrap{position:relative;border-bottom:1px solid #eeeee7;border-radius:0;flex-shrink:0}
 .mailx-message-wrap .mailx-message{display:grid;grid-template-columns:35px minmax(0,1fr);gap:11px;padding:16px 15px;border:0;border-radius:0;background:#fffefa;min-width:0}
