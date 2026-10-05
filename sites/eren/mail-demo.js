@@ -376,6 +376,10 @@
   async function refreshAccounts(){const before=state.accounts.map(a=>a.id).join(','),data=await api('accounts');state.accounts=data.accounts;if(state.account!=='all'&&!state.accounts.some(a=>a.id===state.account))state.account='all';state.messages=state.messages.filter(m=>state.accounts.some(a=>a.id===m.accountId));if(['drafts','outbox'].includes(state.filter))renderFilters();else renderList();if(before!==state.accounts.map(a=>a.id).join(',')){clearMailCache();loadMail(false,true);}}
   async function openDialog(){
     if(!dialog.open)dialog.showModal();shell.classList.remove('is-reading','is-reader-focused');
+    if(matchMedia('(min-width:861px)').matches){
+      const main=$('.mailx-main'),v=clampLayout(parseFloat(getComputedStyle(main).getPropertyValue('--mailx-nav-w')),parseFloat(getComputedStyle(main).getPropertyValue('--mailx-list-w')));
+      applyLayout(v.nav,v.list);
+    }
     try{
       ownCache();
       if(initialized){renderList();Promise.all([refreshAccounts(),loadMail()]).catch(e=>showToast(e.message));return;}
