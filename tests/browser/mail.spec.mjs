@@ -131,14 +131,13 @@ test('desktop composer can be dragged without moving when editing fields',async(
 
 test('touch swipe left archives immediately through the same Gmail action',async({page},info)=>{
  test.skip(info.project.name!=='iphone','touch-only interaction');
- const {calls}=await boot(page);
+ const {calls}=await boot(page);await expect.poll(()=>page.locator('#mailxRefresh').isDisabled()).toBe(false);
  const wrap=page.locator('[data-swipe-row="0"]');await expect(wrap).toHaveAttribute('data-swipe-enabled','1');
  await wrap.evaluate(async el=>{
-   const target=el.querySelector('.mailx-message'),r=el.getBoundingClientRect(),id=41,y=r.top+r.height/2,start=r.right-18,end=start-Math.min(130,r.width*.35);
-   const fire=(type,x)=>target.dispatchEvent(new PointerEvent(type,{bubbles:true,cancelable:true,pointerId:id,pointerType:'touch',isPrimary:true,button:0,clientX:x,clientY:y}));
-   fire('pointerdown',start);fire('pointermove',end);
-   await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
-   fire('pointerup',end);
+   const target=el.querySelector('.mailx-message'),r=el.getBoundingClientRect(),id=41,y=r.top+r.height/2,start=r.right-18,mid=start-64,end=Math.max(r.left+12,start-150);
+   const frame=()=>new Promise(resolve=>requestAnimationFrame(resolve));
+   const fire=(type,x,buttons)=>target.dispatchEvent(new PointerEvent(type,{bubbles:true,cancelable:true,pointerId:id,pointerType:'touch',isPrimary:true,button:0,buttons,clientX:x,clientY:y}));
+   fire('pointerdown',start,1);fire('pointermove',mid,1);await frame();fire('pointermove',end,1);await frame();fire('pointerup',end,0);
  });
  await expect.poll(()=>calls.some(c=>c.route==='modify'&&c.body.action==='archive')).toBeTruthy();
  await expect(page.locator('#mailxToast')).toContainText('Archived');
