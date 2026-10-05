@@ -7,12 +7,12 @@ async function boot(page,options={}){
  await page.addInitScript(()=>{if(window===window.top)localStorage.setItem('ntu-schedule-pairing-key-v1','test-key-'.repeat(6));});
  await page.route('https://**/*',async route=>{
   const req=route.request(),url=new URL(req.url()),r=url.searchParams.get('route');let body={};try{body=req.postDataJSON()||{};}catch{}calls.push({route:r,body,url});
-  let data={};
+  let data={};const first=options.oldTimestamp?{...msg,timestamp:options.oldTimestamp}:msg;
   if(url.pathname.includes('/eren-mail')){
    if(r==='status')data={configured:true,aiConfigured:true,types:['University','Promotion','Receipt / Order','Other'],priorities:['High','Normal','Low','Muted'],actions:['Needs reply','Deadline','Waiting','FYI','No action'],health:{last_finished_at:new Date().toISOString()},redirectUri:'https://api.example.org/callback'};
-   if(r==='bootstrap')data={accounts,preferences:{},messages:[msg,{...msg,id:'m2',threadId:'t2',accountId:'a2',sender:'Bank',subject:'Your receipt',classification:{...classification,type:'Receipt / Order',priority:'Normal',action:'FYI'}}]};if(r==='accounts')data={accounts};if(r==='preferences')data={preferences:{}};if(r==='rules')data={rules:[]};if(r==='outbox')data={jobs:[]};if(r==='drafts')data={drafts:[]};
-   if(r==='mail'){if(options.mailDelay)await new Promise(r=>setTimeout(r,options.mailDelay));let messages=[msg,{...msg,id:'m2',threadId:'t2',accountId:'a2',sender:'Bank',subject:'Your receipt',classification:{...classification,type:'Receipt / Order',priority:'Normal',action:'FYI'}}];if(url.searchParams.get('accountId')!=='all')messages=messages.filter(m=>m.accountId===url.searchParams.get('accountId'));data=options.mailFail?{messages:[],cursor:{a1:'',a2:''},hasMore:false,errors:accounts.map(a=>({accountId:a.id,error:'Gmail temporarily unavailable'}))}:options.partialFail?{messages:messages.filter(m=>m.accountId==='a2'),cursor:{a1:null,a2:null},hasMore:false,errors:[{accountId:'a1',threadIds:['t1'],error:'One thread temporarily unavailable'}]}:{messages,cursor:{a1:null,a2:null},hasMore:false,errors:[]};}
-   if(r==='thread'){if(options.threadDelay)await new Promise(r=>setTimeout(r,options.threadDelay));const images=true;data={threadId:url.searchParams.get('threadId'),accountId:url.searchParams.get('accountId'),messages:[{...msg,threadId:url.searchParams.get('threadId'),...(options.html?{html:images?options.imagesHtml:options.html,hasExternalImages:!images,externalImages:images}: {})}]};}
+   if(r==='bootstrap')data={accounts,preferences:{},messages:[first,{...msg,id:'m2',threadId:'t2',accountId:'a2',sender:'Bank',subject:'Your receipt',classification:{...classification,type:'Receipt / Order',priority:'Normal',action:'FYI'}}]};if(r==='accounts')data={accounts};if(r==='preferences')data={preferences:{}};if(r==='rules')data={rules:[]};if(r==='outbox')data={jobs:[]};if(r==='drafts')data={drafts:[]};
+   if(r==='mail'){if(options.mailDelay)await new Promise(r=>setTimeout(r,options.mailDelay));let messages=[first,{...msg,id:'m2',threadId:'t2',accountId:'a2',sender:'Bank',subject:'Your receipt',classification:{...classification,type:'Receipt / Order',priority:'Normal',action:'FYI'}}];if(url.searchParams.get('accountId')!=='all')messages=messages.filter(m=>m.accountId===url.searchParams.get('accountId'));data=options.mailFail?{messages:[],cursor:{a1:'',a2:''},hasMore:false,errors:accounts.map(a=>({accountId:a.id,error:'Gmail temporarily unavailable'}))}:options.partialFail?{messages:messages.filter(m=>m.accountId==='a2'),cursor:{a1:null,a2:null},hasMore:false,errors:[{accountId:'a1',threadIds:['t1'],error:'One thread temporarily unavailable'}]}:{messages,cursor:{a1:null,a2:null},hasMore:false,errors:[]};}
+   if(r==='thread'){if(options.threadDelay)await new Promise(r=>setTimeout(r,options.threadDelay));const images=true;data={threadId:url.searchParams.get('threadId'),accountId:url.searchParams.get('accountId'),messages:[{...first,threadId:url.searchParams.get('threadId'),...(options.html?{html:images?options.imagesHtml:options.html,hasExternalImages:!images,externalImages:images}: {})}]};}
    if(r==='ai'){
     if(options.aiDelay)await new Promise(r=>setTimeout(r,options.aiDelay));
     if(options.aiFail)return route.fulfill({status:502,contentType:'application/json',body:JSON.stringify({error:'Gemini quota exhausted. Your draft has been preserved.'})});
@@ -135,4 +135,41 @@ test('touch swipe left archives immediately through the same Gmail action',async
  await expect.poll(()=>calls.some(c=>c.route==='modify'&&c.body.action==='archive')).toBeTruthy();
  await expect(page.locator('#mailxToast')).toContainText('Archived');
  await expect(page.locator('#mailxToast button')).toHaveText('Undo');
+});
+
+
+test('mail history shows a year for messages outside the current year',async({page})=>{
+ const oldYear=new Date().getFullYear()-2,oldTimestamp=new Date(oldYear,9,2,23,5).getTime();
+ await boot(page,{oldTimestamp});
+ await expect(page.locator('#mailxList .mailx-message').first().locator('.mailx-time')).toContainText(String(oldYear));
+ await page.locator('#mailxList .mailx-message').first().click();
+ await expect(page.locator('.mailx-thread-message').last().locator('summary').first()).toContainText(String(oldYear));
+});
+
+test('compose uses an icon draft action, clean Gemini label, and visible AI spinner',async({page})=>{
+ await boot(page,{aiDelay:500});await page.locator('#mailxComposeMain').click();
+ await expect(page.locator('#mailxSaveDraft')).toHaveAttribute('aria-label','Save draft');
+ await expect(page.locator('#mailxSaveDraft')).toHaveText('');
+ await expect(page.locator('.mailx-ai-label')).toContainText('Gemini');
+ await expect(page.locator('.mailx-ai-label')).not.toContainText('edits the body below');
+ await page.locator('#mailxAiPrompt').fill('Write a short reply');
+ await page.locator('#mailxGenerate').click();
+ await expect(page.locator('#mailxGenerate')).toHaveClass(/is-loading/);
+ await expect(page.locator('#mailxGenerate')).toHaveAttribute('aria-busy','true');
+ await expect(page.locator('.mailx-ai-spinner')).toBeVisible();
+ await expect(page.locator('.mailx-ai-generate-label')).toHaveText('Revising…');
+ await expect(page.locator('#mailxBody')).toHaveValue('I can meet after 3.');
+ await expect(page.locator('#mailxGenerate')).not.toHaveClass(/is-loading/);
+});
+
+test('mobile compose action sits in the top bar with the other controls',async({page},info)=>{
+ test.skip(info.project.name!=='iphone','mobile-only layout');
+ await boot(page);
+ await expect(page.locator('#mailxComposeMain')).toBeHidden();
+ const compose=page.locator('#mailxComposeMobile'),settings=page.locator('#mailxSettings'),close=page.locator('#mailxClose');
+ await expect(compose).toBeVisible();
+ const [c,sb,cl]=await Promise.all([compose.boundingBox(),settings.boundingBox(),close.boundingBox()]);
+ expect(c).toBeTruthy();expect(sb).toBeTruthy();expect(cl).toBeTruthy();
+ expect(Math.abs(c.y-sb.y)).toBeLessThan(3);expect(Math.abs(c.y-cl.y)).toBeLessThan(3);
+ await compose.click();await expect(page.locator('#mailxCompose')).toHaveClass(/is-open/);
 });
