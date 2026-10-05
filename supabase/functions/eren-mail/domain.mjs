@@ -30,6 +30,16 @@ export function bodies(payload = {}) {
   }
   visit(payload); return result;
 }
+export function resolveAttachmentPart(payload = {}, attachmentId = '', partId = '') {
+  const attachments = bodies(payload).attachments;
+  // Gmail attachment IDs are opaque and may change between equivalent full-message fetches.
+  // MIME partId is the stable locator within one message, so prefer it and use the fresh ID it carries.
+  if (partId) {
+    const byPart = attachments.find(a => a.partId === partId);
+    if (byPart) return byPart;
+  }
+  return attachmentId ? (attachments.find(a => a.id === attachmentId) || null) : null;
+}
 export function plainText(html = '') {
   return html.replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi,'').replace(/<br\s*\/?>|<\/(p|div|tr|li|h[1-6])>/gi,'\n').replace(/<[^>]*>/g,' ').replace(/&nbsp;/gi,' ').replace(/&amp;/gi,'&').replace(/&lt;/gi,'<').replace(/&gt;/gi,'>').replace(/&quot;/gi,'"').replace(/&#(\d+);/g,(_,n)=>String.fromCodePoint(Math.min(+n,0x10ffff)));
 }
