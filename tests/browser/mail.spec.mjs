@@ -142,8 +142,9 @@ test('touch swipe left archives immediately through the same Gmail action',async
 test('mail history shows a year for messages outside the current year',async({page})=>{
  const oldYear=new Date().getFullYear()-2,oldTimestamp=new Date(oldYear,9,2,23,5).getTime();
  await boot(page,{oldTimestamp});
- await expect(page.locator('#mailxList .mailx-message').first().locator('.mailx-time')).toContainText(String(oldYear));
- await page.locator('#mailxList .mailx-message').first().click();
+ const oldMessage=page.locator('#mailxList .mailx-message').filter({hasText:'Thursday meeting'}).first();
+ await expect(oldMessage.locator('.mailx-time')).toContainText(String(oldYear));
+ await oldMessage.click();
  await expect(page.locator('.mailx-thread-message').last().locator('summary').first()).toContainText(String(oldYear));
 });
 
