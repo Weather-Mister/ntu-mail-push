@@ -46,7 +46,7 @@ export async function handle(req:Request) {
   let input:any={};
   if(req.method==='POST') {
    if(!req.headers.get('Content-Type')?.includes('application/json'))throw new MailError(415,'Use JSON.');
-   const raw=await req.text();if(raw.length>150000)throw new MailError(413,'Request too large.');
+   const raw=await req.text(),maxBody=route==='drafts/attachment'?12*1024*1024:150000;if(raw.length>maxBody)throw new MailError(413,'Request too large.');
    try{input=JSON.parse(raw);}catch{throw new MailError(400,'Invalid JSON.');}
    if(!input||typeof input!=='object'||Array.isArray(input))throw new MailError(400,'Invalid request.');
   }
@@ -88,7 +88,8 @@ export async function handle(req:Request) {
    let revoked=false;
    try{const r=await fetch('https://oauth2.googleapis.com/revoke',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({token}),signal:AbortSignal.timeout(10000)});revoked=r.ok;await r.body?.cancel();}catch{}
    const jobs=check(await admin.from('eren_mail_outbox').select('secret_name').eq('account_id',a.id));
-   const drafts=check(await admin.from('eren_mail_drafts').select('secret_name').eq('account_id',a.id));
+   const drafts=check(await admin.from('eren_mail_drafts').select('id,secret_name').eq('account_id',a.id));
+   for(const row of drafts){const stored=await secret(admin,row.secret_name);if(stored){try{for(const att of JSON.parse(stored).attachments||[])await secret(admin,attachmentSecret(workspace,row.id,att.id),null,true);}catch{}}}
    for(const row of [...jobs,...drafts])await secret(admin,row.secret_name,null,true);
    await secret(admin,a.secret_name,null,true);
    check(await admin.from('eren_mail_outbox').delete().eq('account_id',a.id));
