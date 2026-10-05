@@ -167,7 +167,7 @@
       if(wrap.dataset.swipeEnabled!=='1')return;
       const row=wrap.querySelector('.mailx-message');let intent='',suppress=false;
       bindPointerDrag(row,{
-        canStart:()=>true,
+        canStart:e=>['touch','pen'].includes(e.pointerType),
         onStart:()=>{intent='';suppress=false;wrap.classList.remove('is-snapping','is-committing');row.style.transform='';},
         onMove:({event,dx,dy})=>{
           if(!intent&&Math.hypot(dx,dy)>8)intent=Math.abs(dx)>Math.abs(dy)*1.15?'x':'y';
