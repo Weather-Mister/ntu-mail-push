@@ -1,7 +1,21 @@
 import { check, secret, ownedAccount, gmailClient, cacheMessages, accountRules, mapLimit, fullThread, MailError, hash, invalidateThread } from './services.ts';
-import { buildMime, validateDraft, header } from './domain.mjs';
+import { buildMime, validateDraft, header, MAX_ATTACHMENT_BYTES } from './domain.mjs';
 export async function enqueue(admin:any,account:any,input:any) {
- const draft=validateDraft(input);
+ let draft=validateDraft(input);
+ if(draft.attachments.length) {
+  if(!/^[0-9a-f-]{36}$/i.test(input.draftId||''))throw new MailError(400,'Attachments are not linked to a valid draft.');
+  const loaded=[];let total=0;
+  for(const ref of draft.attachments) {
+   const stored=await secret(admin,'eren-mail:'+account.workspace_hash+':draft:'+input.draftId+':attachment:'+ref.id);
+   if(!stored)throw new MailError(400,'An attachment is missing. Remove it and add it again.');
+   let a;try{a=JSON.parse(stored);}catch{throw new MailError(400,'An attachment could not be read. Remove it and add it again.');}
+   if(a.id!==ref.id||a.name!==ref.name||a.type!==ref.type||Number(a.size)!==ref.size||typeof a.data!=='string')throw new MailError(400,'An attachment changed unexpectedly. Remove it and add it again.');
+   let bytes=0;try{bytes=atob(a.data.replace(/\s+/g,'')).length;}catch{throw new MailError(400,'An attachment is corrupted. Remove it and add it again.');}
+   total+=bytes;if(bytes!==ref.size||total>MAX_ATTACHMENT_BYTES)throw new MailError(400,'Attachments are too large or corrupted.');
+   loaded.push({...ref,data:a.data.replace(/\s+/g,'')});
+  }
+  draft={...draft,attachments:loaded};
+ }
  if(!/^[0-9a-f-]{36}$/i.test(input.id||'')) throw new MailError(400,'Missing send request ID.');
  const sendAt=input.sendAt?new Date(input.sendAt):new Date();
  if(!Number.isFinite(sendAt.getTime())||sendAt.getTime()>Date.now()+366*86400000 || input.sendAt && sendAt.getTime()<Date.now()+30000) throw new MailError(400,'Schedule at least one minute in the future (up to one year).');
