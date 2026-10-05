@@ -376,7 +376,7 @@
     let used=currentAttachments.reduce((n,a)=>n+a.size,0);
     for(const file of list){
       if(currentAttachments.length>=8){showToast('You can attach up to 8 files.');break;}
-      if(file.size>12*1024*1024||used+file.size>12*1024*1024){showToast('Attachments can total up to 12 MB.');break;}
+      if(file.size>20*1024*1024||used+file.size>20*1024*1024){showToast('Attachments can total up to 20 MB.');break;}
       const entry={id:crypto.randomUUID(),name:file.name||'attachment',type:file.type||'application/octet-stream',size:file.size,status:'uploading',error:'',file};currentAttachments.push(entry);used+=file.size;uploadAttachment(entry);
     }
     renderAttachments();keepDraft();
@@ -410,7 +410,7 @@
   }
   async function forwardMessage(m,accountId){
     const attachments=m.attachments||[];
-    if(attachments.length>8||attachments.reduce((n,a)=>n+a.size,0)>12*1024*1024){showToast('This message exceeds the 8-file / 12 MB forwarding limit. Download its attachments to share separately.');return;}
+    if(attachments.length>8||attachments.reduce((n,a)=>n+a.size,0)>20*1024*1024){showToast('This message exceeds the 8-file / 20 MB forwarding limit. Download its attachments to share separately.');return;}
     const header='---------- Forwarded message ----------\nFrom: '+m.from+'\nDate: '+new Date(m.timestamp).toLocaleString()+'\nSubject: '+m.subject+'\nTo: '+m.to+(m.cc?'\nCc: '+m.cc:'');
     const opened=await openComposer(null,{accountId,to:'',subject:/^fwd?:/i.test(m.subject)?m.subject:'Fwd: '+m.subject,body:'\n\n'+header+'\n\n'+(m.text||m.snippet||''),forward:true});
     if(!opened)return;
@@ -424,7 +424,7 @@
           if(version!==state.composeVersion||draftId!==state.draftId)return;
           const bytes=Uint8Array.from(atob(data.data.replace(/-/g,'+').replace(/_/g,'/')),c=>c.charCodeAt(0));
           entry.file=new File([bytes],data.filename||a.filename,{type:data.mimeType||entry.type});
-          if(bytes.length>12*1024*1024)throw new Error('Attachment exceeds 12 MB');
+          if(bytes.length>20*1024*1024)throw new Error('Attachment exceeds 20 MB');
           await uploadAttachment(entry);
         }catch(e){if(version===state.composeVersion){entry.status='error';entry.error=e.message;renderAttachments();$('#mailxComposeError').textContent='Could not copy an original attachment. Remove it or reopen Forward to retry.';}}finally{attachmentUploads.delete(entry.id);}})();attachmentUploads.set(entry.id,task);
       }
