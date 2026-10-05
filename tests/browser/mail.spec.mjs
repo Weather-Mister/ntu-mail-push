@@ -100,7 +100,7 @@ test('reader keeps actions on top and gives the current message the content area
  await boot(page);
  await expect(page.locator('#mailxComposeTop')).toHaveCount(0);
  await expect(page.locator('#mailxComposeMain')).toHaveCount(1);
- await expect(page.locator('.mailx-nav [data-mailx-filter]')).toHaveCount(6);await expect(page.locator('[data-mailx-resizer=nav]')).toHaveCount(0);
+ await expect(page.locator('.mailx-nav [data-mailx-filter]')).toHaveCount(7);await expect(page.locator('[data-mailx-resizer=nav]')).toHaveCount(0);
  await page.locator('#mailxList .mailx-message').first().click();
  await expect(page.locator('.mailx-reply-bar')).toHaveCount(0);
  await expect(page.locator('.mailx-reader-toolbar [data-action="reply"]')).toBeVisible();
@@ -110,6 +110,23 @@ test('reader keeps actions on top and gives the current message the content area
  await expect(current.locator('.mailx-thread-details.is-current > summary')).toBeHidden();
  await expect(current.locator('.mailx-message-meta > summary')).toBeVisible();
  await expect(page.locator('.mailx-reply-inline')).toHaveCount(0);
+});
+
+test('unread view is available and mark all read calls the bulk Gmail action',async({page})=>{
+ const {calls}=await boot(page);
+ const unread=page.locator('[data-mailx-filter="unread"]');
+ await expect(unread).toBeVisible();await unread.click();
+ await expect.poll(()=>calls.some(c=>c.route==='mail'&&c.url.searchParams.get('filter')==='unread')).toBeTruthy();
+ await expect(page.locator('#mailxMarkAllRead')).toBeVisible();await page.locator('#mailxMarkAllRead').click();
+ await expect.poll(()=>calls.some(c=>c.route==='mark-all-read'&&c.body.accountId==='all')).toBeTruthy();
+});
+
+test('HTML mail body expands beyond the old fixed-height box',async({page},info)=>{
+ test.skip(info.project.name!=='desktop','desktop layout');
+ await boot(page,{html:'<div style="height:900px">Tall message</div>',imagesHtml:'<div style="height:900px">Tall message</div>'});
+ await page.locator('[data-row="0"]').click();
+ const box=await page.locator('.mailx-thread-details.is-current > .mailx-html-body').boundingBox();
+ expect(box).toBeTruthy();expect(box.height).toBeGreaterThan(440);
 });
 
 test('desktop splitters resize panes and persist their widths',async({page},info)=>{
