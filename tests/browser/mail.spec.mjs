@@ -58,7 +58,7 @@ test('AI failure keeps the draft; edits during generation win',async({page})=>{
  await boot(page,{aiFail:true});await composeButton(page).click();await page.locator('#mailxBody').fill('My current draft.');await page.locator('#mailxAiPrompt').fill('Revise');await page.locator('#mailxGenerate').click();await expect(page.locator('#mailxComposeError')).toContainText('quota');await expect(page.locator('#mailxBody')).toHaveText('My current draft.');
 });
 test('late AI response cannot overwrite typing or a different composer',async({page})=>{
- await boot(page,{aiDelay:500});await composeButton(page).click();await page.locator('#mailxBody').fill('Original');await page.locator('#mailxAiPrompt').fill('Warm');await page.locator('#mailxGenerate').click();await page.locator('#mailxBody').fill('New manual edit');await expect(page.locator('#mailxToast')).toContainText('You edited this draft');await expect(page.locator('#mailxBody')).toHaveText('New manual edit');
+ await boot(page,{aiDelay:1500});await composeButton(page).click();await page.locator('#mailxBody').fill('Original');await page.locator('#mailxAiPrompt').fill('Warm');await page.locator('#mailxGenerate').click();await page.locator('#mailxBody').fill('New manual edit');await expect(page.locator('#mailxToast')).toContainText('You edited this draft');await expect(page.locator('#mailxBody')).toHaveText('New manual edit');
 });
 test('archive uses API; local block scope stays distinct from Spam',async({page})=>{
  const {calls}=await boot(page);await page.locator('#mailxList .mailx-message').first().click();await page.getByLabel('More message actions').click();await page.locator('[data-action="block"]').click();await page.locator('#ruleScope').selectOption('sender');await page.locator('#ruleSave').click();await expect(page.locator('#mailxSheet')).toHaveCount(0);const rule=calls.find(c=>c.route==='rules'&&c.body.effects);expect(rule.body.effects).toEqual({blocked:true});expect(rule.body.scope).toBe('sender');expect(JSON.stringify(calls)).not.toContain('SPAM');await page.locator('[data-action="archive"]').click();await expect.poll(()=>calls.some(c=>c.route==='modify'&&c.body.action==='archive')).toBeTruthy();
@@ -112,9 +112,9 @@ test('reader keeps actions on top and gives the current message the content area
  await expect(page.locator('.mailx-reply-inline')).toHaveCount(0);
 });
 
-test('unread view is available and mark all read calls the bulk Gmail action',async({page})=>{
+test('unread view is available and mark all read calls the bulk Gmail action',async({page},info)=>{
  const {calls}=await boot(page);
- const unread=page.locator('[data-mailx-filter="unread"]');
+ const unread=info.project.name==='iphone'?page.locator('[data-mailx-mobile-filter="unread"]'):page.locator('[data-mailx-filter="unread"]');
  await expect(unread).toBeVisible();await unread.click();
  await expect.poll(()=>calls.some(c=>c.route==='mail'&&c.url.searchParams.get('filter')==='unread')).toBeTruthy();
  await expect(page.locator('#mailxMarkAllRead')).toBeVisible();await page.locator('#mailxMarkAllRead').click();
