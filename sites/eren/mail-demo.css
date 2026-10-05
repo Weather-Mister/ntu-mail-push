@@ -88,3 +88,6 @@
   .mailx-reader-head-actions .mailx-action{padding:0 6px}
   .mailx-reader-tags{overflow:hidden}
 }
+
+.mailx-image-notice{display:flex;align-items:center;gap:12px;padding:10px 12px;margin:8px 0;background:#edf1f8;border:1px solid #dce3ef;border-radius:10px;font-size:11px;line-height:1.5;color:#4d5d77}.mailx-image-notice span{flex:1}.mailx-image-notice button{flex-shrink:0}.mailx-html-body{background:#fff}
+@media(max-width:520px){.mailx-image-notice{align-items:flex-start;flex-direction:column;gap:6px}}

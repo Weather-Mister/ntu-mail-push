@@ -3,8 +3,8 @@ const accounts=[{id:'a1',email:'first@example.org',display_name:'Personal',statu
 const classification={type:'University',context:'Engineering Mathematics',priority:'High',action:'Needs reply',code:null,blocked:false};
 const msg={id:'m1',threadId:'t1',accountId:'a1',sender:'Professor',from:'Professor <prof@example.org>',email:'prof@example.org',replyTo:'prof@example.org',to:'first@example.org',cc:'',subject:'Thursday meeting',timestamp:Date.now(),labels:['INBOX','UNREAD'],snippet:'Can you meet Thursday?',classification,unsubscribe:{web:null,mailto:null,listId:'',oneClick:false},text:'Can you meet Thursday?\nFull message content.',html:'',attachments:[],count:1};
 async function boot(page,options={}){
- const calls=[],errors=[];page.on('pageerror',e=>errors.push(e.message));
- await page.addInitScript(()=>localStorage.setItem('ntu-schedule-pairing-key-v1','test-key-'.repeat(6)));
+ const calls=[],errors=[];page.on('pageerror',e=>{if(!e.message.includes("Failed to read the 'serviceWorker' property from 'Navigator'")||!e.message.includes('sandboxed'))errors.push(e.message);});
+ await page.addInitScript(()=>{if(window===window.top)localStorage.setItem('ntu-schedule-pairing-key-v1','test-key-'.repeat(6));});
  await page.route('https://**/*',async route=>{
   const req=route.request(),url=new URL(req.url()),r=url.searchParams.get('route');let body={};try{body=req.postDataJSON()||{};}catch{}calls.push({route:r,body,url});
   let data={};
@@ -12,7 +12,7 @@ async function boot(page,options={}){
    if(r==='status')data={configured:true,aiConfigured:true,types:['University','Promotion','Receipt / Order','Other'],priorities:['High','Normal','Low','Muted'],actions:['Needs reply','Deadline','Waiting','FYI','No action'],health:{last_finished_at:new Date().toISOString()},redirectUri:'https://api.example.org/callback'};
    if(r==='accounts')data={accounts};if(r==='preferences')data={preferences:{}};if(r==='rules')data={rules:[]};if(r==='outbox')data={jobs:[]};if(r==='drafts')data={drafts:[]};
    if(r==='mail'){let messages=[msg,{...msg,id:'m2',threadId:'t2',accountId:'a2',sender:'Bank',subject:'Your receipt',classification:{...classification,type:'Receipt / Order',priority:'Normal',action:'FYI'}}];if(url.searchParams.get('accountId')!=='all')messages=messages.filter(m=>m.accountId===url.searchParams.get('accountId'));data={messages,cursor:{a1:null,a2:null},hasMore:false,errors:[]};}
-   if(r==='thread')data={threadId:url.searchParams.get('threadId'),accountId:url.searchParams.get('accountId'),messages:[{...msg,threadId:url.searchParams.get('threadId')}]};
+   if(r==='thread'){const images=!!url.searchParams.get('externalMessageId');data={threadId:url.searchParams.get('threadId'),accountId:url.searchParams.get('accountId'),messages:[{...msg,threadId:url.searchParams.get('threadId'),...(options.html?{html:images?options.imagesHtml:options.html,hasExternalImages:!images,externalImages:images}: {})}]};}
    if(r==='ai'){
     if(options.aiDelay)await new Promise(r=>setTimeout(r,options.aiDelay));
     if(options.aiFail)return route.fulfill({status:502,contentType:'application/json',body:JSON.stringify({error:'Gemini quota exhausted. Your draft has been preserved.'})});
@@ -57,4 +57,15 @@ test('archive uses API; local block scope stays distinct from Spam',async({page}
 test('duplicate Send is disabled and scheduled sending is a server request',async({page})=>{
  const {calls}=await boot(page,{sendDelay:500});await page.locator('#mailxComposeTop').click();await page.locator('#mailxTo').fill('friend@example.org');await page.locator('#mailxSubject').fill('Hello');await page.locator('#mailxBody').fill('Daily driver test');await page.locator('#mailxSend').click();await expect(page.locator('#mailxSend')).toBeDisabled();await expect(page.locator('#mailxCompose')).toBeHidden();expect(calls.filter(c=>c.route==='send')).toHaveLength(1);
  await page.locator('#mailxComposeTop').click();await page.locator('#mailxTo').fill('friend@example.org');await page.locator('#mailxBody').fill('Scheduled');await page.locator('#mailxSchedule').click();await page.locator('#mailxSendAt').fill('2027-01-10T15:30');await page.locator('#mailxConfirmSchedule').click();await expect(page.locator('#mailxCompose')).toBeHidden();expect(calls.filter(c=>c.route==='send').at(-1).body.sendAt).toBeTruthy();
+});
+
+test('styled newsletter reader and explicit external image loading',async({page})=>{
+ const head=`<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; style-src 'unsafe-inline'"><style>body{margin:0}table{max-width:100%}h1{font-size:32px;font-family:Arial,sans-serif}</style>`;
+ const html=`${head}<table bgcolor="#ccddff" width="600"><tr><td style="text-align:center;padding:24px"><h1>Less searching. More saving.</h1><span data-external-image="blocked">[Honey illustration]</span><a href="https://example.org" style="background:#4066ff;color:#fff;border-radius:20px;padding:10px 20px">Start shopping</a></td></tr></table>`;
+ const imagesHtml=html.replace('data:;', 'data: https:;').replace('<span data-external-image="blocked">[Honey illustration]</span>','<img src="https://images.example.org/banner.png" alt="Honey illustration">');
+ const {calls,errors}=await boot(page,{html,imagesHtml});await page.locator('#mailxList .mailx-message').first().click();
+ const frame=page.frameLocator('.mailx-html-body');await expect(frame.locator('h1')).toHaveCSS('font-size','32px');await expect(frame.locator('td')).toHaveCSS('text-align','center');await expect(frame.locator('a')).toHaveCSS('background-color','rgb(64, 102, 255)');
+ await expect(frame.locator('img')).toHaveCount(0);await expect(page.locator('.mailx-image-notice')).toContainText('sender know');await page.screenshot({path:'test-results/newsletter-'+page.viewportSize().width+'.png'});
+ await page.getByRole('button',{name:'Show external images',exact:true}).click();await expect(frame.locator('img')).toHaveAttribute('src','https://images.example.org/banner.png');
+ expect(calls.filter(c=>c.route==='thread').at(-1).url.searchParams.get('externalMessageId')).toBe('m1');await expect(page.locator('.mailx-html-body')).toHaveAttribute('sandbox','allow-popups allow-popups-to-escape-sandbox');expect(errors).toEqual([]);
 });

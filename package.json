@@ -12,6 +12,7 @@
     "@supabase/supabase-js": "2.117.2",
     "@types/node": "24.10.1",
     "deno": "2.9.6",
-    "sanitize-html": "2.18.0"
+    "sanitize-html": "2.18.0",
+    "postcss": "8.5.28"
   }
 }
