@@ -119,7 +119,7 @@ export function validateEffects(e) {
   return e;
 }
 export const MAX_ATTACHMENTS=8;
-export const MAX_ATTACHMENT_BYTES=12*1024*1024;
+export const MAX_ATTACHMENT_BYTES=20*1024*1024;
 export const MAX_RICH_BODY_BYTES=220000;
 
 export function validateAttachmentRefs(value=[]) {
