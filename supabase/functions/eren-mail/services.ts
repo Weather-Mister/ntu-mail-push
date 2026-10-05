@@ -64,16 +64,30 @@ export async function gmailClient(admin:any,account:any) {
   }
   try{token=await pending;}finally{if(tokenRequests.get(key)===pending)tokenRequests.delete(key);}
  }
- const accessToken=token.value;
- const api=async (path:string,method='GET',body?:any) => {
+ let accessToken=token.value;
+ const api=async (path:string,method='GET',body?:any,alreadyRefreshed=false) => {
+  let refreshed=alreadyRefreshed;
+  for(let attempt=0;;attempt++) {
   const r=await fetch('https://gmail.googleapis.com/gmail/v1/users/me/'+path,{method,headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},body:body===undefined?undefined:JSON.stringify(body),signal:AbortSignal.timeout(20000)});
   if(!r.ok) {
-   if(r.status===401)accessTokens.delete(key);
-   // Do not expose Google's response: it can contain mail data and credentials.
-   await r.body?.cancel();
-   throw new MailError(r.status,r.status===404?'Message no longer exists in Gmail.':r.status===429?'Gmail is rate limiting requests. Try again shortly.':'Gmail could not complete this request.','gmail_error');
+   if(r.status===401&&accessTokens.get(key)?.value===accessToken)accessTokens.delete(key);
+   // Keep only a known reason code, never Google's message/body/resource IDs.
+   const error=await r.json().catch(()=>({})),candidate=error.error?.errors?.[0]?.reason||error.error?.status;
+   const reasons=['authError','invalidCredentials','insufficientPermissions','accessNotConfigured','domainPolicy','rateLimitExceeded','userRateLimitExceeded','dailyLimitExceeded','backendError','badRequest','invalidArgument','INVALID_ARGUMENT','PERMISSION_DENIED','UNAUTHENTICATED','RESOURCE_EXHAUSTED','INTERNAL','UNAVAILABLE'];
+   const reason=reasons.includes(candidate)?candidate:'unknown';
+   if(method==='GET'&&r.status===401&&!refreshed) {
+    refreshed=true;
+    const renewed=await gmailClient(admin,account);
+    return renewed(path,method,body, true);
+   }
+   if(method==='GET'&&attempt<2&&(r.status===429||r.status>=500||r.status===403&&['rateLimitExceeded','userRateLimitExceeded'].includes(reason))) {
+    await new Promise(resolve=>setTimeout(resolve,1000*2**attempt+Math.random()*250));continue;
+   }
+   const failure=new MailError(r.status,r.status===404?'Message no longer exists in Gmail.':r.status===429?'Gmail is rate limiting requests. Try again shortly.':`Gmail could not complete this request (${r.status}; ${reason}).`,'gmail_error');
+   (failure as any).reason=reason;throw failure;
   }
   return r.status===204?{}:await r.json();
+  }
  };
  return Object.assign(api,{mailAccountKey:account.workspace_hash+':'+account.id});
 }

@@ -110,9 +110,10 @@ export async function handle(req:Request) {
      const params=new URLSearchParams({maxResults:'12',q:`${base} ${query} -in:trash -in:spam`.trim()});
      if(cursors[a.id]) params.set('pageToken',String(cursors[a.id]).slice(0,2000));
      const page=await api('threads?'+params);
-     const cachedMessages:any[]=[];
+     const cachedMessages:any[]=[],failures:any[]=[];
      const threadViews=await mapLimit(page.threads||[],async(t:any)=>{
-      const full=await fullThread(api,t.id),msgs=full.messages||[];
+      let full;try{full=await fullThread(api,t.id);}catch(e){failures.push({threadId:t.id,error:e instanceof MailError?e.message:'Could not read this thread.'});return null;}
+      const msgs=full.messages||[];
       cachedMessages.push(...msgs);
       const views=threadMessageViews(msgs,rules,true);
       // For inbox keep the most recent incoming message as the classification source.
@@ -124,10 +125,15 @@ export async function handle(req:Request) {
       return visible(overview,filter)?overview:null;
      },8);
      defer(cacheMessages(admin,a,cachedMessages,rules));
-     return {accountId:a.id,messages:threadViews.filter(Boolean),next:page.nextPageToken||null};
+     let fallback:any[]=[];
+     if(failures.length) {
+      const saved=await admin.from('eren_mail_messages').select('*').eq('workspace_hash',workspace).eq('account_id',a.id).in('thread_id',failures.map(f=>f.threadId));
+      if(!saved.error)fallback=cachedOverviews(saved.data||[],[a]).filter(m=>visible(m,filter));
+     }
+     return {accountId:a.id,messages:[...threadViews.filter(Boolean),...fallback],next:page.nextPageToken||null,failures,error:failures.length?failures[0].error:undefined};
     }catch(e){return {accountId:a.id,messages:[],next:cursors[a.id]||'',error:e instanceof MailError?e.message:'Could not reach this account.'};}
    },2);
-   return response({messages:results.flatMap(r=>r.messages).sort((a,b)=>b.timestamp-a.timestamp),cursor:Object.fromEntries(results.map(r=>[r.accountId,r.next])),hasMore:results.some(r=>!!r.next),errors:results.filter(r=>r.error).map(r=>({accountId:r.accountId,error:r.error}))});
+   return response({messages:results.flatMap(r=>r.messages).sort((a,b)=>b.timestamp-a.timestamp),cursor:Object.fromEntries(results.map(r=>[r.accountId,r.next])),hasMore:results.some(r=>!!r.next),errors:results.filter(r=>r.error).map(r=>({accountId:r.accountId,error:r.error,threadIds:r.failures?.map((f:any)=>f.threadId)}))});
   }
   if(route==='thread'&&req.method==='GET') {
    const a=await ownedAccount(admin,workspace,get('accountId'));
