@@ -92,9 +92,10 @@ export async function handle(req:Request) {
    clearMailMemory(workspace);const token=await secret(admin,a.secret_name);
    let revoked=false;
    try{const r=await fetch('https://oauth2.googleapis.com/revoke',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({token}),signal:AbortSignal.timeout(10000)});revoked=r.ok;await r.body?.cancel();}catch{}
-   const jobs=check(await admin.from('eren_mail_outbox').select('secret_name').eq('account_id',a.id));
+   const jobs=check(await admin.from('eren_mail_outbox').select('id,secret_name').eq('account_id',a.id));
    const drafts=check(await admin.from('eren_mail_drafts').select('id,secret_name').eq('account_id',a.id));
-   for(const row of drafts){const stored=await secret(admin,row.secret_name);if(stored){try{for(const att of JSON.parse(stored).attachments||[])await secret(admin,attachmentSecret(workspace,row.id,att.id),null,true);}catch{}}}
+   for(const row of drafts){const stored=await secret(admin,row.secret_name);if(stored){try{const refs=JSON.parse(stored).attachments||[];await removeAttachmentObjects(admin,refs.map((att:any)=>draftAttachmentPath(workspace,row.id,att.id))).catch(()=>{});for(const att of refs)await secret(admin,attachmentSecret(workspace,row.id,att.id),null,true).catch(()=>{});}catch{}}}
+   for(const row of jobs){const stored=await secret(admin,row.secret_name);if(stored){try{const refs=JSON.parse(stored).attachments||[];await removeAttachmentObjects(admin,refs.map((att:any)=>outboxAttachmentPath(workspace,row.id,att.id))).catch(()=>{});}catch{}}}
    for(const row of [...jobs,...drafts])await secret(admin,row.secret_name,null,true);
    await secret(admin,a.secret_name,null,true);
    check(await admin.from('eren_mail_outbox').delete().eq('account_id',a.id));
