@@ -17,8 +17,8 @@ async function boot(page,options={}){
    if(r==='ai'){
     if(options.aiDelay)await new Promise(r=>setTimeout(r,options.aiDelay));
     if(options.aiFail)return route.fulfill({status:502,contentType:'application/json',body:JSON.stringify({error:'Gemini quota exhausted. Your draft has been preserved.'})});
-    const revised=body.body?'Warm: '+body.body:'I can meet after 3.';
-    data={body:revised,...(options.richAiHtml?{bodyHtml:options.richAiHtml}:{})};
+    const revised=options.aiBody!==undefined?options.aiBody:(body.body?'Warm: '+body.body:'I can meet after 3.');
+    data={body:revised,...(options.richAiHtml!==undefined?{bodyHtml:options.richAiHtml}:{})};
    }
    if(r==='drafts/attachment'){
     options._attachmentAttempts=(options._attachmentAttempts||0)+1;
@@ -208,4 +208,18 @@ test('Gemini rich revisions preserve returned formatting and Undo restores prior
  await boot(page,{richAiHtml:'<p>Warm: <strong>I can meet after 4.</strong></p>'});await composeButton(page).click();await page.locator('#mailxBody').fill('I can meet after 4.');await page.locator('#mailxAiPrompt').fill('Make warmer');await page.locator('#mailxGenerate').click();
  await expect(page.locator('#mailxBody')).toContainText('Warm:');await expect.poll(()=>page.locator('#mailxBody').evaluate(el=>el.innerHTML)).toContain('<strong>');
  await page.locator('#mailxUndo').click();await expect(page.locator('#mailxBody')).toHaveText('I can meet after 4.');
+});
+
+
+test('plain Gemini line breaks render as real editor breaks',async({page})=>{
+ await boot(page,{aiBody:'First line\nSecond line\n\nNew paragraph.',richAiHtml:''});await composeButton(page).click();await page.locator('#mailxAiPrompt').fill('Keep my paragraphs');await page.locator('#mailxGenerate').click();
+ await expect(page.locator('#mailxBody')).toHaveText('First line\nSecond line\n\nNew paragraph.');
+ const html=await page.locator('#mailxBody').evaluate(el=>el.innerHTML);expect(html).toBe('First line<br>Second line<br><br>New paragraph.');
+});
+
+test('composer defensively renders HTML returned in Gemini body instead of printing tags',async({page})=>{
+ const malformed='<div style="font-family:Arial"><h2 style="color:red">Project Update</h2><p>Progress below:</p><ul><li><strong>Phase 1:</strong> Complete.</li><li><em>Phase 2:</em> Testing.</li></ul></div>';
+ await boot(page,{aiBody:malformed,richAiHtml:''});await composeButton(page).click();await page.locator('#mailxAiPrompt').fill('Format update');await page.locator('#mailxGenerate').click();
+ await expect(page.locator('#mailxBody')).toContainText('Project Update');await expect(page.locator('#mailxBody')).not.toContainText('<h2');
+ const html=await page.locator('#mailxBody').evaluate(el=>el.innerHTML);expect(html).toContain('<h2>Project Update</h2>');expect(html).not.toContain('style=');
 });
