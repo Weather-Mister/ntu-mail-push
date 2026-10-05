@@ -167,7 +167,7 @@
       if(wrap.dataset.swipeEnabled!=='1')return;
       const row=wrap.querySelector('.mailx-message');let intent='',suppress=false;
       bindPointerDrag(wrap,{
-        canStart:e=>matchMedia('(max-width:860px)').matches||['touch','pen'].includes(e.pointerType),
+        canStart:()=>true,
         onStart:()=>{intent='';suppress=false;wrap.classList.remove('is-snapping','is-committing');row.style.transform='';},
         onMove:({event,dx,dy})=>{
           if(!intent&&Math.hypot(dx,dy)>8)intent=Math.abs(dx)>Math.abs(dy)*1.15?'x':'y';
@@ -175,9 +175,10 @@
           event.preventDefault();suppress=true;
           const shift=Math.max(-Math.min(132,wrap.clientWidth*.42),dx);row.style.transform=`translate3d(${shift}px,0,0)`;
         },
-        onEnd:({dx})=>{
-          if(suppress){wrap._mailxSuppressClick=true;setTimeout(()=>wrap._mailxSuppressClick=false,280);}
-          if(intent==='x'&&-dx>=Math.min(96,wrap.clientWidth*.24)){
+        onEnd:({dx,dy})=>{
+          if(!intent&&Math.hypot(dx,dy)>8)intent=Math.abs(dx)>Math.abs(dy)*1.15?'x':'y';
+          if(suppress||intent==='x'){wrap._mailxSuppressClick=true;setTimeout(()=>wrap._mailxSuppressClick=false,280);}
+          if(intent==='x'&&dx<0&&-dx>=Math.min(96,wrap.clientWidth*.24)){
             wrap.classList.add('is-committing');row.style.transform='';const m=state.messages[Number(wrap.dataset.swipeRow)];setTimeout(()=>{if(m)archiveFromList(m);},150);
           }else{wrap.classList.add('is-snapping');row.style.transform='';setTimeout(()=>wrap.classList.remove('is-snapping'),180);}
         },
