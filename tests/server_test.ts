@@ -150,6 +150,17 @@ Deno.test('Gemini receives latest rich draft, preserves formatting contract and 
  await fetching(async()=>new Response('',{status:429}),async()=>{await assert.rejects(()=>revise(db,a,input));assert.equal(input.body,'I can meet after 4.');});
 });
 
+Deno.test('Gemini repairs HTML returned in the plain body field and keeps paragraph breaks',async()=>{
+ const {db,a}=setup();db.secrets['eren-mail:workspace:config:GEMINI_API_KEY']='gemini-test';db.secrets['eren-mail:workspace:config:GEMINI_MODEL']='configurable-model';
+ const input={body:'Original draft',bodyHtml:'',to:'friend@example.org',subject:'Update',instruction:'Format this clearly'};
+ const malformed='<div style="font-family:Arial"><h2 style="color:#123456">Project Update</h2><p>Progress below:</p><ul><li><strong>Phase 1:</strong> Complete.</li><li><em>Phase 2:</em> Testing.</li></ul><p><strong>Note:</strong> Upload docs.</p></div>';
+ await fetching(async()=>Response.json({candidates:[{finishReason:'STOP',content:{parts:[{text:JSON.stringify({body:malformed,bodyHtml:''})}]}}]}),async()=>{
+  const r=await revise(db,a,input);
+  assert(!r.body.includes('<div'));assert.match(r.body,/Project Update\n\nProgress below:/);assert.match(r.body,/Phase 1: Complete\.\nPhase 2: Testing\./);
+  assert(r.bodyHtml.includes('<h2>Project Update</h2>'));assert(!r.bodyHtml.includes('style='));
+ });
+});
+
 Deno.test('reply sent later changes inferred Needs reply to Waiting but preserves explicit corrections',()=>{
  const incoming={id:'m1',threadId:'t1',labelIds:['INBOX'],payload:{mimeType:'text/plain',headers:[{name:'From',value:'friend@example.org'}],body:{data:b64url('Can you reply?')}}};
  const sent={...incoming,id:'m2',labelIds:['SENT'],payload:{...incoming.payload,body:{data:b64url('Yes, Thursday.')}}};
