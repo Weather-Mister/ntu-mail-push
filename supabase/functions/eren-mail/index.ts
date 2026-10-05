@@ -1,0 +1,204 @@
+import { db, check, secret, hash, config, workspaceFor, ownedAccount, gmailClient, accountRules, cacheMessages, messageView, threadMessageViews, fullThread, mapLimit, revise, MailError, rate, REDIRECT, SITE } from './services.ts';
+import { oauthStart, oauthCallback, oauthFinish } from './oauth.ts';
+import { enqueue, deliver, reconcile, tick, syncAccount } from './jobs.ts';
+import { oneClickUnsubscribe } from './unsubscribe.ts';
+import { TYPES, PRIORITIES, ACTIONS, validateEffects, header, address, unsubscribeInfo, bodies, decodeBody } from './domain.mjs';
+const ACCOUNT_FIELDS='id,email,display_name,status,last_sync_at,sync_error';
+const OUTBOX_FIELDS='id,account_id,to_address,subject,send_at,status,error,gmail_id,created_at,sent_at';
+const origin=new URL(SITE).origin;
+function response(data:any,status=200) {return Response.json(data,{status,headers:{'Access-Control-Allow-Origin':origin,'Access-Control-Allow-Headers':'content-type,x-schedule-key','Access-Control-Allow-Methods':'GET,POST,OPTIONS','Cache-Control':'no-store','Vary':'Origin','Referrer-Policy':'no-referrer','X-Content-Type-Options':'nosniff'}});}
+const mustPost=(req:Request)=>{if(req.method!=='POST') throw new MailError(405,'Use POST for this action.');};
+const id=(v:any)=>{if(!/^[a-zA-Z0-9_-]{1,200}$/.test(v||''))throw new MailError(400,'Invalid message ID.');return v;};
+function visible(v:any,filter:string) {
+ const c=v.classification,l=v.labels;
+ if(filter==='all')return true;
+ if(filter==='blocked')return c.blocked;
+ if(c.blocked)return false;
+ if(filter==='low')return ['Low','Muted'].includes(c.priority);
+ if(filter==='archived')return !l.includes('INBOX')&&!l.includes('DRAFT')&&!l.includes('TRASH')&&!l.includes('SPAM');
+ if(filter==='sent')return l.includes('SENT');
+ if(filter==='gmail-drafts')return l.includes('DRAFT');
+ if(filter==='important')return c.priority==='High'&&l.includes('INBOX');
+ if(filter==='reply')return c.action==='Needs reply'&&l.includes('INBOX');
+ if(filter==='codes')return c.type==='Login Code';
+ return l.includes('INBOX')&&c.priority!=='Muted';
+}
+export async function handle(req:Request) {
+ const reqOrigin=req.headers.get('Origin');
+ if(reqOrigin&&reqOrigin!==origin) return response({error:'Origin not allowed.'},403);
+ if(req.method==='OPTIONS')return response({ok:true});
+ const admin=db(),url=new URL(req.url),route=url.searchParams.get('route')||url.pathname.split('/eren-mail/')[1]||'';
+ try {
+  if(route==='oauth/callback'&&req.method==='GET')return await oauthCallback(admin,url);
+  if(route==='worker') {
+   mustPost(req);
+   const key=req.headers.get('x-mail-cron')||'',expected=await secret(admin,'eren-mail:cron');
+   if(!expected||key.length<32||await hash(key)!==await hash(expected)) throw new MailError(401,'Unauthorized worker.');
+   return response(await tick(admin));
+  }
+  if(!['GET','POST'].includes(req.method))throw new MailError(405,'Method not allowed.');
+  const workspace=await workspaceFor(req,admin);
+  await rate(admin,workspace+':api',180);
+  let input:any={};
+  if(req.method==='POST') {
+   if(!req.headers.get('Content-Type')?.includes('application/json'))throw new MailError(415,'Use JSON.');
+   const raw=await req.text();if(raw.length>150000)throw new MailError(413,'Request too large.');
+   try{input=JSON.parse(raw);}catch{throw new MailError(400,'Invalid JSON.');}
+   if(!input||typeof input!=='object'||Array.isArray(input))throw new MailError(400,'Invalid request.');
+  }
+  const get=(k:string)=>req.method==='GET'?url.searchParams.get(k):input[k];
+  if(route==='status'&&req.method==='GET') {
+   const cfg=await config(admin,workspace),health=check(await admin.from('eren_mail_health').select('*').eq('id','worker').maybeSingle());
+   return response({configured:!!(cfg.GOOGLE_CLIENT_ID&&cfg.GOOGLE_CLIENT_SECRET),aiConfigured:!!(cfg.GEMINI_API_KEY&&cfg.GEMINI_MODEL),model:cfg.GEMINI_MODEL||'',redirectUri:REDIRECT(),health,types:TYPES,priorities:PRIORITIES,actions:ACTIONS});
+  }
+  if(route==='settings') {
+   mustPost(req);await rate(admin,workspace+':settings',10);
+   const allowed=['GOOGLE_CLIENT_ID','GOOGLE_CLIENT_SECRET','GEMINI_API_KEY','GEMINI_MODEL'];
+   for(const [key,value] of Object.entries(input)) {
+    if(!allowed.includes(key)||typeof value!=='string'||value.length>4000)throw new MailError(400,'Invalid setting.');
+    if(key==='GEMINI_MODEL'&&value&&!/^[\w.-]+$/.test(value))throw new MailError(400,'Invalid model name.');
+    if(key==='GOOGLE_CLIENT_ID'&&value&&!/^[\w.-]+\.apps\.googleusercontent\.com$/.test(value))throw new MailError(400,'Use a Google Web OAuth client ID.');
+    if(value)await secret(admin,`eren-mail:${workspace}:config:${key}`,value);
+   }
+   return response({ok:true});
+  }
+  if(route==='oauth/start'){mustPost(req);await rate(admin,workspace+':oauth',10);return response(await oauthStart(admin,workspace,input));}
+  if(route==='oauth/finish'){mustPost(req);return response(await oauthFinish(admin,workspace,input));}
+  if(route==='accounts'&&req.method==='GET')return response({accounts:check(await admin.from('eren_mail_accounts').select(ACCOUNT_FIELDS).eq('workspace_hash',workspace).neq('status','disconnecting').order('created_at'))});
+  if(route==='accounts/rename') {mustPost(req);const a=await ownedAccount(admin,workspace,input.accountId);const name=String(input.name||'').trim().slice(0,80);if(!name)throw new MailError(400,'Enter a display name.');check(await admin.from('eren_mail_accounts').update({display_name:name}).eq('id',a.id));return response({ok:true});}
+  if(route==='accounts/disconnect') {
+   mustPost(req);const a=await ownedAccount(admin,workspace,input.accountId);
+   const pending=check(await admin.from('eren_mail_outbox').select('id').eq('account_id',a.id).in('status',['pending','processing','sending','uncertain']).limit(1));
+   if(pending.length)throw new MailError(409,'Cancel pending sends and resolve uncertain sends before disconnecting.');
+   if(input.confirm!==a.email)throw new MailError(400,'Confirm the account email before disconnecting.');
+   check(await admin.from('eren_mail_accounts').update({status:'disconnecting'}).eq('id',a.id));
+   const token=await secret(admin,a.secret_name);
+   let revoked=false;
+   try{const r=await fetch('https://oauth2.googleapis.com/revoke',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({token}),signal:AbortSignal.timeout(10000)});revoked=r.ok;await r.body?.cancel();}catch{}
+   const jobs=check(await admin.from('eren_mail_outbox').select('secret_name').eq('account_id',a.id));
+   const drafts=check(await admin.from('eren_mail_drafts').select('secret_name').eq('account_id',a.id));
+   for(const row of [...jobs,...drafts])await secret(admin,row.secret_name,null,true);
+   await secret(admin,a.secret_name,null,true);
+   check(await admin.from('eren_mail_outbox').delete().eq('account_id',a.id));
+   check(await admin.from('eren_mail_accounts').delete().eq('id',a.id));
+   return response({ok:true,revoked});
+  }
+  if(route==='preferences') {
+   if(req.method==='GET')return response({preferences:check(await admin.from('eren_mail_preferences').select('preferences').eq('workspace_hash',workspace).maybeSingle())?.preferences||{}});
+   const preferences={account:String(input.account||'all').slice(0,50),filter:String(input.filter||'inbox').slice(0,30)};
+   check(await admin.from('eren_mail_preferences').upsert({workspace_hash:workspace,preferences}));return response({ok:true});
+  }
+  if(route==='mail'&&req.method==='GET') {
+   const filter=String(get('filter')||'inbox'),query=String(get('q')||'').slice(0,1000),which=get('accountId');
+   const accounts=which&&which!=='all'?[await ownedAccount(admin,workspace,which)]:check(await admin.from('eren_mail_accounts').select('*').eq('workspace_hash',workspace).neq('status','disconnecting').order('created_at'));
+   let cursors:any={};try{cursors=JSON.parse(String(get('cursor')||'{}'));}catch{throw new MailError(400,'Invalid mail page.');}
+   if(!cursors||typeof cursors!=='object'||Array.isArray(cursors))throw new MailError(400,'Invalid cursor.');
+   const results=await mapLimit(accounts,async(a:any)=>{
+    if(cursors[a.id]===null)return {messages:[],next:null,accountId:a.id};
+    try {
+     const api=await gmailClient(admin,a),rules=await accountRules(admin,a);
+     const base=({inbox:'in:inbox',important:'in:inbox',reply:'in:inbox',codes:'',low:'',blocked:'',archived:'-in:inbox -in:drafts',sent:'in:sent','gmail-drafts':'in:drafts',all:''} as any)[filter]??'in:inbox';
+     const params=new URLSearchParams({maxResults:'12',q:`${base} ${query} -in:trash -in:spam`.trim()});
+     if(cursors[a.id]) params.set('pageToken',String(cursors[a.id]).slice(0,2000));
+     const page=await api('threads?'+params);
+     const threadViews=await mapLimit(page.threads||[],async(t:any)=>{
+      const full=await fullThread(api,t.id),msgs=full.messages||[];
+      await cacheMessages(admin,a,msgs,rules);
+      const views=threadMessageViews(msgs,rules);
+      // For inbox keep the most recent incoming message as the classification source.
+      const candidate=filter==='sent' ? ([...views].reverse().find((v:any)=>v.labels.includes('SENT'))||views.at(-1)) : ([...views].reverse().find((v:any)=>v.labels.includes('INBOX'))||views.at(-1));
+      if(!candidate)return null;
+      const labels=[...new Set<string>(views.flatMap((v:any)=>v.labels))];
+      const overview={...candidate,labels,accountId:a.id,accountName:a.display_name,count:views.length,timestamp:Math.max(...views.map((v:any)=>v.timestamp))};
+      delete overview.html;delete overview.text;delete overview.attachments;
+      return visible(overview,filter)?overview:null;
+     });
+     return {accountId:a.id,messages:threadViews.filter(Boolean),next:page.nextPageToken||null};
+    }catch(e){return {accountId:a.id,messages:[],next:cursors[a.id]||'',error:e instanceof MailError?e.message:'Could not reach this account.'};}
+   },2);
+   return response({messages:results.flatMap(r=>r.messages).sort((a,b)=>b.timestamp-a.timestamp),cursor:Object.fromEntries(results.map(r=>[r.accountId,r.next])),hasMore:results.some(r=>!!r.next),errors:results.filter(r=>r.error).map(r=>({accountId:r.accountId,error:r.error}))});
+  }
+  if(route==='thread'&&req.method==='GET') {
+   const a=await ownedAccount(admin,workspace,get('accountId')),api=await gmailClient(admin,a),t=await fullThread(api,id(get('threadId'))),rules=await accountRules(admin,a);
+   await cacheMessages(admin,a,t.messages||[],rules);
+   return response({threadId:t.id,accountId:a.id,messages:threadMessageViews(t.messages||[],rules)});
+  }
+  if(route==='attachment'&&req.method==='GET') {
+   const a=await ownedAccount(admin,workspace,get('accountId')),api=await gmailClient(admin,a),m=await api('messages/'+id(get('messageId'))+'?format=full');
+   const part=bodies(m.payload).attachments.find((p:any)=>p.id===get('attachmentId')&&p.partId===get('partId'));
+   if(!part)throw new MailError(404,'Attachment not found.');if(part.size>20*1024*1024)throw new MailError(413,'This attachment is over the 20 MB download limit.');
+   let data;
+   if(part.id) data=(await api(`messages/${m.id}/attachments/${encodeURIComponent(part.id)}`)).data;
+   else {const find=(p:any):any=>p.partId===part.partId?p:(p.parts||[]).map(find).find(Boolean);data=find(m.payload)?.body?.data;}
+   return response({data,filename:part.filename,mimeType:'application/octet-stream'});
+  }
+  if(route==='modify') {
+   mustPost(req);const a=await ownedAccount(admin,workspace,input.accountId),api=await gmailClient(admin,a);
+   const mods=({archive:{removeLabelIds:['INBOX']},unarchive:{addLabelIds:['INBOX']},read:{removeLabelIds:['UNREAD']},unread:{addLabelIds:['UNREAD']}} as any)[input.action];
+   if(!mods)throw new MailError(400,'Invalid mail action.');
+   await api('threads/'+id(input.threadId)+'/modify','POST',mods);return response({ok:true});
+  }
+  if(route==='rules') {
+   if(req.method==='GET')return response({rules:check(await admin.from('eren_mail_rules').select('*').eq('workspace_hash',workspace).order('created_at',{ascending:false}))});
+   if(input.accountId)await ownedAccount(admin,workspace,input.accountId);
+   if(!['sender','domain','list','thread','message'].includes(input.scope)||typeof input.value!=='string'||!input.value.trim()||input.value.length>500||input.typeMatch&&!TYPES.includes(input.typeMatch))throw new MailError(400,'Invalid rule scope.');
+   let effects;try{effects=validateEffects(input.effects);}catch(e){throw new MailError(400,e.message);}
+   if(['thread','message'].includes(input.scope)&&!input.accountId)throw new MailError(400,'Thread corrections need an account.');
+   const value=['thread','message'].includes(input.scope)?input.value:input.value.trim().toLowerCase();
+   const row=check(await admin.from('eren_mail_rules').insert({workspace_hash:workspace,account_id:input.accountId||null,scope:input.scope,match_value:value,type_match:input.typeMatch||null,effects}).select('*').single());
+   return response({rule:row});
+  }
+  if(route==='rules/delete'){mustPost(req);check(await admin.from('eren_mail_rules').delete().eq('id',input.id).eq('workspace_hash',workspace));return response({ok:true});}
+  if(route==='unsubscribe') {
+   mustPost(req);const a=await ownedAccount(admin,workspace,input.accountId),api=await gmailClient(admin,a),m=await api('messages/'+id(input.messageId)+'?format=metadata&metadataHeaders=List-Unsubscribe&metadataHeaders=List-Unsubscribe-Post&metadataHeaders=List-ID');
+   const info=unsubscribeInfo(m);
+   if(input.confirm!==true||!info.oneClick)throw new MailError(400,'This message does not support confirmed one-click unsubscribe.');
+   const result=await oneClickUnsubscribe(info.web);
+   check(await admin.from('eren_mail_unsubscribes').upsert({account_id:a.id,message_id:m.id,status:result.status,updated_at:new Date().toISOString()}));
+   return response(result);
+  }
+  if(route==='ai'){mustPost(req);await rate(admin,workspace+':ai',12);const a=await ownedAccount(admin,workspace,input.accountId);return response(await revise(admin,a,input));}
+  if(route==='send') {
+   mustPost(req);await rate(admin,workspace+':send',20);const a=await ownedAccount(admin,workspace,input.accountId);
+   const job=await enqueue(admin,a,input);
+   if(!input.sendAt&&job.status==='pending') {const jobs=check(await admin.rpc('eren_mail_claim',{p_id:job.id}));for(const claimed of jobs)await deliver(admin,claimed);}
+   return response({job:check(await admin.from('eren_mail_outbox').select(OUTBOX_FIELDS).eq('id',job.id).eq('workspace_hash',workspace).single())});
+  }
+  if(route==='outbox'&&req.method==='GET')return response({jobs:check(await admin.from('eren_mail_outbox').select(OUTBOX_FIELDS).eq('workspace_hash',workspace).order('created_at',{ascending:false}).limit(100))});
+  if(route.startsWith('outbox/')) {
+   mustPost(req);const job=check(await admin.from('eren_mail_outbox').select('*').eq('id',input.id).eq('workspace_hash',workspace).maybeSingle());
+   if(!job)throw new MailError(404,'Send not found.');
+   if(route==='outbox/cancel') {
+    const changed=check(await admin.from('eren_mail_outbox').update({status:'cancelled',locked_until:null}).eq('id',job.id).in('status',['pending','processing']).select('id').maybeSingle());
+    if(!changed)throw new MailError(409,'This send has already started and cannot be cancelled.');
+    return response({ok:true});
+   }
+   if(route==='outbox/check')return response({job:((j:any)=>Object.fromEntries(OUTBOX_FIELDS.split(',').map(k=>[k,j[k]])))(await reconcile(admin,job))});
+   if(route==='outbox/restore') {
+    if(!['cancelled','failed'].includes(job.status))throw new MailError(409,'Cancel the send first. Uncertain sends must be checked before restoring.');
+    const stored=await secret(admin,job.secret_name);if(!stored)throw new MailError(404,'Draft no longer available.');
+    return response({draft:{...JSON.parse(stored),accountId:job.account_id,threadId:null},note:'Restored as a new message. To preserve a reply thread, reopen the thread and paste this draft.'});
+   }
+  }
+  if(route==='drafts') {
+   if(req.method==='GET')return response({drafts:check(await admin.from('eren_mail_drafts').select('id,account_id,subject,updated_at').eq('workspace_hash',workspace).order('updated_at',{ascending:false}).limit(100))});
+   const a=await ownedAccount(admin,workspace,input.accountId);
+   if(!/^[a-f0-9-]{36}$/i.test(input.id||'')||typeof input.body!=='string'||input.body.length>100000)throw new MailError(400,'Invalid draft.');
+   const old=check(await admin.from('eren_mail_drafts').select('workspace_hash').eq('id',input.id).maybeSingle());
+   if(old&&old.workspace_hash!==workspace)throw new MailError(404,'Draft not found.');
+   const name=`eren-mail:${workspace}:draft:${input.id}`;
+   const draft={id:input.id,accountId:a.id,to:String(input.to||'').slice(0,2000),subject:String(input.subject||'').slice(0,500),body:input.body,threadId:input.threadId||null,replyMessageId:input.replyMessageId||null};
+   await secret(admin,name,JSON.stringify(draft));
+   check(await admin.from('eren_mail_drafts').upsert({id:input.id,workspace_hash:workspace,account_id:a.id,secret_name:name,subject:draft.subject,updated_at:new Date().toISOString()}));return response({ok:true});
+  }
+  if(route==='drafts/open'||route==='drafts/delete') {
+   mustPost(req);const draft=check(await admin.from('eren_mail_drafts').select('*').eq('id',input.id).eq('workspace_hash',workspace).maybeSingle());
+   if(!draft)throw new MailError(404,'Draft not found.');
+   if(route==='drafts/open')return response({draft:JSON.parse(await secret(admin,draft.secret_name))});
+   await secret(admin,draft.secret_name,null,true);check(await admin.from('eren_mail_drafts').delete().eq('id',draft.id));return response({ok:true});
+  }
+  if(route==='sync'){mustPost(req);await rate(admin,workspace+':sync',3,60);const a=await ownedAccount(admin,workspace,input.accountId);return response(await syncAccount(admin,a));}
+  throw new MailError(404,'Mail route not found.');
+ }catch(e){return response({error:e instanceof MailError?e.message:'Mail is temporarily unavailable. Your draft has been preserved.',code:e instanceof MailError?e.code:'internal_error'},e instanceof MailError?e.status:503);}
+}
+if(import.meta.main)Deno.serve(handle);

@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "strict": false
+  },
+  "imports": {
+    "@supabase/supabase-js": "npm:@supabase/supabase-js@2.117.2",
+    "sanitize-html": "npm:sanitize-html@2.18.0"
+  }
+}
