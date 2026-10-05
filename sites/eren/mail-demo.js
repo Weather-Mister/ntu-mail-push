@@ -318,7 +318,7 @@
     attachmentUploads.set(entry.id,task);return task;
   }
   async function addFiles(files){
-    const list=[...files];if(!list.length)return;
+    const list=[...files];if(!list.length)return;clearTimeout(draftTimer);
     try{await saveDraft();}catch(e){showToast('Save the draft before attaching files: '+e.message);return;}
     let used=currentAttachments.reduce((n,a)=>n+a.size,0);
     for(const file of list){
