@@ -8,12 +8,13 @@ async function boot(page,options={}){
  await page.addInitScript(()=>{if(window===window.top)localStorage.setItem('ntu-schedule-pairing-key-v1','test-key-'.repeat(6));});
  await page.route('https://**/*',async route=>{
   const req=route.request(),url=new URL(req.url()),r=url.searchParams.get('route');let body={};try{body=req.postDataJSON()||{};}catch{}calls.push({route:r,body,url});
-  let data={};const first=options.oldTimestamp?{...msg,timestamp:options.oldTimestamp}:msg;
+  let data={};const first={...msg,...(options.oldTimestamp?{timestamp:options.oldTimestamp}:{}),...(options.attachments?{attachments:options.attachments}:{}),...(options.subject?{subject:options.subject}:{}),...(options.multiThread?{count:2}:{})};
   if(url.pathname.includes('/eren-mail')){
    if(r==='status')data={configured:true,aiConfigured:true,types:['University','Promotion','Receipt / Order','Other'],priorities:['High','Normal','Low','Muted'],actions:['Needs reply','Deadline','Waiting','FYI','No action'],health:{last_finished_at:new Date().toISOString()},redirectUri:'https://api.example.org/callback'};
    if(r==='bootstrap')data={accounts,preferences:{},messages:[first,{...msg,id:'m2',threadId:'t2',accountId:'a2',sender:'Bank',subject:'Your receipt',classification:{...classification,type:'Receipt / Order',priority:'Normal',action:'FYI'}}]};if(r==='accounts')data={accounts};if(r==='preferences')data={preferences:{}};if(r==='rules')data={rules:[]};if(r==='outbox')data={jobs:[]};if(r==='drafts')data={drafts:[]};
    if(r==='mail'){if(options.mailDelay)await new Promise(r=>setTimeout(r,options.mailDelay));let messages=[first,{...msg,id:'m2',threadId:'t2',accountId:'a2',sender:'Bank',subject:'Your receipt',classification:{...classification,type:'Receipt / Order',priority:'Normal',action:'FYI'}}];if(url.searchParams.get('accountId')!=='all')messages=messages.filter(m=>m.accountId===url.searchParams.get('accountId'));data=options.mailFail?{messages:[],cursor:{a1:'',a2:''},hasMore:false,errors:accounts.map(a=>({accountId:a.id,error:'Gmail temporarily unavailable'}))}:options.partialFail?{messages:messages.filter(m=>m.accountId==='a2'),cursor:{a1:null,a2:null},hasMore:false,errors:[{accountId:'a1',threadIds:['t1'],error:'One thread temporarily unavailable'}]}:{messages,cursor:{a1:null,a2:null},hasMore:false,errors:[]};}
-   if(r==='thread'){if(options.threadDelay)await new Promise(r=>setTimeout(r,options.threadDelay));const images=true;data={threadId:url.searchParams.get('threadId'),accountId:url.searchParams.get('accountId'),messages:[{...first,threadId:url.searchParams.get('threadId'),...(options.html?{html:images?options.imagesHtml:options.html,hasExternalImages:!images,externalImages:images}: {})}]};}
+   if(r==='thread'){if(options.threadDelay)await new Promise(r=>setTimeout(r,options.threadDelay));const images=true;data={threadId:url.searchParams.get('threadId'),accountId:url.searchParams.get('accountId'),messages:[...(options.multiThread?[{...first,id:'old',sender:'Earlier sender',text:'Earlier message',html:'<p>Earlier body</p>'}]:[]),{...first,threadId:url.searchParams.get('threadId'),...(options.html?{html:images?options.imagesHtml:options.html,hasExternalImages:!images,externalImages:images}: {})}]};}
+   if(r==='attachment'){if(options.downloadDelay)await new Promise(r=>setTimeout(r,options.downloadDelay));if(options.downloadFail)return route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'Download failed'})});data={data:Buffer.from('Original attachment bytes').toString('base64url'),filename:'agenda.txt',mimeType:'text/plain',size:25};}
    if(r==='ai'){
     if(options.aiDelay)await new Promise(r=>setTimeout(r,options.aiDelay));
     if(options.aiFail)return route.fulfill({status:502,contentType:'application/json',body:JSON.stringify({error:'Gemini quota exhausted. Your draft has been preserved.'})});
@@ -39,7 +40,7 @@ async function boot(page,options={}){
  await page.goto('/');await page.locator('#mailDashboardButton').click();await expect(page.locator('#mailxList .mailx-message')).toHaveCount(2);return {calls,errors};
 }
 test('dashboard remains intact; live account selector combines and filters inbox',async({page},info)=>{
- const {calls,errors}=await boot(page);await expect(page.locator('.topbar-actions > #mailDashboardButton')).toHaveCount(1);await expect(page.locator('#ntuHubSection #mailDashboardButton')).toHaveCount(0);await expect(page.locator('#mailxConnection')).toBeHidden();const listSelector=page.locator('.mailx-account-select-list'),navSelector=page.locator('.mailx-nav [data-mailx-account-filter]'),selector=info.project.name==='iphone'?listSelector:navSelector;await expect(selector.locator('option')).toHaveCount(3);if(info.project.name==='iphone'){await expect(listSelector).toBeVisible();}else{await expect(listSelector).toBeHidden();await expect(navSelector).toBeVisible();}await selector.selectOption('a2');await expect(page.locator('#mailxList .mailx-message')).toHaveCount(1);await expect(page.locator('#mailxList')).toContainText('Your receipt');await selector.selectOption('all');await expect(page.locator('#mailxList .mailx-message')).toHaveCount(2);
+ const {calls,errors}=await boot(page);await expect(page.locator('.topbar-actions > #mailDashboardButton')).toHaveCount(1);await expect(page.locator('#ntuHubSection #mailDashboardButton')).toHaveCount(0);await expect(page.locator('#mailxConnection')).toBeHidden();const selector=page.locator('.mailx-top-account');await expect(selector.locator('option')).toHaveCount(3);await expect(selector).toBeVisible();await selector.selectOption('a2');await expect(page.locator('#mailxList .mailx-message')).toHaveCount(1);await expect(page.locator('#mailxList')).toContainText('Your receipt');await selector.selectOption('all');await expect(page.locator('#mailxList .mailx-message')).toHaveCount(2);
  await page.locator('#mailxClose').click();await page.locator('[data-day="1"]').click();await expect(page.locator('#scheduleList')).toContainText('Engineering Mathematics');
  await expect(page.locator('#todoList')).toContainText('Existing manual task');await expect(page.locator('#transferList')).toContainText('Existing transfer');await expect(page.locator('#coolDeadlines')).toContainText('Existing COOL assignment');await expect(page.locator('a[aria-label="Open NTU Mail"]')).toHaveAttribute('href','https://wmail1.cc.ntu.edu.tw/rc/index.php');expect(calls.some(c=>c.route==='hanzi-widget')).toBeTruthy();expect(errors).toEqual([]);
 });
@@ -60,7 +61,7 @@ test('late AI response cannot overwrite typing or a different composer',async({p
  await boot(page,{aiDelay:500});await composeButton(page).click();await page.locator('#mailxBody').fill('Original');await page.locator('#mailxAiPrompt').fill('Warm');await page.locator('#mailxGenerate').click();await page.locator('#mailxBody').fill('New manual edit');await expect(page.locator('#mailxToast')).toContainText('You edited this draft');await expect(page.locator('#mailxBody')).toHaveText('New manual edit');
 });
 test('archive uses API; local block scope stays distinct from Spam',async({page})=>{
- const {calls}=await boot(page);await page.locator('#mailxList .mailx-message').first().click();await page.locator('[data-action="block"]').click();await page.locator('#ruleScope').selectOption('sender');await page.locator('#ruleSave').click();await expect(page.locator('#mailxSheet')).toHaveCount(0);const rule=calls.find(c=>c.route==='rules'&&c.body.effects);expect(rule.body.effects).toEqual({blocked:true});expect(rule.body.scope).toBe('sender');expect(JSON.stringify(calls)).not.toContain('SPAM');await page.locator('[data-action="archive"]').click();await expect.poll(()=>calls.some(c=>c.route==='modify'&&c.body.action==='archive')).toBeTruthy();
+ const {calls}=await boot(page);await page.locator('#mailxList .mailx-message').first().click();await page.getByLabel('More message actions').click();await page.locator('[data-action="block"]').click();await page.locator('#ruleScope').selectOption('sender');await page.locator('#ruleSave').click();await expect(page.locator('#mailxSheet')).toHaveCount(0);const rule=calls.find(c=>c.route==='rules'&&c.body.effects);expect(rule.body.effects).toEqual({blocked:true});expect(rule.body.scope).toBe('sender');expect(JSON.stringify(calls)).not.toContain('SPAM');await page.locator('[data-action="archive"]').click();await expect.poll(()=>calls.some(c=>c.route==='modify'&&c.body.action==='archive')).toBeTruthy();
 });
 test('duplicate Send is disabled and scheduled sending is a server request',async({page})=>{
  const {calls}=await boot(page,{sendDelay:500});await composeButton(page).click();await page.locator('#mailxTo').fill('friend@example.org');await page.locator('#mailxSubject').fill('Hello');await page.locator('#mailxBody').fill('Daily driver test');await page.locator('#mailxSend').click();await expect(page.locator('#mailxSend')).toBeDisabled();await expect(page.locator('#mailxCompose')).toBeHidden();expect(calls.filter(c=>c.route==='send')).toHaveLength(1);await expect.poll(()=>page.locator('#mailxSend').isDisabled()).toBe(false);
@@ -82,7 +83,7 @@ test('cached readers and views avoid repeated waits; first view appears before s
  await expect(page.locator('#mailxList')).toContainText('Thursday meeting');await page.locator('#mailxList .mailx-message').first().click();await expect(page.locator('.mailx-mail-body')).toContainText('Full message content.');
  if(info.project.name==='iphone')await page.locator('[data-action="back"]').click();else await page.locator('[data-mailx-filter="inbox"]').click();const requests=calls.filter(c=>c.route==='thread').length;const start=Date.now();await page.locator('#mailxList .mailx-message').first().click();await expect(page.locator('.mailx-mail-body')).toContainText('Full message content.',{timeout:500});expect(Date.now()-start).toBeLessThan(700);expect(calls.filter(c=>c.route==='thread')).toHaveLength(requests);
  if(info.project.name==='iphone')await page.locator('[data-action="back"]').click();else await page.locator('[data-mailx-filter="inbox"]').click();await expect.poll(()=>page.locator('#mailxNotice').textContent()).toBe('');
- const selector=info.project.name==='iphone'?page.locator('.mailx-account-select-list'):page.locator('.mailx-nav [data-mailx-account-filter]');await selector.selectOption('a2');await expect(page.locator('#mailxList .mailx-message')).toHaveCount(1);await expect.poll(()=>page.locator('#mailxNotice').textContent()).toBe('');const lists=calls.filter(c=>c.route==='mail').length;await selector.selectOption('all');await expect(page.locator('#mailxList .mailx-message')).toHaveCount(2,{timeout:500});expect(calls.filter(c=>c.route==='mail')).toHaveLength(lists);
+ const selector=page.locator('.mailx-top-account');await selector.selectOption('a2');await expect(page.locator('#mailxList .mailx-message')).toHaveCount(1);await expect.poll(()=>page.locator('#mailxNotice').textContent()).toBe('');const lists=calls.filter(c=>c.route==='mail').length;await selector.selectOption('all');await expect(page.locator('#mailxList .mailx-message')).toHaveCount(2,{timeout:500});expect(calls.filter(c=>c.route==='mail')).toHaveLength(lists);
 });
 test('archive gives immediate list feedback and restores the message when Gmail fails',async({page})=>{
  await boot(page,{modifyFail:true});await page.locator('#mailxList .mailx-message').first().click();await page.locator('[data-action="archive"]').click();await expect(page.locator('#mailxToast')).toContainText('Change failed');await expect(page.locator('#mailxList')).toContainText('Thursday meeting');
@@ -99,7 +100,7 @@ test('workspace chrome is singular, grouped, and reader footer is structurally s
  await boot(page);
  await expect(page.locator('#mailxComposeTop')).toHaveCount(0);
  await expect(page.locator('#mailxComposeMain')).toHaveCount(1);
- await expect(page.locator('.mailx-nav-group')).toHaveCount(4);
+ await expect(page.locator('.mailx-nav [data-mailx-filter]')).toHaveCount(6);await expect(page.locator('[data-mailx-resizer=nav]')).toHaveCount(0);
  await page.locator('#mailxList .mailx-message').first().click();
  await expect(page.locator('.mailx-reader > .mailx-reply-bar')).toHaveCount(1);
  await expect(page.locator('.mailx-reader-scroll .mailx-reply-bar')).toHaveCount(0);
@@ -114,7 +115,7 @@ test('desktop splitters resize panes and persist their widths',async({page},info
  expect(before).toBeTruthy();expect(handle).toBeTruthy();
  await page.mouse.move(handle.x+handle.width/2,handle.y+60);await page.mouse.down();await page.mouse.move(handle.x+handle.width/2+72,handle.y+60,{steps:5});await page.mouse.up();
  const after=await list.boundingBox();expect(after.width).toBeGreaterThan(before.width+40);
- const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('eren-mail-layout-v1')||'{}'));
+ const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('eren-mail-layout-v2')||'{}'));
  expect(saved.list).toBeGreaterThan(before.width+40);
 });
 
@@ -173,8 +174,8 @@ test('compose uses an icon draft action, clean Gemini label, and visible AI spin
 test('mobile compose action sits in the top bar with the other controls',async({page},info)=>{
  test.skip(info.project.name!=='iphone','mobile-only layout');
  await boot(page);
- await expect(page.locator('#mailxComposeMain')).toBeHidden();
- const compose=page.locator('#mailxComposeMobile'),settings=page.locator('#mailxSettings'),close=page.locator('#mailxClose');
+ await expect(page.locator('#mailxComposeMobile')).toBeHidden();
+ const compose=page.locator('#mailxComposeMain'),settings=page.locator('#mailxSettings'),close=page.locator('#mailxClose');
  await expect(compose).toBeVisible();
  const [c,sb,cl]=await Promise.all([compose.boundingBox(),settings.boundingBox(),close.boundingBox()]);
  expect(c).toBeTruthy();expect(sb).toBeTruthy();expect(cl).toBeTruthy();
@@ -222,3 +223,38 @@ test('composer defensively renders HTML returned in Gemini body instead of print
  await expect(page.locator('#mailxBody')).toContainText('Project Update');await expect(page.locator('#mailxBody')).not.toContainText('<h2');
  const html=await page.locator('#mailxBody').evaluate(el=>el.innerHTML);expect(html).toContain('<h2>Project Update</h2>');expect(html).not.toContain('style=');
 });
+
+test('forward starts a new conversation and copies original attachments before sending',async({page})=>{
+ const {calls}=await boot(page,{downloadDelay:300,attachments:[{id:'original',partId:'1',filename:'agenda.txt',mimeType:'text/plain',size:25}]});
+ await page.locator('[data-row="0"]').click();await page.getByRole('button',{name:'Forward',exact:true}).click();
+ await expect(page.locator('#mailxComposeTitle')).toHaveText('Forward');await expect(page.locator('#mailxTo')).toHaveValue('');await expect(page.locator('#mailxFrom')).toHaveValue('a1');await expect(page.locator('#mailxFrom')).toBeEnabled();await expect(page.locator('#mailxSubject')).toHaveValue('Fwd: Thursday meeting');
+ await expect(page.locator('#mailxBody')).toContainText('From: Professor <prof@example.org>');await expect(page.locator('#mailxBody')).toContainText('Full message content.');
+ await page.locator('#mailxTo').fill('friend@example.org');await page.locator('#mailxSend').click();await expect(page.locator('#mailxCompose')).toBeHidden();
+ const sent=calls.find(c=>c.route==='send').body;expect(sent.threadId).toBeNull();expect(sent.replyMessageId).toBeNull();expect(sent.to).toBe('friend@example.org');expect(sent.attachments).toHaveLength(1);expect(sent.attachments[0].name).toBe('agenda.txt');
+ const upload=calls.find(c=>c.route==='drafts/attachment');expect(Buffer.from(upload.body.data,'base64').toString()).toBe('Original attachment bytes');
+});
+
+test('forward download failure cannot silently send without its attachment',async({page})=>{
+ const {calls}=await boot(page,{downloadFail:true,attachments:[{id:'original',partId:'1',filename:'agenda.txt',size:25}]});
+ await page.locator('[data-row="0"]').click();await page.getByRole('button',{name:'Forward',exact:true}).click();await expect(page.locator('.mailx-attachment-chip.is-error')).toBeVisible();await page.locator('#mailxTo').fill('friend@example.org');await page.locator('#mailxSend').click();await expect(page.locator('#mailxToast')).toContainText('Retry or remove');expect(calls.some(c=>c.route==='send')).toBe(false);
+});
+
+test('forward keeps an existing prefix',async({page})=>{
+ await boot(page,{subject:'Fwd: Thursday meeting'});await page.locator('[data-row="0"]').click();await page.getByRole('button',{name:'Forward',exact:true}).click();await expect(page.locator('#mailxSubject')).toHaveValue('Fwd: Thursday meeting');await expect(page.locator('#mailxSubject')).toBeEditable();
+});
+
+test('collapsed older messages load their HTML only when expanded',async({page})=>{
+ await boot(page,{multiThread:true});await page.locator('[data-row="0"]').click();const old=page.locator('.mailx-thread-details').first();await expect(old).not.toHaveAttribute('open','');await expect(old.locator('iframe')).not.toHaveAttribute('srcdoc',/Earlier body/);await expect(page.locator('.mailx-thread-details').last()).toHaveAttribute('open','');await old.locator('summary').first().click();await expect(old.locator('iframe')).toHaveAttribute('srcdoc',/<p>Earlier body<\/p>/);
+});
+
+test('star and reversible trash actions work without opening the reader',async({page})=>{
+ const {calls}=await boot(page);const row=page.locator('[data-swipe-row="0"]');await row.hover();await row.locator('[data-row-action="star"]').click();await expect.poll(()=>calls.some(c=>c.route==='modify'&&c.body.action==='star')).toBe(true);await expect(page.locator('#mailxShell')).not.toHaveClass(/is-reading/);
+ await row.hover();await row.locator('[data-row-action="trash"]').click();await expect(page.locator('#mailxToast')).toContainText('Moved to Trash');await page.locator('#mailxToast button').click();await expect.poll(()=>calls.some(c=>c.route==='modify'&&c.body.action==='untrash')).toBe(true);
+});
+
+test('modern reader fits the viewport and keeps Reply and Forward available',async({page},info)=>{
+ await boot(page);if(info.project.name==='desktop'){const rail=await page.locator('.mailx-nav').boundingBox();expect(rail.width).toBe(64);}await expect(page.locator('.mailx-message .mailx-avatar')).toHaveCount(2);await page.locator('[data-row="0"]').click();
+ const reader=await page.locator('#mailxReader').boundingBox(),reply=await page.getByRole('button',{name:'Reply',exact:true}).boundingBox(),forward=await page.getByRole('button',{name:'Forward',exact:true}).boundingBox();expect(reader.width).toBeGreaterThan(300);expect(reply.y+reply.height).toBeLessThanOrEqual(page.viewportSize().height);expect(forward.y).toBe(reply.y);expect(await page.locator('#mailDemoDialog').evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);
+ await page.screenshot({path:'test-results/'+info.project.name+'-modern-reader.png'});
+});
+
