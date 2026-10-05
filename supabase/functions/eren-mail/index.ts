@@ -235,12 +235,14 @@ export async function handle(req:Request) {
    const a=await ownedAccount(admin,workspace,input.accountId),draftId=uuid(input.id,'draft ID');
    if(typeof input.body!=='string'||input.body.length>100000)throw new MailError(400,'Invalid draft.');
    const attachments=validateAttachmentRefs(input.attachments||[]),bodyHtml=input.bodyHtml==null?'':sanitizeRichBody(input.bodyHtml);
-   const old=check(await admin.from('eren_mail_drafts').select('workspace_hash').eq('id',draftId).maybeSingle());
+   const old=check(await admin.from('eren_mail_drafts').select('workspace_hash,secret_name').eq('id',draftId).maybeSingle());
    if(old&&old.workspace_hash!==workspace)throw new MailError(404,'Draft not found.');
-   const name='eren-mail:'+workspace+':draft:'+draftId;
+   const name='eren-mail:'+workspace+':draft:'+draftId,previous=old?.secret_name?await secret(admin,old.secret_name):null;
    const draft={id:draftId,accountId:a.id,to:String(input.to||'').slice(0,2000),subject:String(input.subject||'').slice(0,500),body:input.body,bodyHtml,attachments,threadId:input.threadId||null,replyMessageId:input.replyMessageId||null};
    await secret(admin,name,JSON.stringify(draft));
-   check(await admin.from('eren_mail_drafts').upsert({id:draftId,workspace_hash:workspace,account_id:a.id,secret_name:name,subject:draft.subject,updated_at:new Date().toISOString()}));return response({ok:true});
+   check(await admin.from('eren_mail_drafts').upsert({id:draftId,workspace_hash:workspace,account_id:a.id,secret_name:name,subject:draft.subject,updated_at:new Date().toISOString()}));
+   if(previous){try{const keep=new Set(attachments.map((a:any)=>a.id));for(const att of JSON.parse(previous).attachments||[])if(!keep.has(att.id))await secret(admin,attachmentSecret(workspace,draftId,att.id),null,true);}catch{}}
+   return response({ok:true});
   }
   if(route==='drafts/open'||route==='drafts/delete') {
    mustPost(req);const draft=check(await admin.from('eren_mail_drafts').select('*').eq('id',input.id).eq('workspace_hash',workspace).maybeSingle());
