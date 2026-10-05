@@ -3,7 +3,7 @@ import { db, check, secret, hash, config, workspaceFor, ownedAccount, gmailClien
 import { oauthStart, oauthCallback, oauthFinish } from './oauth.ts';
 import { enqueue, deliver, reconcile, tick, syncAccount } from './jobs.ts';
 import { oneClickUnsubscribe } from './unsubscribe.ts';
-import { TYPES, PRIORITIES, ACTIONS, validateEffects, validateAttachmentRefs, sanitizeRichBody, MAX_ATTACHMENT_BYTES, header, address, unsubscribeInfo, bodies, decodeBody } from './domain.mjs';
+import { TYPES, PRIORITIES, ACTIONS, validateEffects, validateAttachmentRefs, sanitizeRichBody, MAX_ATTACHMENT_BYTES, header, address, unsubscribeInfo, bodies, decodeBody, resolveAttachmentPart } from './domain.mjs';
 const ACCOUNT_FIELDS='id,email,display_name,status,last_sync_at,sync_error';
 const OUTBOX_FIELDS='id,account_id,to_address,subject,send_at,status,error,gmail_id,created_at,sent_at';
 const origin=new URL(SITE).origin;
