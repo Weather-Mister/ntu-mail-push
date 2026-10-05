@@ -1,10 +1,11 @@
+import { ShortCache } from '../supabase/functions/eren-mail/memory.ts';
 const assert:any=Object.assign((ok:any,message='Assertion failed')=>{if(!ok)throw new Error(message);},{
  equal:(a:any,b:any)=>{if(a!==b)throw new Error(`Expected ${JSON.stringify(b)}, got ${JSON.stringify(a)}`);},
  match:(s:string,r:RegExp)=>{if(!r.test(s))throw new Error('Pattern did not match');},
  deepEqual:(a:any,b:any)=>{if(JSON.stringify(a)!==JSON.stringify(b))throw new Error('Not deeply equal');},
  rejects:async(fn:any)=>{let rejected=false;try{await fn();}catch{rejected=true;}if(!rejected)throw new Error('Expected rejection');}
 });
-import { safeHtml, workspaceFor, hash, revise, threadMessageViews, fullThread } from '../supabase/functions/eren-mail/services.ts';
+import { safeHtml, workspaceFor, hash, revise, threadMessageViews, fullThread, gmailClient, clearMailMemory, cachedOverviews } from '../supabase/functions/eren-mail/services.ts';
 import { inlineImages } from '../supabase/functions/eren-mail/render.ts';
 import { deliver, enqueue, reconcile, syncAccount } from '../supabase/functions/eren-mail/jobs.ts';
 import { oauthStart, oauthFinish } from '../supabase/functions/eren-mail/oauth.ts';
@@ -34,8 +35,29 @@ class MemoryDB {
  }
  rpc(name:string,args:any){if(name==='eren_mail_secret'){if(args.p_delete)delete this.secrets[args.p_name];else if(args.p_value!==null&&args.p_value!==undefined)this.secrets[args.p_name]=args.p_value;return Promise.resolve({data:args.p_value?null:this.secrets[args.p_name]||null,error:null});}throw new Error(name);}
 }
-function setup(){const db=new MemoryDB(),a:any={id:'11111111-1111-4111-8111-111111111111',workspace_hash:'workspace',email:'me@example.org',secret_name:'eren-mail:workspace:account:1',status:'active'};db.tables.eren_mail_accounts.push(a);db.secrets[a.secret_name]='refresh-test';db.secrets['eren-mail:workspace:config:GOOGLE_CLIENT_ID']='client';db.secrets['eren-mail:workspace:config:GOOGLE_CLIENT_SECRET']='secret-test';return {db,a};}
+function setup(){clearMailMemory();const db=new MemoryDB(),a:any={id:'11111111-1111-4111-8111-111111111111',workspace_hash:'workspace',email:'me@example.org',secret_name:'eren-mail:workspace:account:1',status:'active'};db.tables.eren_mail_accounts.push(a);db.secrets[a.secret_name]='refresh-test';db.secrets['eren-mail:workspace:config:GOOGLE_CLIENT_ID']='client';db.secrets['eren-mail:workspace:config:GOOGLE_CLIENT_SECRET']='secret-test';return {db,a};}
 async function fetching(fn:any,run:any){const old=globalThis.fetch;globalThis.fetch=fn;try{await run();}finally{globalThis.fetch=old;}}
+Deno.test('Gmail concurrent clients refresh once and reuse an unexpired server-only token',async()=>{
+ const {db,a}=setup();let refreshes=0,gmail=0,clock=Date.now();const now=Date.now;Date.now=()=>clock;
+ try{await fetching(async(url:any)=>{if(String(url).includes('oauth2')){refreshes++;return Response.json({access_token:'access-test',expires_in:3600});}gmail++;return Response.json({ok:true});},async()=>{
+  const clients=await Promise.all([gmailClient(db,a),gmailClient(db,a),gmailClient(db,a)]);await Promise.all(clients.map(api=>api('profile')));assert.equal(refreshes,1);assert.equal(gmail,3);
+  await (await gmailClient(db,a))('profile');assert.equal(refreshes,1);
+  clock+=901000;await gmailClient(db,a);assert.equal(refreshes,2);
+  clearMailMemory(a.workspace_hash);await gmailClient(db,a);assert.equal(refreshes,3);
+ });}finally{Date.now=now;clearMailMemory();}
+});
+Deno.test('short thread cache expires, clones data, enforces limits and invalidates account scope',()=>{
+ const cache=new ShortCache(10,2,2000),now=Date.now;let clock=100;Date.now=()=>clock;
+ try{cache.set('w:a:t1',{labels:['INBOX']});const value=cache.get('w:a:t1');value.labels=[];assert.equal(cache.get('w:a:t1').labels[0],'INBOX');cache.set('w:a:t2',{});cache.set('w:b:t3',{});assert.equal(cache.get('w:a:t1'),undefined);cache.deletePrefix('w:a:');assert.equal(cache.get('w:a:t2'),undefined);assert(cache.get('w:b:t3'));clock+=11;assert.equal(cache.get('w:b:t3'),undefined);}finally{Date.now=now;}
+});
+Deno.test('cached first view groups threads and never includes another account or full bodies',()=>{
+ const row={id:'m1',account_id:'a1',thread_id:'t1',sender:'prof@example.org',sender_name:'Professor',subject:'Meeting',snippet:'Hello',internal_date:10,labels:['INBOX'],classification:{type:'University'}};
+ const views=cachedOverviews([row,{...row,id:'m2',internal_date:20,labels:['SENT']},{...row,account_id:'foreign',thread_id:'other'}],[{id:'a1',display_name:'University'}]);assert.equal(views.length,1);assert.equal(views[0].count,2);assert.equal(views[0].timestamp,20);assert.equal(views[0].sender,'Professor');assert(!('text' in views[0]));assert(!('html' in views[0]));
+});
+Deno.test('reader enables external images by default while summary rows skip HTML rendering',()=>{
+ const message={id:'m1',threadId:'t1',labelIds:['INBOX'],payload:{headers:[],mimeType:'text/html',body:{data:b64url('<p style="color:#223344">Hello</p><img src="https://images.example.org/banner.png">')}}};
+ const reader=threadMessageViews([message],[])[0],overview=threadMessageViews([message],[],true)[0];assert(reader.html.includes('src="https://images.example.org/banner.png"'));assert(!reader.hasExternalImages);assert.equal(overview.html,'');
+});
 Deno.test('HTML mail cannot execute scripts, forms, remote images or CSS tracking',()=>{
  const html=safeHtml('<script>steal()</script><img src="https://track.example.org/x"><style>@import url(https://track.test)</style><form action="https://evil.test"><input></form><a href="javascript:alert(1)">bad</a><a href="https://example.org">safe</a><p onmouseover="steal()">Hello</p><svg onload="steal()"></svg>');
  assert(!html.includes('steal'));assert(!html.includes('javascript:'));assert(!html.includes('track.'));assert(!html.includes('<form'));assert(!html.includes('<svg'));assert(html.includes("default-src 'none'"));assert(html.includes('Hello'));
@@ -45,7 +67,7 @@ Deno.test('newsletter text styling survives; CSS cannot make tracking requests',
  for(const text of ['font-size:32px','font-size:20px','font-family:Arial,sans-serif','font-weight:bold','background-color:#ccddff','border-radius:20px','bgcolor="#ccddff"','class="hero"'])assert(html.includes(text),text);
  assert(!html.includes('track.example'));assert(!html.includes('position:fixed'));assert(!html.includes('@import'));
 });
-Deno.test('external image loading requires opt-in and cannot enable scripts or unsafe sources',()=>{
+Deno.test('sanitizer respects image mode and cannot enable scripts or unsafe sources',()=>{
  const input='<img src="https://images.example.org/banner.png" alt="Banner" width="600"><img src="javascript:alert(1)"><img src="data:image/svg+xml,bad"><img src="https://127.0.0.1/x"><img src="https://user:pass@example.org/x"><script>alert(1)</script>';
  const blocked=safeHtml(input),enabled=safeHtml(input,{externalImages:true});
  assert(!blocked.includes('images.example'));assert(blocked.includes('data-external-image'));assert(enabled.includes('src="https://images.example.org/banner.png"'));assert(enabled.includes('referrerpolicy="no-referrer"'));

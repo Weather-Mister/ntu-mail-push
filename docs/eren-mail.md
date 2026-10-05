@@ -49,7 +49,7 @@ Mute changes local priority to Muted. Block is local and never maps to Gmail Spa
 
 Unsubscribe controls appear only for supported headers. Confirmed one-click POST uses a DNS-validated, pinned public IP and hostname-verified TLS, without redirects, cookies or OAuth credentials. Safe HTTPS unsubscribe pages open explicitly. A mailto option opens a reviewable composer; it is not sent automatically. A successful POST is recorded as a request, not a promise that a sender will stop instantly.
 
-HTML is sanitized server-side with a strict allowlist and displayed in a sandboxed iframe with restrictive CSP. Safe text styling, table layouts and responsive CSS are preserved. Raster embedded (CID) images display automatically, subject to size limits. External HTTPS images are blocked until you choose “Show external images” for that message; the notice explains that loading them can reveal opens to senders. Scripts, forms, embedded active content, CSS URLs/imports and remote fonts remain blocked. Plain text remains available. Attachment metadata and downloads are supported (20 MB download limit); attaching files to outbound mail is not included in this release.
+HTML is sanitized server-side with a strict allowlist and displayed in a sandboxed iframe with restrictive CSP. Safe text styling, table layouts and responsive CSS are preserved. Raster embedded (CID) images display automatically, subject to size limits. External HTTPS images load by default, as requested. All email content remains sandboxed; scripts and active content cannot run. External images can reveal opens to senders. Scripts, forms, embedded active content, CSS URLs/imports and remote fonts remain blocked. Plain text remains available. Attachment metadata and downloads are supported (20 MB download limit); attaching files to outbound mail is not included in this release.
 
 ## Composer and drafts
 
@@ -94,3 +94,5 @@ The explicit command routes and typed, persistent rules provide a foundation for
 - [Supabase scheduled functions](https://supabase.com/docs/guides/functions/schedule-functions)
 - [Supabase Vault](https://supabase.com/docs/guides/database/vault)
 - [RFC 8058 one-click unsubscribe](https://www.rfc-editor.org/rfc/rfc8058)
+
+Mailbox performance: the first view uses background-synced metadata while canonical Gmail data refreshes. Inbox pages and up to six readers stay in tab memory briefly; no email bodies are added to browser persistent storage. The next three readers are prefetched. The server reuses unexpired access tokens in bounded process memory, batches reconstructible metadata writes, and skips HTML rendering for list rows. Refresh bypasses tab caches. Gmail ownership checks still run for every API request.

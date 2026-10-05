@@ -10,15 +10,15 @@ async function boot(page,options={}){
   let data={};
   if(url.pathname.includes('/eren-mail')){
    if(r==='status')data={configured:true,aiConfigured:true,types:['University','Promotion','Receipt / Order','Other'],priorities:['High','Normal','Low','Muted'],actions:['Needs reply','Deadline','Waiting','FYI','No action'],health:{last_finished_at:new Date().toISOString()},redirectUri:'https://api.example.org/callback'};
-   if(r==='accounts')data={accounts};if(r==='preferences')data={preferences:{}};if(r==='rules')data={rules:[]};if(r==='outbox')data={jobs:[]};if(r==='drafts')data={drafts:[]};
-   if(r==='mail'){let messages=[msg,{...msg,id:'m2',threadId:'t2',accountId:'a2',sender:'Bank',subject:'Your receipt',classification:{...classification,type:'Receipt / Order',priority:'Normal',action:'FYI'}}];if(url.searchParams.get('accountId')!=='all')messages=messages.filter(m=>m.accountId===url.searchParams.get('accountId'));data={messages,cursor:{a1:null,a2:null},hasMore:false,errors:[]};}
-   if(r==='thread'){const images=!!url.searchParams.get('externalMessageId');data={threadId:url.searchParams.get('threadId'),accountId:url.searchParams.get('accountId'),messages:[{...msg,threadId:url.searchParams.get('threadId'),...(options.html?{html:images?options.imagesHtml:options.html,hasExternalImages:!images,externalImages:images}: {})}]};}
+   if(r==='bootstrap')data={accounts,preferences:{},messages:[msg,{...msg,id:'m2',threadId:'t2',accountId:'a2',sender:'Bank',subject:'Your receipt',classification:{...classification,type:'Receipt / Order',priority:'Normal',action:'FYI'}}]};if(r==='accounts')data={accounts};if(r==='preferences')data={preferences:{}};if(r==='rules')data={rules:[]};if(r==='outbox')data={jobs:[]};if(r==='drafts')data={drafts:[]};
+   if(r==='mail'){if(options.mailDelay)await new Promise(r=>setTimeout(r,options.mailDelay));let messages=[msg,{...msg,id:'m2',threadId:'t2',accountId:'a2',sender:'Bank',subject:'Your receipt',classification:{...classification,type:'Receipt / Order',priority:'Normal',action:'FYI'}}];if(url.searchParams.get('accountId')!=='all')messages=messages.filter(m=>m.accountId===url.searchParams.get('accountId'));data={messages,cursor:{a1:null,a2:null},hasMore:false,errors:[]};}
+   if(r==='thread'){if(options.threadDelay)await new Promise(r=>setTimeout(r,options.threadDelay));const images=true;data={threadId:url.searchParams.get('threadId'),accountId:url.searchParams.get('accountId'),messages:[{...msg,threadId:url.searchParams.get('threadId'),...(options.html?{html:images?options.imagesHtml:options.html,hasExternalImages:!images,externalImages:images}: {})}]};}
    if(r==='ai'){
     if(options.aiDelay)await new Promise(r=>setTimeout(r,options.aiDelay));
     if(options.aiFail)return route.fulfill({status:502,contentType:'application/json',body:JSON.stringify({error:'Gemini quota exhausted. Your draft has been preserved.'})});
     data={body:body.body?'Warm: '+body.body:'I can meet after 3.'};
    }
-   if(r==='send'){if(options.sendDelay)await new Promise(r=>setTimeout(r,options.sendDelay));data={job:{id:body.id,status:body.sendAt?'pending':'sent'}};}
+   if(r==='modify'&&options.modifyFail)return route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'Gmail unavailable'})});if(r==='send'){if(options.sendDelay)await new Promise(r=>setTimeout(r,options.sendDelay));data={job:{id:body.id,status:body.sendAt?'pending':'sent'}};}
   }else if(url.pathname.includes('ntu-schedule-api')){
    if(r==='todos/list')data={tasks:[{id:'task1',text:'Existing manual task',done:false}]};
    if(r==='transfer/list')data={items:[{id:'x1',kind:'text',content:'Existing transfer',createdAt:new Date().toISOString()}]};
@@ -59,13 +59,23 @@ test('duplicate Send is disabled and scheduled sending is a server request',asyn
  await page.locator('#mailxComposeTop').click();await page.locator('#mailxTo').fill('friend@example.org');await page.locator('#mailxBody').fill('Scheduled');await page.locator('#mailxSchedule').click();await page.locator('#mailxSendAt').fill('2027-01-10T15:30');await page.locator('#mailxConfirmSchedule').click();await expect(page.locator('#mailxCompose')).toBeHidden();expect(calls.filter(c=>c.route==='send').at(-1).body.sendAt).toBeTruthy();
 });
 
-test('styled newsletter reader and explicit external image loading',async({page})=>{
+test('styled newsletter images load by default without a notice',async({page})=>{
  const head=`<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; style-src 'unsafe-inline'"><style>body{margin:0}table{max-width:100%}h1{font-size:32px;font-family:Arial,sans-serif}</style>`;
  const html=`${head}<table bgcolor="#ccddff" width="600"><tr><td style="text-align:center;padding:24px"><h1>Less searching. More saving.</h1><span data-external-image="blocked">[Honey illustration]</span><a href="https://example.org" style="background:#4066ff;color:#fff;border-radius:20px;padding:10px 20px">Start shopping</a></td></tr></table>`;
  const imagesHtml=html.replace('data:;', 'data: https:;').replace('<span data-external-image="blocked">[Honey illustration]</span>','<img src="https://images.example.org/banner.png" alt="Honey illustration">');
  const {calls,errors}=await boot(page,{html,imagesHtml});await page.locator('#mailxList .mailx-message').first().click();
  const frame=page.frameLocator('.mailx-html-body');await expect(frame.locator('h1')).toHaveCSS('font-size','32px');await expect(frame.locator('td')).toHaveCSS('text-align','center');await expect(frame.locator('a')).toHaveCSS('background-color','rgb(64, 102, 255)');
- await expect(frame.locator('img')).toHaveCount(0);await expect(page.locator('.mailx-image-notice')).toContainText('sender know');await page.screenshot({path:'test-results/newsletter-'+page.viewportSize().width+'.png'});
- await page.getByRole('button',{name:'Show external images',exact:true}).click();await expect(frame.locator('img')).toHaveAttribute('src','https://images.example.org/banner.png');
- expect(calls.filter(c=>c.route==='thread').at(-1).url.searchParams.get('externalMessageId')).toBe('m1');await expect(page.locator('.mailx-html-body')).toHaveAttribute('sandbox','allow-popups allow-popups-to-escape-sandbox');expect(errors).toEqual([]);
+ await expect(page.locator('.mailx-image-notice')).toHaveCount(0);await expect(page.getByRole('button',{name:'Show external images',exact:true})).toHaveCount(0);await expect(frame.locator('img')).toHaveAttribute('src','https://images.example.org/banner.png');
+ expect(calls.filter(c=>c.route==='thread').some(c=>c.url.searchParams.has('externalMessageId'))).toBe(false);await expect(page.locator('.mailx-html-body')).toHaveAttribute('sandbox','allow-popups allow-popups-to-escape-sandbox');expect(errors).toEqual([]);
+});
+
+test('cached readers and views avoid repeated waits; first view appears before slow Gmail refresh',async({page},info)=>{
+ const {calls}=await boot(page,{mailDelay:1500,threadDelay:500});
+ await expect(page.locator('#mailxList')).toContainText('Thursday meeting');await page.locator('#mailxList .mailx-message').first().click();await expect(page.locator('.mailx-mail-body')).toContainText('Full message content.');
+ if(info.project.name==='iphone')await page.locator('[data-action="back"]').click();else await page.locator('[data-mailx-filter="inbox"]').click();const requests=calls.filter(c=>c.route==='thread').length;const start=Date.now();await page.locator('#mailxList .mailx-message').first().click();await expect(page.locator('.mailx-mail-body')).toContainText('Full message content.',{timeout:500});expect(Date.now()-start).toBeLessThan(700);expect(calls.filter(c=>c.route==='thread')).toHaveLength(requests);
+ if(info.project.name==='iphone')await page.locator('[data-action="back"]').click();else await page.locator('[data-mailx-filter="inbox"]').click();await expect.poll(()=>page.locator('#mailxNotice').textContent()).toBe('');
+ const selector=page.locator('.mailx-account-select-list');await selector.selectOption('a2');await expect(page.locator('#mailxList .mailx-message')).toHaveCount(1);await expect.poll(()=>page.locator('#mailxNotice').textContent()).toBe('');const lists=calls.filter(c=>c.route==='mail').length;await selector.selectOption('all');await expect(page.locator('#mailxList .mailx-message')).toHaveCount(2,{timeout:500});expect(calls.filter(c=>c.route==='mail')).toHaveLength(lists);
+});
+test('archive gives immediate list feedback and restores the message when Gmail fails',async({page})=>{
+ await boot(page,{modifyFail:true});await page.locator('#mailxList .mailx-message').first().click();await page.locator('[data-action="archive"]').click();await expect(page.locator('#mailxToast')).toContainText('Change failed');await expect(page.locator('#mailxList')).toContainText('Thursday meeting');
 });

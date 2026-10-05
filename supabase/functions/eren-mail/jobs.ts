@@ -1,4 +1,4 @@
-import { check, secret, ownedAccount, gmailClient, cacheMessages, accountRules, mapLimit, fullThread, MailError, hash } from './services.ts';
+import { check, secret, ownedAccount, gmailClient, cacheMessages, accountRules, mapLimit, fullThread, MailError, hash, invalidateThread } from './services.ts';
 import { buildMime, validateDraft, header } from './domain.mjs';
 export async function enqueue(admin:any,account:any,input:any) {
  const draft=validateDraft(input);
@@ -40,6 +40,7 @@ export async function deliver(admin:any,job:any) {
   if(!ready) return;
   started=true;
   const sent=await api('messages/send','POST',{raw,...(payload.threadId?{threadId:payload.threadId}:{})});
+  if(sent.threadId||payload.threadId)invalidateThread(account.workspace_hash,account.id,sent.threadId||payload.threadId);
   check(await admin.from('eren_mail_outbox').update({status:'sent',gmail_id:sent.id,sent_at:new Date().toISOString(),error:null,locked_until:null}).eq('id',job.id));
   await secret(admin,job.secret_name,null,true);
  } catch(e) {
