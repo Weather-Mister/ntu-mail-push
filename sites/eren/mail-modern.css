@@ -89,11 +89,11 @@
 .mailx-thread-message.is-current{display:flex;flex:1 1 auto;min-height:0;flex-direction:column}
 .mailx-thread-details.is-current[open]{display:flex;flex:1 1 auto;min-height:0;flex-direction:column}
 .mailx-thread-details.is-current>.mailx-message-meta{flex:0 0 auto}
-.mailx-thread-message.is-current>.mailx-thread-details.is-current[open]>.mailx-html-body{display:block;flex:1 1 auto;width:100%;height:100%;min-height:0;max-height:none}
+.mailx-thread-message.is-current>.mailx-thread-details.is-current[open]>.mailx-html-body{display:block;flex:1 1 auto;width:100%;height:100%;min-height:clamp(470px,calc(100dvh - 250px),760px);max-height:none}
 .mailx-thread-message.is-current>.mailx-thread-details.is-current[open]>.mailx-mail-body{flex:1 1 auto;min-height:0;overflow:auto}
 .mailx-thread-details.is-current>.mailx-text-alternative,
 .mailx-thread-details.is-current>.mailx-attachments{flex:0 0 auto}
 @media(max-width:860px){
  .mailx-thread-message.is-current{min-height:0}
- .mailx-thread-details.is-current>.mailx-html-body{min-height:0}
+ .mailx-thread-message.is-current>.mailx-thread-details.is-current[open]>.mailx-html-body{min-height:calc(100dvh - 180px)}
 }
