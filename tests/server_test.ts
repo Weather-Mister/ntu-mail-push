@@ -12,7 +12,12 @@ import { oauthStart, oauthFinish } from '../supabase/functions/eren-mail/oauth.t
 import { publicIPv4 } from '../supabase/functions/eren-mail/unsubscribe.ts';
 import { decodeBody, b64url } from '../supabase/functions/eren-mail/domain.mjs';
 class MemoryDB {
- tables:any={};secrets:any={};
+ tables:any={};secrets:any={};storageObjects=new Map<string,Uint8Array>();
+ storage={from:(bucket:string)=>({
+  upload:async(path:string,data:any)=>{const bytes=data instanceof Uint8Array?data:new Uint8Array(await data.arrayBuffer());this.storageObjects.set(bucket+'/'+path,new Uint8Array(bytes));return {data:{path},error:null};},
+  download:async(path:string)=>{const bytes=this.storageObjects.get(bucket+'/'+path);return bytes?{data:new Blob([bytes]),error:null}:{data:null,error:{message:'not found'}};},
+  remove:async(paths:string[])=>{for(const path of paths)this.storageObjects.delete(bucket+'/'+path);return {data:[],error:null};}
+ })};
  constructor(){this.tables={eren_mail_accounts:[],eren_mail_outbox:[],eren_mail_messages:[],eren_mail_rules:[],eren_mail_oauth:[],schedule_workspaces:[]};}
  from(table:string){
   const db=this;let op='select',values:any,filters:any[]=[],single=false,limit=Infinity,conflict='id';
@@ -118,7 +123,7 @@ Deno.test('queued send resolves durable draft attachments and emits mixed MIME',
  db.secrets['eren-mail:workspace:draft:'+draftId+':attachment:'+attId]=JSON.stringify({id:attId,name:'report.txt',type:'text/plain',size:16,data});
  await fetching(async(url:any,init:any)=>{const u=String(url);if(u.includes('oauth2'))return Response.json({access_token:'access-test'});if(u.endsWith('messages/send')){sent=JSON.parse(init.body);return Response.json({id:'sent2',threadId:'new-thread'});}throw new Error(u);},async()=>{
   const input={id:crypto.randomUUID(),draftId,to:'friend@example.org',subject:'Report',body:'See attached.',bodyHtml:'<p>See <strong>attached</strong>.</p>',attachments:[{id:attId,name:'report.txt',type:'text/plain',size:16}]};
-  const job=await enqueue(db,a,input);const stored=JSON.parse(db.secrets[job.secret_name]);assert.equal(stored.attachments[0].data,data);
+  const job=await enqueue(db,a,input);const stored=JSON.parse(db.secrets[job.secret_name]);assert.equal(stored.attachments[0].data,undefined);assert([...db.storageObjects.keys()].some(k=>k.includes('/outbox/'+job.id+'/'+attId)));
   db.tables.eren_mail_outbox[0].status='processing';await deliver(db,{...job,attempts:1});
   const raw=decodeBody(sent.raw);assert.match(raw,/Content-Type: multipart\/mixed/);assert.match(raw,/Content-Disposition: attachment/);assert.match(raw,/report\.txt/);assert.match(raw,/Content-Type: text\/html/);
  });
