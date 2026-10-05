@@ -348,7 +348,7 @@
   function restoreEditorRange(){
     if(!savedEditorRange)return;const sel=getSelection();sel.removeAllRanges();sel.addRange(savedEditorRange);
   }
-  function composerChanged(){state.editVersion++;state.redo=[];saveEditorRange();keepDraft();scheduleDraftSave();}
+  function composerChanged(){state.editVersion++;state.redo=[];saveEditorRange();keepDraft();if(!attachmentUploads.size)scheduleDraftSave();}
   function formatEditor(command,value=null){
     restoreEditorRange();ce().body.focus();document.execCommand(command,false,value);saveEditorRange();composerChanged();updateFormatState();
   }
@@ -519,7 +519,7 @@
     $$('[data-mailx-ai-chip]').forEach(b=>b.onclick=()=>{ce().prompt.value=b.dataset.mailxAiChip;runAi();});
     searchEl.oninput=()=>{state.query=searchEl.value;clearTimeout(searchTimer);searchTimer=setTimeout(()=>loadMail(),350);};
     accountEls.forEach(el=>el.onchange=()=>{state.account=el.value;state.readVersion++;shell.classList.remove('is-reading','is-reader-focused');remember();loadMail();});
-    [ce().from,ce().to,ce().subject].forEach(el=>el.addEventListener('input',()=>{state.editVersion++;state.redo=[];keepDraft();scheduleDraftSave();}));
+    [ce().from,ce().to,ce().subject].forEach(el=>el.addEventListener('input',()=>{state.editVersion++;state.redo=[];keepDraft();if(!attachmentUploads.size)scheduleDraftSave();}));
     ce().body.addEventListener('input',composerChanged);ce().body.addEventListener('keyup',saveEditorRange);ce().body.addEventListener('mouseup',saveEditorRange);
     ce().body.addEventListener('paste',e=>{if(e.clipboardData?.files?.length){e.preventDefault();addFiles(e.clipboardData.files);}});
     ce().pane.addEventListener('dragover',e=>{if(e.dataTransfer?.types?.includes('Files')){e.preventDefault();ce().pane.classList.add('is-file-drag');}});
