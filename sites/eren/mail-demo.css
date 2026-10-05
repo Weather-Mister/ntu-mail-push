@@ -397,3 +397,147 @@
 @media(prefers-reduced-motion:reduce){
   .mailx-ai-generate.is-loading .mailx-ai-spinner{animation-duration:1.2s}
 }
+
+
+/* Rich compose and attachments */
+.mailx-format-toolbar{
+  display:flex;
+  align-items:center;
+  gap:4px;
+  margin:0 14px 7px;
+  min-height:34px;
+  padding:4px 5px;
+  border:1px solid #e3ddd5;
+  border-radius:10px;
+  background:#f8f6f2;
+  overflow-x:auto;
+  scrollbar-width:none;
+}
+.mailx-format-toolbar::-webkit-scrollbar{display:none}
+.mailx-format-toolbar select,
+.mailx-format-toolbar button{
+  flex:0 0 auto;
+  min-height:27px;
+  border:0;
+  border-radius:7px;
+  background:transparent;
+  color:#5f5a54;
+  font:inherit;
+  font-size:10px;
+  font-weight:760;
+}
+.mailx-format-toolbar select{max-width:112px;padding:0 6px}
+.mailx-format-toolbar button{min-width:29px;padding:0 7px;cursor:pointer}
+.mailx-format-toolbar button:hover,
+.mailx-format-toolbar button.is-active{background:#ebe7df;color:#263f77}
+.mailx-format-toolbar button:disabled{cursor:wait}
+.mailx-format-divider{width:1px;height:18px;background:#ddd7ce;flex:0 0 1px;margin:0 2px}
+.mailx-format-spacer{flex:1 0 8px}
+.mailx-attach-button{font-size:15px!important}
+.mailx-email-body{
+  overflow:auto;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  cursor:text;
+}
+.mailx-email-body:empty::before{
+  content:attr(data-placeholder);
+  color:#aaa39a;
+  pointer-events:none;
+}
+.mailx-email-body p:first-child,
+.mailx-email-body div:first-child,
+.mailx-email-body h1:first-child,
+.mailx-email-body h2:first-child,
+.mailx-email-body h3:first-child{margin-top:0}
+.mailx-email-body p:last-child,
+.mailx-email-body div:last-child,
+.mailx-email-body h1:last-child,
+.mailx-email-body h2:last-child,
+.mailx-email-body h3:last-child{margin-bottom:0}
+.mailx-email-body h1{font-size:1.55em;line-height:1.22}
+.mailx-email-body h2{font-size:1.3em;line-height:1.25}
+.mailx-email-body h3{font-size:1.12em;line-height:1.3}
+.mailx-email-body blockquote{margin:8px 0;padding-left:12px;border-left:3px solid #d5ddeb;color:#5f6671}
+.mailx-email-body a{color:#263f77;text-decoration:underline}
+.mailx-attachment-list{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  max-height:116px;
+  overflow:auto;
+  padding:0 14px;
+  margin:-4px 0 10px;
+}
+.mailx-attachment-list:empty{display:none}
+.mailx-attachment-chip{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  max-width:100%;
+  min-height:39px;
+  padding:5px 6px 5px 9px;
+  border:1px solid #ded8cf;
+  border-radius:10px;
+  background:#faf8f4;
+}
+.mailx-attachment-chip.is-error{border-color:#d8a3a3;background:#fff5f5}
+.mailx-attachment-chip.is-uploading{opacity:.82}
+.mailx-attachment-icon{font-size:13px}
+.mailx-attachment-info{
+  min-width:0;
+  max-width:190px;
+  display:flex;
+  flex-direction:column;
+  line-height:1.2;
+}
+.mailx-attachment-info strong{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:10px;
+  font-weight:800;
+  color:#403c37;
+}
+.mailx-attachment-info small{font-size:8px;color:#8c857d;margin-top:2px}
+.mailx-attachment-chip button{
+  border:0;
+  background:transparent;
+  color:#6e6861;
+  padding:3px 5px;
+  border-radius:6px;
+  cursor:pointer;
+  font:inherit;
+  font-size:10px;
+  font-weight:800;
+}
+.mailx-attachment-chip button:hover{background:#ebe7df}
+.mailx-attachment-spinner{
+  width:13px;
+  height:13px;
+  border:2px solid #c9c3ba;
+  border-top-color:#263f77;
+  border-radius:50%;
+  animation:mailx-spin .7s linear infinite;
+}
+.mailx-compose.is-file-drag::after{
+  content:"Drop files to attach";
+  position:absolute;
+  inset:8px;
+  z-index:50;
+  display:grid;
+  place-items:center;
+  border:2px dashed #6f83b2;
+  border-radius:15px;
+  background:rgba(244,246,251,.94);
+  color:#263f77;
+  font-size:14px;
+  font-weight:850;
+  pointer-events:none;
+}
+@media(max-width:860px){
+  .mailx-format-toolbar{margin-left:10px;margin-right:10px}
+  .mailx-email-body{margin-left:10px;margin-right:10px;min-height:150px}
+  .mailx-attachment-list{padding-left:10px;padding-right:10px}
+  .mailx-attachment-info{max-width:150px}
+}

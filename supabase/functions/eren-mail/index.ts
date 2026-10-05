@@ -3,13 +3,16 @@ import { db, check, secret, hash, config, workspaceFor, ownedAccount, gmailClien
 import { oauthStart, oauthCallback, oauthFinish } from './oauth.ts';
 import { enqueue, deliver, reconcile, tick, syncAccount } from './jobs.ts';
 import { oneClickUnsubscribe } from './unsubscribe.ts';
-import { TYPES, PRIORITIES, ACTIONS, validateEffects, header, address, unsubscribeInfo, bodies, decodeBody } from './domain.mjs';
+import { TYPES, PRIORITIES, ACTIONS, validateEffects, validateAttachmentRefs, sanitizeRichBody, MAX_ATTACHMENT_BYTES, header, address, unsubscribeInfo, bodies, decodeBody } from './domain.mjs';
 const ACCOUNT_FIELDS='id,email,display_name,status,last_sync_at,sync_error';
 const OUTBOX_FIELDS='id,account_id,to_address,subject,send_at,status,error,gmail_id,created_at,sent_at';
 const origin=new URL(SITE).origin;
 function response(data:any,status=200) {return Response.json(data,{status,headers:{'Access-Control-Allow-Origin':origin,'Access-Control-Allow-Headers':'content-type,x-schedule-key','Access-Control-Allow-Methods':'GET,POST,OPTIONS','Cache-Control':'no-store','Vary':'Origin','Referrer-Policy':'no-referrer','X-Content-Type-Options':'nosniff'}});}
 const mustPost=(req:Request)=>{if(req.method!=='POST') throw new MailError(405,'Use POST for this action.');};
 const id=(v:any)=>{if(!/^[a-zA-Z0-9_-]{1,200}$/.test(v||''))throw new MailError(400,'Invalid message ID.');return v;};
+const uuid=(v:any,label='ID')=>{if(!/^[0-9a-f-]{36}$/i.test(v||''))throw new MailError(400,'Invalid '+label+'.');return String(v);};
+const attachmentSecret=(workspace:string,draftId:string,attachmentId:string)=>'eren-mail:'+workspace+':draft:'+draftId+':attachment:'+attachmentId;
+const attachmentRef=(a:any)=>({id:a.id,name:a.name,type:a.type,size:a.size});
 function visible(v:any,filter:string) {
  const c=v.classification,l=v.labels;
  if(filter==='all')return true;
@@ -43,7 +46,7 @@ export async function handle(req:Request) {
   let input:any={};
   if(req.method==='POST') {
    if(!req.headers.get('Content-Type')?.includes('application/json'))throw new MailError(415,'Use JSON.');
-   const raw=await req.text();if(raw.length>150000)throw new MailError(413,'Request too large.');
+   const raw=await req.text(),maxBody=route==='drafts/attachment'?12*1024*1024:150000;if(raw.length>maxBody)throw new MailError(413,'Request too large.');
    try{input=JSON.parse(raw);}catch{throw new MailError(400,'Invalid JSON.');}
    if(!input||typeof input!=='object'||Array.isArray(input))throw new MailError(400,'Invalid request.');
   }
@@ -85,7 +88,8 @@ export async function handle(req:Request) {
    let revoked=false;
    try{const r=await fetch('https://oauth2.googleapis.com/revoke',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({token}),signal:AbortSignal.timeout(10000)});revoked=r.ok;await r.body?.cancel();}catch{}
    const jobs=check(await admin.from('eren_mail_outbox').select('secret_name').eq('account_id',a.id));
-   const drafts=check(await admin.from('eren_mail_drafts').select('secret_name').eq('account_id',a.id));
+   const drafts=check(await admin.from('eren_mail_drafts').select('id,secret_name').eq('account_id',a.id));
+   for(const row of drafts){const stored=await secret(admin,row.secret_name);if(stored){try{for(const att of JSON.parse(stored).attachments||[])await secret(admin,attachmentSecret(workspace,row.id,att.id),null,true);}catch{}}}
    for(const row of [...jobs,...drafts])await secret(admin,row.secret_name,null,true);
    await secret(admin,a.secret_name,null,true);
    check(await admin.from('eren_mail_outbox').delete().eq('account_id',a.id));
@@ -195,24 +199,57 @@ export async function handle(req:Request) {
    if(route==='outbox/restore') {
     if(!['cancelled','failed'].includes(job.status))throw new MailError(409,'Cancel the send first. Uncertain sends must be checked before restoring.');
     const stored=await secret(admin,job.secret_name);if(!stored)throw new MailError(404,'Draft no longer available.');
-    return response({draft:{...JSON.parse(stored),accountId:job.account_id,threadId:null},note:'Restored as a new message. To preserve a reply thread, reopen the thread and paste this draft.'});
+    const payload=JSON.parse(stored),draftId=crypto.randomUUID(),attachments=[];
+    for(const a of payload.attachments||[]) {
+     const ref=attachmentRef(a);await secret(admin,attachmentSecret(workspace,draftId,ref.id),JSON.stringify(a));attachments.push(ref);
+    }
+    const restored={id:draftId,accountId:job.account_id,to:payload.to||'',subject:payload.subject||'',body:payload.body||'',bodyHtml:payload.bodyHtml||'',attachments,threadId:null,replyMessageId:null};
+    const name='eren-mail:'+workspace+':draft:'+draftId;await secret(admin,name,JSON.stringify(restored));
+    check(await admin.from('eren_mail_drafts').upsert({id:draftId,workspace_hash:workspace,account_id:job.account_id,secret_name:name,subject:restored.subject,updated_at:new Date().toISOString()}));
+    return response({draft:restored,note:'Restored as a new message. Attachments were restored too. To preserve a reply thread, reopen the thread instead.'});
    }
+  }
+  if(route==='drafts/attachment') {
+   mustPost(req);await rate(admin,workspace+':attachment',30,60);
+   const draftId=uuid(input.draftId,'draft ID'),attachmentId=uuid(input.id,'attachment ID');
+   const row=check(await admin.from('eren_mail_drafts').select('*').eq('id',draftId).eq('workspace_hash',workspace).maybeSingle());
+   if(!row)throw new MailError(409,'Save the draft before adding attachments.');
+   const refs=validateAttachmentRefs([{id:attachmentId,name:input.name,type:input.type||'application/octet-stream',size:Number(input.size)}]),ref=refs[0];
+   if(typeof input.data!=='string'||input.data.length>Math.ceil(MAX_ATTACHMENT_BYTES*4/3)+16)throw new MailError(400,'Attachment is too large.');
+   const data=input.data.replace(/\s+/g,'');let bytes=0;try{bytes=atob(data).length;}catch{throw new MailError(400,'Attachment data is invalid.');}
+   if(bytes!==ref.size||bytes>MAX_ATTACHMENT_BYTES)throw new MailError(400,'Attachment size does not match.');
+   await secret(admin,attachmentSecret(workspace,draftId,attachmentId),JSON.stringify({...ref,data}));
+   const stored=await secret(admin,row.secret_name);if(stored){const draft=JSON.parse(stored),attachments=validateAttachmentRefs([...(draft.attachments||[]).filter((a:any)=>a.id!==ref.id),ref]);await secret(admin,row.secret_name,JSON.stringify({...draft,attachments}));}
+   return response({attachment:ref});
+  }
+  if(route==='drafts/attachment/delete') {
+   mustPost(req);const draftId=uuid(input.draftId,'draft ID'),attachmentId=uuid(input.id,'attachment ID');
+   const row=check(await admin.from('eren_mail_drafts').select('*').eq('id',draftId).eq('workspace_hash',workspace).maybeSingle());
+   if(!row)throw new MailError(404,'Draft not found.');
+   await secret(admin,attachmentSecret(workspace,draftId,attachmentId),null,true);
+   const stored=await secret(admin,row.secret_name);if(stored){const draft=JSON.parse(stored),attachments=(draft.attachments||[]).filter((a:any)=>a.id!==attachmentId);await secret(admin,row.secret_name,JSON.stringify({...draft,attachments}));}
+   return response({ok:true});
   }
   if(route==='drafts') {
    if(req.method==='GET')return response({drafts:check(await admin.from('eren_mail_drafts').select('id,account_id,subject,updated_at').eq('workspace_hash',workspace).order('updated_at',{ascending:false}).limit(100))});
-   const a=await ownedAccount(admin,workspace,input.accountId);
-   if(!/^[a-f0-9-]{36}$/i.test(input.id||'')||typeof input.body!=='string'||input.body.length>100000)throw new MailError(400,'Invalid draft.');
-   const old=check(await admin.from('eren_mail_drafts').select('workspace_hash').eq('id',input.id).maybeSingle());
+   const a=await ownedAccount(admin,workspace,input.accountId),draftId=uuid(input.id,'draft ID');
+   if(typeof input.body!=='string'||input.body.length>100000)throw new MailError(400,'Invalid draft.');
+   const attachments=validateAttachmentRefs(input.attachments||[]),bodyHtml=input.bodyHtml==null?'':sanitizeRichBody(input.bodyHtml);
+   const old=check(await admin.from('eren_mail_drafts').select('workspace_hash,secret_name').eq('id',draftId).maybeSingle());
    if(old&&old.workspace_hash!==workspace)throw new MailError(404,'Draft not found.');
-   const name=`eren-mail:${workspace}:draft:${input.id}`;
-   const draft={id:input.id,accountId:a.id,to:String(input.to||'').slice(0,2000),subject:String(input.subject||'').slice(0,500),body:input.body,threadId:input.threadId||null,replyMessageId:input.replyMessageId||null};
+   const name='eren-mail:'+workspace+':draft:'+draftId,previous=old?.secret_name?await secret(admin,old.secret_name):null;
+   const draft={id:draftId,accountId:a.id,to:String(input.to||'').slice(0,2000),subject:String(input.subject||'').slice(0,500),body:input.body,bodyHtml,attachments,threadId:input.threadId||null,replyMessageId:input.replyMessageId||null};
    await secret(admin,name,JSON.stringify(draft));
-   check(await admin.from('eren_mail_drafts').upsert({id:input.id,workspace_hash:workspace,account_id:a.id,secret_name:name,subject:draft.subject,updated_at:new Date().toISOString()}));return response({ok:true});
+   check(await admin.from('eren_mail_drafts').upsert({id:draftId,workspace_hash:workspace,account_id:a.id,secret_name:name,subject:draft.subject,updated_at:new Date().toISOString()}));
+   if(previous){try{const keep=new Set(attachments.map((a:any)=>a.id));for(const att of JSON.parse(previous).attachments||[])if(!keep.has(att.id))await secret(admin,attachmentSecret(workspace,draftId,att.id),null,true);}catch{}}
+   return response({ok:true});
   }
   if(route==='drafts/open'||route==='drafts/delete') {
    mustPost(req);const draft=check(await admin.from('eren_mail_drafts').select('*').eq('id',input.id).eq('workspace_hash',workspace).maybeSingle());
    if(!draft)throw new MailError(404,'Draft not found.');
-   if(route==='drafts/open')return response({draft:JSON.parse(await secret(admin,draft.secret_name))});
+   const stored=await secret(admin,draft.secret_name),value=stored?JSON.parse(stored):null;
+   if(route==='drafts/open')return response({draft:value});
+   for(const a of value?.attachments||[])await secret(admin,attachmentSecret(workspace,draft.id,a.id),null,true);
    await secret(admin,draft.secret_name,null,true);check(await admin.from('eren_mail_drafts').delete().eq('id',draft.id));return response({ok:true});
   }
   if(route==='sync'){mustPost(req);await rate(admin,workspace+':sync',3,60);const a=await ownedAccount(admin,workspace,input.accountId);return response(await syncAccount(admin,a));}

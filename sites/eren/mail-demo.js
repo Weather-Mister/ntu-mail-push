@@ -262,34 +262,125 @@
     }));
   }
   function address(v=''){return (v.match(/<([^<>]+)>/)?.[1]||v).trim().toLowerCase();}
+  let currentAttachments=[],attachmentUploads=new Map(),savedEditorRange=null;
+  const editorTags=new Set(['P','DIV','BR','STRONG','B','EM','I','U','S','STRIKE','UL','OL','LI','BLOCKQUOTE','H1','H2','H3','A','SPAN']);
   function ce(){return{pane:$('#mailxCompose'),title:$('#mailxComposeTitle'),context:$('#mailxComposeContext'),from:$('#mailxFrom'),to:$('#mailxTo'),subject:$('#mailxSubject'),prompt:$('#mailxAiPrompt'),body:$('#mailxBody'),generate:$('#mailxGenerate')};}
   function setAiBusy(c,busy){
     state.busyAi=busy;c.generate.disabled=busy;c.generate.classList.toggle('is-loading',busy);c.generate.setAttribute('aria-busy',String(busy));
     const label=c.generate.querySelector('.mailx-ai-generate-label');if(label)label.textContent=busy?'Revising…':'Generate';
   }
-  function draftSnapshot(){const c=ce();return{id:state.draftId,accountId:c.from.value,to:c.to.value,subject:c.subject.value,body:c.body.value,threadId:state.replyContext?.threadId||null,replyMessageId:state.replyContext?.id||null};}
+  function cleanEditorHtml(html=''){
+    const template=document.createElement('template');template.innerHTML=String(html||'');
+    [...template.content.querySelectorAll('*')].reverse().forEach(el=>{
+      if(!editorTags.has(el.tagName)){el.replaceWith(...el.childNodes);return;}
+      [...el.attributes].forEach(a=>el.removeAttribute(a.name));
+      if(el.tagName==='A'){
+        const source=document.createElement('template');source.innerHTML=String(html||'');
+      }
+    });
+    // Restore only safe href/title attributes from a separately parsed tree by walking in order.
+    const source=document.createElement('template');source.innerHTML=String(html||'');
+    const safeLinks=[...template.content.querySelectorAll('a')],rawLinks=[...source.content.querySelectorAll('a')];
+    safeLinks.forEach((a,i)=>{
+      const raw=rawLinks[i],href=raw?.getAttribute('href')||'',title=raw?.getAttribute('title')||'';
+      try{const u=new URL(href,location.href);if(['http:','https:','mailto:'].includes(u.protocol))a.setAttribute('href',href);}catch{}
+      if(title)a.setAttribute('title',title.slice(0,200));
+    });
+    return template.innerHTML;
+  }
+  function editorText(){return ce().body.innerText.replace(/\u00a0/g,' ').replace(/\r\n?/g,'\n');}
+  function editorHtml(){return ce().body.innerHTML;}
+  function editorState(){return{body:editorText(),bodyHtml:editorHtml()};}
+  function setEditor(body='',html=''){const c=ce();c.body.innerHTML=html?cleanEditorHtml(html):'';if(!html)c.body.textContent=body||'';}
+  function completedAttachmentRefs(){return currentAttachments.filter(a=>a.status==='done').map(({id,name,type,size})=>({id,name,type,size}));}
+  function draftSnapshot(){const c=ce(),content=editorState();return{id:state.draftId,accountId:c.from.value,to:c.to.value,subject:c.subject.value,...content,attachments:completedAttachmentRefs(),threadId:state.replyContext?.threadId||null,replyMessageId:state.replyContext?.id||null};}
   function keepDraft(){if(!state.draftId)return;writeStore(DRAFT,{...draftSnapshot(),requestId:state.requestId,requestPayload:state.requestPayload});}
+  function formatBytes(bytes){return bytes<1024?bytes+' B':bytes<1024*1024?Math.ceil(bytes/1024)+' KB':(bytes/1024/1024).toFixed(1)+' MB';}
+  function renderAttachments(){
+    const box=$('#mailxAttachments');if(!box)return;
+    box.innerHTML=currentAttachments.map(a=>`<div class="mailx-attachment-chip ${a.status==='error'?'is-error':a.status==='uploading'?'is-uploading':''}" data-attachment-id="${escapeHtml(a.id)}"><span class="mailx-attachment-icon">📎</span><span class="mailx-attachment-info"><strong>${escapeHtml(a.name)}</strong><small>${a.status==='uploading'?'Uploading…':a.status==='error'?(a.error||'Upload failed'):formatBytes(a.size)}</small></span>${a.status==='uploading'?'<span class="mailx-attachment-spinner" aria-label="Uploading"></span>':a.status==='error'&&a.file?'<button type="button" data-attachment-retry aria-label="Retry attachment">Retry</button>':''}<button type="button" data-attachment-remove aria-label="Remove ${escapeHtml(a.name)}">×</button></div>`).join('');
+    $$('[data-attachment-remove]').forEach(b=>b.onclick=()=>removeAttachment(b.closest('[data-attachment-id]').dataset.attachmentId));
+    $$('[data-attachment-retry]').forEach(b=>b.onclick=()=>retryAttachment(b.closest('[data-attachment-id]').dataset.attachmentId));
+  }
+  function fileBase64(file){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result).split(',')[1]||'');r.onerror=()=>reject(r.error||new Error('Could not read file.'));r.readAsDataURL(file);});}
+  async function uploadAttachment(entry){
+    entry.status='uploading';entry.error='';renderAttachments();
+    const task=(async()=>{
+      try{
+        const data=await fileBase64(entry.file);
+        const result=await api('drafts/attachment',{draftId:state.draftId,id:entry.id,name:entry.name,type:entry.type,size:entry.size,data});
+        const current=currentAttachments.find(a=>a.id===entry.id);if(!current)return;
+        Object.assign(current,result.attachment,{status:'done',error:'',file:null});renderAttachments();keepDraft();scheduleDraftSave();
+      }catch(e){
+        const current=currentAttachments.find(a=>a.id===entry.id);if(current){current.status='error';current.error=e.message||'Upload failed';renderAttachments();$('#mailxComposeError').textContent='Attachment upload failed. Retry it or remove it before sending.';}
+      }finally{attachmentUploads.delete(entry.id);}
+    })();
+    attachmentUploads.set(entry.id,task);return task;
+  }
+  async function addFiles(files){
+    const list=[...files];if(!list.length)return;clearTimeout(draftTimer);
+    try{await saveDraft();}catch(e){showToast('Save the draft before attaching files: '+e.message);return;}
+    let used=currentAttachments.reduce((n,a)=>n+a.size,0);
+    for(const file of list){
+      if(currentAttachments.length>=8){showToast('You can attach up to 8 files.');break;}
+      if(file.size>8*1024*1024||used+file.size>8*1024*1024){showToast('Attachments can total up to 8 MB.');break;}
+      const entry={id:crypto.randomUUID(),name:file.name||'attachment',type:file.type||'application/octet-stream',size:file.size,status:'uploading',error:'',file};currentAttachments.push(entry);used+=file.size;uploadAttachment(entry);
+    }
+    renderAttachments();keepDraft();
+  }
+  async function removeAttachment(id){
+    const entry=currentAttachments.find(a=>a.id===id);if(!entry)return;
+    if(entry.status==='uploading'){showToast('Wait for this attachment to finish uploading.');return;}
+    currentAttachments=currentAttachments.filter(a=>a.id!==id);renderAttachments();keepDraft();scheduleDraftSave();
+    if(entry.status==='done')api('drafts/attachment/delete',{draftId:state.draftId,id}).catch(()=>showToast('Attachment removed locally; server cleanup will retry with the draft.'));
+  }
+  function retryAttachment(id){const entry=currentAttachments.find(a=>a.id===id);if(entry?.status==='error'&&entry.file)uploadAttachment(entry);}
+  async function waitForAttachmentUploads(requireSuccess=false){
+    if(attachmentUploads.size)await Promise.allSettled([...attachmentUploads.values()]);
+    const failed=currentAttachments.filter(a=>a.status!=='done');
+    if(requireSuccess&&failed.length){showToast('Retry or remove failed attachments before sending.');return false;}
+    return true;
+  }
+  function saveEditorRange(){
+    const sel=getSelection();if(!sel?.rangeCount)return;const range=sel.getRangeAt(0),body=ce().body;
+    if(body.contains(range.commonAncestorContainer))savedEditorRange=range.cloneRange();
+  }
+  function restoreEditorRange(){
+    if(!savedEditorRange)return;const sel=getSelection();sel.removeAllRanges();sel.addRange(savedEditorRange);
+  }
+  function composerChanged(){state.editVersion++;state.redo=[];saveEditorRange();keepDraft();if(!attachmentUploads.size)scheduleDraftSave();}
+  function formatEditor(command,value=null){
+    restoreEditorRange();ce().body.focus();document.execCommand(command,false,value);saveEditorRange();composerChanged();updateFormatState();
+  }
+  function updateFormatState(){
+    $$('[data-format-command]').forEach(b=>{const cmd=b.dataset.formatCommand;b.classList.toggle('is-active',!!document.queryCommandState?.(cmd));});
+  }
   async function openComposer(m=null,existing=null){
     if(!state.accounts.length){showToast('Connect a Gmail account first.');return settings();}
     if(state.busySend){showToast('Wait for the send to finish.');return;}
-    if(ce().pane.classList.contains('is-open')&&(ce().body.value||ce().to.value)&&!confirm('Save this draft and open another message?'))return;
-    if(ce().pane.classList.contains('is-open')&&ce().body.value)await saveDraft();
-    const c=ce();state.composeVersion++;state.editVersion++;state.busyAi=false;state.replyContext=m;state.history=[];state.redo=[];state.requestId=existing?.requestId||null;state.requestPayload=existing?.requestPayload||null;state.draftId=existing?.id||crypto.randomUUID();
+    if(ce().pane.classList.contains('is-open')&&(editorText().trim()||ce().to.value||currentAttachments.length)&&!confirm('Save this draft and open another message?'))return;
+    if(ce().pane.classList.contains('is-open')&&(editorText().trim()||currentAttachments.length))await saveDraft();
+    const c=ce();state.composeVersion++;state.editVersion++;state.busyAi=false;state.replyContext=m;state.history=[];state.redo=[];state.requestId=existing?.requestId||null;state.requestPayload=existing?.requestPayload||null;state.draftId=existing?.id||crypto.randomUUID();currentAttachments=(existing?.attachments||[]).map(a=>({...a,status:'done',error:'',file:null}));attachmentUploads.clear();
     const selected=m?.accountId||existing?.accountId||(state.account!=='all'?state.account:state.accounts[0].id);
     c.from.innerHTML=state.accounts.map(a=>option(a.id,a.display_name+' · '+a.email,selected)).join('');c.from.disabled=!!(m||existing?.threadId);
     c.to.value=existing?.to||(m?(address(m.email)===address(state.accounts.find(a=>a.id===selected)?.email)?m.to:address(m.replyTo)): '');
     c.subject.value=existing?.subject||(m?(/^re:/i.test(m.subject)?m.subject:'Re: '+m.subject):'');c.subject.readOnly=!!(m||existing?.threadId);
     if(existing?.threadId)state.replyContext={threadId:existing.threadId,id:existing.replyMessageId};
-    c.body.value=existing?.body||'';c.prompt.value='';setAiBusy(c,false);
+    setEditor(existing?.body||'',existing?.bodyHtml||'');savedEditorRange=null;c.prompt.value='';setAiBusy(c,false);renderAttachments();
     c.title.textContent=state.replyContext?'Reply':'New message';c.context.textContent=state.replyContext?'Replying in the original Gmail thread':'AI revises the current editable draft below';
     $('#mailxComposeError').textContent='';$('#mailxDraftState').textContent='Saved on this tab as you type';
     c.pane.classList.add('is-open');requestAnimationFrame(()=>{placeFloating(c.pane,'compose');focusFloating(c.pane);});keepDraft();setTimeout(()=>c.body.focus(),30);
   }
-  async function closeComposer(){if(state.busySend)return showToast('Wait for the send to finish.');keepDraft();clearTimeout(draftTimer);if(ce().body.value)saveDraft().catch(()=>showToast('Draft is kept on this tab; reconnect to save it securely.'));state.composeVersion++;ce().pane.classList.remove('is-open');}
+  async function closeComposer(){
+    if(state.busySend)return showToast('Wait for the send to finish.');
+    await waitForAttachmentUploads(false);keepDraft();clearTimeout(draftTimer);
+    if(editorText().trim()||currentAttachments.length)saveDraft().catch(()=>showToast('Draft is kept on this tab; reconnect to save it securely.'));
+    state.composeVersion++;ce().pane.classList.remove('is-open');
+  }
   async function saveDraft(snapshot=draftSnapshot()){
     if(!snapshot.id||!snapshot.accountId)return;keepDraft();
     const save=draftSaveChain.catch(()=>{}).then(()=>api('drafts',snapshot));draftSaveChain=save;
-    await save;if(snapshot.id===state.draftId&&snapshot.body===ce().body.value)$('#mailxDraftState').textContent='Draft saved securely';
+    await save;if(snapshot.id===state.draftId&&snapshot.body===editorText())$('#mailxDraftState').textContent='Draft saved securely';
   }
   function scheduleDraftSave(){clearTimeout(draftTimer);$('#mailxDraftState').textContent='Saving draft…';draftTimer=setTimeout(()=>{if(!state.busySend)saveDraft().catch(()=>{$('#mailxDraftState').textContent='Offline · draft kept on this tab';});},1200);}
   async function runAi(){
@@ -300,19 +391,21 @@
       const result=await api('ai',{...snapshot,instruction});
       if(version!==state.composeVersion)return;
       if(edited!==state.editVersion||JSON.stringify(snapshot)!==JSON.stringify(draftSnapshot())){showToast('You edited this draft during generation. Your edits are kept; run AI again to include them.');return;}
-      state.history.push(c.body.value);state.redo=[];c.body.value=result.body;state.editVersion++;c.prompt.value='';keepDraft();scheduleDraftSave();c.body.focus();
+      state.history.push(editorState());state.redo=[];setEditor(result.body,result.bodyHtml||'');state.editVersion++;c.prompt.value='';keepDraft();scheduleDraftSave();c.body.focus();
     }catch(e){if(version===state.composeVersion)$('#mailxComposeError').textContent=e.message;}
     finally{if(version===state.composeVersion)setAiBusy(c,false);}
   }
-  function undoAi(){if(state.busySend||!state.history.length)return;state.redo.push(ce().body.value);ce().body.value=state.history.pop();state.editVersion++;keepDraft();scheduleDraftSave();}
-  function redoAi(){if(state.busySend||!state.redo.length)return;state.history.push(ce().body.value);ce().body.value=state.redo.pop();state.editVersion++;keepDraft();scheduleDraftSave();}
+  function undoAi(){if(state.busySend||!state.history.length)return;state.redo.push(editorState());const v=state.history.pop();setEditor(v.body,v.bodyHtml);state.editVersion++;keepDraft();scheduleDraftSave();}
+  function redoAi(){if(state.busySend||!state.redo.length)return;state.history.push(editorState());const v=state.redo.pop();setEditor(v.body,v.bodyHtml);state.editVersion++;keepDraft();scheduleDraftSave();}
   async function send(sendAt=null){
-    if(state.busySend)return;clearTimeout(draftTimer);const c=ce();if(!c.to.reportValidity()||!c.to.value.trim()||!c.body.value.trim()){showToast('Add a recipient and email body.');return;}
-    const payload={...draftSnapshot(),sendAt};delete payload.id;
+    if(state.busySend)return;clearTimeout(draftTimer);const c=ce();
+    if(!c.to.reportValidity()||!c.to.value.trim()||(!editorText().trim()&&!currentAttachments.length)){showToast('Add a recipient and email body or attachment.');return;}
+    if(!await waitForAttachmentUploads(true))return;
+    const payload={...draftSnapshot(),draftId:state.draftId,sendAt};delete payload.id;
     if(state.requestId&&JSON.stringify(payload)!==JSON.stringify(state.requestPayload)){showToast('A previous send is unresolved. Check Outbox before sending changed text.');return;}
     state.requestId ||=crypto.randomUUID();state.requestPayload=payload;keepDraft();state.busySend=true;state.composeVersion++;
-    const editing=[c.from,c.to,c.subject,c.body,c.prompt];const previous=editing.map(el=>el.disabled);editing.forEach(el=>el.disabled=true);
-    $('#mailxSend').disabled=true;$('#mailxSchedule').disabled=true;$('#mailxSaveDraft').disabled=true;$('#mailxComposeError').textContent='';
+    const editing=[c.from,c.to,c.subject,c.prompt];const previous=editing.map(el=>el.disabled);editing.forEach(el=>el.disabled=true);const editable=c.body.getAttribute('contenteditable');c.body.setAttribute('contenteditable','false');
+    $('#mailxSend').disabled=true;$('#mailxSchedule').disabled=true;$('#mailxSaveDraft').disabled=true;$('#mailxAttach').disabled=true;$$('[data-format-command]').forEach(b=>b.disabled=true);$('#mailxBlockFormat').disabled=true;$('#mailxComposeError').textContent='';
     try{
       await draftSaveChain.catch(()=>{});
       const {job}=await api('send',{...payload,id:state.requestId});
@@ -320,9 +413,9 @@
       if(job.status==='uncertain')throw new Error('Delivery is uncertain. Check Outbox; do not send a duplicate.');
       showToast(job.status==='sent'?'Sent through Gmail':sendAt?'Scheduled on the server':'Send queued on the server. Check Outbox for its status.');
       api('drafts/delete',{id:state.draftId}).catch(()=>{});try{sessionStorage.removeItem(DRAFT);}catch{}
-      c.pane.classList.remove('is-open');state.requestId=null;state.requestPayload=null;state.draftId=null;state.replyContext=null;clearMailCache();loadMail(false,true);
+      c.pane.classList.remove('is-open');state.requestId=null;state.requestPayload=null;state.draftId=null;state.replyContext=null;currentAttachments=[];clearMailCache();loadMail(false,true);
     }catch(e){$('#mailxComposeError').textContent=e.message;keepDraft();}
-    finally{state.busySend=false;editing.forEach((el,i)=>el.disabled=previous[i]);$('#mailxSend').disabled=false;$('#mailxSchedule').disabled=false;$('#mailxSaveDraft').disabled=false;setAiBusy(c,false);}
+    finally{state.busySend=false;editing.forEach((el,i)=>el.disabled=previous[i]);c.body.setAttribute('contenteditable',editable||'true');$('#mailxSend').disabled=false;$('#mailxSchedule').disabled=false;$('#mailxSaveDraft').disabled=false;$('#mailxAttach').disabled=false;$$('[data-format-command]').forEach(b=>b.disabled=false);$('#mailxBlockFormat').disabled=false;setAiBusy(c,false);}
   }
   function sheet(title,html,onMount){
     $('#mailxSheet')?.remove();const panel=document.createElement('section');panel.id='mailxSheet';panel.className='mailx-sheet';panel.setAttribute('aria-label',title);
@@ -413,17 +506,26 @@
   function mount(){
     const launch=document.querySelector('#mailDashboardButton');if(!launch)return;launch.addEventListener('click',e=>{e.preventDefault();openDialog();});launch.setAttribute('aria-label','Open Mail');launch.title='Open Mail';
     dialog=document.createElement('dialog');dialog.id='mailDemoDialog';dialog.className='mailx-dialog';
-    dialog.innerHTML='<div class="mailx-shell" id="mailxShell"><header class="mailx-topbar"><div class="mailx-brand"><span class="mailx-brand-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="2"/><path d="m5 8 7 5 7-5"/></svg></span><span class="mailx-title">Mail</span><span class="mailx-demo-badge" id="mailxConnection">Mail</span></div><div class="mailx-top-spacer"></div><button class="mailx-top-action mailx-compose-mobile" type="button" id="mailxComposeMobile">＋ Compose</button><button class="mailx-top-action" type="button" id="mailxSettings" aria-label="Mail settings">⚙</button><button class="mailx-icon-button" type="button" id="mailxClose" aria-label="Close mail">×</button></header><div class="mailx-mobile-tabs">'+['inbox','important','reply','codes','low','all'].map(k=>'<button class="mailx-mobile-tab" data-mailx-mobile-filter="'+k+'">'+categoryLabel(k)+'</button>').join('')+'</div><div class="mailx-main"><nav class="mailx-nav" aria-label="Mail views"><button class="mailx-compose-main" type="button" id="mailxComposeMain">＋ Compose</button><div class="mailx-nav-label">MAIL</div>'+[['inbox','important','reply'],['codes','low'],['all','blocked','archived'],['sent','drafts','outbox']].map(group=>'<div class="mailx-nav-group">'+group.map(k=>'<button class="mailx-filter" type="button" data-mailx-filter="'+k+'"><span>'+categoryLabel(k)+'</span></button>').join('')+'</div>').join('')+'<div class="mailx-nav-label">ACCOUNT</div><select class="mailx-account-select" data-mailx-account-filter aria-label="Connected account"><option value="all">All connected</option></select><p class="mailx-nav-note">Local blocks stay available in Blocked and All mail.</p></nav><div class="mailx-resizer" data-mailx-resizer="nav" role="separator" tabindex="0" aria-orientation="vertical" aria-label="Resize mail navigation"></div><section class="mailx-list-pane"><div class="mailx-list-tools"><div class="mailx-list-controls"><input aria-label="Search mail" id="mailxSearch" class="mailx-search" type="search" placeholder="Search mail…" autocomplete="off"><select class="mailx-account-select mailx-account-select-list" data-mailx-account-filter aria-label="Connected account"><option value="all">All connected</option></select></div><div class="mailx-list-meta" id="mailxListMeta"></div><div class="mailx-list-extra"><select id="mailxView" aria-label="Mail view"></select><button class="mailx-action" id="mailxRefresh">↻ Refresh</button></div><div id="mailxNotice" role="status"></div></div><div class="mailx-list" id="mailxList"></div></section><div class="mailx-resizer" data-mailx-resizer="list" role="separator" tabindex="0" aria-orientation="vertical" aria-label="Resize message list"></div><section class="mailx-reader" id="mailxReader"></section></div></div><section aria-label="Email composer" class="mailx-compose" id="mailxCompose"><div class="mailx-compose-head"><div><div class="mailx-compose-title" id="mailxComposeTitle">New message</div><div class="mailx-compose-context" id="mailxComposeContext"></div></div><button class="mailx-icon-button mailx-compose-close" id="mailxComposeClose" type="button" aria-label="Close composer">×</button></div><div class="mailx-compose-fields"><div class="mailx-field-row"><label for="mailxFrom">From</label><select id="mailxFrom" aria-label="Sending account"></select></div><div class="mailx-field-row"><label for="mailxTo">To</label><input id="mailxTo" type="email" multiple placeholder="name@example.com"></div><div class="mailx-field-row"><label for="mailxSubject">Subject</label><input id="mailxSubject" type="text" placeholder="Subject"></div></div><div class="mailx-ai-wrap"><div class="mailx-ai-label"><span>AI COMMAND</span><span>Gemini</span></div><div class="mailx-ai-row"><textarea aria-label="AI instruction" id="mailxAiPrompt" class="mailx-ai-prompt" placeholder="Tell AI what to write or change. It always uses the current email draft below as reference."></textarea><button id="mailxGenerate" class="mailx-ai-generate" type="button"><span class="mailx-ai-spinner" aria-hidden="true"></span><span class="mailx-ai-generate-label">Generate</span></button></div><div class="mailx-ai-chips"><button class="mailx-ai-chip" type="button" data-mailx-ai-chip="make it shorter">Shorter</button><button class="mailx-ai-chip" type="button" data-mailx-ai-chip="make it warmer and friendlier">Warmer</button><button class="mailx-ai-chip" type="button" data-mailx-ai-chip="make it more formal">More formal</button><button class="mailx-ai-chip" type="button" data-mailx-ai-chip="fix the grammar without changing my meaning">Fix grammar</button></div></div><div class="mailx-editor-label"><span>EMAIL</span><span class="mailx-editor-tools"><button id="mailxUndo" type="button">Undo AI</button><button id="mailxRedo" type="button">Redo</button></span></div><textarea aria-label="Editable email body" id="mailxBody" class="mailx-email-body" placeholder="Write manually here, or use the AI command above…"></textarea><div id="mailxComposeError" class="mailx-inline-error" role="alert"></div><div class="mailx-compose-foot"><span class="mailx-compose-note"><span id="mailxDraftState">Your editable draft</span></span><button class="mailx-action mailx-save-draft-icon" id="mailxSaveDraft" type="button" aria-label="Save draft" title="Save draft"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11l3 3v13H5z"/><path d="M8 4v6h8V4"/><path d="M8 20v-6h8v6"/></svg></button><button class="mailx-schedule" id="mailxSchedule" type="button">Schedule</button><button class="mailx-send" id="mailxSend" type="button">Send</button></div></section><div class="mailx-toast" id="mailxToast" role="status"></div>';
+    dialog.innerHTML='<div class="mailx-shell" id="mailxShell"><header class="mailx-topbar"><div class="mailx-brand"><span class="mailx-brand-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="2"/><path d="m5 8 7 5 7-5"/></svg></span><span class="mailx-title">Mail</span><span class="mailx-demo-badge" id="mailxConnection">Mail</span></div><div class="mailx-top-spacer"></div><button class="mailx-top-action mailx-compose-mobile" type="button" id="mailxComposeMobile">＋ Compose</button><button class="mailx-top-action" type="button" id="mailxSettings" aria-label="Mail settings">⚙</button><button class="mailx-icon-button" type="button" id="mailxClose" aria-label="Close mail">×</button></header><div class="mailx-mobile-tabs">'+['inbox','important','reply','codes','low','all'].map(k=>'<button class="mailx-mobile-tab" data-mailx-mobile-filter="'+k+'">'+categoryLabel(k)+'</button>').join('')+'</div><div class="mailx-main"><nav class="mailx-nav" aria-label="Mail views"><button class="mailx-compose-main" type="button" id="mailxComposeMain">＋ Compose</button><div class="mailx-nav-label">MAIL</div>'+[['inbox','important','reply'],['codes','low'],['all','blocked','archived'],['sent','drafts','outbox']].map(group=>'<div class="mailx-nav-group">'+group.map(k=>'<button class="mailx-filter" type="button" data-mailx-filter="'+k+'"><span>'+categoryLabel(k)+'</span></button>').join('')+'</div>').join('')+'<div class="mailx-nav-label">ACCOUNT</div><select class="mailx-account-select" data-mailx-account-filter aria-label="Connected account"><option value="all">All connected</option></select><p class="mailx-nav-note">Local blocks stay available in Blocked and All mail.</p></nav><div class="mailx-resizer" data-mailx-resizer="nav" role="separator" tabindex="0" aria-orientation="vertical" aria-label="Resize mail navigation"></div><section class="mailx-list-pane"><div class="mailx-list-tools"><div class="mailx-list-controls"><input aria-label="Search mail" id="mailxSearch" class="mailx-search" type="search" placeholder="Search mail…" autocomplete="off"><select class="mailx-account-select mailx-account-select-list" data-mailx-account-filter aria-label="Connected account"><option value="all">All connected</option></select></div><div class="mailx-list-meta" id="mailxListMeta"></div><div class="mailx-list-extra"><select id="mailxView" aria-label="Mail view"></select><button class="mailx-action" id="mailxRefresh">↻ Refresh</button></div><div id="mailxNotice" role="status"></div></div><div class="mailx-list" id="mailxList"></div></section><div class="mailx-resizer" data-mailx-resizer="list" role="separator" tabindex="0" aria-orientation="vertical" aria-label="Resize message list"></div><section class="mailx-reader" id="mailxReader"></section></div></div><section aria-label="Email composer" class="mailx-compose" id="mailxCompose"><div class="mailx-compose-head"><div><div class="mailx-compose-title" id="mailxComposeTitle">New message</div><div class="mailx-compose-context" id="mailxComposeContext"></div></div><button class="mailx-icon-button mailx-compose-close" id="mailxComposeClose" type="button" aria-label="Close composer">×</button></div><div class="mailx-compose-fields"><div class="mailx-field-row"><label for="mailxFrom">From</label><select id="mailxFrom" aria-label="Sending account"></select></div><div class="mailx-field-row"><label for="mailxTo">To</label><input id="mailxTo" type="email" multiple placeholder="name@example.com"></div><div class="mailx-field-row"><label for="mailxSubject">Subject</label><input id="mailxSubject" type="text" placeholder="Subject"></div></div><div class="mailx-ai-wrap"><div class="mailx-ai-label"><span>AI COMMAND</span><span>Gemini</span></div><div class="mailx-ai-row"><textarea aria-label="AI instruction" id="mailxAiPrompt" class="mailx-ai-prompt" placeholder="Tell AI what to write or change. It always uses the current email draft below as reference."></textarea><button id="mailxGenerate" class="mailx-ai-generate" type="button"><span class="mailx-ai-spinner" aria-hidden="true"></span><span class="mailx-ai-generate-label">Generate</span></button></div><div class="mailx-ai-chips"><button class="mailx-ai-chip" type="button" data-mailx-ai-chip="make it shorter">Shorter</button><button class="mailx-ai-chip" type="button" data-mailx-ai-chip="make it warmer and friendlier">Warmer</button><button class="mailx-ai-chip" type="button" data-mailx-ai-chip="make it more formal">More formal</button><button class="mailx-ai-chip" type="button" data-mailx-ai-chip="fix the grammar without changing my meaning">Fix grammar</button></div></div><div class="mailx-editor-label"><span>EMAIL</span><span class="mailx-editor-tools"><button id="mailxUndo" type="button">Undo AI</button><button id="mailxRedo" type="button">Redo</button></span></div><div class="mailx-format-toolbar" role="toolbar" aria-label="Text formatting"><select id="mailxBlockFormat" aria-label="Text style"><option value="p">Normal</option><option value="h3">Small heading</option><option value="h2">Heading</option><option value="h1">Large heading</option><option value="blockquote">Quote</option></select><span class="mailx-format-divider"></span><button type="button" data-format-command="bold" aria-label="Bold"><strong>B</strong></button><button type="button" data-format-command="italic" aria-label="Italic"><em>I</em></button><button type="button" data-format-command="underline" aria-label="Underline"><u>U</u></button><button type="button" data-format-command="strikeThrough" aria-label="Strikethrough"><s>S</s></button><span class="mailx-format-divider"></span><button type="button" data-format-command="insertUnorderedList" aria-label="Bulleted list">• List</button><button type="button" data-format-command="insertOrderedList" aria-label="Numbered list">1. List</button><button type="button" id="mailxLink" aria-label="Add link">Link</button><button type="button" data-format-command="removeFormat" aria-label="Clear formatting">Clear</button><span class="mailx-format-spacer"></span><button type="button" id="mailxAttach" class="mailx-attach-button" aria-label="Add attachments" title="Attach files">📎</button><input id="mailxAttachmentInput" type="file" multiple hidden></div><div aria-label="Editable email body" id="mailxBody" class="mailx-email-body" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="Write manually here, or use the AI command above…"></div><div id="mailxAttachments" class="mailx-attachment-list" aria-live="polite"></div><div id="mailxComposeError" class="mailx-inline-error" role="alert"></div><div class="mailx-compose-foot"><span class="mailx-compose-note"><span id="mailxDraftState">Your editable draft</span></span><button class="mailx-action mailx-save-draft-icon" id="mailxSaveDraft" type="button" aria-label="Save draft" title="Save draft"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11l3 3v13H5z"/><path d="M8 4v6h8V4"/><path d="M8 20v-6h8v6"/></svg></button><button class="mailx-schedule" id="mailxSchedule" type="button">Schedule</button><button class="mailx-send" id="mailxSend" type="button">Send</button></div></section><div class="mailx-toast" id="mailxToast" role="status"></div>';
     document.body.appendChild(dialog);shell=$('#mailxShell');listEl=$('#mailxList');readerEl=$('#mailxReader');searchEl=$('#mailxSearch');accountEls=$$('[data-mailx-account-filter]');initMailWorkspaceInteractions();
     $('#mailxClose').onclick=()=>{keepDraft();dialog.close();};$('#mailxSettings').onclick=guarded(settings);
     $('#mailxComposeMain').onclick=guarded(()=>openComposer());$('#mailxComposeMobile').onclick=guarded(()=>openComposer());$('#mailxComposeClose').onclick=closeComposer;
     $('#mailxGenerate').onclick=runAi;$('#mailxUndo').onclick=undoAi;$('#mailxRedo').onclick=redoAi;$('#mailxSchedule').onclick=scheduleSend;$('#mailxSend').onclick=()=>send();$('#mailxSaveDraft').onclick=guarded(()=>saveDraft());
+    $('#mailxAttach').onclick=()=>$('#mailxAttachmentInput').click();$('#mailxAttachmentInput').onchange=e=>{addFiles(e.target.files);e.target.value='';};
+    $$('[data-format-command]').forEach(b=>{b.onmousedown=e=>e.preventDefault();b.onclick=()=>formatEditor(b.dataset.formatCommand);});
+    $('#mailxBlockFormat').onchange=e=>{formatEditor('formatBlock',e.target.value);};$('#mailxLink').onmousedown=e=>e.preventDefault();$('#mailxLink').onclick=()=>{restoreEditorRange();const sel=getSelection();if(!sel||sel.isCollapsed)return showToast('Select text to turn into a link.');const href=prompt('Link URL');if(!href)return;try{const u=new URL(href);if(!['http:','https:','mailto:'].includes(u.protocol))throw 0;formatEditor('createLink',href);}catch{showToast('Use an http, https, or mailto link.');}};
     $('#mailxRefresh').onclick=guarded(async()=>{clearMailCache();await Promise.all([refreshAccounts(),loadMail(false,true)]);});$('#mailxView').onchange=e=>setFilter(e.target.value);
     $$('[data-mailx-filter]').forEach(b=>b.onclick=()=>setFilter(b.dataset.mailxFilter));$$('[data-mailx-mobile-filter]').forEach(b=>b.onclick=()=>setFilter(b.dataset.mailxMobileFilter));
     $$('[data-mailx-ai-chip]').forEach(b=>b.onclick=()=>{ce().prompt.value=b.dataset.mailxAiChip;runAi();});
     searchEl.oninput=()=>{state.query=searchEl.value;clearTimeout(searchTimer);searchTimer=setTimeout(()=>loadMail(),350);};
     accountEls.forEach(el=>el.onchange=()=>{state.account=el.value;state.readVersion++;shell.classList.remove('is-reading','is-reader-focused');remember();loadMail();});
-    [ce().from,ce().to,ce().subject,ce().body].forEach(el=>el.addEventListener('input',()=>{state.editVersion++;state.redo=[];keepDraft();scheduleDraftSave();}));
+    [ce().from,ce().to,ce().subject].forEach(el=>el.addEventListener('input',()=>{state.editVersion++;state.redo=[];keepDraft();if(!attachmentUploads.size)scheduleDraftSave();}));
+    ce().body.addEventListener('input',composerChanged);ce().body.addEventListener('keyup',saveEditorRange);ce().body.addEventListener('mouseup',saveEditorRange);
+    ce().body.addEventListener('paste',e=>{if(e.clipboardData?.files?.length){e.preventDefault();addFiles(e.clipboardData.files);}});
+    ce().pane.addEventListener('dragover',e=>{if(e.dataTransfer?.types?.includes('Files')){e.preventDefault();ce().pane.classList.add('is-file-drag');}});
+    ce().pane.addEventListener('dragleave',e=>{if(!ce().pane.contains(e.relatedTarget))ce().pane.classList.remove('is-file-drag');});
+    ce().pane.addEventListener('drop',e=>{ce().pane.classList.remove('is-file-drag');if(e.dataTransfer?.files?.length){e.preventDefault();addFiles(e.dataTransfer.files);}});
+    document.addEventListener('selectionchange',()=>{if(dialog.open&&ce().pane.classList.contains('is-open')){saveEditorRange();updateFormatState();}});
     dialog.addEventListener('cancel',e=>{if($('#mailxSheet')){e.preventDefault();$('#mailxSheet').remove();}else if(ce().pane.classList.contains('is-open')){e.preventDefault();closeComposer();}else keepDraft();});
     window.addEventListener('pagehide',keepDraft);window.addEventListener('focus',()=>{if(dialog.open)guarded(finishConnection)();});
     document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&dialog.open&&!ce().pane.classList.contains('is-open'))guarded(()=>loadMail())();});

@@ -112,6 +112,17 @@ Deno.test('real send constructs selected From and Gmail thread; repeated enqueue
   assert.equal(sent.threadId,'t1');const raw=decodeBody(sent.raw);assert.match(raw,/From: me@example.org/);assert.match(raw,/In-Reply-To: <source@example.org>/);assert.equal(db.tables.eren_mail_outbox[0].status,'sent');assert.equal(db.secrets[job.secret_name],undefined);
  });
 });
+
+Deno.test('queued send resolves durable draft attachments and emits mixed MIME',async()=>{
+ const {db,a}=setup(),draftId='22222222-2222-4222-8222-222222222222',attId='33333333-3333-4333-8333-333333333333',data=btoa('attachment bytes');let sent:any=null;
+ db.secrets['eren-mail:workspace:draft:'+draftId+':attachment:'+attId]=JSON.stringify({id:attId,name:'report.txt',type:'text/plain',size:16,data});
+ await fetching(async(url:any,init:any)=>{const u=String(url);if(u.includes('oauth2'))return Response.json({access_token:'access-test'});if(u.endsWith('messages/send')){sent=JSON.parse(init.body);return Response.json({id:'sent2',threadId:'new-thread'});}throw new Error(u);},async()=>{
+  const input={id:crypto.randomUUID(),draftId,to:'friend@example.org',subject:'Report',body:'See attached.',bodyHtml:'<p>See <strong>attached</strong>.</p>',attachments:[{id:attId,name:'report.txt',type:'text/plain',size:16}]};
+  const job=await enqueue(db,a,input);const stored=JSON.parse(db.secrets[job.secret_name]);assert.equal(stored.attachments[0].data,data);
+  db.tables.eren_mail_outbox[0].status='processing';await deliver(db,{...job,attempts:1});
+  const raw=decodeBody(sent.raw);assert.match(raw,/Content-Type: multipart\/mixed/);assert.match(raw,/Content-Disposition: attachment/);assert.match(raw,/report\.txt/);assert.match(raw,/Content-Type: text\/html/);
+ });
+});
 Deno.test('uncertain sends are not blindly retried and can reconcile by Message-ID',async()=>{
  const {db,a}=setup();let sends=0,found=false;
  await fetching(async(url:any)=>{const u=String(url);if(u.includes('oauth2'))return Response.json({access_token:'access-test'});if(u.endsWith('messages/send')){sends++;throw new TypeError('network lost');}if(u.includes('rfc822msgid'))return Response.json({messages:found?[{id:'actually-sent'}]:[]});throw new Error(u);},async()=>{
@@ -132,10 +143,10 @@ Deno.test('new-mail history is processed while old mail is still backfilling',as
   await syncAccount(db,a);assert.equal(db.tables.eren_mail_accounts[0].history_id,'11');assert.equal(db.tables.eren_mail_accounts[0].backfill_page,'older2');assert.equal(db.tables.eren_mail_messages.length,2);assert(paths.findIndex(p=>p.includes('/history?'))<paths.findIndex(p=>p.includes('/messages?')));
  });
 });
-Deno.test('Gemini receives latest edited body and only requested thread; errors preserve caller state',async()=>{
- const {db,a}=setup();db.secrets['eren-mail:workspace:config:GEMINI_API_KEY']='gemini-test';db.secrets['eren-mail:workspace:config:GEMINI_MODEL']='configurable-model';const input={body:'I can meet after 4.',to:'friend@example.org',subject:'Thursday',instruction:'Make warmer'};let got:any;
- await fetching(async(url:any,init:any)=>{assert(String(url).includes('/configurable-model:'));got=JSON.parse(init.body);return Response.json({candidates:[{finishReason:'STOP',content:{parts:[{text:'Warm revision'}]}}]});},async()=>{assert.equal((await revise(db,a,input)).body,'Warm revision');});
- const data=JSON.parse(got.contents[0].parts[0].text);assert.equal(data.currentEditableDraft,'I can meet after 4.');assert.deepEqual(data.threadContext,[]);
+Deno.test('Gemini receives latest rich draft, preserves formatting contract and errors preserve caller state',async()=>{
+ const {db,a}=setup();db.secrets['eren-mail:workspace:config:GEMINI_API_KEY']='gemini-test';db.secrets['eren-mail:workspace:config:GEMINI_MODEL']='configurable-model';const input={body:'I can meet after 4.',bodyHtml:'<p>I can meet <strong>after 4</strong>.</p>',to:'friend@example.org',subject:'Thursday',instruction:'Make warmer'};let got:any;
+ await fetching(async(url:any,init:any)=>{assert(String(url).includes('/configurable-model:'));got=JSON.parse(init.body);return Response.json({candidates:[{finishReason:'STOP',content:{parts:[{text:JSON.stringify({body:'Warm revision',bodyHtml:'<p><strong>Warm</strong> revision<script>x()</script></p>'})}]}}]});},async()=>{const r=await revise(db,a,input);assert.equal(r.body,'Warm revision');assert.equal(r.bodyHtml,'<p><strong>Warm</strong> revision</p>');});
+ const data=JSON.parse(got.contents[0].parts[0].text);assert.equal(data.currentEditableDraft,'I can meet after 4.');assert.equal(data.currentEditableHtml,'<p>I can meet <strong>after 4</strong>.</p>');assert.deepEqual(data.threadContext,[]);assert.equal(got.generationConfig.responseMimeType,'application/json');
  await fetching(async()=>new Response('',{status:429}),async()=>{await assert.rejects(()=>revise(db,a,input));assert.equal(input.body,'I can meet after 4.');});
 });
 
