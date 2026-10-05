@@ -148,7 +148,8 @@ export function looksLikeRichHtml(value='') {
 }
 export function richBodyPlainText(html='') {
   const structured=String(html||'').replace(/<\/(p|div|blockquote|h[1-3])>/gi,'</$1>\n').replace(/<\/li>/gi,'</li>');
-  return normalizePlainBody(plainText(structured));
+  const text=plainText(structured).replace(/[ \t]{2,}/g,' ').replace(/[ \t]+([,.;!?])/g,'$1');
+  return normalizePlainBody(text);
 }
 export function normalizeAiRevision(parsed={}) {
   const rawBody=typeof parsed?.body==='string'?parsed.body:'',rawHtml=typeof parsed?.bodyHtml==='string'?parsed.bodyHtml:'';
