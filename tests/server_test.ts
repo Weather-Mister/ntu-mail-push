@@ -119,8 +119,8 @@ Deno.test('real send constructs selected From and Gmail thread; repeated enqueue
 });
 
 Deno.test('queued send resolves durable draft attachments and emits mixed MIME',async()=>{
- const {db,a}=setup(),draftId='22222222-2222-4222-8222-222222222222',attId='33333333-3333-4333-8333-333333333333',data=btoa('attachment bytes');let sent:any=null;
- db.secrets['eren-mail:workspace:draft:'+draftId+':attachment:'+attId]=JSON.stringify({id:attId,name:'report.txt',type:'text/plain',size:16,data});
+ const {db,a}=setup(),draftId='22222222-2222-4222-8222-222222222222',attId='33333333-3333-4333-8333-333333333333';let sent:any=null;
+ db.storageObjects.set('eren-mail-attachments/workspace/draft/'+draftId+'/'+attId,new TextEncoder().encode('attachment bytes'));
  await fetching(async(url:any,init:any)=>{const u=String(url);if(u.includes('oauth2'))return Response.json({access_token:'access-test'});if(u.endsWith('messages/send')){sent=JSON.parse(init.body);return Response.json({id:'sent2',threadId:'new-thread'});}throw new Error(u);},async()=>{
   const input={id:crypto.randomUUID(),draftId,to:'friend@example.org',subject:'Report',body:'See attached.',bodyHtml:'<p>See <strong>attached</strong>.</p>',attachments:[{id:attId,name:'report.txt',type:'text/plain',size:16}]};
   const job=await enqueue(db,a,input);const stored=JSON.parse(db.secrets[job.secret_name]);assert.equal(stored.attachments[0].data,undefined);assert([...db.storageObjects.keys()].some(k=>k.includes('/outbox/'+job.id+'/'+attId)));
@@ -128,6 +128,14 @@ Deno.test('queued send resolves durable draft attachments and emits mixed MIME',
   const raw=decodeBody(sent.raw);assert.match(raw,/Content-Type: multipart\/mixed/);assert.match(raw,/Content-Disposition: attachment/);assert.match(raw,/report\.txt/);assert.match(raw,/Content-Type: text\/html/);
  });
 });
+Deno.test('legacy Vault draft attachments still migrate into outbox storage',async()=>{
+ const {db,a}=setup(),draftId='42222222-2222-4222-8222-222222222222',attId='43333333-3333-4333-8333-333333333333',data=btoa('legacy bytes');
+ db.secrets['eren-mail:workspace:draft:'+draftId+':attachment:'+attId]=JSON.stringify({id:attId,name:'legacy.txt',type:'text/plain',size:12,data});
+ const job=await enqueue(db,a,{id:crypto.randomUUID(),draftId,to:'friend@example.org',subject:'Legacy',body:'See attached.',attachments:[{id:attId,name:'legacy.txt',type:'text/plain',size:12}]});
+ assert([...db.storageObjects.keys()].some(k=>k.includes('/outbox/'+job.id+'/'+attId)));
+ assert.equal(JSON.parse(db.secrets[job.secret_name]).attachments[0].data,undefined);
+});
+
 Deno.test('uncertain sends are not blindly retried and can reconcile by Message-ID',async()=>{
  const {db,a}=setup();let sends=0,found=false;
  await fetching(async(url:any)=>{const u=String(url);if(u.includes('oauth2'))return Response.json({access_token:'access-test'});if(u.endsWith('messages/send')){sends++;throw new TypeError('network lost');}if(u.includes('rfc822msgid'))return Response.json({messages:found?[{id:'actually-sent'}]:[]});throw new Error(u);},async()=>{
