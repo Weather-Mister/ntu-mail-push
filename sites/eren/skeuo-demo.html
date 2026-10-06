@@ -1,135 +1,452 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#aaa696"><title>NTU Schedule — Keyboard Layout Study</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#777a72">
+<title>NTU Schedule — Keyboard Hardware Study</title>
 <link rel="icon" href="./favicon.svg" type="image/svg+xml">
 <style>
 :root{
- --desk:#77766f;--case:#aaa696;--case2:#b5b1a2;--well:#8f8c81;--line:#77746a;
- --key:#c8c3b2;--keyedge:#777266;--ink:#24251f;--muted:#625f56;--navy:#34486b;
- --navyedge:#25334d;--green:#66795d;--red:#95584e;--amber:#a47b3c
+  --desk:#555852;
+  --shell:#85877f;
+  --shell-hi:#989a91;
+  --shell-lo:#676a63;
+  --panel:#9c9d93;
+  --panel-dark:#73756e;
+  --seam:#575a54;
+  --ink:#22231f;
+  --muted:#595b54;
+  --key:#d2cfc1;
+  --key-hi:#dedbce;
+  --key-lo:#a19d90;
+  --key-edge:#77746a;
+  --blue:#415779;
+  --blue-edge:#2a3c59;
+  --green:#708563;
+  --amber:#bd8840;
+  --red:#a75c51;
+  --screen:#282d2d;
+  --screen-ink:#d7dccd;
 }
-*{box-sizing:border-box}button,input,textarea{font:inherit}body{
- margin:0;min-height:100vh;padding:14px;color:var(--ink);
- font-family:Arial,Helvetica,sans-serif;background:#77766f;
- background-image:radial-gradient(rgba(255,255,255,.07) .7px,transparent .8px),radial-gradient(rgba(0,0,0,.08) .7px,transparent .8px);
- background-position:0 0,7px 9px;background-size:17px 17px,19px 19px
+*{box-sizing:border-box}
+html{background:var(--desk)}
+body{
+  margin:0;min-height:100vh;padding:16px 12px calc(30px + env(safe-area-inset-bottom));
+  color:var(--ink);font-family:Arial,Helvetica,sans-serif;-webkit-font-smoothing:antialiased;
+  background:
+    radial-gradient(circle at 20% 5%,rgba(255,255,255,.08),transparent 27%),
+    repeating-linear-gradient(0deg,rgba(255,255,255,.012) 0 1px,transparent 1px 4px),
+    #555852;
 }
+button,input,textarea{font:inherit}
+button{-webkit-tap-highlight-color:transparent}
 .machine{
- width:min(1320px,100%);margin:auto;padding:16px;border:1px solid #5f5d55;border-radius:9px;
- background:#aaa696;box-shadow:0 6px 0 #5e5c54,0 13px 25px rgba(0,0,0,.28),inset 0 1px rgba(255,255,255,.28)
+  position:relative;width:min(1320px,100%);margin:auto;padding:20px 18px 18px;
+  border:1px solid #4d504b;border-radius:8px;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.10),transparent 13%),
+    linear-gradient(105deg,transparent 0 72%,rgba(0,0,0,.025) 72.3%,transparent 72.7%),
+    var(--shell);
+  box-shadow:
+    0 2px 0 #a0a29a inset,
+    0 -2px 0 #62655e inset,
+    0 7px 0 #484b46,
+    0 18px 35px rgba(15,17,15,.32);
+  isolation:isolate;
 }
-.topbar{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:12px;padding:0 3px}
-.eyebrow,.tiny{font:700 8px/1.2 "Courier New",monospace;letter-spacing:.12em;color:#5a574f}.eyebrow{margin:0 0 3px}
-h1{margin:0;font-size:27px;letter-spacing:-.04em}.topkeys{display:flex;gap:7px}
+.machine::before{
+  content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;border-radius:inherit;opacity:.11;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.68' numOctaves='3' seed='11'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.38'/%3E%3C/svg%3E");
+  mix-blend-mode:multiply;
+}
+.machine::after{
+  content:"";position:absolute;left:17px;right:17px;top:65px;height:1px;background:rgba(57,60,55,.46);
+  box-shadow:0 1px rgba(255,255,255,.13);pointer-events:none;
+}
+.screw{
+  position:absolute;width:9px;height:9px;border-radius:50%;z-index:3;
+  background:radial-gradient(circle at 35% 30%,#aaa99f 0 12%,#686a64 35%,#444741 70%);
+  border:1px solid #4c4e49;box-shadow:0 1px 1px rgba(255,255,255,.2),inset 0 0 0 1px rgba(0,0,0,.15)
+}
+.screw::after{content:"";position:absolute;left:1px;right:1px;top:3px;height:1px;background:#363833;transform:rotate(var(--screw-angle,12deg))}
+.s1{left:7px;top:8px;--screw-angle:17deg}.s2{right:7px;top:8px;--screw-angle:-28deg}.s3{left:7px;bottom:8px;--screw-angle:41deg}.s4{right:7px;bottom:8px;--screw-angle:-8deg}
+
+.topbar{height:47px;display:flex;justify-content:space-between;align-items:flex-start;gap:14px;padding:0 6px;margin-bottom:14px}
+.brandline{display:flex;align-items:flex-start;gap:13px}
+.brandmark{
+  width:27px;height:27px;display:grid;place-items:center;margin-top:1px;border:1px solid #545750;
+  background:#74776f;color:#d5d3c7;font:800 12px/1 "Arial Narrow",Arial,sans-serif;
+  box-shadow:inset 0 1px rgba(255,255,255,.16)
+}
+.eyebrow,.micro,.rail-title,.panel-code,.keylegend,.time,.deadline small,.transferitem small,.studykey span,.ntu span,.serial{
+  font-family:"Courier New",ui-monospace,monospace
+}
+.eyebrow{margin:0 0 2px;font-size:8px;font-weight:700;letter-spacing:.14em;color:#e1ded1;text-shadow:0 1px rgba(0,0,0,.25)}
+h1{margin:0;font-size:26px;line-height:1;letter-spacing:-.045em;color:#20221e}
+.serial{font-size:7px;color:#4e514b;margin-top:5px;letter-spacing:.08em}
+.topkeys{display:flex;gap:8px;padding-top:2px}
+
 .key{
- appearance:none;border:1px solid #6d695f;border-radius:5px;background:#c7c1b0;color:#282922;
- box-shadow:0 4px 0 #777166,0 6px 6px rgba(25,24,21,.18);transform:translateY(-3px);
- cursor:pointer;transition:transform 55ms,box-shadow 55ms;-webkit-tap-highlight-color:transparent
+  --key-top:var(--key);--key-bottom:var(--key-lo);--key-side:var(--key-edge);
+  position:relative;appearance:none;border:1px solid #706d64;border-radius:5px;
+  color:#292a25;background:
+    linear-gradient(145deg,rgba(255,255,255,.24),transparent 34%),
+    linear-gradient(180deg,var(--key-hi),var(--key-top) 68%,#c4c0b2);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.56),
+    inset 1px 0 0 rgba(255,255,255,.18),
+    inset -1px 0 0 rgba(60,57,51,.08),
+    0 1px 0 #8d897e,
+    0 4px 0 var(--key-side),
+    0 6px 5px rgba(25,26,23,.22);
+  transform:translateY(-3px);cursor:pointer;
+  transition:transform 62ms cubic-bezier(.2,.8,.3,1),box-shadow 62ms cubic-bezier(.2,.8,.3,1),filter 80ms;
+  text-shadow:0 1px rgba(255,255,255,.35);
 }
-.key:active{transform:translateY(1px);box-shadow:0 1px 0 #777166,0 2px 2px rgba(25,24,21,.1)}
-.topkey{height:31px;padding:0 11px;font:700 9px "Courier New",monospace}.topkey.square{width:34px;padding:0}
-.statusrow{display:grid;grid-template-columns:minmax(0,3fr) minmax(280px,1fr);gap:12px;margin-bottom:12px}
+.key::before{
+  content:"";position:absolute;inset:3px 4px 4px;border-radius:3px;pointer-events:none;
+  border-top:1px solid rgba(255,255,255,.15);border-left:1px solid rgba(255,255,255,.08);
+}
+.key:hover{filter:brightness(1.025)}
+.key:active,.key.pressed{
+  transform:translateY(1px);
+  box-shadow:inset 0 1px 2px rgba(48,46,41,.18),0 1px 0 var(--key-side),0 2px 2px rgba(25,26,23,.12)
+}
+.keylegend{position:absolute;left:6px;top:5px;font-size:6.5px;font-weight:700;color:#777267;letter-spacing:.04em}
+.topkey{height:31px;min-width:35px;padding:8px 10px 3px;font:800 9px/1 Arial,sans-serif}
+.topkey.wide{min-width:76px}
+.topkey .keylegend{font-size:6px}
+
+.statusrow{display:grid;grid-template-columns:minmax(0,3fr) minmax(300px,1fr);gap:12px;margin-bottom:12px}
 .panel{
- background:#b2ae9f;border:1px solid #79766d;border-radius:7px;padding:11px;
- box-shadow:inset 0 1px rgba(255,255,255,.22),inset 0 -1px rgba(0,0,0,.08)
+  position:relative;border:1px solid #666963;border-radius:5px;padding:11px;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.08),transparent 20%),
+    var(--panel);
+  box-shadow:
+    inset 0 1px rgba(255,255,255,.20),
+    inset 0 -1px rgba(56,58,53,.12),
+    0 1px 1px rgba(35,37,33,.08);
 }
-.now{min-height:88px;background:#30343a;color:#e8e4d8;border-color:#25282d;display:flex;justify-content:space-between;align-items:center;padding:15px 17px}
-.now .tiny{color:#aaa99f}.now strong{display:block;font-size:19px;margin-top:5px}.now p{margin:5px 0 0;font-size:11px;color:#bdbbb2}
-.led{width:8px;height:8px;border-radius:50%;background:#738b65;box-shadow:0 0 5px rgba(112,142,95,.55)}
-.hanzi{display:grid;grid-template-columns:95px 1fr;gap:8px;min-height:88px}
-.hanzi .streak{border-right:1px solid #888477;padding:4px 8px}.hanzi b{display:block;font-size:29px;margin-top:8px}.hanzi .next{padding:4px 5px}.hanzi .char{font-size:30px;margin-top:7px}.hanzi .pinyin{font:700 9px "Courier New",monospace;color:#3e5d83}
-.workspace{display:grid;grid-template-columns:104px minmax(280px,1.12fr) minmax(260px,1fr) minmax(280px,1.04fr);grid-template-rows:minmax(340px,1.15fr) minmax(210px,.85fr) 70px;gap:12px}
-.rail{grid-column:1;grid-row:1/4;padding:9px;display:grid;grid-template-rows:auto minmax(0,1.1fr) auto minmax(0,.85fr);gap:7px}
-.rail-title{margin:0 2px;font:700 8px "Courier New",monospace;letter-spacing:.12em}
-.days{display:grid;grid-template-rows:repeat(6,1fr);gap:7px}.day{min-height:0;padding:5px 8px;display:flex;justify-content:space-between;align-items:center}
-.day span{font-weight:800;font-size:12px}.day small{font:700 9px "Courier New",monospace;color:#5e5a51}
-.day.active{background:#405476;color:#eeeadd;border-color:#293a58;box-shadow:0 4px 0 #293a58,0 6px 6px rgba(25,24,21,.2)}.day.active small{color:#d7d9d9}
-.ntu{display:grid;grid-template-rows:repeat(3,1fr);gap:7px}.ntu .key{min-height:0;padding:5px 2px;text-align:center}.ntu b{display:block;font-size:17px;margin-bottom:3px}.ntu span{font:700 8px "Courier New",monospace}
-.schedule{grid-column:2;grid-row:1/3;display:flex;flex-direction:column}.heading{display:flex;justify-content:space-between;align-items:end;margin-bottom:9px}.heading p{margin:0 0 2px;font:700 8px "Courier New",monospace;color:var(--muted)}h2,h3{margin:0}.heading h2{font-size:22px}.count{font:700 8px "Courier New",monospace;color:var(--muted)}
+.panel::before{
+  content:"";position:absolute;left:5px;right:5px;top:5px;height:1px;background:rgba(255,255,255,.08);pointer-events:none
+}
+.panel-code{position:absolute;right:8px;bottom:5px;font-size:6px;color:#6b6d66;letter-spacing:.06em}
+.display{
+  min-height:92px;display:grid;grid-template-columns:1fr auto;align-items:center;gap:16px;padding:14px 17px;
+  border-color:#202525;background:
+    repeating-linear-gradient(0deg,rgba(255,255,255,.018) 0 1px,transparent 1px 3px),
+    var(--screen);
+  color:var(--screen-ink);
+  box-shadow:inset 0 2px 6px rgba(0,0,0,.44),inset 0 0 0 1px rgba(255,255,255,.025),0 1px rgba(255,255,255,.12)
+}
+.display::before{display:none}
+.display .eyebrow{color:#8d968b;text-shadow:none;letter-spacing:.11em}
+.display strong{display:block;margin-top:5px;font-size:19px;letter-spacing:-.015em}
+.display p{margin:5px 0 0;font:700 9px/1.3 "Courier New",monospace;color:#aeb6aa}
+.display-right{display:flex;align-items:center;gap:9px;padding-left:13px;border-left:1px solid #444b49}
+.indicator{display:flex;flex-direction:column;align-items:center;gap:4px;font:700 6px "Courier New",monospace;color:#7d857d}
+.led{
+  width:8px;height:8px;border-radius:50%;display:block;border:1px solid #3f453d;
+  background:radial-gradient(circle at 35% 30%,#9fb48c,#617956 65%,#42503d);
+  box-shadow:0 0 5px rgba(111,141,94,.46),inset 0 1px rgba(255,255,255,.25)
+}
+.led.off{background:#484b45;box-shadow:inset 0 1px rgba(255,255,255,.12)}
+
+.hanzi{min-height:92px;display:grid;grid-template-columns:104px 1fr;gap:0;padding:0;overflow:hidden}
+.hanzi .streak{padding:12px 12px;border-right:1px solid #777a72;background:rgba(255,255,255,.035)}
+.hanzi .micro{font-size:7px;font-weight:700;color:#5a5d56;letter-spacing:.08em}
+.hanzi b{display:block;margin:7px 0 2px;font-size:30px;line-height:.9;letter-spacing:-.06em}
+.hanzi .next{padding:12px 13px}.hanzi .nexthead{display:flex;justify-content:space-between;gap:8px}
+.hanzi .charline{display:flex;align-items:end;gap:9px;margin-top:6px}.hanzi .char{font-size:30px;line-height:1}
+.hanzi .pinyin{font:700 9px/1.2 "Courier New",monospace;color:#344f74;padding-bottom:2px}
+.hanzi .pinyin small{display:block;color:#66675f;margin-top:3px}
+
+.workspace{
+  display:grid;
+  grid-template-columns:104px minmax(280px,1.12fr) minmax(260px,1fr) minmax(280px,1.04fr);
+  grid-template-rows:minmax(340px,1.15fr) minmax(210px,.85fr) 72px;
+  gap:12px;
+}
+.rail{
+  grid-column:1;grid-row:1/4;padding:9px;
+  display:grid;grid-template-rows:auto minmax(0,1.08fr) auto minmax(0,.92fr);gap:8px;
+  background:#7f8179;border-color:#5d605a
+}
+.rail::after{
+  content:"";position:absolute;left:7px;right:7px;top:28px;bottom:8px;border:1px solid rgba(62,64,59,.28);
+  border-radius:4px;pointer-events:none
+}
+.rail-title{position:relative;z-index:1;margin:0 2px;font-size:7px;font-weight:700;letter-spacing:.14em;color:#d4d1c5}
+.days{position:relative;z-index:1;display:grid;grid-template-rows:repeat(6,1fr);gap:8px}
+.day{min-height:0;padding:12px 7px 5px;display:flex;justify-content:space-between;align-items:center}
+.day span{font-weight:800;font-size:12px}.day small{font:700 8px "Courier New",monospace;color:#666259}
+.day.active{
+  --key-hi:#657998;--key-top:#4b6082;--key-side:#2c3e5b;
+  color:#f0ede4;border-color:#2b3b56;text-shadow:0 1px #26364e;
+  box-shadow:inset 0 1px rgba(255,255,255,.2),0 1px 0 #354966,0 4px 0 #293a55,0 6px 5px rgba(25,26,23,.24)
+}
+.day.active small,.day.active .keylegend{color:#d7dce1}
+
+.ntu{position:relative;z-index:1;display:grid;grid-template-rows:repeat(3,1fr);gap:8px}
+.ntu .key{min-height:0;padding:14px 3px 4px;text-align:center}.ntu b{display:block;font-size:17px;line-height:1;margin-bottom:4px}
+.ntu span{font-size:7px;font-weight:700}.ntu .keylegend{font-size:5.5px}
+
+.schedule{grid-column:2;grid-row:1/3;display:flex;flex-direction:column;min-width:0}
+.heading{display:flex;justify-content:space-between;align-items:end;min-height:41px;margin-bottom:8px;padding:0 3px}
+.heading p{margin:0 0 2px;font:700 7px "Courier New",monospace;color:#d6d3c7;letter-spacing:.12em;text-shadow:0 1px rgba(0,0,0,.25)}
+.heading h2{margin:0;font-size:22px;letter-spacing:-.035em}.count{font:700 7px "Courier New",monospace;color:#d3d0c5;letter-spacing:.08em}
 .lessons{display:grid;grid-template-rows:repeat(4,1fr);gap:8px;flex:1;min-height:0}
-.lesson{display:grid;grid-template-columns:61px 1fr;gap:8px;min-height:0;align-items:stretch}.time{display:flex;flex-direction:column;justify-content:center;text-align:right;padding-right:7px;border-right:1px solid #817d72;font:700 10px "Courier New",monospace}.time small{margin-top:3px;color:#666259}
-.lessoncard{position:relative;display:flex;flex-direction:column;justify-content:center;padding:11px 13px;border:1px solid #777368;border-radius:5px;background:#c0baaa;box-shadow:0 2px 0 #777166}
-.lessoncard::after{content:"";position:absolute;right:9px;top:9px;width:6px;height:6px;border-radius:50%;background:var(--amber)}
-.lesson:nth-child(2) .lessoncard::after{background:var(--green)}.lesson:nth-child(3) .lessoncard::after{background:var(--red)}
-.lessoncard strong{font-size:12px}.lessoncard small{margin-top:5px;font:700 8px "Courier New",monospace;color:#5d594f}
-.cool{grid-column:3;grid-row:1/3}.module-head{display:flex;justify-content:space-between;align-items:start;margin-bottom:10px}.module-head p{margin:0 0 3px;font:700 8px "Courier New",monospace;color:var(--muted);letter-spacing:.1em}.module-head h3{font-size:14px}
-.mini{height:25px;padding:0 7px;font:700 8px "Courier New",monospace}.deadline{padding:11px 4px;border-top:1px solid #888477}.deadline:first-of-type{border-top:0}.deadline strong{display:block;font-size:11px}.deadline small{display:block;margin-top:5px;font:700 8px "Courier New",monospace;color:#625e55}
-.todo{grid-column:4;grid-row:1}.form{display:grid;grid-template-columns:1fr 45px;gap:7px;margin:11px 0}.input{width:100%;min-width:0;border:1px solid #777368;border-radius:4px;background:#969286;box-shadow:inset 0 2px 3px rgba(30,29,25,.2);padding:8px;color:#f0ece0;outline:0;font-size:10px}.input::placeholder{color:#d0cabd}.add{min-height:32px}
-.task{display:flex;align-items:center;gap:7px;padding:8px 2px;border-top:1px solid #888477;font-size:10px}.taskbox{width:18px;height:18px;flex:0 0 18px}
-.transfer{grid-column:4;grid-row:2/4;display:grid;grid-template-columns:minmax(105px,.85fr) minmax(0,1.15fr);grid-template-rows:auto 1fr;gap:8px;position:relative}.transfer .module-head{grid-column:1/-1;margin:0}.transfer-compose{min-width:0}.transfer textarea{height:72px;resize:none}.sendrow{display:grid;grid-template-columns:28px 1fr;gap:6px;margin-top:7px}.sendrow .key{min-height:29px;font:700 8px "Courier New",monospace}
-.inbox{min-width:0;display:flex;flex-direction:column;gap:5px}.transferitem{padding:6px;border:1px solid #817d72;border-radius:4px;background:#a29e91}.transferitem strong{display:block;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.transferitem small{font:700 7px "Courier New",monospace;color:#5d594f}
-.study{grid-column:2/4;grid-row:3;padding:5px 0 0;border-top:1px solid #7e7a70;background:transparent;box-shadow:none;border-radius:0}.studygrid{height:100%;display:grid;grid-template-columns:repeat(6,1fr);gap:7px}.studykey{min-height:0;padding:5px 3px;text-align:center}.studykey b{display:block;font-size:17px;margin-bottom:4px}.studykey span{font:700 7px "Courier New",monospace}
-.screw{position:absolute;width:5px;height:5px;border-radius:50%;background:#66635b;box-shadow:inset 1px 1px #444}.s1{left:6px;top:6px}.s2{right:6px;top:6px}.machine{position:relative}
-@media(max-width:859px){
- body{padding:7px}.machine{padding:11px}.statusrow{grid-template-columns:1fr}.hanzi{display:none}
- .workspace{display:flex;flex-direction:column}.rail{order:1;display:block}.rail-title{margin-bottom:7px}.days{grid-template-columns:repeat(6,1fr);grid-template-rows:none}.day{min-height:54px;display:block;text-align:center;padding:6px 2px}.day small{display:block;margin-top:5px}
- .ntu{display:none}.schedule{order:2}.cool{order:3}.todo{order:4}.transfer{order:5;display:block}.transfer-compose{margin-bottom:9px}.study{order:6}.studygrid{grid-template-columns:repeat(3,1fr);height:auto}.studykey{min-height:58px}
- .lessons{display:flex;flex-direction:column}.lesson{min-height:75px}.topbar{align-items:flex-start}.topkeys .places{display:none}
+.lesson{display:grid;grid-template-columns:63px 1fr;gap:8px;min-height:0;align-items:stretch}
+.time{display:flex;flex-direction:column;justify-content:center;text-align:right;padding-right:8px;border-right:1px solid #646761;color:#e1ded2;font-size:9px;font-weight:700;text-shadow:0 1px rgba(0,0,0,.28)}
+.time small{margin-top:3px;color:#bdbbb1;font-size:8px}
+.lessoncard{
+  position:relative;display:flex;flex-direction:column;justify-content:center;padding:11px 33px 11px 14px;
+  border:1px solid #696c65;border-radius:5px;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.10),transparent 30%),
+    #a9a99f;
+  box-shadow:inset 0 1px rgba(255,255,255,.18),0 2px 0 #676a63;
+  overflow:hidden
 }
-@media(max-width:480px){.machine{border-radius:5px}.topkey{padding:0 8px}.statusrow{margin-bottom:9px}.days{gap:4px}.day span{font-size:9px}.studygrid{grid-template-columns:repeat(3,1fr)}}
+.lessoncard::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--course,#bd8840)}
+.lessoncard::after{
+  content:"";position:absolute;right:11px;top:11px;width:7px;height:7px;border-radius:50%;background:var(--course,#bd8840);
+  border:1px solid rgba(48,49,45,.38);box-shadow:inset 0 1px rgba(255,255,255,.28)
+}
+.lesson:nth-child(2) .lessoncard{--course:#718260}.lesson:nth-child(3) .lessoncard{--course:#9b5e55}.lesson:nth-child(4) .lessoncard{--course:#6d7069}
+.lessoncard strong{font-size:12px}.lessoncard small{margin-top:5px;font:700 7.5px "Courier New",monospace;color:#555850;letter-spacing:.025em}
+.lessoncard .card-code{position:absolute;right:10px;bottom:8px;font:700 5.5px "Courier New",monospace;color:#71736c}
+
+.cool{grid-column:3;grid-row:1/3;padding:13px}
+.module-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:10px}
+.module-head p{margin:0 0 3px;font:700 7px "Courier New",monospace;color:#555851;letter-spacing:.12em}
+.module-head h3{margin:0;font-size:14px;letter-spacing:-.01em}
+.mini{height:26px;padding:7px 8px 3px;font:800 7px "Courier New",monospace;letter-spacing:.04em}
+.deadline{position:relative;padding:12px 7px 12px 14px;border-top:1px solid #7f8179}
+.deadline::before{content:"";position:absolute;left:2px;top:15px;width:5px;height:5px;border-radius:50%;background:#74776f;border:1px solid #5b5e57}
+.deadline.urgent::before{background:var(--red)}.deadline.soon::before{background:var(--amber)}
+.deadline:first-of-type{border-top:0}.deadline strong{display:block;font-size:10.5px;line-height:1.3}
+.deadline small{display:block;margin-top:5px;font-size:7px;font-weight:700;color:#5a5d56}
+.deadline .bar{height:3px;margin-top:8px;background:#85877f;border:1px solid #74766f}
+.deadline .bar i{display:block;height:100%;width:var(--p,60%);background:#626b61}
+
+.todo{grid-column:4;grid-row:1;padding:13px}
+.counter{
+  min-width:40px;padding:3px 5px;border:1px solid #6c6f68;background:#7e8179;color:#d9d6ca;
+  text-align:center;font:700 7px "Courier New",monospace;box-shadow:inset 0 1px 2px rgba(0,0,0,.2)
+}
+.form{display:grid;grid-template-columns:1fr 46px;gap:8px;margin:12px 0}
+.input{
+  width:100%;min-width:0;border:1px solid #60635d;border-radius:3px;background:#70736c;color:#e6e2d7;
+  box-shadow:inset 0 2px 4px rgba(27,29,26,.30),0 1px rgba(255,255,255,.1);padding:8px 9px;outline:0;font-size:10px
+}
+.input::placeholder{color:#b9b8ae}.input:focus{border-color:#485b76;box-shadow:inset 0 2px 4px rgba(27,29,26,.3),0 0 0 1px #52698c}
+.add{min-height:32px}
+.task{display:grid;grid-template-columns:20px 1fr auto;align-items:center;gap:8px;padding:8px 2px;border-top:1px solid #85877f;font-size:10px}
+.taskbox{width:19px;height:19px;min-height:19px;padding:0}.task small{font:700 6px "Courier New",monospace;color:#686a63}
+
+.transfer{
+  grid-column:4;grid-row:2/4;display:grid;grid-template-columns:minmax(105px,.85fr) minmax(0,1.15fr);
+  grid-template-rows:auto 1fr;gap:9px;padding:13px;position:relative
+}
+.transfer .module-head{grid-column:1/-1;margin:0}.transfer-status{display:flex;align-items:center;gap:5px;font:700 6px "Courier New",monospace;color:#555850}
+.transfer-compose{min-width:0}.transfer textarea{height:75px;resize:none}
+.sendrow{display:grid;grid-template-columns:30px 1fr;gap:7px;margin-top:8px}.sendrow .key{min-height:30px;font:800 7px "Courier New",monospace;padding-top:4px}
+.inbox{min-width:0;display:flex;flex-direction:column;gap:5px}
+.transferitem{
+  position:relative;padding:7px 7px 7px 26px;border:1px solid #7b7d75;border-radius:3px;background:#93958c;
+  box-shadow:inset 0 1px rgba(255,255,255,.10)
+}
+.transferitem::before{
+  content:attr(data-kind);position:absolute;left:5px;top:7px;width:15px;height:15px;display:grid;place-items:center;
+  border:1px solid #666961;background:#7c7f77;color:#d9d6ca;font:700 5px "Courier New",monospace
+}
+.transferitem strong{display:block;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.transferitem small{display:block;margin-top:3px;font-size:6.5px;color:#555850}
+
+.study{
+  grid-column:2/4;grid-row:3;padding:6px 0 0;border-top:1px solid #5f625c;position:relative
+}
+.study::before{content:"QUICK ACCESS / BANK A";position:absolute;top:-10px;left:3px;padding:0 4px;background:var(--shell);font:700 6px "Courier New",monospace;color:#d2cfc4;letter-spacing:.08em}
+.studygrid{height:100%;display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.studykey{min-height:0;padding:17px 3px 4px;text-align:center}.studykey b{display:block;font-size:16px;line-height:1;margin-bottom:5px}
+.studykey span{font-size:6.5px;font-weight:700}.studykey .keylegend{font-size:5.5px}
+.studykey:nth-child(1){--key-top:#d0c8aa}.studykey:nth-child(2){--key-top:#c5c9c1}.studykey:nth-child(3){--key-top:#c8c3b5}
+
+.chassis-label{
+  position:absolute;right:19px;bottom:5px;font:700 5.5px "Courier New",monospace;color:#565952;letter-spacing:.08em
+}
+.vent{position:absolute;right:126px;bottom:7px;display:flex;gap:3px}.vent i{display:block;width:13px;height:2px;background:#666962;box-shadow:0 1px rgba(255,255,255,.08)}
+
+@media(max-width:1050px) and (min-width:860px){
+  .workspace{grid-template-columns:94px minmax(250px,1.08fr) minmax(220px,.9fr) minmax(245px,1fr)}
+  .statusrow{grid-template-columns:minmax(0,2.5fr) minmax(270px,1fr)}
+}
+@media(max-width:859px){
+  body{padding:8px 6px calc(22px + env(safe-area-inset-bottom))}
+  .machine{padding:14px 10px 16px}.machine::after{top:59px}
+  .topbar{height:42px;padding:0 2px;margin-bottom:11px}.brandmark{display:none}h1{font-size:23px}.serial{display:none}
+  .topkey.wide{display:none}.statusrow{grid-template-columns:1fr;margin-bottom:10px}.hanzi{display:none}.display{min-height:82px}
+  .workspace{display:flex;flex-direction:column;gap:10px}
+  .rail{order:1;display:block;padding:9px}.rail::after{display:none}.rail-title{margin-bottom:8px}
+  .days{grid-template-columns:repeat(6,1fr);grid-template-rows:none;gap:5px}.day{min-height:54px;display:block;text-align:center;padding:17px 2px 4px}.day small{display:block;margin-top:5px}
+  .ntu,.rail>.rail-title:nth-of-type(2){display:none}
+  .schedule{order:2}.heading{min-height:35px}.heading p{color:#ddd9cd}.count{color:#d7d4c8}
+  .lessons{display:flex;flex-direction:column}.lesson{min-height:76px}.time{color:#e3dfd4}.time small{color:#c4c1b7}
+  .cool{order:3}.todo{order:4}.transfer{order:5;display:block}.transfer-compose{margin-bottom:10px}
+  .study{order:6;padding-top:11px}.study::before{top:0;background:transparent}.studygrid{grid-template-columns:repeat(3,1fr);height:auto;gap:7px}.studykey{min-height:62px}
+  .vent,.chassis-label{display:none}
+}
+@media(max-width:480px){
+  .machine{border-radius:5px}.topkeys{gap:6px}.topkey{min-width:32px}.statusrow{margin-top:1px}
+  .days{gap:4px}.day span{font-size:9px}.day small{font-size:7px}.lesson{grid-template-columns:55px 1fr}
+  .lessoncard{padding-left:11px}.studygrid{grid-template-columns:repeat(3,1fr)}
+}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
 <main class="machine">
- <i class="screw s1"></i><i class="screw s2"></i>
- <header class="topbar">
-  <div><p class="eyebrow">NTU · FALL 2026</p><h1>My Schedule</h1></div>
-  <div class="topkeys"><button class="key topkey square">↻</button><button class="key topkey places">⌖ PLACES</button><button class="key topkey square">✉</button></div>
- </header>
- <section class="statusrow">
-  <div class="panel now"><div><span class="tiny">HAPPENING NOW</span><strong>Engineering Mathematics</strong><p>Room 114 · ends in 42 min</p></div><i class="led"></i></div>
-  <div class="panel hanzi"><div class="streak"><span class="tiny">HANZI STEPS</span><b>12</b><span class="tiny">DAY STREAK</span></div><div class="next"><span class="tiny">UP NEXT · UNIT 23</span><div class="char">準備</div><span class="pinyin">zhǔnbèi · prepare</span></div></div>
- </section>
- <section class="workspace">
-  <aside class="panel rail">
-   <p class="rail-title">WEEK</p>
-   <nav class="days">
-    <button class="key day"><span>Mon</span><small>05</small></button><button class="key day active"><span>Tue</span><small>06</small></button>
-    <button class="key day"><span>Wed</span><small>07</small></button><button class="key day"><span>Thu</span><small>08</small></button>
-    <button class="key day"><span>Fri</span><small>09</small></button><button class="key day"><span>Sat</span><small>10</small></button>
-   </nav>
-   <p class="rail-title">NTU</p>
-   <div class="ntu"><button class="key"><b>⌂</b><span>myNTU</span></button><button class="key"><b>▰</b><span>COOL</span></button><button class="key"><b>✉</b><span>MAIL</span></button></div>
-  </aside>
+  <i class="screw s1"></i><i class="screw s2"></i><i class="screw s3"></i><i class="screw s4"></i>
 
-  <section class="schedule">
-   <div class="heading"><div><p>OCTOBER 06</p><h2>Tuesday</h2></div><span class="count">3 CLASSES</span></div>
-   <div class="lessons">
-    <div class="lesson"><div class="time">10:20<small>12:10</small></div><div class="lessoncard"><strong>Engineering Mathematics</strong><small>ME BUILDING · ROOM 114</small></div></div>
-    <div class="lesson"><div class="time">13:20<small>15:10</small></div><div class="lessoncard"><strong>Engineering Materials</strong><small>進學講堂</small></div></div>
-    <div class="lesson"><div class="time">15:30<small>17:20</small></div><div class="lessoncard"><strong>Statics</strong><small>繡山講堂</small></div></div>
-    <div class="lesson"><div class="time">—<small>OPEN</small></div><div class="lessoncard" style="opacity:.48"><strong>No fourth class</strong><small>SLOT RESERVED</small></div></div>
-   </div>
+  <header class="topbar">
+    <div class="brandline">
+      <div class="brandmark">N</div>
+      <div>
+        <p class="eyebrow">NATIONAL TAIWAN UNIVERSITY · FALL 2026</p>
+        <h1>My Schedule</h1>
+        <div class="serial">PERSONAL ACADEMIC CONSOLE / NTU-ME-06</div>
+      </div>
+    </div>
+    <div class="topkeys">
+      <button class="key topkey" aria-label="Refresh"><span class="keylegend">RFRSH</span>↻</button>
+      <button class="key topkey wide"><span class="keylegend">LOC</span>⌖ &nbsp;PLACES</button>
+      <button class="key topkey" aria-label="Mail"><span class="keylegend">MAIL</span>✉</button>
+    </div>
+  </header>
+
+  <section class="statusrow">
+    <div class="panel display">
+      <div>
+        <span class="eyebrow">HAPPENING NOW / CHANNEL 01</span>
+        <strong>Engineering Mathematics</strong>
+        <p>ROOM 114 · END 16:10 · 42 MIN REMAINING</p>
+      </div>
+      <div class="display-right">
+        <div class="indicator"><i class="led"></i>LIVE</div>
+        <div class="indicator"><i class="led off"></i>ALRM</div>
+      </div>
+    </div>
+    <div class="panel hanzi">
+      <div class="streak">
+        <span class="micro">HANZI STEPS</span>
+        <b>12</b>
+        <span class="micro">DAY STREAK</span>
+      </div>
+      <div class="next">
+        <div class="nexthead"><span class="micro">UP NEXT / UNIT 23</span><span class="micro">4/10</span></div>
+        <div class="charline"><span class="char">準備</span><span class="pinyin">zhǔnbèi<small>prepare · get ready</small></span></div>
+      </div>
+      <span class="panel-code">HS-AUX/23</span>
+    </div>
   </section>
 
-  <section class="panel cool">
-   <div class="module-head"><div><p>NTU COOL</p><h3>Upcoming deadlines</h3></div><button class="key mini">REFRESH</button></div>
-   <div class="deadline"><strong>Engineering Mathematics — HW 4</strong><small>TONIGHT · 23:59</small></div>
-   <div class="deadline"><strong>Psychology — Chapter response</strong><small>THU · 18:00</small></div>
-   <div class="deadline"><strong>Engineering Materials — Quiz</strong><small>FRI · 10:00</small></div>
+  <section class="workspace">
+    <aside class="panel rail">
+      <p class="rail-title">WEEK / SELECT</p>
+      <nav class="days">
+        <button class="key day"><span class="keylegend">D1</span><span>Mon</span><small>05</small></button>
+        <button class="key day active"><span class="keylegend">D2</span><span>Tue</span><small>06</small></button>
+        <button class="key day"><span class="keylegend">D3</span><span>Wed</span><small>07</small></button>
+        <button class="key day"><span class="keylegend">D4</span><span>Thu</span><small>08</small></button>
+        <button class="key day"><span class="keylegend">D5</span><span>Fri</span><small>09</small></button>
+        <button class="key day"><span class="keylegend">D6</span><span>Sat</span><small>10</small></button>
+      </nav>
+      <p class="rail-title">NTU / SERVICES</p>
+      <div class="ntu">
+        <button class="key"><span class="keylegend">N1</span><b>⌂</b><span>myNTU</span></button>
+        <button class="key"><span class="keylegend">N2</span><b>▰</b><span>COOL</span></button>
+        <button class="key"><span class="keylegend">N3</span><b>✉</b><span>MAIL</span></button>
+      </div>
+    </aside>
+
+    <section class="schedule">
+      <div class="heading">
+        <div><p>OCTOBER 06 / WEEK 05</p><h2>Tuesday</h2></div>
+        <span class="count">03 CLASSES · 01 OPEN SLOT</span>
+      </div>
+      <div class="lessons">
+        <div class="lesson"><div class="time">10:20<small>12:10</small></div><div class="lessoncard"><strong>Engineering Mathematics</strong><small>ME BUILDING · ROOM 114</small><span class="card-code">ME2001</span></div></div>
+        <div class="lesson"><div class="time">13:20<small>15:10</small></div><div class="lessoncard"><strong>Engineering Materials</strong><small>進學講堂 · ME COMPLEX</small><span class="card-code">ME-MAT</span></div></div>
+        <div class="lesson"><div class="time">15:30<small>17:20</small></div><div class="lessoncard"><strong>Statics</strong><small>繡山講堂 · ME COMPLEX</small><span class="card-code">ME-STAT</span></div></div>
+        <div class="lesson"><div class="time">—<small>OPEN</small></div><div class="lessoncard" style="opacity:.52"><strong>No fourth class</strong><small>SCHEDULE SLOT AVAILABLE</small><span class="card-code">EMPTY</span></div></div>
+      </div>
+    </section>
+
+    <section class="panel cool">
+      <div class="module-head">
+        <div><p>NTU COOL / FEED 01</p><h3>Upcoming deadlines</h3></div>
+        <button class="key mini"><span class="keylegend">SYNC</span>REFRESH</button>
+      </div>
+      <div class="deadline urgent"><strong>Engineering Mathematics — HW 4</strong><small>TONIGHT · 23:59 · 08H 14M</small><div class="bar"><i style="--p:88%"></i></div></div>
+      <div class="deadline soon"><strong>Psychology — Chapter response</strong><small>THU · 18:00 · 2 DAYS</small><div class="bar"><i style="--p:57%"></i></div></div>
+      <div class="deadline"><strong>Engineering Materials — Quiz</strong><small>FRI · 10:00 · 3 DAYS</small><div class="bar"><i style="--p:34%"></i></div></div>
+      <div class="deadline"><strong>Academic English — Reading</strong><small>MON · 09:00 · 6 DAYS</small><div class="bar"><i style="--p:18%"></i></div></div>
+      <span class="panel-code">COOL/ICS · AUTO</span>
+    </section>
+
+    <section class="panel todo">
+      <div class="module-head">
+        <div><p>TO DO / LOCAL</p><h3>Manual tasks</h3></div><span class="counter">03 TASKS</span>
+      </div>
+      <div class="form"><input class="input" placeholder="Add a task…"><button class="key mini add"><span class="keylegend">INS</span>ADD</button></div>
+      <div class="task"><button class="key taskbox"></button><span>Review Statics notes</span><small>01</small></div>
+      <div class="task"><button class="key taskbox"></button><span>Chinese worksheet</span><small>02</small></div>
+      <div class="task"><button class="key taskbox"></button><span>Check COOL deadlines</span><small>03</small></div>
+      <span class="panel-code">MEM/LOCAL</span>
+    </section>
+
+    <section class="panel transfer">
+      <div class="module-head">
+        <div><p>DEVICE TRANSFER / PRIVATE</p><h3>Phone ↔ PC</h3></div>
+        <span class="transfer-status"><i class="led"></i>LINK OK</span>
+      </div>
+      <div class="transfer-compose">
+        <textarea class="input" placeholder="Paste text or a link…"></textarea>
+        <div class="sendrow"><button class="key"><span class="keylegend">FILE</span>＋</button><button class="key"><span class="keylegend">TX</span>SEND</button></div>
+      </div>
+      <div class="inbox">
+        <div class="transferitem" data-kind="F"><strong>lecture-notes.pdf</strong><small>FILE · 2 MIN AGO · 1.8 MB</small></div>
+        <div class="transferitem" data-kind="L"><strong>cool.ntu.edu.tw/courses/...</strong><small>LINK · 14 MIN AGO</small></div>
+        <div class="transferitem" data-kind="T"><strong>Homework reminder</strong><small>TEXT · YESTERDAY</small></div>
+        <div class="transferitem" data-kind="F"><strong>materials-week4.pdf</strong><small>FILE · YESTERDAY · 4.2 MB</small></div>
+      </div>
+      <span class="panel-code">P2P/BUFFER · 04</span>
+    </section>
+
+    <section class="study">
+      <div class="studygrid">
+        <button class="key studykey"><span class="keylegend">A1</span><b>漢</b><span>HANZI STEPS</span></button>
+        <button class="key studykey"><span class="keylegend">A2</span><b>∫</b><span>ENG MATH</span></button>
+        <button class="key studykey"><span class="keylegend">A3</span><b>Σ</b><span>STATICS</span></button>
+        <button class="key studykey"><span class="keylegend">A4</span><b>Ψ</b><span>PSYCH</span></button>
+        <button class="key studykey"><span class="keylegend">A5</span><b>◆</b><span>MATERIALS</span></button>
+        <button class="key studykey"><span class="keylegend">A6</span><b style="font-size:11px">PDF</b><span>I WEATHER</span></button>
+      </div>
+    </section>
   </section>
 
-  <section class="panel todo">
-   <div class="module-head"><div><p>TO DO</p><h3>Manual tasks</h3></div><span class="tiny">3 TASKS</span></div>
-   <div class="form"><input class="input" placeholder="Add a task…"><button class="key mini add">ADD</button></div>
-   <div class="task"><button class="key taskbox"></button>Review Statics notes</div><div class="task"><button class="key taskbox"></button>Chinese worksheet</div><div class="task"><button class="key taskbox"></button>Check COOL deadlines</div>
-  </section>
-
-  <section class="panel transfer">
-   <div class="module-head"><div><p>DEVICE TRANSFER</p><h3>Phone ↔ PC</h3></div><i class="led"></i></div>
-   <div class="transfer-compose"><textarea class="input" placeholder="Paste text or a link…"></textarea><div class="sendrow"><button class="key">＋</button><button class="key">SEND</button></div></div>
-   <div class="inbox"><div class="transferitem"><strong>lecture-notes.pdf</strong><small>FILE · 2 MIN AGO</small></div><div class="transferitem"><strong>https://cool.ntu.edu.tw/...</strong><small>LINK · 14 MIN AGO</small></div><div class="transferitem"><strong>Homework reminder</strong><small>TEXT · YESTERDAY</small></div></div>
-  </section>
-
-  <section class="study">
-   <div class="studygrid"><button class="key studykey"><b>漢</b><span>HANZI STEPS</span></button><button class="key studykey"><b>∫</b><span>ENG MATH</span></button><button class="key studykey"><b>Σ</b><span>STATICS</span></button><button class="key studykey"><b>Ψ</b><span>PSYCH</span></button><button class="key studykey"><b>◆</b><span>MATERIALS</span></button><button class="key studykey"><b>PDF</b><span>I WEATHER</span></button></div>
-  </section>
- </section>
+  <div class="vent"><i></i><i></i><i></i><i></i><i></i></div>
+  <div class="chassis-label">NTU PERSONAL CONSOLE · REV C · 2026</div>
 </main>
+
 <script>
-document.querySelectorAll('.day').forEach(k=>k.addEventListener('click',()=>{document.querySelectorAll('.day').forEach(x=>x.classList.remove('active'));k.classList.add('active')}));
+document.querySelectorAll('.day').forEach(k=>k.addEventListener('click',()=>{
+  document.querySelectorAll('.day').forEach(x=>x.classList.remove('active'));k.classList.add('active')
+}));
+document.querySelectorAll('.taskbox').forEach(k=>k.addEventListener('click',()=>k.classList.toggle('pressed')));
 </script>
-</body></html>
+</body>
+</html>
