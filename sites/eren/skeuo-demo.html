@@ -1556,7 +1556,7 @@ document.querySelectorAll('.taskbox').forEach(k=>k.addEventListener('click',()=>
   if (!dialog || !launch || !shell || !list || !reader || !compose) return;
 
   const $ = (s,r=dialog) => r.querySelector(s);
-  const $ = (s,r=dialog) => [...r.querySelectorAll(s)];
+  const $$ = (s,r=dialog) => [...r.querySelectorAll(s)];
   let selected = $('.mailx-message.is-selected');
   let previousBody = '';
   let toastTimer;
@@ -1581,7 +1581,7 @@ document.querySelectorAll('.taskbox').forEach(k=>k.addEventListener('click',()=>
 
   const renderReader = row => {
     selected = row;
-    $('.mailx-message').forEach(x=>x.classList.toggle('is-selected',x===row));
+    $$('.mailx-message').forEach(x=>x.classList.toggle('is-selected',x===row));
     row.classList.remove('is-unread');
     row.querySelector('.mailx-unread-dot')?.remove();
 
@@ -1641,7 +1641,7 @@ document.querySelectorAll('.taskbox').forEach(k=>k.addEventListener('click',()=>
 
     shell.classList.add('is-reading');
 
-    $('[data-action]',reader).forEach(b=>b.onclick=()=>{
+    $$('[data-action]',reader).forEach(b=>b.onclick=()=>{
       const a=b.dataset.action;
       if(a==='back'){shell.classList.remove('is-reading','is-reader-focused');return;}
       if(a==='reply'){openCompose('Reply',row);return;}
@@ -1705,33 +1705,33 @@ document.querySelectorAll('.taskbox').forEach(k=>k.addEventListener('click',()=>
   $('#mailxComposeClose').onclick = () => compose.classList.remove('is-open');
   $('#mailxSettings').onclick = openSettings;
   $('#mailxRefresh').onclick = () => toast('Mail refreshed');
-  $('#mailxMarkAllRead').onclick = () => {$('.mailx-message').forEach(r=>{r.classList.remove('is-unread');r.querySelector('.mailx-unread-dot')?.remove();});$('#mailxUnreadCount').textContent='';toast('Marked all read');};
+  $('#mailxMarkAllRead').onclick = () => {$$('.mailx-message').forEach(r=>{r.classList.remove('is-unread');r.querySelector('.mailx-unread-dot')?.remove();});$('#mailxUnreadCount').textContent='';toast('Marked all read');};
   $('#mailxSchedule').onclick = openScheduleSheet;
   $('#mailxSend').onclick = () => {toast('Send preview only');compose.classList.remove('is-open');};
   $('#mailxSaveDraft').onclick = () => toast('Draft saved locally in preview');
 
   const search=$('#mailxSearch');
-  search.oninput=()=>{const q=search.value.toLowerCase();$('.mailx-message-wrap').forEach(w=>w.hidden=!w.innerText.toLowerCase().includes(q));};
+  search.oninput=()=>{const q=search.value.toLowerCase();$$('.mailx-message-wrap').forEach(w=>w.hidden=!w.innerText.toLowerCase().includes(q));};
 
   const applyView = view => {
-    const rows=$('.mailx-message-wrap');
+    const rows=$$('.mailx-message-wrap');
     rows.forEach(w=>{w.hidden = view!=='all' && !w.dataset.kind.split(' ').includes(view) && !(view==='important'&&w.dataset.kind.includes('important'));});
     $('#mailxListMeta').textContent=(view==='all'?'All mail':view.charAt(0).toUpperCase()+view.slice(1))+' · '+rows.filter(w=>!w.hidden).length+' loaded';
   };
-  $('[data-mailx-filter]').forEach(b=>b.onclick=()=>{$('[data-mailx-filter]').forEach(x=>x.classList.remove('is-active'));b.classList.add('is-active');$('#mailxView').value=b.dataset.mailxFilter;applyView(b.dataset.mailxFilter);});
-  $('[data-mailx-mobile-filter]').forEach(b=>b.onclick=()=>{$('[data-mailx-mobile-filter]').forEach(x=>x.classList.remove('is-active'));b.classList.add('is-active');applyView(b.dataset.mailxMobileFilter);});
+  $$('[data-mailx-filter]').forEach(b=>b.onclick=()=>{$$('[data-mailx-filter]').forEach(x=>x.classList.remove('is-active'));b.classList.add('is-active');$('#mailxView').value=b.dataset.mailxFilter;applyView(b.dataset.mailxFilter);});
+  $$('[data-mailx-mobile-filter]').forEach(b=>b.onclick=()=>{$$('[data-mailx-mobile-filter]').forEach(x=>x.classList.remove('is-active'));b.classList.add('is-active');applyView(b.dataset.mailxMobileFilter);});
   $('#mailxView').onchange=e=>applyView(e.target.value);
 
-  $('.mailx-message').forEach(row=>row.onclick=()=>renderReader(row));
-  $('.mailx-row-actions button').forEach(b=>b.onclick=e=>{e.stopPropagation();toast((b.dataset.rowAction||'Action')+' previewed');});
+  $$('.mailx-message').forEach(row=>row.onclick=()=>renderReader(row));
+  $$('.mailx-row-actions button').forEach(b=>b.onclick=e=>{e.stopPropagation();toast((b.dataset.rowAction||'Action')+' previewed');});
 
   $('[data-mailx-ai-chip]')?.closest('.mailx-ai-chips');
-  $('[data-mailx-ai-chip]').forEach(b=>b.onclick=()=>{$('#mailxAiPrompt').value=b.dataset.mailxAiChip;});
+  $$('[data-mailx-ai-chip]').forEach(b=>b.onclick=()=>{$('#mailxAiPrompt').value=b.dataset.mailxAiChip;});
   $('#mailxGenerate').onclick=()=>{previousBody=$('#mailxBody').innerHTML;const cmd=$('#mailxAiPrompt').value||'Draft a concise reply';$('#mailxBody').innerHTML='<p><strong>Preview AI revision</strong></p><p>'+cmd.replace(/</g,'&lt;')+'.</p>';toast('AI revision preview');};
   $('#mailxUndo').onclick=()=>{if(previousBody!==undefined){const now=$('#mailxBody').innerHTML;$('#mailxBody').innerHTML=previousBody;previousBody=now;}};
   $('#mailxRedo').onclick=$('#mailxUndo').onclick;
 
-  $('[data-format-command]').forEach(b=>b.onclick=()=>{document.execCommand(b.dataset.formatCommand,false,null);$('#mailxBody').focus();});
+  $$('[data-format-command]').forEach(b=>b.onclick=()=>{document.execCommand(b.dataset.formatCommand,false,null);$('#mailxBody').focus();});
   $('#mailxBlockFormat').onchange=e=>{document.execCommand('formatBlock',false,e.target.value);$('#mailxBody').focus();};
   $('#mailxLink').onclick=()=>{const href=prompt('Link URL');if(href)document.execCommand('createLink',false,href);};
   $('#mailxAttach').onclick=()=>$('#mailxAttachmentInput').click();
