@@ -1797,9 +1797,31 @@ setInterval(() => {
   }
 }, 8000);
 
+/* Decoy-only hardware-console enhancements. Production site remains untouched. */
+document.querySelectorAll('[data-open-url]').forEach(button => {
+  button.addEventListener('click', () => {
+    const url = button.dataset.openUrl;
+    if (url) window.open(url, '_blank', 'noopener,noreferrer');
+  });
+});
 
-/* Decoy-console enhancements only. */
-document.querySelectorAll('[data-open-url]').forEach(button=>button.addEventListener('click',()=>{const url=button.dataset.openUrl;if(url)window.open(url,'_blank','noopener,noreferrer');}));
-const skeuoNext=document.getElementById('nextClass'),skeuoLiveLed=document.getElementById('skeuoLiveLed'),skeuoLiveState=document.getElementById('skeuoLiveState');
-function syncSkeuoLiveIndicator(){if(!skeuoNext||!skeuoLiveLed||!skeuoLiveState)return;const label=(skeuoNext.querySelector('.next-label')?.textContent||'').toLowerCase();const live=label.includes('happening');skeuoLiveLed.classList.toggle('off',!live);skeuoLiveState.textContent=live?'LIVE':'NEXT';}
-if(skeuoNext)new MutationObserver(syncSkeuoLiveIndicator).observe(skeuoNext,{childList:true,subtree:true,characterData:true});syncSkeuoLiveIndicator();
+const skeuoNext = document.getElementById('nextClass');
+const skeuoLiveLed = document.getElementById('skeuoLiveLed');
+const skeuoLiveState = document.getElementById('skeuoLiveState');
+
+function syncSkeuoLiveIndicator(){
+  if (!skeuoNext || !skeuoLiveLed || !skeuoLiveState) return;
+  const label = String(skeuoNext.querySelector('.next-label')?.textContent || '').toLowerCase();
+  const live = label.includes('happening');
+  skeuoLiveLed.classList.toggle('off', !live);
+  skeuoLiveState.textContent = live ? 'LIVE' : 'NEXT';
+}
+
+if (skeuoNext){
+  new MutationObserver(syncSkeuoLiveIndicator).observe(skeuoNext, {
+    childList:true,
+    subtree:true,
+    characterData:true
+  });
+}
+syncSkeuoLiveIndicator();
