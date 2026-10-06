@@ -3,34 +3,36 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#f1eee7">
-<title>NTU Schedule — Monolith Demo</title>
+<meta name="theme-color" content="#b8b3a6">
+<title>NTU Schedule — Broken Grunge Demo</title>
 <link rel="icon" href="./favicon.svg" type="image/svg+xml">
 <style>
 :root{
-  --ground:#f1eee7;
-  --ground-2:#e8e4db;
-  --ink:#20252c;
-  --muted:#77756f;
-  --line:#d4d0c7;
-  --top:#f8f6f0;
-  --side:#c8c3b9;
-  --accent:#2c4478;
-  --accent-side:#1d3059;
-  --green:#50755f;
-  --orange:#a66f3d;
-  --red:#9a5d55;
-  --lift:16px;
+  --paper:#c8c3b6;
+  --paper2:#b6b0a2;
+  --ink:#171717;
+  --faded:#5b574f;
+  --blue:#243b68;
+  --red:#8d2f28;
+  --yellow:#c39b2b;
+  --green:#4e6748;
+  --rust:#7c4a2d;
+  --line:#6b675e;
 }
 *{box-sizing:border-box}
-html{background:var(--ground)}
+html{background:#8f8a7f}
 body{
   margin:0;
   min-height:100vh;
   color:var(--ink);
-  font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-  -webkit-font-smoothing:antialiased;
-  background:var(--ground);
+  font-family:"Courier New",ui-monospace,SFMono-Regular,Menlo,monospace;
+  background:
+    radial-gradient(circle at 15% 20%,rgba(0,0,0,.12) 0 1px,transparent 1.5px),
+    radial-gradient(circle at 72% 66%,rgba(0,0,0,.08) 0 2px,transparent 2.5px),
+    linear-gradient(90deg,rgba(255,255,255,.08),transparent 30% 70%,rgba(0,0,0,.06)),
+    var(--paper);
+  background-size:19px 17px,47px 41px,100% 100%,auto;
+  overflow-x:hidden;
 }
 body::before{
   content:"";
@@ -38,333 +40,474 @@ body::before{
   inset:0;
   pointer-events:none;
   z-index:1000;
-  opacity:.24;
+  opacity:.48;
   mix-blend-mode:multiply;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150' viewBox='0 0 150 150'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.78' numOctaves='3' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.25'/%3E%3C/svg%3E");
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='5' seed='8'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.34'/%3E%3C/svg%3E");
 }
 body::after{
   content:"";
   position:fixed;
-  inset:0;
+  inset:-10%;
   pointer-events:none;
   z-index:999;
   opacity:.42;
   background:
-    radial-gradient(circle at 11% 17%,rgba(60,62,63,.11) 0 1.2px,transparent 1.8px),
-    radial-gradient(circle at 12% 18%,rgba(60,62,63,.08) 0 2.4px,transparent 3.3px),
-    radial-gradient(circle at 57% 11%,rgba(60,62,63,.08) 0 1px,transparent 1.7px),
-    radial-gradient(circle at 80% 36%,rgba(60,62,63,.12) 0 1.5px,transparent 2.2px),
-    radial-gradient(circle at 81% 35%,rgba(60,62,63,.07) 0 3px,transparent 4px),
-    radial-gradient(circle at 34% 69%,rgba(60,62,63,.10) 0 1.1px,transparent 1.9px),
-    radial-gradient(circle at 66% 86%,rgba(60,62,63,.09) 0 2px,transparent 2.8px);
-  background-size:109px 137px,173px 191px,149px 117px,197px 169px,231px 217px,181px 153px,211px 189px;
+    repeating-linear-gradient(173deg,transparent 0 47px,rgba(30,25,20,.09) 48px,transparent 49px 96px),
+    linear-gradient(77deg,transparent 0 16%,rgba(20,20,18,.10) 16.2%,transparent 16.8% 52%,rgba(255,255,255,.10) 52.2%,transparent 52.7%),
+    radial-gradient(ellipse at 18% 12%,rgba(63,47,34,.22),transparent 18%),
+    radial-gradient(ellipse at 87% 81%,rgba(58,45,30,.18),transparent 21%);
+  transform:rotate(-1.2deg);
 }
 button{font:inherit;color:inherit}
-.shell{
+.wrap{
   width:min(760px,100%);
   margin:0 auto;
-  padding:22px 18px calc(46px + env(safe-area-inset-bottom));
+  padding:18px 12px calc(48px + env(safe-area-inset-bottom));
+}
+.sheet{
+  position:relative;
+  padding:17px 14px 28px;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.05),transparent 22%),
+    var(--paper);
+  border:2px solid #282621;
+  box-shadow:
+    8px 9px 0 rgba(22,20,17,.92),
+    -3px 4px 0 rgba(255,255,255,.12);
+  transform:rotate(-.25deg);
+  clip-path:polygon(0 0,97% 0,100% 4%,99% 73%,97.5% 74%,100% 100%,2% 99%,0 97%);
+}
+.sheet::before{
+  content:"";
+  position:absolute;
+  inset:6px;
+  pointer-events:none;
+  border:1px dashed rgba(31,29,25,.32);
+}
+.sheet::after{
+  content:"";
+  position:absolute;
+  left:8%;
+  top:-9px;
+  width:92px;
+  height:23px;
+  background:rgba(211,197,153,.5);
+  border-left:1px solid rgba(0,0,0,.18);
+  border-right:1px solid rgba(0,0,0,.18);
+  transform:rotate(-4deg);
+  box-shadow:0 1px 1px rgba(0,0,0,.13);
 }
 .top{
   display:flex;
-  align-items:flex-start;
   justify-content:space-between;
-  gap:16px;
-  margin-bottom:28px;
+  align-items:flex-start;
+  gap:12px;
+  margin:4px 0 18px;
+}
+.stamp{
+  display:inline-block;
+  padding:4px 6px 3px;
+  border:2px solid var(--red);
+  color:var(--red);
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:.14em;
+  transform:rotate(3deg);
 }
 .kicker{
-  margin:0 0 5px;
+  margin:0 0 3px;
   font-size:10px;
-  font-weight:850;
-  letter-spacing:.15em;
-  color:var(--muted);
+  font-weight:900;
+  letter-spacing:.12em;
+  text-transform:uppercase;
 }
-h1{margin:0;font-size:32px;line-height:1;letter-spacing:-.045em}
-.demo-note{
-  font-size:9px;
-  font-weight:850;
-  letter-spacing:.11em;
-  color:#8a877f;
-  padding-top:5px;
+h1{
+  margin:0;
+  font-family:Arial Black,Impact,sans-serif;
+  font-size:34px;
+  line-height:.95;
+  letter-spacing:-.055em;
+  text-transform:uppercase;
 }
 .status{
+  position:relative;
   display:grid;
   grid-template-columns:1fr auto;
-  gap:14px;
+  gap:10px;
   align-items:center;
-  padding:0 2px 24px;
-  border-bottom:1px solid var(--line);
-  margin-bottom:34px;
+  padding:12px 13px;
+  margin:0 0 22px 5px;
+  background:#b1ab9d;
+  border:2px solid #24221f;
+  border-right-width:5px;
+  box-shadow:4px 5px 0 rgba(34,31,27,.8);
+  transform:rotate(.35deg);
+}
+.status::before{
+  content:"FAULT 02";
+  position:absolute;
+  right:10px;
+  top:-9px;
+  padding:2px 5px;
+  background:var(--yellow);
+  border:1px solid #2c281f;
+  font-size:8px;
+  font-weight:900;
+  transform:rotate(-2deg);
 }
 .status small{
   display:block;
-  margin-bottom:5px;
-  font-size:10px;
-  font-weight:850;
-  letter-spacing:.13em;
-  color:var(--muted);
+  margin-bottom:4px;
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:.12em;
 }
-.status strong{display:block;font-size:20px;line-height:1.15;letter-spacing:-.025em}
-.status p{margin:5px 0 0;font-size:12px;color:var(--muted);font-weight:650}
-.status-dot{width:9px;height:9px;border-radius:50%;background:var(--green)}
+.status strong{
+  display:block;
+  font-family:Arial Black,Impact,sans-serif;
+  font-size:18px;
+  text-transform:uppercase;
+  line-height:1.05;
+}
+.status p{
+  margin:5px 0 0;
+  font-size:11px;
+  font-weight:700;
+  color:#403d36;
+}
+.bulb{
+  width:12px;height:12px;border-radius:50%;
+  background:#2c2b28;
+  border:2px solid #111;
+  box-shadow:0 0 0 3px #898377,0 0 0 4px #24221f;
+}
 .label{
-  margin:0 0 10px 2px;
+  margin:0 0 10px;
+  display:flex;
+  align-items:center;
+  gap:8px;
   font-size:10px;
-  font-weight:850;
-  letter-spacing:.13em;
-  color:var(--muted);
+  font-weight:900;
+  text-transform:uppercase;
 }
-.pillars{
+.label::after{
+  content:"";
+  height:1px;
+  flex:1;
+  background:repeating-linear-gradient(90deg,#3a3731 0 8px,transparent 8px 13px);
+}
+.days{
   display:grid;
   grid-template-columns:repeat(6,1fr);
-  gap:9px;
-  margin-bottom:42px;
+  gap:7px;
+  margin-bottom:28px;
 }
-.pillar{
+.day{
   appearance:none;
-  border:0;
-  min-height:78px;
-  border-radius:10px;
-  padding:10px 3px 9px;
-  background:var(--top);
+  border:2px solid #22211e;
+  min-height:62px;
+  padding:8px 2px 7px;
+  background:#bdb7aa;
   box-shadow:
-    0 var(--lift) 0 var(--side),
-    0 calc(var(--lift) + 11px) 22px rgba(39,40,38,.22);
-  transform:translateY(calc(var(--lift) * -1));
-  transition:transform 85ms cubic-bezier(.2,.75,.2,1),box-shadow 85ms ease,background 110ms ease,color 110ms ease;
+    4px 6px 0 #464139,
+    8px 10px 0 rgba(0,0,0,.13);
   cursor:pointer;
   -webkit-tap-highlight-color:transparent;
+  transform:rotate(var(--r,0deg)) translateY(-3px);
+  clip-path:polygon(0 4px,8px 0,100% 0,100% calc(100% - 7px),calc(100% - 6px) 100%,0 100%);
+  transition:transform 65ms linear,box-shadow 65ms linear;
 }
-.pillar span{display:block;font-size:12px;font-weight:850;letter-spacing:.01em}
-.pillar small{display:block;margin-top:5px;font-size:9px;font-weight:800;color:#8a867e}
-.pillar:active{
-  transform:translateY(-1px);
-  box-shadow:0 1px 0 var(--side),0 4px 6px rgba(39,40,38,.10);
+.day:nth-child(1){--r:-1.1deg}
+.day:nth-child(2){--r:.5deg}
+.day:nth-child(3){--r:-.35deg}
+.day:nth-child(4){--r:.9deg}
+.day:nth-child(5){--r:-.7deg}
+.day:nth-child(6){--r:.3deg}
+.day span{display:block;font-size:11px;font-weight:900}
+.day small{display:block;margin-top:4px;font-size:8px;font-weight:900;color:#676158}
+.day:active{
+  transform:rotate(var(--r,0deg)) translateY(4px);
+  box-shadow:1px 1px 0 #464139;
 }
-.pillar.active{
-  color:white;
-  background:var(--accent);
+.day.active{
+  color:#eee9dc;
+  background:var(--blue);
   box-shadow:
-    0 var(--lift) 0 var(--accent-side),
-    0 calc(var(--lift) + 12px) 24px rgba(37,49,78,.28);
+    4px 6px 0 #172846,
+    8px 10px 0 rgba(0,0,0,.18);
 }
-.pillar.active small{color:#d8dfef}
-.pillar.active:active{
-  transform:translateY(-1px);
-  box-shadow:0 1px 0 var(--accent-side),0 4px 6px rgba(37,49,78,.12);
-}
+.day.active small{color:#c7ccda}
 .schedule-head{
   display:flex;
-  align-items:end;
   justify-content:space-between;
-  gap:14px;
-  margin:0 2px 12px;
+  align-items:end;
+  gap:12px;
+  margin:0 3px 9px;
 }
-.schedule-head h2{margin:0;font-size:25px;letter-spacing:-.04em}
-.schedule-head p{margin:0;font-size:11px;font-weight:800;color:var(--muted)}
-.lessons{border-top:1px solid var(--line)}
+.schedule-head h2{
+  margin:0;
+  font-family:Arial Black,Impact,sans-serif;
+  font-size:24px;
+  text-transform:uppercase;
+  letter-spacing:-.03em;
+}
+.schedule-head p{
+  margin:0;
+  padding:2px 5px;
+  background:#282621;
+  color:#ddd7c9;
+  font-size:9px;
+  font-weight:900;
+}
+.lessons{
+  border-top:3px solid #24221f;
+}
 .lesson{
   position:relative;
   display:grid;
-  grid-template-columns:64px 1fr;
-  gap:14px;
-  align-items:center;
-  min-height:83px;
-  padding:14px 4px;
-  border-bottom:1px solid var(--line);
+  grid-template-columns:67px 1fr;
+  gap:11px;
+  min-height:82px;
+  padding:12px 5px 11px;
+  border-bottom:2px solid #4e4a43;
+}
+.lesson:nth-child(2){
+  background:
+    repeating-linear-gradient(135deg,rgba(60,55,47,.05) 0 5px,transparent 5px 10px);
 }
 .time{
-  padding-right:12px;
-  border-right:1px solid var(--line);
+  padding-right:9px;
+  border-right:2px solid #3e3b35;
   text-align:right;
 }
-.time strong{display:block;font-size:13px}
-.time small{display:block;margin-top:3px;font-size:10px;font-weight:750;color:var(--muted)}
-.lesson-copy{min-width:0}
-.lesson-copy strong{display:block;font-size:14px;line-height:1.2}
-.lesson-copy small{display:block;margin-top:5px;font-size:11px;font-weight:650;color:var(--muted)}
-.mark{
-  position:absolute;
-  right:2px;
-  top:19px;
-  width:7px;height:7px;border-radius:50%;
-  background:var(--orange)
+.time strong{display:block;font-size:12px}
+.time small{display:block;margin-top:3px;font-size:9px;font-weight:900;color:#5d5850}
+.lesson-copy strong{
+  display:inline;
+  background:linear-gradient(transparent 68%,rgba(195,155,43,.38) 68%);
+  font-size:13px;
+  line-height:1.35;
 }
-.lesson:nth-child(2) .mark{background:var(--green)}
-.lesson:nth-child(3) .mark{background:var(--red)}
-.utility{
+.lesson-copy small{
+  display:block;
+  margin-top:5px;
+  font-size:10px;
+  font-weight:700;
+  color:#565149;
+}
+.scratch{
+  position:absolute;
+  right:5px;
+  top:12px;
+  width:24px;height:6px;
+  border-top:2px solid var(--red);
+  border-bottom:1px solid var(--red);
+  transform:rotate(-12deg);
+  opacity:.72;
+}
+.utilities{
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:24px;
-  margin-top:34px;
-  padding-top:2px;
+  gap:15px;
+  margin-top:23px;
 }
-.utility-section h3{
-  margin:0 0 14px;
+.box{
+  position:relative;
+  padding:12px 10px 14px;
+  border:2px solid #2a2824;
+  background:#aaa497;
+  box-shadow:5px 6px 0 #4b463e;
+}
+.box:nth-child(2){
+  transform:rotate(.55deg);
+  background:#b9b2a4;
+}
+.box h3{
+  margin:0 0 11px;
+  font-family:Arial Black,Impact,sans-serif;
   font-size:13px;
-  letter-spacing:-.01em;
+  text-transform:uppercase;
+}
+.box::after{
+  content:"";
+  position:absolute;
+  width:32px;height:7px;
+  right:-8px;top:13px;
+  background:var(--rust);
+  transform:rotate(87deg);
+  opacity:.52;
 }
 .task{
   display:flex;
   align-items:center;
-  gap:11px;
-  min-height:39px;
-  font-size:11px;
-  font-weight:720;
-  border-bottom:1px solid var(--line);
+  gap:8px;
+  min-height:34px;
+  border-top:1px dashed #59544b;
+  font-size:10px;
+  font-weight:800;
 }
-.task:last-child{border-bottom:0}
-.micro{
+.task:first-of-type{border-top:0}
+.toggle{
   appearance:none;
-  border:0;
-  width:23px;height:23px;flex:0 0 23px;
-  border-radius:6px;
-  background:var(--top);
-  box-shadow:0 8px 0 var(--side),0 13px 14px rgba(39,40,38,.18);
-  transform:translateY(-7px);
-  transition:80ms ease;
+  border:2px solid #20201d;
+  width:22px;height:22px;flex:0 0 22px;
+  background:#c8c2b4;
+  box-shadow:3px 4px 0 #4c473f;
   cursor:pointer;
-  -webkit-tap-highlight-color:transparent;
+  transform:rotate(-2deg);
+  transition:60ms linear;
 }
-.micro:active,.micro.on{
-  transform:translateY(0);
-  box-shadow:0 1px 0 var(--side),0 3px 4px rgba(39,40,38,.08);
+.toggle:active,.toggle.on{
+  transform:translateY(3px) rotate(-2deg);
+  box-shadow:1px 1px 0 #4c473f;
 }
-.micro.on::after{
-  content:"";
+.toggle.on::after{
+  content:"X";
   display:block;
-  width:7px;height:7px;
-  margin:8px;
-  border-radius:50%;
-  background:var(--green);
+  margin-top:-1px;
+  font-size:16px;
+  font-weight:900;
+  color:var(--red);
+  transform:rotate(8deg);
 }
 .quick{
   display:grid;
   grid-template-columns:repeat(3,1fr);
-  gap:10px;
-  padding-top:8px;
+  gap:7px;
 }
-.quick-key{
+.quick button{
   appearance:none;
-  border:0;
-  height:70px;
-  border-radius:9px;
-  background:var(--top);
-  box-shadow:0 13px 0 var(--side),0 21px 20px rgba(39,40,38,.22);
-  transform:translateY(-12px);
-  transition:85ms ease;
+  border:2px solid #20201d;
+  height:58px;
+  background:#c4beb1;
+  box-shadow:4px 5px 0 #4e4941;
   cursor:pointer;
-  -webkit-tap-highlight-color:transparent;
-  font-size:10px;
-  font-weight:850;
+  font-size:8px;
+  font-weight:900;
+  text-transform:uppercase;
+  transition:60ms linear;
 }
-.quick-key b{display:block;font-size:19px;line-height:1;margin-bottom:5px}
-.quick-key:active{
-  transform:translateY(0);
-  box-shadow:0 1px 0 var(--side),0 4px 6px rgba(39,40,38,.09);
+.quick button:nth-child(2){transform:rotate(-1.5deg)}
+.quick button:nth-child(3){transform:rotate(1deg)}
+.quick button b{
+  display:block;
+  font-size:17px;
+  margin-bottom:3px;
+}
+.quick button:active{
+  transform:translateY(4px) rotate(0deg);
+  box-shadow:1px 1px 0 #4e4941;
 }
 .footer{
-  margin:38px 0 0;
-  padding-top:15px;
-  border-top:1px solid var(--line);
-  text-align:center;
-  font-size:10px;
-  font-weight:700;
-  color:#8a877f;
+  margin:28px 2px 0;
+  padding-top:10px;
+  border-top:2px solid #2c2a26;
+  font-size:9px;
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  color:#514d46;
+}
+.footer span{
+  color:var(--red);
+  text-decoration:line-through;
 }
 @media(max-width:560px){
-  .shell{padding:16px 12px calc(38px + env(safe-area-inset-bottom))}
-  h1{font-size:28px}
-  .pillars{gap:6px;margin-bottom:38px}
-  .pillar{min-height:68px;border-radius:8px}
-  .pillar span{font-size:10px}
-  .pillar small{font-size:8px}
-  .utility{grid-template-columns:1fr;gap:30px}
-  .quick{padding-top:10px}
+  .wrap{padding:12px 8px calc(38px + env(safe-area-inset-bottom))}
+  .sheet{padding:15px 10px 24px;box-shadow:6px 7px 0 rgba(22,20,17,.92)}
+  h1{font-size:29px}
+  .days{gap:4px}
+  .day{min-height:58px;padding-inline:1px}
+  .day span{font-size:9px}
+  .utilities{grid-template-columns:1fr}
 }
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
-<main class="shell">
-  <header class="top">
-    <div>
-      <p class="kicker">NTU · FALL 2026</p>
-      <h1>My Schedule</h1>
-    </div>
-    <span class="demo-note">MONOLITH TEST</span>
-  </header>
-
-  <section class="status">
-    <div>
-      <small>HAPPENING NOW</small>
-      <strong>Engineering Mathematics</strong>
-      <p>Room 114 · ends in 42 min</p>
-    </div>
-    <span class="status-dot" aria-hidden="true"></span>
-  </section>
-
-  <p class="label">WEEK</p>
-  <nav class="pillars" aria-label="Demo day controls">
-    <button class="pillar"><span>MON</span><small>05</small></button>
-    <button class="pillar active"><span>TUE</span><small>06</small></button>
-    <button class="pillar"><span>WED</span><small>07</small></button>
-    <button class="pillar"><span>THU</span><small>08</small></button>
-    <button class="pillar"><span>FRI</span><small>09</small></button>
-    <button class="pillar"><span>SAT</span><small>10</small></button>
-  </nav>
-
-  <div class="schedule-head">
-    <h2>Tuesday</h2>
-    <p>3 classes</p>
-  </div>
-
-  <section class="lessons">
-    <article class="lesson">
-      <div class="time"><strong>10:20</strong><small>12:10</small></div>
-      <div class="lesson-copy"><strong>Engineering Mathematics</strong><small>Mechanical Engineering · Room 114</small></div>
-      <span class="mark"></span>
-    </article>
-    <article class="lesson">
-      <div class="time"><strong>13:20</strong><small>15:10</small></div>
-      <div class="lesson-copy"><strong>Engineering Materials</strong><small>進學講堂</small></div>
-      <span class="mark"></span>
-    </article>
-    <article class="lesson">
-      <div class="time"><strong>15:30</strong><small>17:20</small></div>
-      <div class="lesson-copy"><strong>Statics</strong><small>繡山講堂</small></div>
-      <span class="mark"></span>
-    </article>
-  </section>
-
-  <section class="utility">
-    <div class="utility-section">
-      <h3>Manual tasks</h3>
-      <div class="task"><button class="micro" aria-label="Toggle task"></button><span>Review Statics notes</span></div>
-      <div class="task"><button class="micro on" aria-label="Toggle task"></button><span>Chinese worksheet</span></div>
-      <div class="task"><button class="micro" aria-label="Toggle task"></button><span>Check COOL deadlines</span></div>
-    </div>
-    <div class="utility-section">
-      <h3>Quick access</h3>
-      <div class="quick">
-        <button class="quick-key"><b>漢</b>Hanzi</button>
-        <button class="quick-key"><b>∫</b>Math</button>
-        <button class="quick-key"><b>↗</b>Places</button>
+<main class="wrap">
+  <section class="sheet">
+    <header class="top">
+      <div>
+        <p class="kicker">NTU // FALL 2026</p>
+        <h1>My Schedule</h1>
       </div>
-    </div>
-  </section>
+      <span class="stamp">UNSTABLE</span>
+    </header>
 
-  <p class="footer">Visual prototype only · no schedule data or app state is connected.</p>
+    <section class="status">
+      <div>
+        <small>HAPPENING NOW // SIGNAL BAD</small>
+        <strong>Engineering Mathematics</strong>
+        <p>Room 114 · ends in 42 min</p>
+      </div>
+      <span class="bulb" aria-hidden="true"></span>
+    </section>
+
+    <p class="label">week selector</p>
+    <nav class="days" aria-label="Demo day controls">
+      <button class="day"><span>MON</span><small>05</small></button>
+      <button class="day active"><span>TUE</span><small>06</small></button>
+      <button class="day"><span>WED</span><small>07</small></button>
+      <button class="day"><span>THU</span><small>08</small></button>
+      <button class="day"><span>FRI</span><small>09</small></button>
+      <button class="day"><span>SAT</span><small>10</small></button>
+    </nav>
+
+    <div class="schedule-head">
+      <h2>Tuesday</h2>
+      <p>3 classes / maybe</p>
+    </div>
+
+    <section class="lessons">
+      <article class="lesson">
+        <div class="time"><strong>10:20</strong><small>12:10</small></div>
+        <div class="lesson-copy"><strong>Engineering Mathematics</strong><small>Mechanical Engineering · Room 114</small></div>
+        <span class="scratch"></span>
+      </article>
+      <article class="lesson">
+        <div class="time"><strong>13:20</strong><small>15:10</small></div>
+        <div class="lesson-copy"><strong>Engineering Materials</strong><small>進學講堂</small></div>
+        <span class="scratch"></span>
+      </article>
+      <article class="lesson">
+        <div class="time"><strong>15:30</strong><small>17:20</small></div>
+        <div class="lesson-copy"><strong>Statics</strong><small>繡山講堂</small></div>
+        <span class="scratch"></span>
+      </article>
+    </section>
+
+    <section class="utilities">
+      <div class="box">
+        <h3>Manual tasks</h3>
+        <div class="task"><button class="toggle" aria-label="Toggle task"></button><span>Review Statics notes</span></div>
+        <div class="task"><button class="toggle on" aria-label="Toggle task"></button><span>Chinese worksheet</span></div>
+        <div class="task"><button class="toggle" aria-label="Toggle task"></button><span>Check COOL deadlines</span></div>
+      </div>
+
+      <div class="box">
+        <h3>Quick access</h3>
+        <div class="quick">
+          <button><b>漢</b>Hanzi</button>
+          <button><b>∫</b>Math</button>
+          <button><b>↗</b>Places</button>
+        </div>
+      </div>
+    </section>
+
+    <p class="footer">visual test only // <span>reliable system</span> // nothing connected</p>
+  </section>
 </main>
 
 <script>
-document.querySelectorAll('.pillar').forEach(button=>{
+document.querySelectorAll('.day').forEach(button=>{
   button.addEventListener('click',()=>{
-    document.querySelectorAll('.pillar').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.day').forEach(b=>b.classList.remove('active'));
     button.classList.add('active');
   });
 });
-document.querySelectorAll('.micro').forEach(button=>{
+document.querySelectorAll('.toggle').forEach(button=>{
   button.addEventListener('click',()=>button.classList.toggle('on'));
 });
 </script>
