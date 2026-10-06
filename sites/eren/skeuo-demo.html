@@ -1380,6 +1380,176 @@ h1{
 }
 </style>
 
+
+<style id="imperfection-and-badge-fix">
+/* Unread badge: let it sit above the physical inbox key without being clipped. */
+.machine.mail-mode .mailx-nav{
+  overflow:visible!important;
+}
+.machine.mail-mode .mailx-nav .mailx-filter{
+  overflow:visible!important;
+  isolation:isolate;
+}
+.machine.mail-mode .mailx-rail-count{
+  top:-7px!important;
+  right:-7px!important;
+  min-width:17px!important;
+  height:17px!important;
+  line-height:15px!important;
+  padding:0 4px!important;
+  border:1px solid #793a34!important;
+  border-radius:5px!important;
+  background:
+    linear-gradient(180deg,#b8655b,#934841)!important;
+  color:#f5ece3!important;
+  font:700 8px/15px "Courier New",monospace!important;
+  box-shadow:
+    inset 0 1px rgba(255,255,255,.18),
+    0 2px 0 rgba(88,37,31,.26),
+    2px 4px 5px rgba(38,18,10,.22)!important;
+  z-index:8!important;
+}
+
+/* Age the shell unevenly instead of using one uniform beige. */
+.machine{
+  background:
+    radial-gradient(ellipse at 14% 11%,rgba(120,80,38,.075),transparent 9%),
+    radial-gradient(ellipse at 68% 4%,rgba(96,60,26,.055),transparent 8%),
+    radial-gradient(ellipse at 91% 72%,rgba(110,69,31,.045),transparent 11%),
+    linear-gradient(107deg,transparent 0 31%,rgba(93,67,37,.025) 31.2%,transparent 31.8%),
+    linear-gradient(180deg,rgba(255,255,255,.32),transparent 10%),
+    linear-gradient(180deg,#d7ccb1 0 6%,#c8bea4 6% 92%,#b3a78e 92%),
+    var(--shell)!important;
+}
+
+/* Subtle grime accumulated where the top shell meets the controls. */
+.topbar{
+  box-shadow:
+    inset 0 -1px rgba(82,66,45,.10),
+    0 1px rgba(255,255,255,.09);
+}
+.topbar::before{
+  content:"";
+  position:absolute;
+  left:9%;right:14%;bottom:-2px;
+  height:3px;
+  pointer-events:none;
+  opacity:.48;
+  background:
+    linear-gradient(90deg,
+      transparent 0 8%,
+      rgba(80,58,34,.14) 13%,
+      transparent 21% 40%,
+      rgba(77,54,31,.10) 47%,
+      transparent 58% 77%,
+      rgba(72,49,29,.13) 84%,
+      transparent 94%);
+  filter:blur(.45px);
+}
+
+/* Keys have slightly different ageing, not identical damage. */
+.days .day:nth-child(3),
+.ntu .key:nth-child(2),
+.studykey:nth-child(5),
+.topkeys .topkey:nth-child(1){
+  filter:sepia(.045) brightness(.985);
+}
+.days .day:nth-child(5),
+.ntu .key:nth-child(1),
+.studykey:nth-child(2),
+.topkeys .topkey:nth-child(3){
+  filter:saturate(.94) brightness(1.012);
+}
+
+/* Frequently touched keys get a faint polished patch. */
+.day.active::before,
+#mailDashboardButton::before,
+.ntu .key:nth-child(2)::before,
+.studykey:nth-child(1)::before{
+  background:
+    radial-gradient(ellipse at 49% 43%,rgba(255,255,255,.115),transparent 46%),
+    linear-gradient(180deg,rgba(255,255,255,.09),transparent 66%)!important;
+  border-color:rgba(255,255,255,.08)!important;
+}
+
+/* Only a handful of keys have actual edge chips/scratches. */
+.days .day:nth-child(4)::after,
+.ntu .key:nth-child(2)::after,
+.studykey:nth-child(4)::after,
+.topkeys .topkey:nth-child(2)::after{
+  content:""!important;
+  display:block!important;
+  position:absolute;
+  width:8px;height:4px;
+  right:4px;bottom:3px;
+  background:#776c58;
+  opacity:.62;
+  clip-path:polygon(0 18%,38% 0,100% 26%,74% 100%,18% 78%);
+  pointer-events:none;
+}
+.days .day:nth-child(4),
+.studykey:nth-child(4){
+  background-image:
+    linear-gradient(118deg,transparent 0 69%,rgba(85,67,47,.16) 69.5%,transparent 70.2%),
+    linear-gradient(145deg,rgba(255,255,255,.34),transparent 31%),
+    linear-gradient(180deg,#f1ead8 0,#e3dac4 61%,#c5b9a0 100%)!important;
+}
+
+/* A few tiny scuffs along panel faces and wells. */
+.panel,
+.lessoncard,
+.machine.mail-mode .mailx-list-pane,
+.machine.mail-mode .mailx-reader{
+  background-image:
+    linear-gradient(92deg,transparent 0 18%,rgba(87,66,42,.035) 18.2%,transparent 18.7%),
+    linear-gradient(176deg,transparent 0 73%,rgba(88,64,39,.025) 73.3%,transparent 74%)!important;
+  background-blend-mode:multiply,normal;
+}
+.lessoncard:nth-child(odd){
+  box-shadow:
+    inset 0 2px rgba(255,255,255,.25),
+    inset 11px 0 17px rgba(104,72,35,.025),
+    0 3px 0 #8c8069,
+    7px 9px 9px rgba(45,26,13,.20)!important;
+}
+
+/* Fine scratches on the dark mail reader bezel, not over the mail text. */
+.machine.mail-mode .mailx-reader-scroll{
+  position:relative;
+}
+.machine.mail-mode .mailx-reader-scroll::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  z-index:3;
+  opacity:.24;
+  background:
+    linear-gradient(112deg,transparent 0 23%,rgba(210,199,171,.09) 23.15%,transparent 23.35%),
+    linear-gradient(97deg,transparent 0 74%,rgba(208,194,166,.07) 74.1%,transparent 74.28%),
+    linear-gradient(171deg,transparent 0 46%,rgba(38,30,21,.22) 46.15%,transparent 46.35%);
+}
+
+/* Slight old-plastic discoloration around screws and lower lip. */
+.s1{box-shadow:0 0 0 5px rgba(107,72,34,.035),0 1px 1px rgba(0,0,0,.22)!important}
+.s4{box-shadow:0 0 0 6px rgba(99,64,30,.03),0 1px 1px rgba(0,0,0,.22)!important}
+.machine .chassis-label{
+  opacity:.80;
+  text-shadow:0 1px rgba(255,255,255,.16);
+}
+
+/* Keep the damage subtle on small screens. */
+@media(max-width:860px){
+  .machine.mail-mode .mailx-rail-count{
+    top:-4px!important;
+    right:-4px!important;
+  }
+  .machine.mail-mode .mailx-reader-scroll::before{
+    opacity:.14;
+  }
+}
+</style>
+
 </head>
 <body>
 <div class="desk-stage">
