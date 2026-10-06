@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#d8d2c6">
+<title>NTU Schedule — Tactile Demo</title>
+<link rel="icon" href="./favicon.svg" type="image/svg+xml">
+<style>
+:root{
+  --surface:#d8d2c6;
+  --surface-hi:#e8e3d9;
+  --surface-lo:#c4bcae;
+  --ink:#282722;
+  --muted:#736f66;
+  --navy:#334a6a;
+  --green:#5f745d;
+  --orange:#a76a3e;
+  --red:#98594f;
+  --yellow:#b28b43;
+  --lift:7px;
+}
+*{box-sizing:border-box}
+html{background:#bdb6aa}
+body{
+  margin:0;
+  color:var(--ink);
+  font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+  background:
+    radial-gradient(circle at 12% 8%,rgba(255,255,255,.45),transparent 27%),
+    radial-gradient(circle at 88% 93%,rgba(84,74,60,.11),transparent 30%),
+    linear-gradient(145deg,#ddd7cb,#d1cabd);
+}
+body::before{
+  content:"";
+  position:fixed;inset:0;pointer-events:none;z-index:1000;
+  opacity:.17;
+  mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='170' height='170' viewBox='0 0 170 170'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.7' numOctaves='4' seed='19' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.36'/%3E%3C/svg%3E");
+}
+body::after{
+  content:"";
+  position:fixed;inset:0;pointer-events:none;z-index:999;
+  opacity:.22;
+  background:
+    radial-gradient(ellipse at 19% 22%,rgba(61,55,46,.16) 0 1px,transparent 2px),
+    radial-gradient(ellipse at 19.8% 22.5%,rgba(61,55,46,.10) 0 2px,transparent 3px),
+    radial-gradient(ellipse at 74% 31%,rgba(255,255,255,.28) 0 1px,transparent 2px),
+    radial-gradient(ellipse at 63% 72%,rgba(61,55,46,.12) 0 1px,transparent 2px),
+    radial-gradient(ellipse at 64% 72.5%,rgba(61,55,46,.08) 0 2px,transparent 3px);
+  background-size:73px 91px,113px 127px,89px 107px,131px 101px,157px 143px;
+}
+button{font:inherit;color:inherit}
+.shell{
+  width:min(760px,100%);
+  margin:0 auto;
+  padding:20px 16px calc(34px + env(safe-area-inset-bottom));
+}
+.panel{
+  position:relative;
+  border-radius:30px;
+  padding:18px;
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.26),rgba(85,74,58,.06)),
+    var(--surface);
+  box-shadow:
+    inset 1px 1px 0 rgba(255,255,255,.55),
+    inset -1px -1px 0 rgba(72,61,48,.14),
+    0 18px 45px rgba(66,58,48,.18);
+  border:1px solid rgba(82,72,59,.12);
+}
+.top{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:15px;
+  margin-bottom:18px;
+}
+.kicker{margin:1px 0 5px;font-size:10px;font-weight:900;letter-spacing:.16em;color:#706b61}
+h1{margin:0;font-size:31px;line-height:1;letter-spacing:-.045em}
+.demo-badge{
+  padding:7px 10px;border-radius:9px;
+  color:#655f55;font-size:10px;font-weight:900;letter-spacing:.1em;
+  background:#d1cabe;
+  box-shadow:inset 2px 2px 4px rgba(75,67,56,.17),inset -2px -2px 4px rgba(255,255,255,.42);
+}
+.recess{
+  background:#cfc8bc;
+  box-shadow:
+    inset 4px 5px 9px rgba(69,60,49,.16),
+    inset -3px -3px 8px rgba(255,255,255,.42);
+  border:1px solid rgba(87,77,63,.09);
+}
+.status{
+  display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;
+  min-height:92px;border-radius:20px;padding:16px 17px;margin-bottom:18px;
+}
+.status small{display:block;font-size:10px;font-weight:900;letter-spacing:.14em;color:#6d675d;margin-bottom:4px}
+.status strong{display:block;font-size:20px;line-height:1.12;letter-spacing:-.025em}
+.status p{margin:5px 0 0;font-size:12px;color:#716b61;font-weight:650}
+.led{
+  width:14px;height:14px;border-radius:50%;
+  background:#667b61;
+  box-shadow:
+    inset 1px 1px 2px rgba(255,255,255,.45),
+    inset -1px -1px 2px rgba(31,45,29,.4),
+    0 0 0 5px #c3bcaf,
+    0 0 0 6px rgba(77,68,56,.18);
+}
+.section-label{margin:0 0 9px 3px;font-size:10px;font-weight:900;letter-spacing:.14em;color:#726d64}
+.day-row{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:22px}
+.key,.mini-key,.lesson,.task{
+  -webkit-tap-highlight-color:transparent;
+  user-select:none;
+}
+.key{
+  appearance:none;border:0;position:relative;
+  min-height:62px;padding:8px 3px 7px;border-radius:14px;
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.3),rgba(69,59,47,.04)),
+    #ddd7cb;
+  box-shadow:
+    0 var(--lift) 0 #b5ad9f,
+    0 calc(var(--lift) + 4px) 10px rgba(62,54,45,.18),
+    inset 1px 1px 0 rgba(255,255,255,.62),
+    inset -1px -1px 0 rgba(80,70,57,.12);
+  transform:translateY(calc(var(--lift) * -1));
+  transition:transform 80ms cubic-bezier(.2,.8,.2,1),box-shadow 80ms ease,background 120ms ease;
+  cursor:pointer;
+}
+.key span{display:block;font-size:12px;font-weight:850}
+.key small{display:block;margin-top:4px;font-size:9px;color:#777167;font-weight:800}
+.key:active,.key.is-down{
+  transform:translateY(0);
+  box-shadow:
+    0 1px 0 #aea698,
+    inset 2px 3px 6px rgba(76,67,55,.16),
+    inset -2px -2px 5px rgba(255,255,255,.33);
+}
+.key.active{
+  color:#f7f2e8;
+  background:linear-gradient(145deg,#435a79,#2d425f);
+  box-shadow:
+    0 var(--lift) 0 #22344c,
+    0 calc(var(--lift) + 4px) 11px rgba(46,53,59,.24),
+    inset 1px 1px 0 rgba(255,255,255,.16);
+}
+.key.active small{color:#d8deea}
+.key.active:active,.key.active.is-down{
+  box-shadow:0 1px 0 #22344c,inset 2px 3px 7px rgba(11,20,31,.3),inset -1px -1px 3px rgba(255,255,255,.08)
+}
+.schedule-head{display:flex;justify-content:space-between;align-items:end;margin:0 2px 11px}
+.schedule-head h2{margin:0;font-size:24px;letter-spacing:-.04em}
+.schedule-head p{margin:0;font-size:11px;font-weight:800;color:#787168}
+.lessons{display:grid;gap:12px}
+.lesson{
+  position:relative;
+  display:grid;grid-template-columns:63px 1fr;gap:13px;align-items:center;
+  min-height:83px;padding:11px 14px 11px 10px;border-radius:17px;
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.32),rgba(80,68,54,.035)),
+    #ddd7cb;
+  box-shadow:
+    0 5px 0 #b8b0a2,
+    0 9px 14px rgba(65,56,46,.14),
+    inset 1px 1px 0 rgba(255,255,255,.56),
+    inset -1px -1px 0 rgba(75,66,54,.1);
+}
+.time{border-right:1px solid rgba(89,79,66,.16);padding-right:11px;text-align:right}
+.time strong{display:block;font-size:13px}.time small{display:block;margin-top:3px;font-size:10px;color:#777067;font-weight:750}
+.lesson-copy{min-width:0}
+.lesson-copy strong{display:block;font-size:14px;line-height:1.2}
+.lesson-copy small{display:block;margin-top:5px;font-size:11px;color:#726b62;font-weight:650}
+.course-mark{position:absolute;right:12px;top:12px;width:8px;height:8px;border-radius:50%;background:var(--orange);box-shadow:inset 1px 1px 1px rgba(255,255,255,.45)}
+.lesson:nth-child(2) .course-mark{background:var(--green)}
+.lesson:nth-child(3) .course-mark{background:var(--red)}
+.controls{
+  display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:24px
+}
+.module{border-radius:20px;padding:14px}
+.module h3{margin:0 0 11px;font-size:13px;letter-spacing:-.01em}
+.task{display:flex;align-items:center;gap:9px;font-size:11px;font-weight:720;padding:9px 2px;border-top:1px solid rgba(82,72,59,.11)}
+.task:first-of-type{border-top:0}
+.switch{
+  appearance:none;border:0;width:25px;height:25px;flex:0 0 25px;border-radius:8px;
+  background:#ddd7cb;
+  box-shadow:0 4px 0 #aea698,0 6px 8px rgba(60,53,45,.14),inset 1px 1px 0 rgba(255,255,255,.55);
+  transform:translateY(-3px);
+  transition:80ms ease;cursor:pointer;
+}
+.switch:active,.switch.on{
+  transform:translateY(1px);
+  box-shadow:0 0 0 #aea698,inset 2px 3px 6px rgba(72,63,52,.2),inset -1px -1px 3px rgba(255,255,255,.3)
+}
+.switch.on::after{content:"";display:block;width:8px;height:8px;border-radius:50%;margin:8px;background:#60765e;box-shadow:0 0 0 2px rgba(82,106,79,.15)}
+.quick-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.mini-key{
+  appearance:none;border:0;height:58px;border-radius:13px;
+  background:#ddd7cb;
+  box-shadow:0 5px 0 #b3ab9d,0 8px 10px rgba(61,53,44,.15),inset 1px 1px 0 rgba(255,255,255,.58);
+  transform:translateY(-4px);
+  transition:80ms ease;
+  cursor:pointer;font-size:10px;font-weight:850
+}
+.mini-key b{display:block;font-size:18px;line-height:1;margin-bottom:4px}
+.mini-key:active{transform:translateY(1px);box-shadow:0 0 0 #b3ab9d,inset 2px 3px 6px rgba(70,61,50,.19)}
+.footer-note{text-align:center;margin:21px 8px 2px;font-size:10px;color:#777168;font-weight:700}
+@media(max-width:560px){
+  .shell{padding-left:10px;padding-right:10px;padding-top:12px}
+  .panel{padding:14px;border-radius:24px}
+  h1{font-size:27px}
+  .day-row{gap:5px}
+  .key{min-height:57px;border-radius:12px}
+  .key span{font-size:10px}.key small{font-size:8px}
+  .controls{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main class="shell">
+  <section class="panel">
+    <header class="top">
+      <div>
+        <p class="kicker">NTU · FALL 2026</p>
+        <h1>My Schedule</h1>
+      </div>
+      <span class="demo-badge">TACTILE TEST</span>
+    </header>
+
+    <section class="status recess">
+      <div>
+        <small>HAPPENING NOW</small>
+        <strong>Engineering Mathematics</strong>
+        <p>Room 114 · ends in 42 min</p>
+      </div>
+      <span class="led" aria-hidden="true"></span>
+    </section>
+
+    <p class="section-label">WEEK — PRESS THE KEYS</p>
+    <nav class="day-row" aria-label="Demo day controls">
+      <button class="key"><span>MON</span><small>05</small></button>
+      <button class="key active"><span>TUE</span><small>06</small></button>
+      <button class="key"><span>WED</span><small>07</small></button>
+      <button class="key"><span>THU</span><small>08</small></button>
+      <button class="key"><span>FRI</span><small>09</small></button>
+      <button class="key"><span>SAT</span><small>10</small></button>
+    </nav>
+
+    <div class="schedule-head">
+      <h2>Tuesday</h2>
+      <p>3 classes</p>
+    </div>
+
+    <section class="lessons">
+      <article class="lesson">
+        <div class="time"><strong>10:20</strong><small>12:10</small></div>
+        <div class="lesson-copy"><strong>Engineering Mathematics</strong><small>Mechanical Engineering · Room 114</small></div>
+        <span class="course-mark"></span>
+      </article>
+      <article class="lesson">
+        <div class="time"><strong>13:20</strong><small>15:10</small></div>
+        <div class="lesson-copy"><strong>Engineering Materials</strong><small>進學講堂</small></div>
+        <span class="course-mark"></span>
+      </article>
+      <article class="lesson">
+        <div class="time"><strong>15:30</strong><small>17:20</small></div>
+        <div class="lesson-copy"><strong>Statics</strong><small>繡山講堂</small></div>
+        <span class="course-mark"></span>
+      </article>
+    </section>
+
+    <div class="controls">
+      <section class="module recess">
+        <h3>Manual tasks</h3>
+        <div class="task"><button class="switch" aria-label="Toggle task"></button><span>Review Statics notes</span></div>
+        <div class="task"><button class="switch on" aria-label="Toggle task"></button><span>Chinese worksheet</span></div>
+        <div class="task"><button class="switch" aria-label="Toggle task"></button><span>Check COOL deadlines</span></div>
+      </section>
+      <section class="module recess">
+        <h3>Quick access</h3>
+        <div class="quick-grid">
+          <button class="mini-key"><b>漢</b>Hanzi</button>
+          <button class="mini-key"><b>∫</b>Math</button>
+          <button class="mini-key"><b>↗</b>Places</button>
+        </div>
+      </section>
+    </div>
+
+    <p class="footer-note">Visual prototype only · no schedule data or app state is connected.</p>
+  </section>
+</main>
+<script>
+document.querySelectorAll('.key').forEach(button=>{
+  button.addEventListener('click',()=>{
+    document.querySelectorAll('.key').forEach(b=>b.classList.remove('active'));
+    button.classList.add('active');
+  });
+});
+document.querySelectorAll('.switch').forEach(button=>{
+  button.addEventListener('click',()=>button.classList.toggle('on'));
+});
+</script>
+</body>
+</html>
