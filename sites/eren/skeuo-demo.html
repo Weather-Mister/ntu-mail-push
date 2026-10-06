@@ -273,6 +273,264 @@ h1{margin:0;font-size:26px;line-height:1;letter-spacing:-.045em;color:#20221e}
 }
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
+
+<style id="realism-pass">
+:root{
+  --shell:#c8bea4;--shell-hi:#ded4bb;--shell-lo:#8e846e;
+  --panel:#b8ad93;--seam:#756b57;--ink:#2b271f;--muted:#6c6353;
+  --key:#e4dcc7;--key-hi:#f1ead8;--key-lo:#b6ab93;--key-edge:#817661;
+  --screen:#242622;--screen-ink:#e0ddc8;
+}
+html,body{height:100%}
+body{
+  background:
+    radial-gradient(circle at 72% 6%,rgba(255,171,82,.30),transparent 16%),
+    repeating-linear-gradient(1deg,transparent 0 23px,rgba(31,12,3,.18) 24px,rgba(255,255,255,.018) 25px,transparent 28px 52px),
+    repeating-linear-gradient(91deg,rgba(255,255,255,.012) 0 1px,transparent 1px 11px),
+    linear-gradient(102deg,#3d2113,#61371f 34%,#744127 62%,#422316);
+}
+body::before{
+  background:
+    radial-gradient(circle at 77% 3%,rgba(255,185,96,.56),transparent 16%),
+    radial-gradient(circle at 70% 18%,rgba(255,135,48,.22),transparent 35%),
+    linear-gradient(122deg,rgba(255,149,61,.11),transparent 48%);
+}
+.desk-stage{
+  height:100dvh;min-height:0;max-height:100dvh;
+  width:min(1460px,100%);padding:22px 30px 28px;
+  display:flex;align-items:center;justify-content:center;
+}
+.desk-stage::before{
+  left:4%;right:0;bottom:5%;height:92px;filter:blur(22px);
+  background:rgba(10,4,1,.74);transform:skewX(-14deg) translateX(24px);
+}
+.machine{
+  width:min(1360px,calc(100vw - 86px));
+  height:min(760px,calc(100dvh - 54px));
+  min-height:610px;
+  margin:0;
+  padding:18px 17px 17px;
+  border-color:#7c715d;
+  border-radius:13px 13px 19px 19px;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.32),transparent 10%),
+    linear-gradient(180deg,#d7ccb1 0 6%,#c8bea4 6% 92%,#b3a78e 92%),
+    var(--shell);
+  box-shadow:
+    inset 0 2px 0 rgba(255,255,255,.56),
+    inset 0 -4px 0 rgba(100,88,66,.24),
+    0 10px 0 #8b806a,
+    0 17px 0 #6e6453,
+    28px 42px 24px rgba(24,9,2,.54),
+    52px 70px 54px rgba(17,6,2,.43);
+  transform:perspective(1400px) rotateX(3.6deg) rotateZ(-.45deg);
+  display:grid;
+  grid-template-rows:43px 78px minmax(0,1fr);
+  row-gap:10px;
+}
+.machine::after{
+  top:55px;background:rgba(92,81,61,.48);box-shadow:0 1px rgba(255,255,255,.30)
+}
+.machine::before{opacity:.10}
+.topbar{
+  height:auto;margin:0;padding:0 5px;
+  align-items:flex-start;
+}
+.brandmark{
+  background:#ada38c;border-color:#786d58;color:#51493c;
+  box-shadow:inset 0 2px rgba(255,255,255,.28),0 1px rgba(61,53,40,.18)
+}
+.eyebrow{color:#6c6252;text-shadow:0 1px rgba(255,255,255,.28)}
+h1{color:#29251e}
+.serial{color:#786e5c}
+.statusrow{
+  min-height:0;height:78px;margin:0;gap:10px;
+  grid-template-columns:minmax(0,3fr) minmax(280px,1fr)
+}
+.panel{
+  background:
+    radial-gradient(circle at 8% 12%,rgba(101,62,26,.08),transparent 15%),
+    linear-gradient(180deg,rgba(255,255,255,.18),transparent 18%),
+    #b7ad96;
+  border-color:#827762;
+  box-shadow:
+    inset 0 2px 3px rgba(84,73,55,.24),
+    inset 0 -1px rgba(255,255,255,.24),
+    0 1px rgba(255,255,255,.18);
+}
+.display{
+  min-height:0;height:78px;
+  border:3px solid #8c826e;
+  border-bottom-color:#afa58f;
+  background:
+    repeating-linear-gradient(0deg,rgba(255,255,255,.015) 0 1px,transparent 1px 3px),
+    #282923;
+  box-shadow:
+    inset 0 5px 12px rgba(0,0,0,.63),
+    inset 0 0 0 1px rgba(255,255,255,.025),
+    8px 10px 13px rgba(38,22,10,.24);
+}
+.hanzi{min-height:0;height:78px}
+.hanzi .streak,.hanzi .next{padding-top:9px;padding-bottom:9px}
+.hanzi b{font-size:27px}
+.hanzi .char{font-size:26px}
+.workspace{
+  min-height:0;height:100%;
+  grid-template-columns:100px minmax(270px,1.12fr) minmax(250px,1fr) minmax(270px,1.04fr);
+  grid-template-rows:minmax(0,1fr) minmax(0,.62fr) 58px;
+  gap:10px;
+}
+.rail{
+  padding:8px;gap:6px;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.08),transparent 16%),
+    #aa9f87;
+  border-color:#786d58;
+  box-shadow:
+    inset 0 4px 8px rgba(70,59,43,.22),
+    inset 0 -1px rgba(255,255,255,.20),
+    7px 10px 12px rgba(47,27,13,.20)
+}
+.days,.ntu{gap:6px}
+.key{
+  --key-top:#e3dac4;--key-side:#8a7e68;
+  border-color:#8c806a;
+  border-radius:6px 6px 8px 8px;
+  background:
+    radial-gradient(circle at 81% 18%,rgba(112,71,29,.08),transparent 13%),
+    linear-gradient(145deg,rgba(255,255,255,.34),transparent 31%),
+    linear-gradient(180deg,#f1ead8 0,#e3dac4 61%,#c5b9a0 100%);
+  box-shadow:
+    inset 0 2px 0 rgba(255,255,255,.72),
+    inset 1px 0 rgba(255,255,255,.18),
+    inset -1px 0 rgba(68,58,43,.08),
+    0 2px 0 #afa48d,
+    0 7px 0 var(--key-side),
+    8px 12px 10px rgba(39,22,10,.34);
+  transform:translateY(-6px);
+}
+.key::before{inset:4px 5px 6px;border-radius:4px;border-top-color:rgba(255,255,255,.18)}
+.key::after{
+  width:11px;height:6px;right:-1px;bottom:6px;
+  background:#7a6f5d;opacity:.72
+}
+.key:active,.key.pressed{
+  transform:translateY(1px);
+  box-shadow:
+    inset 0 2px 3px rgba(72,61,45,.23),
+    0 1px 0 var(--key-side),
+    2px 3px 3px rgba(38,21,10,.18)
+}
+.day.active{
+  --key-hi:#7485a0;--key-top:#536989;--key-side:#30425f;
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.18),transparent 31%),
+    linear-gradient(180deg,#7184a0,#526887 67%,#435876);
+  box-shadow:
+    inset 0 2px rgba(255,255,255,.19),
+    0 2px 0 #435978,
+    0 7px 0 #2f405c,
+    8px 12px 10px rgba(35,22,13,.34)
+}
+.topkey{height:29px}
+.heading{
+  min-height:31px;margin-bottom:6px;
+}
+.heading h2{font-size:20px}
+.heading p,.count{
+  color:#675e4e;text-shadow:0 1px rgba(255,255,255,.28)
+}
+.lessons{gap:6px}
+.lesson{grid-template-columns:58px 1fr;gap:7px}
+.time{
+  color:#514a3e;text-shadow:0 1px rgba(255,255,255,.25);
+  border-right-color:#897d67
+}
+.time small{color:#746a59}
+.lessoncard{
+  padding:9px 30px 9px 12px;
+  border-color:#877b65;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.22),transparent 31%),
+    #c1b69f;
+  box-shadow:
+    inset 0 2px rgba(255,255,255,.28),
+    0 3px 0 #8c8069,
+    7px 9px 9px rgba(45,26,13,.20)
+}
+.lessoncard strong{font-size:11.5px}.lessoncard small{font-size:7px}
+.cool,.todo,.transfer{padding:10px}
+.module-head{margin-bottom:6px}
+.module-head h3{font-size:13px}
+.deadline{padding:8px 6px 8px 13px}
+.deadline strong{font-size:9.5px}.deadline small{margin-top:3px}
+.deadline .bar{margin-top:5px}
+.form{margin:8px 0;gap:6px}
+.input{padding:6px 8px}
+.task{padding:6px 2px}
+.transfer{gap:6px}
+.transfer textarea{height:57px}
+.sendrow{margin-top:6px;gap:6px}
+.inbox{gap:4px}
+.transferitem{padding-top:5px;padding-bottom:5px}
+.study{padding-top:5px}
+.studygrid{gap:6px}
+.studykey{padding-top:14px}
+.studykey b{font-size:14px;margin-bottom:3px}
+
+.postit{
+  box-shadow:10px 14px 18px rgba(20,8,2,.38);
+  filter:saturate(.82) sepia(.12)
+}
+.note-a{left:6px;top:13px;z-index:1}
+.note-b{right:4px;top:116px;z-index:3}
+.note-c{left:18%;bottom:4px;z-index:3}
+.desk-stage::after{
+  width:180px;height:180px;right:1.8%;top:17%;
+  background:
+    radial-gradient(circle,transparent 50%,rgba(60,26,9,.29) 51% 57%,transparent 59%),
+    radial-gradient(circle at 52% 53%,rgba(27,9,2,.13),transparent 64%)
+}
+.chip-a{background:#766b58}.chip-b,.chip-c{background:#6e6453}
+.crack::before,.crack::after{background:#786c59}
+.stain-a{background:radial-gradient(circle at 50% 50%,rgba(83,49,24,.17),rgba(94,53,24,.09) 48%,transparent 70%)}
+
+@media (min-width:860px){
+  body{overflow:hidden}
+  .desk-stage{overflow:hidden}
+}
+@media (min-width:860px) and (max-height:820px){
+  .desk-stage{padding-top:12px;padding-bottom:18px}
+  .machine{
+    height:calc(100dvh - 30px);
+    min-height:0;
+    grid-template-rows:38px 69px minmax(0,1fr);
+    row-gap:8px;
+  }
+  .topbar{height:auto}
+  .statusrow,.display,.hanzi{height:69px}
+  .display{padding-top:10px;padding-bottom:10px}
+  .display strong{font-size:17px}
+  .hanzi .streak,.hanzi .next{padding-top:7px;padding-bottom:7px}
+  .hanzi b{font-size:24px}.hanzi .char{font-size:23px}
+  .workspace{
+    grid-template-rows:minmax(0,1fr) minmax(0,.56fr) 52px;
+    gap:8px
+  }
+  .days,.ntu{gap:5px}
+  .lessoncard{padding-top:7px;padding-bottom:7px}
+  .deadline{padding-top:6px;padding-bottom:6px}
+  .task{padding-top:5px;padding-bottom:5px}
+  .studykey{padding-top:12px}
+  .postit{transform:scale(.83) rotate(var(--rot,0deg))}
+}
+@media(max-width:859px){
+  body{overflow:auto}
+  .desk-stage{height:auto;max-height:none;display:block;padding:20px 4px 34px}
+  .machine{width:100%;height:auto;min-height:0;display:block;transform:none}
+}
+</style>
+
 </head>
 <body>
 <div class="desk-stage">
