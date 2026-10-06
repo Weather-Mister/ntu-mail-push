@@ -2776,6 +2776,75 @@ h1{
 }
 </style>
 
+
+<style id="day-key-left-align-fix">
+/* Day keys: left-aligned like real legends, not centered tiles. */
+.day{
+  position:relative!important;
+  display:block!important;
+  text-align:left!important;
+}
+.day .keylegend{
+  left:8px!important;
+  top:6px!important;
+}
+.day small{
+  position:absolute!important;
+  right:8px!important;
+  top:7px!important;
+  margin:0!important;
+  font:700 7px/1 "Courier New",monospace!important;
+}
+.day>span:not(.keylegend){
+  position:absolute!important;
+  left:8px!important;
+  right:auto!important;
+  top:auto!important;
+  bottom:8px!important;
+  transform:none!important;
+  display:block!important;
+  font-size:13px!important;
+  font-weight:800!important;
+  line-height:1!important;
+  text-align:left!important;
+  white-space:nowrap!important;
+}
+.day.active>span:not(.keylegend){
+  bottom:7px!important;
+  transform:none!important;
+}
+
+@media(min-width:860px) and (max-height:760px){
+  .day>span:not(.keylegend){
+    bottom:6px!important;
+    font-size:12px!important;
+  }
+  .day.active>span:not(.keylegend){
+    bottom:5px!important;
+  }
+}
+
+@media(max-width:859px){
+  .day .keylegend{
+    left:5px!important;
+    top:5px!important;
+  }
+  .day small{
+    right:5px!important;
+    top:5px!important;
+  }
+  .day>span:not(.keylegend){
+    left:5px!important;
+    bottom:6px!important;
+    font-size:10px!important;
+    text-align:left!important;
+  }
+  .day.active>span:not(.keylegend){
+    bottom:5px!important;
+  }
+}
+</style>
+
 </head>
 <body>
 <div class="desk-stage">
