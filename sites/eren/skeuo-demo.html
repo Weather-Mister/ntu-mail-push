@@ -1835,6 +1835,310 @@ h1{
 }
 </style>
 
+
+<style id="composer-hardware-refine">
+/* Push the compose tray to the console edges and spend the height on the terminals. */
+.machine.mail-mode>.mail-console-view>.mailx-compose{
+  top:48px!important;
+  right:5px!important;
+  bottom:1px!important;
+  width:min(650px,calc(100% - 68px))!important;
+}
+.machine.mail-mode>.mail-console-view>.mailx-compose.is-open{
+  display:grid!important;
+  grid-template-rows:
+    38px
+    auto
+    minmax(156px,.82fr)
+    26px
+    37px
+    minmax(260px,1.42fr)
+    auto
+    auto
+    50px!important;
+}
+
+/* Addressing area stays compact. */
+.machine.mail-mode .mailx-compose-head{
+  height:38px!important;
+  min-height:38px!important;
+  padding:5px 8px!important;
+}
+.machine.mail-mode .mailx-compose-fields{
+  padding:2px 13px 0!important;
+}
+.machine.mail-mode .mailx-field-row{
+  height:30px!important;
+  min-height:30px!important;
+}
+.machine.mail-mode .mailx-field-row label{
+  width:60px!important;
+}
+
+/* AI bay: make the entire block a working terminal, including its controls. */
+.machine.mail-mode .mailx-ai-wrap{
+  margin:5px 13px 5px!important;
+  padding:10px 10px 8px!important;
+  min-height:156px!important;
+  border:3px solid #6d6453!important;
+  background:
+    repeating-linear-gradient(0deg,rgba(255,255,255,.017) 0 1px,transparent 1px 3px),
+    radial-gradient(circle at 78% 18%,rgba(126,145,116,.04),transparent 24%),
+    #24271f!important;
+  box-shadow:
+    inset 0 8px 18px rgba(0,0,0,.66),
+    inset 0 0 0 1px rgba(255,255,255,.022),
+    0 2px rgba(255,255,255,.10)!important;
+}
+.machine.mail-mode .mailx-ai-row{
+  min-height:78px!important;
+}
+.machine.mail-mode .mailx-ai-prompt{
+  min-height:78px!important;
+}
+
+/* AI shortcut controls now belong to the terminal instead of looking like cream keycaps. */
+.machine.mail-mode .mailx-ai-chip,
+.machine.mail-mode .mailx-ai-generate{
+  border:1px solid #51584b!important;
+  border-radius:3px!important;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0) 55%),
+    #30342c!important;
+  color:#d6ddce!important;
+  text-shadow:none!important;
+  box-shadow:
+    inset 0 1px rgba(255,255,255,.055),
+    inset 0 -2px rgba(0,0,0,.27),
+    0 2px 0 #191b17,
+    3px 4px 4px rgba(0,0,0,.24)!important;
+  transform:translateY(-2px)!important;
+  font-family:"Courier New",monospace!important;
+}
+.machine.mail-mode .mailx-ai-chip{
+  min-height:25px!important;
+  padding:0 9px!important;
+  font-size:7px!important;
+  font-weight:700!important;
+  letter-spacing:.035em!important;
+  text-transform:uppercase;
+}
+.machine.mail-mode .mailx-ai-generate{
+  min-width:104px!important;
+  height:38px!important;
+  min-height:38px!important;
+  padding:0 12px!important;
+  font-size:9px!important;
+  font-weight:800!important;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+}
+.machine.mail-mode .mailx-ai-chip:hover,
+.machine.mail-mode .mailx-ai-generate:hover{
+  background:#373c32!important;
+  color:#edf1e8!important;
+}
+.machine.mail-mode .mailx-ai-chip:active,
+.machine.mail-mode .mailx-ai-generate:active{
+  transform:translateY(1px)!important;
+  background:#252821!important;
+  box-shadow:
+    inset 0 3px 5px rgba(0,0,0,.48),
+    0 1px 0 #171914!important;
+}
+
+/* Keep the message-terminal label tight. */
+.machine.mail-mode .mailx-editor-label{
+  height:26px!important;
+  min-height:26px!important;
+  padding:4px 13px 3px!important;
+}
+
+/* Formatting controls get one compact row so the writing terminal can extend further. */
+.machine.mail-mode .mailx-format-toolbar{
+  height:37px!important;
+  min-height:37px!important;
+  margin:0 13px 5px!important;
+  padding:4px 6px!important;
+  flex-wrap:nowrap!important;
+}
+.machine.mail-mode .mailx-format-toolbar button,
+.machine.mail-mode .mailx-format-toolbar select{
+  height:25px!important;
+  min-height:25px!important;
+}
+
+/* Main writing terminal consumes the spare lower space. */
+.machine.mail-mode .mailx-email-body{
+  margin:0 13px 4px!important;
+  min-height:260px!important;
+  height:100%!important;
+  padding:15px 16px!important;
+}
+.machine.mail-mode .mailx-attachment-list{
+  max-height:30px!important;
+  padding:0 13px 2px!important;
+}
+.machine.mail-mode #mailxComposeError{
+  padding:0 13px!important;
+  min-height:0!important;
+}
+
+/* One coherent transmission-key bank. */
+.machine.mail-mode .mailx-compose-foot{
+  height:50px!important;
+  min-height:50px!important;
+  padding:7px 11px 6px!important;
+  gap:8px!important;
+  border-top:1px solid #827762!important;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.12),transparent 32%),
+    #b1a58c!important;
+}
+.machine.mail-mode .mailx-compose-note{
+  margin-right:auto!important;
+}
+.machine.mail-mode #mailxSaveDraft,
+.machine.mail-mode #mailxSchedule,
+.machine.mail-mode #mailxSend{
+  height:31px!important;
+  min-height:31px!important;
+  border:1px solid #817661!important;
+  border-radius:5px!important;
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.34),transparent 31%),
+    linear-gradient(180deg,#f0e8d5,#e0d6bf 62%,#c1b49a)!important;
+  color:#2d2921!important;
+  box-shadow:
+    inset 0 2px rgba(255,255,255,.62),
+    0 1px 0 #aea28a,
+    0 4px 0 #817661,
+    4px 6px 5px rgba(42,24,11,.22)!important;
+  transform:translateY(-3px)!important;
+  font:800 10px/1 Arial,sans-serif!important;
+}
+.machine.mail-mode #mailxSaveDraft:active,
+.machine.mail-mode #mailxSchedule:active,
+.machine.mail-mode #mailxSend:active{
+  transform:translateY(1px)!important;
+  box-shadow:inset 0 2px 3px rgba(72,61,45,.22),0 1px 0 #817661!important;
+}
+.machine.mail-mode #mailxSaveDraft{
+  width:36px!important;
+  min-width:36px!important;
+  padding:0!important;
+}
+.machine.mail-mode #mailxSaveDraft svg{
+  width:15px!important;
+  height:15px!important;
+  fill:none!important;
+  stroke:currentColor!important;
+  stroke-width:1.8!important;
+  stroke-linecap:round!important;
+  stroke-linejoin:round!important;
+}
+.machine.mail-mode #mailxSchedule,
+.machine.mail-mode #mailxSend{
+  width:112px!important;
+  min-width:112px!important;
+  padding:0 14px!important;
+}
+
+/* Close controls are physical console keys too — no white floating pills. */
+.machine.mail-mode #mailxClose,
+.machine.mail-mode .mailx-compose-close,
+.machine.mail-mode .mailx-sheet .mailx-compose-close{
+  width:32px!important;
+  min-width:32px!important;
+  height:28px!important;
+  min-height:28px!important;
+  padding:0!important;
+  border:1px solid #817661!important;
+  border-radius:5px!important;
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.30),transparent 31%),
+    linear-gradient(180deg,#eee5d2,#dbd0b8 63%,#bbae94)!important;
+  color:#3b352b!important;
+  box-shadow:
+    inset 0 2px rgba(255,255,255,.57),
+    0 1px 0 #a79b83,
+    0 4px 0 #7f745f,
+    4px 6px 5px rgba(40,23,11,.21)!important;
+  transform:translateY(-3px)!important;
+  font:900 16px/1 Arial,sans-serif!important;
+}
+.machine.mail-mode #mailxClose:hover,
+.machine.mail-mode .mailx-compose-close:hover{
+  filter:brightness(1.025)!important;
+}
+.machine.mail-mode #mailxClose:active,
+.machine.mail-mode .mailx-compose-close:active{
+  transform:translateY(1px)!important;
+  box-shadow:inset 0 2px 3px rgba(72,61,45,.22),0 1px 0 #7f745f!important;
+}
+
+/* Short displays: still use more of the available lower area. */
+@media(min-width:861px) and (max-height:760px){
+  .machine.mail-mode>.mail-console-view>.mailx-compose{
+    top:44px!important;
+    bottom:0!important;
+  }
+  .machine.mail-mode>.mail-console-view>.mailx-compose.is-open{
+    grid-template-rows:
+      34px
+      auto
+      minmax(120px,.68fr)
+      23px
+      33px
+      minmax(190px,1.20fr)
+      auto
+      auto
+      44px!important;
+  }
+  .machine.mail-mode .mailx-compose-head{
+    height:34px!important;min-height:34px!important;
+  }
+  .machine.mail-mode .mailx-field-row{
+    height:27px!important;min-height:27px!important;
+  }
+  .machine.mail-mode .mailx-ai-wrap{
+    min-height:120px!important;
+    margin-top:4px!important;
+  }
+  .machine.mail-mode .mailx-ai-prompt{
+    min-height:58px!important;
+  }
+  .machine.mail-mode .mailx-editor-label{
+    height:23px!important;min-height:23px!important;
+  }
+  .machine.mail-mode .mailx-format-toolbar{
+    height:33px!important;min-height:33px!important;
+  }
+  .machine.mail-mode .mailx-email-body{
+    min-height:190px!important;
+  }
+  .machine.mail-mode .mailx-compose-foot{
+    height:44px!important;min-height:44px!important;padding-top:5px!important;
+  }
+  .machine.mail-mode #mailxSaveDraft,
+  .machine.mail-mode #mailxSchedule,
+  .machine.mail-mode #mailxSend{
+    height:28px!important;min-height:28px!important;
+  }
+}
+@media(max-width:860px){
+  .machine.mail-mode>.mail-console-view>.mailx-compose.is-open{
+    grid-template-rows:
+      auto auto
+      minmax(140px,.75fr)
+      auto auto
+      minmax(210px,1.2fr)
+      auto auto
+      calc(52px + env(safe-area-inset-bottom))!important;
+  }
+}
+</style>
+
 </head>
 <body>
 <div class="desk-stage">
@@ -2124,7 +2428,7 @@ h1{
 
     <div class="mailx-compose-foot">
       <span class="mailx-compose-note"><span id="mailxDraftState">Your editable draft</span></span>
-      <button class="mailx-action mailx-save-draft-icon" id="mailxSaveDraft" type="button" title="Save draft">Save draft</button>
+      <button class="mailx-action mailx-save-draft-icon" id="mailxSaveDraft" type="button" title="Save draft" aria-label="Save draft"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11l3 3v13H5z"/><path d="M8 4v6h8V4"/><path d="M8 20v-6h8v6"/></svg></button>
       <button class="mailx-schedule" id="mailxSchedule" type="button">Schedule</button>
       <button class="mailx-send" id="mailxSend" type="button">Send</button>
     </div>
