@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#4a2817">
+<title>NTU Mail — Keyboard Demo</title>
+<link rel="icon" href="./favicon.svg" type="image/svg+xml">
+<style>
+:root{
+  --wood1:#3a1d10;--wood2:#59301a;--wood3:#6d3a20;
+  --case:#c8bea4;--case-hi:#ded4bb;--case-lo:#8b806a;--case-edge:#6f6452;
+  --well:#a79b82;--panel:#b8ad93;--panel2:#c4b9a1;
+  --key:#e4dcc7;--key-hi:#f1ead8;--key-side:#817661;
+  --ink:#29251e;--muted:#6a6151;--screen:#252821;--screen2:#30332c;
+  --screen-ink:#e2dfd0;--green:#718361;--amber:#b77f39;--red:#9f584e;--blue:#4e6383;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--wood1)}
+body{
+  font-family:Arial,Helvetica,sans-serif;color:var(--ink);padding:8px 10px 18px;overflow-x:hidden;
+  background:
+    repeating-linear-gradient(1deg,transparent 0 23px,rgba(28,10,2,.18) 24px,rgba(255,255,255,.018) 25px,transparent 28px 52px),
+    repeating-linear-gradient(91deg,rgba(255,255,255,.012) 0 1px,transparent 1px 11px),
+    linear-gradient(102deg,var(--wood1),var(--wood2) 33%,var(--wood3) 61%,var(--wood1));
+}
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:20;
+  background:linear-gradient(132deg,transparent 0 49%,rgba(255,171,77,.07) 50%,rgba(255,151,57,.20) 58%,rgba(255,136,42,.09) 67%,transparent 76%);
+  mix-blend-mode:screen;
+}
+body::after{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:21;opacity:.18;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' seed='27'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.32'/%3E%3C/svg%3E");
+}
+button,input,textarea{font:inherit}
+.stage{
+  width:min(1430px,100%);height:calc(100dvh - 16px);margin:auto;display:flex;align-items:flex-start;justify-content:center;position:relative;
+}
+.stage::before{
+  content:"";position:absolute;left:5%;right:-1%;bottom:3%;height:76px;filter:blur(9px);background:rgba(10,4,1,.77);
+  transform:skewX(-14deg) translate(36px,10px)
+}
+.keyboard{
+  position:relative;width:min(1360px,calc(100vw - 60px));height:min(760px,calc(100dvh - 32px));
+  min-height:630px;padding:17px;border:1px solid #796e59;border-radius:13px 13px 20px 20px;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.34),transparent 10%),
+    linear-gradient(180deg,#d8ceb5 0 6%,#c9bea4 6% 92%,#b2a58b 92%);
+  box-shadow:
+    inset 0 2px 0 rgba(255,255,255,.58),
+    inset 0 -4px 0 rgba(100,88,66,.24),
+    0 10px 0 #8b806a,
+    0 17px 0 #6e6453,
+    24px 34px 8px rgba(24,9,2,.52),
+    45px 56px 18px rgba(17,6,2,.40);
+  transform:perspective(1400px) rotateX(2.8deg) rotateZ(-.32deg);
+  display:grid;grid-template-rows:42px minmax(0,1fr);gap:9px;overflow:hidden
+}
+.keyboard::before{
+  content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;opacity:.10;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.72' numOctaves='3' seed='11'/%3E%3C/filter id='n'%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.40'/%3E%3C/svg%3E");
+}
+.keyboard::after{content:"";position:absolute;left:16px;right:16px;top:55px;height:1px;background:#8f846d;box-shadow:0 1px rgba(255,255,255,.28)}
+.screw{position:absolute;width:9px;height:9px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#aaa99f 0 12%,#686a64 35%,#444741 70%);border:1px solid #4c4e49;z-index:5}
+.screw::after{content:"";position:absolute;left:1px;right:1px;top:3px;height:1px;background:#363833;transform:rotate(var(--r,12deg))}
+.s1{left:7px;top:8px;--r:17deg}.s2{right:7px;top:8px;--r:-28deg}.s3{left:7px;bottom:8px;--r:41deg}.s4{right:7px;bottom:8px;--r:-8deg}
+
+.topbar{display:flex;align-items:center;gap:10px;padding:0 5px;min-width:0}
+.brand{display:flex;align-items:center;gap:9px;min-width:190px}
+.brandmark{width:25px;height:25px;display:grid;place-items:center;background:#ada38c;border:1px solid #786d58;font-weight:900;font-size:12px;color:#4d4539}
+.brand small,.micro,.legend,.folder small,.mail-time,.meta,.stat{font-family:"Courier New",monospace}
+.brand small{display:block;font-size:6.5px;letter-spacing:.13em;color:#706655}
+.brand strong{display:block;font-size:20px;line-height:1}
+.search-shell{flex:1;max-width:520px;min-width:140px;background:#8a806b;border:1px solid #6c6251;border-radius:5px;box-shadow:inset 0 3px 6px rgba(36,27,17,.36),0 1px rgba(255,255,255,.18);height:30px;display:flex;align-items:center;padding:0 9px;gap:7px;color:#e6e0d0}
+.search-shell input{border:0;outline:0;background:transparent;color:#eee8d9;min-width:0;width:100%;font-size:11px}.search-shell input::placeholder{color:#cfc6b3}
+.topspacer{flex:1}
+.key{
+  --side:var(--key-side);appearance:none;position:relative;border:1px solid #8b806a;border-radius:6px 6px 8px 8px;
+  color:#2d2921;background:
+    linear-gradient(145deg,rgba(255,255,255,.34),transparent 31%),
+    linear-gradient(180deg,var(--key-hi),var(--key) 62%,#c4b89e);
+  box-shadow:inset 0 2px rgba(255,255,255,.65),0 2px 0 #aea28a,0 6px 0 var(--side),7px 10px 8px rgba(39,22,10,.31);
+  transform:translateY(-5px);cursor:pointer;transition:transform 60ms,box-shadow 60ms;
+}
+.key:active,.key.down{transform:translateY(1px);box-shadow:inset 0 2px 3px rgba(72,61,45,.22),0 1px 0 var(--side),2px 3px 3px rgba(38,21,10,.16)}
+.legend{position:absolute;left:5px;top:4px;font-size:5.5px;font-weight:700;color:#786f5e}
+.topkey{height:29px;min-width:36px;padding:8px 9px 2px;font-size:8px;font-weight:800}
+.compose-key{min-width:78px;--key:#d5c9a8;--key-hi:#e8dec0}
+
+.mailgrid{
+  min-height:0;display:grid;grid-template-columns:112px minmax(290px,340px) minmax(0,1fr);gap:8px
+}
+.well{
+  min-width:0;min-height:0;border:1px solid #746a57;border-radius:6px;background:#aa9f87;
+  box-shadow:inset 0 4px 9px rgba(70,55,35,.30),inset 0 -1px rgba(255,255,255,.22)
+}
+.sidebar{padding:9px;display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:8px}
+.sidebar-label{font:700 6.5px "Courier New",monospace;letter-spacing:.13em;color:#e2dbc8;padding:0 2px}
+.folders{display:grid;grid-template-rows:repeat(7,1fr);gap:6px}
+.folder{min-height:0;padding:13px 7px 4px;display:grid;grid-template-columns:18px 1fr;align-items:center;gap:5px;text-align:left}
+.folder b{font-size:12px;text-align:center}.folder span{font-size:8px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.folder small{position:absolute;right:5px;bottom:4px;font-size:5.5px;color:#766d5d}
+.folder.active{transform:translateY(1px);--side:#30425f;background:linear-gradient(#7183a0,#526887);color:#f1ede3;box-shadow:inset 0 2px 4px rgba(29,39,56,.32),0 1px 0 #2e405d,2px 3px 3px rgba(35,22,13,.18)}
+.folder.active .legend,.folder.active small{color:#d9dce0}
+.account{height:45px;padding:13px 7px 4px;display:flex;align-items:center;gap:7px}.account .avatar{width:20px;height:20px;border-radius:3px;background:#8b806a;color:#f0e9d7;display:grid;place-items:center;font-size:8px;font-weight:900}.account span{font-size:7px;font-weight:800}
+
+.listpane{display:flex;flex-direction:column;overflow:hidden}
+.listhead{padding:8px 9px 6px;border-bottom:1px solid #817660;display:flex;align-items:center;gap:8px}
+.listhead h2{font-size:16px;margin:0}.listhead .stat{margin-left:auto;font-size:6.5px;color:#675f50}
+.list{overflow:auto;min-height:0;scrollbar-width:thin;scrollbar-color:#766c59 #aaa08a}
+.mail{
+  width:100%;border:0;border-bottom:1px solid #817660;background:#b9ae96;color:var(--ink);text-align:left;cursor:pointer;
+  padding:10px 10px 9px;display:grid;grid-template-columns:30px minmax(0,1fr);gap:8px;position:relative
+}
+.mail:hover{background:#c1b6a0}.mail.selected{background:#d0c5ab;box-shadow:inset 4px 0 var(--blue)}
+.mail-avatar{width:28px;height:28px;border:1px solid #817662;background:#a39880;display:grid;place-items:center;font-size:9px;font-weight:900}
+.mail.unread .mail-avatar{background:#6f7f62;color:#eeeadd}
+.mail-main{min-width:0}.mail-row{display:flex;align-items:center;gap:6px;min-width:0}.sender{font-size:10px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.unread .sender,.unread .subject{font-weight:900}.mail-time{margin-left:auto;font-size:6px;color:#6d6557;white-space:nowrap}
+.subject{display:block;font-size:10.5px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.snippet{display:block;font-size:8px;color:#665e50;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mailtags{display:flex;gap:4px;margin-top:5px}.tag{font:700 5.5px "Courier New",monospace;border:1px solid #887d68;padding:2px 4px;background:#aca18a}.tag.hot{color:#7f302a;background:#d1b39b}.tag.reply{color:#62501f;background:#d2c69e}
+.dot{width:6px;height:6px;border-radius:50%;background:#6f8363;box-shadow:0 0 4px rgba(98,126,86,.35)}
+
+.reader{display:flex;flex-direction:column;overflow:hidden;background:#b3a890}
+.toolbar{height:44px;flex:0 0 44px;padding:7px 9px;border-bottom:1px solid #786d58;display:flex;align-items:center;gap:6px}
+.toolkey{height:28px;min-width:34px;padding:8px 8px 2px;font-size:7px;font-weight:800}.toolkey.reply{--key:#d2c6a6}
+.readscreen{min-height:0;flex:1;margin:0 8px 8px;border:3px solid #887d68;border-radius:5px;background:
+  repeating-linear-gradient(0deg,rgba(255,255,255,.014) 0 1px,transparent 1px 3px),var(--screen);
+  color:var(--screen-ink);box-shadow:inset 0 6px 14px rgba(0,0,0,.56),9px 11px 13px rgba(41,23,11,.21);
+  overflow:auto;padding:18px 20px
+}
+.reader-head{padding-bottom:13px;border-bottom:1px solid #44483e}.reader-head .micro{font-size:6.5px;letter-spacing:.12em;color:#8c9586}.reader-head h2{margin:5px 0 12px;font-size:22px;line-height:1.1;color:#e7e2d1}
+.fromrow{display:flex;align-items:center;gap:9px}.fromavatar{width:32px;height:32px;border:1px solid #5d6255;background:#66705e;display:grid;place-items:center;font-size:10px;font-weight:900}.fromcopy{min-width:0;flex:1}.fromcopy strong{font-size:10px}.fromcopy span{display:block;margin-top:2px;font:700 6.5px "Courier New",monospace;color:#9ea595}.fromdate{font:700 6.5px "Courier New",monospace;color:#888f81}
+.bodycopy{max-width:72ch;padding:18px 0;font-size:12px;line-height:1.65;color:#d0d2c5}.bodycopy p{margin:0 0 12px}.bodycopy a{color:#b8c899}
+.attachment{display:inline-flex;align-items:center;gap:8px;border:1px solid #555b4d;background:#31362e;padding:8px 10px;margin-top:4px;font-size:8px}.filetype{width:28px;height:30px;display:grid;place-items:center;background:#525b4b;font:700 6px "Courier New",monospace}
+.replybar{display:flex;gap:7px;padding-top:14px;border-top:1px solid #44483e}.replybar .key{height:31px;padding:8px 11px 2px;font-size:8px;font-weight:800}
+
+.compose{
+  display:none;position:absolute;right:28px;top:68px;width:min(590px,calc(100% - 56px));height:min(560px,calc(100% - 95px));z-index:8;
+  background:#c4b9a1;border:1px solid #756a56;border-radius:8px;padding:10px;
+  box-shadow:0 8px 0 #847861,18px 24px 18px rgba(25,10,3,.45)
+}
+.compose.open{display:flex;flex-direction:column}
+.compose-head{display:flex;align-items:center;gap:7px;padding:2px 3px 9px;border-bottom:1px solid #8a7f69}.compose-head strong{font-size:13px}.compose-head .key{margin-left:auto}
+.field{display:grid;grid-template-columns:48px 1fr;align-items:center;border-bottom:1px solid #91856f;min-height:34px}.field label{font:700 6.5px "Courier New",monospace;color:#625a4d}.field input{border:0;background:transparent;outline:0;color:#2d2922;font-size:10px}
+.compose textarea{flex:1;min-height:0;margin-top:9px;border:2px solid #867b66;border-radius:4px;background:#8d836f;color:#eee7d8;box-shadow:inset 0 4px 8px rgba(35,25,15,.34);padding:10px;resize:none;outline:0;font-size:11px;line-height:1.5}
+.compose textarea::placeholder{color:#d0c8b8}.compose-foot{display:flex;justify-content:flex-end;gap:7px;padding-top:9px}.send{--key:#cbbf9f;min-width:72px}
+
+.chip{position:absolute;background:#746a57;clip-path:polygon(0 0,100% 18%,78% 100%,22% 82%);z-index:4}.chip.a{width:18px;height:8px;left:180px;top:-1px}.chip.b{width:13px;height:7px;right:42px;bottom:-1px}
+.stain{position:absolute;width:120px;height:48px;right:19%;top:4px;border-radius:50%;background:radial-gradient(circle,rgba(83,49,24,.15),rgba(94,53,24,.07) 48%,transparent 70%);mix-blend-mode:multiply;pointer-events:none}
+.crack{position:absolute;right:138px;top:9px;width:50px;height:24px}.crack::before,.crack::after{content:"";position:absolute;height:1px;background:#776b58;transform-origin:left}.crack::before{width:32px;transform:rotate(16deg)}.crack::after{width:22px;left:25px;top:9px;transform:rotate(-25deg)}
+
+@media(min-width:861px){body{overflow:hidden}}
+@media(max-width:860px){
+  body{padding:0;overflow:auto}
+  .stage{height:auto;display:block}.keyboard{width:100%;height:100dvh;min-height:0;border-radius:0;transform:none;padding:10px;grid-template-rows:auto minmax(0,1fr)}
+  .topbar{flex-wrap:wrap}.brand{min-width:0}.brand small{display:none}.brand strong{font-size:18px}.search-shell{order:10;flex:1 0 100%;max-width:none}
+  .mailgrid{grid-template-columns:1fr}.sidebar{display:none}.listpane{display:flex}.reader{display:none}.mailgrid.reading .listpane{display:none}.mailgrid.reading .reader{display:flex}
+  .compose{position:fixed;inset:0;width:100%;height:100dvh;border-radius:0;right:auto;top:auto}
+}
+@media(max-width:430px){.keyboard{padding:8px}.topkey{min-width:31px;padding-left:7px;padding-right:7px}.compose-key{min-width:66px}.mail{padding:11px 9px}.readscreen{padding:15px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="stage">
+<main class="keyboard">
+  <i class="screw s1"></i><i class="screw s2"></i><i class="screw s3"></i><i class="screw s4"></i>
+  <i class="chip a"></i><i class="chip b"></i><i class="stain"></i><i class="crack"></i>
+
+  <header class="topbar">
+    <div class="brand"><div class="brandmark">N</div><div><small>NTU PERSONAL TERMINAL / MAIL</small><strong>NTU Mail</strong></div></div>
+    <div class="search-shell"><span>⌕</span><input id="search" placeholder="Search mail"></div>
+    <div class="topspacer"></div>
+    <button class="key topkey compose-key" id="composeBtn"><span class="legend">NEW</span>COMPOSE</button>
+    <button class="key topkey" id="refreshBtn"><span class="legend">RFRSH</span>↻</button>
+    <button class="key topkey" id="scheduleBtn"><span class="legend">BACK</span>⌂</button>
+  </header>
+
+  <section class="mailgrid" id="mailgrid">
+    <aside class="well sidebar">
+      <div class="sidebar-label">MAIL / SELECT</div>
+      <nav class="folders">
+        <button class="key folder active"><span class="legend">F1</span><b>▰</b><span>Inbox</span><small>12</small></button>
+        <button class="key folder"><span class="legend">F2</span><b>●</b><span>Unread</span><small>4</small></button>
+        <button class="key folder"><span class="legend">F3</span><b>★</b><span>Starred</span><small>3</small></button>
+        <button class="key folder"><span class="legend">F4</span><b>↗</b><span>Sent</span><small></small></button>
+        <button class="key folder"><span class="legend">F5</span><b>□</b><span>Drafts</span><small>2</small></button>
+        <button class="key folder"><span class="legend">F6</span><b>▱</b><span>Archive</span><small></small></button>
+        <button class="key folder"><span class="legend">F7</span><b>×</b><span>Trash</span><small></small></button>
+      </nav>
+      <button class="key account"><span class="legend">ACC</span><span class="avatar">E</span><span>NTU</span></button>
+    </aside>
+
+    <section class="well listpane">
+      <div class="listhead"><h2>Inbox</h2><span class="dot"></span><span class="stat">12 MESSAGES / 4 UNREAD</span></div>
+      <div class="list" id="list">
+        <button class="mail unread selected" data-subject="ME2001 — Homework 4 reminder" data-from="Engineering Mathematics" data-email="meganho@ntu.edu.tw" data-date="Today · 14:22" data-body="Reminder that Homework 4 is due tonight at 23:59. Please upload one PDF through NTU COOL.||The submission link will close automatically at the deadline, so please check that the uploaded file opens correctly before leaving the page.">
+          <span class="mail-avatar">ME</span><span class="mail-main"><span class="mail-row"><span class="sender">Engineering Mathematics</span><span class="mail-time">14:22</span></span><span class="subject">ME2001 — Homework 4 reminder</span><span class="snippet">Reminder that Homework 4 is due tonight at 23:59…</span><span class="mailtags"><span class="tag hot">DEADLINE</span><span class="tag reply">COURSE</span></span></span>
+        </button>
+        <button class="mail unread" data-subject="Course announcement: Friday classroom" data-from="Statics" data-email="statics@ntu.edu.tw" data-date="Today · 12:05" data-body="Friday's class will remain in 繡山講堂. Please bring a calculator and your printed formula sheet.||The quiz will begin during the second half of the class.">
+          <span class="mail-avatar">ST</span><span class="mail-main"><span class="mail-row"><span class="sender">Statics</span><span class="mail-time">12:05</span></span><span class="subject">Course announcement: Friday classroom</span><span class="snippet">Friday's class will remain in 繡山講堂…</span><span class="mailtags"><span class="tag">COURSE</span></span></span>
+        </button>
+        <button class="mail unread" data-subject="您的作業已批改" data-from="NTU COOL" data-email="noreply@cool.ntu.edu.tw" data-date="Today · 09:18" data-body="Your Engineering Materials assignment has been graded.||Open NTU COOL to view the score and instructor feedback.">
+          <span class="mail-avatar">NC</span><span class="mail-main"><span class="mail-row"><span class="sender">NTU COOL</span><span class="mail-time">09:18</span></span><span class="subject">您的作業已批改</span><span class="snippet">Your Engineering Materials assignment has been graded…</span><span class="mailtags"><span class="tag">COOL</span></span></span>
+        </button>
+        <button class="mail" data-subject="Authorization code confirmation" data-from="Office of Academic Affairs" data-email="course@ntu.edu.tw" data-date="Yesterday · 17:44" data-body="Your course authorization request has been processed.||Please check the course selection system and confirm your registration status before the add/drop deadline.">
+          <span class="mail-avatar">AA</span><span class="mail-main"><span class="mail-row"><span class="sender">Academic Affairs</span><span class="mail-time">YDAY</span></span><span class="subject">Authorization code confirmation</span><span class="snippet">Your course authorization request has been processed…</span><span class="mailtags"><span class="tag">NTU</span></span></span>
+        </button>
+        <button class="mail" data-subject="Psychology reading for next week" data-from="General Psychology" data-email="psych@ntu.edu.tw" data-date="Yesterday · 11:02" data-body="The reading for next week is now available on COOL.||Please finish Chapter 5 before class and bring one discussion question.">
+          <span class="mail-avatar">PS</span><span class="mail-main"><span class="mail-row"><span class="sender">General Psychology</span><span class="mail-time">YDAY</span></span><span class="subject">Psychology reading for next week</span><span class="snippet">The reading for next week is now available on COOL…</span><span class="mailtags"><span class="tag">READING</span></span></span>
+        </button>
+        <button class="mail" data-subject="Receipt — NT$428" data-from="Carrefour" data-email="service@carrefour.tw" data-date="Mon · 20:31" data-body="Thank you for your purchase.||Total: NT$428. Your electronic receipt has been issued.">
+          <span class="mail-avatar">CF</span><span class="mail-main"><span class="mail-row"><span class="sender">Carrefour</span><span class="mail-time">MON</span></span><span class="subject">Receipt — NT$428</span><span class="snippet">Thank you for your purchase. Your electronic receipt…</span><span class="mailtags"><span class="tag">RECEIPT</span></span></span>
+        </button>
+      </div>
+    </section>
+
+    <section class="well reader">
+      <div class="toolbar">
+        <button class="key toolkey" id="backBtn"><span class="legend">ESC</span>←</button>
+        <button class="key toolkey reply"><span class="legend">R</span>REPLY</button>
+        <button class="key toolkey"><span class="legend">F</span>FWD</button>
+        <button class="key toolkey"><span class="legend">A</span>ARCH</button>
+        <button class="key toolkey"><span class="legend">S</span>★</button>
+        <button class="key toolkey"><span class="legend">DEL</span>×</button>
+      </div>
+      <article class="readscreen">
+        <header class="reader-head">
+          <span class="micro">INBOX / COURSE / DEADLINE</span>
+          <h2 id="rSubject">ME2001 — Homework 4 reminder</h2>
+          <div class="fromrow">
+            <div class="fromavatar" id="rAvatar">ME</div>
+            <div class="fromcopy"><strong id="rFrom">Engineering Mathematics</strong><span id="rEmail">meganho@ntu.edu.tw</span></div>
+            <div class="fromdate" id="rDate">Today · 14:22</div>
+          </div>
+        </header>
+        <div class="bodycopy" id="rBody">
+          <p>Reminder that Homework 4 is due tonight at 23:59. Please upload one PDF through NTU COOL.</p>
+          <p>The submission link will close automatically at the deadline, so please check that the uploaded file opens correctly before leaving the page.</p>
+          <div class="attachment"><span class="filetype">PDF</span><span><strong>HW4-instructions.pdf</strong><br><span class="meta">182 KB · ATTACHMENT</span></span></div>
+        </div>
+        <div class="replybar"><button class="key">REPLY</button><button class="key">FORWARD</button></div>
+      </article>
+    </section>
+  </section>
+
+  <section class="compose" id="compose">
+    <div class="compose-head"><strong>New message</strong><span class="micro">DRAFT / LOCAL</span><button class="key topkey" id="closeCompose">×</button></div>
+    <div class="field"><label>FROM</label><input value="NTU Mail"></div>
+    <div class="field"><label>TO</label><input placeholder="Recipient"></div>
+    <div class="field"><label>SUBJECT</label><input placeholder="Subject"></div>
+    <textarea placeholder="Write your message…"></textarea>
+    <div class="compose-foot"><button class="key topkey">ATTACH</button><button class="key topkey send">SEND</button></div>
+  </section>
+</main>
+</div>
+<script>
+const grid=document.getElementById('mailgrid');
+const mails=[...document.querySelectorAll('.mail')];
+const subject=document.getElementById('rSubject'),from=document.getElementById('rFrom'),email=document.getElementById('rEmail'),date=document.getElementById('rDate'),body=document.getElementById('rBody'),avatar=document.getElementById('rAvatar');
+mails.forEach(m=>m.addEventListener('click',()=>{
+  mails.forEach(x=>x.classList.remove('selected'));m.classList.add('selected');m.classList.remove('unread');
+  subject.textContent=m.dataset.subject;from.textContent=m.dataset.from;email.textContent=m.dataset.email;date.textContent=m.dataset.date;
+  avatar.textContent=m.querySelector('.mail-avatar').textContent;
+  body.innerHTML=m.dataset.body.split('||').map(x=>'<p>'+x+'</p>').join('');
+  grid.classList.add('reading');
+}));
+document.querySelectorAll('.folder').forEach(f=>f.addEventListener('click',()=>{document.querySelectorAll('.folder').forEach(x=>x.classList.remove('active'));f.classList.add('active')}));
+document.getElementById('composeBtn').onclick=()=>document.getElementById('compose').classList.add('open');
+document.getElementById('closeCompose').onclick=()=>document.getElementById('compose').classList.remove('open');
+document.getElementById('backBtn').onclick=()=>grid.classList.remove('reading');
+document.getElementById('scheduleBtn').onclick=()=>location.href='./skeuo-demo.html';
+document.getElementById('refreshBtn').onclick=e=>{e.currentTarget.classList.add('down');setTimeout(()=>e.currentTarget.classList.remove('down'),180)};
+document.getElementById('search').addEventListener('input',e=>{const q=e.target.value.toLowerCase();mails.forEach(m=>m.hidden=!m.innerText.toLowerCase().includes(q))});
+</script>
+</body>
+</html>
