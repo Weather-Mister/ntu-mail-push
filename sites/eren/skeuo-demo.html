@@ -2661,6 +2661,121 @@ h1{
 }
 </style>
 
+
+<style id="day-key-repair">
+/* Repair the day bank: one clear keyface hierarchy instead of a cramped two-column layout. */
+.days{
+  gap:7px!important;
+  overflow:visible!important;
+}
+.day{
+  position:relative!important;
+  display:block!important;
+  min-height:0!important;
+  padding:0!important;
+  overflow:visible!important;
+  text-align:center!important;
+}
+.day .keylegend{
+  left:7px!important;
+  top:6px!important;
+  font-size:6px!important;
+  line-height:1!important;
+}
+.day>span:not(.keylegend){
+  position:absolute!important;
+  left:7px!important;
+  right:7px!important;
+  top:50%!important;
+  transform:translateY(-37%)!important;
+  display:block!important;
+  width:auto!important;
+  max-width:none!important;
+  font-size:13px!important;
+  font-weight:800!important;
+  line-height:1!important;
+  text-align:left!important;
+  white-space:nowrap!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+}
+.day small{
+  position:absolute!important;
+  right:7px!important;
+  top:6px!important;
+  margin:0!important;
+  padding:0!important;
+  font:700 7px/1 "Courier New",monospace!important;
+  white-space:nowrap!important;
+}
+.day.active{
+  transform:translateY(0)!important;
+  box-shadow:
+    inset 0 3px 5px rgba(22,31,45,.35),
+    inset 0 -1px rgba(255,255,255,.08),
+    0 1px 0 #2d3e59,
+    2px 3px 3px rgba(35,22,13,.17)!important;
+}
+.day.active>span:not(.keylegend){
+  transform:translateY(-31%)!important;
+}
+.day.active .keylegend,
+.day.active small{
+  color:#d9dee4!important;
+}
+
+/* Don't let the rail frame visually crowd the key edges. */
+.rail{
+  padding-left:9px!important;
+  padding-right:9px!important;
+}
+.rail::after{
+  left:7px!important;
+  right:7px!important;
+}
+
+/* Preserve a compact but readable version on short desktop screens. */
+@media(min-width:860px) and (max-height:760px){
+  .days{gap:5px!important}
+  .day .keylegend,
+  .day small{top:5px!important}
+  .day>span:not(.keylegend){
+    font-size:12px!important;
+  }
+}
+
+/* Mobile remains a horizontal bank, with the same keyface hierarchy. */
+@media(max-width:859px){
+  .days{
+    gap:4px!important;
+  }
+  .day{
+    min-height:50px!important;
+  }
+  .day .keylegend{
+    left:5px!important;
+    top:5px!important;
+    font-size:5px!important;
+  }
+  .day small{
+    right:5px!important;
+    top:5px!important;
+    font-size:5.5px!important;
+  }
+  .day>span:not(.keylegend){
+    left:3px!important;
+    right:3px!important;
+    top:54%!important;
+    transform:translateY(-50%)!important;
+    font-size:10px!important;
+    text-align:center!important;
+  }
+  .day.active>span:not(.keylegend){
+    transform:translateY(-44%)!important;
+  }
+}
+</style>
+
 </head>
 <body>
 <div class="desk-stage">
