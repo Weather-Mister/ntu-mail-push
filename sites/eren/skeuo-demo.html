@@ -711,6 +711,60 @@ h1{
 }
 </style>
 
+
+<style id="final-fit-pass">
+@media (min-width:860px){
+  .desk-stage{
+    padding-top:10px;
+    padding-bottom:12px;
+  }
+  .machine{
+    width:min(1320px,calc(100vw - 104px));
+    height:calc(100dvh - 24px);
+    max-height:748px;
+    min-height:0;
+    grid-template-rows:35px 88px minmax(0,1fr);
+    row-gap:7px;
+  }
+  .topbar{height:35px}
+  .statusrow,.display,.hanzi{
+    height:88px;
+    min-height:88px;
+  }
+  .display{
+    padding-top:14px;
+    padding-bottom:14px;
+  }
+  .workspace{
+    grid-template-rows:minmax(0,1fr) minmax(0,.52fr) 46px;
+    gap:7px;
+  }
+  .cool,.todo,.transfer{padding:8px}
+  .deadline{padding-top:5px;padding-bottom:5px}
+  .task{padding-top:4px;padding-bottom:4px}
+  .transfer textarea{height:50px}
+  .transferitem{padding-top:4px;padding-bottom:4px}
+  .studykey{padding-top:10px}
+}
+@media (min-width:860px) and (max-height:760px){
+  .machine{
+    width:min(1290px,calc(100vw - 116px));
+    height:calc(100dvh - 18px);
+    grid-template-rows:33px 86px minmax(0,1fr);
+    row-gap:6px;
+  }
+  .topbar{height:33px}
+  .statusrow,.display,.hanzi{
+    height:86px;
+    min-height:86px;
+  }
+  .workspace{
+    grid-template-rows:minmax(0,1fr) minmax(0,.48fr) 44px;
+    gap:6px;
+  }
+}
+</style>
+
 </head>
 <body>
 <div class="desk-stage">
