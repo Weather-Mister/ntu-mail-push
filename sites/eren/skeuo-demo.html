@@ -765,6 +765,98 @@ h1{
 }
 </style>
 
+
+<style id="screenshot-fit-fix">
+@media (min-width:860px){
+  .desk-stage{
+    padding-top:8px;
+    padding-bottom:8px;
+  }
+  .machine{
+    width:min(1300px,calc(100vw - 118px));
+    height:min(690px,calc(100dvh - 74px));
+    max-height:690px;
+    grid-template-rows:34px 94px minmax(0,1fr);
+    row-gap:6px;
+    transform:perspective(1400px) rotateX(3deg) rotateZ(-.38deg);
+    box-shadow:
+      inset 0 2px 0 rgba(255,255,255,.56),
+      inset 0 -4px 0 rgba(100,88,66,.24),
+      0 9px 0 #8b806a,
+      0 15px 0 #6e6453,
+      23px 31px 7px rgba(24,9,2,.52),
+      40px 47px 16px rgba(17,6,2,.38);
+  }
+  .topbar{height:34px}
+  .statusrow,.display,.hanzi{
+    height:94px;
+    min-height:94px;
+  }
+  .display{
+    padding:17px 18px;
+  }
+  .display strong{
+    font-size:20px;
+    margin-top:7px;
+  }
+  .display p{margin-top:7px}
+  .hanzi .streak,.hanzi .next{
+    padding-top:12px;
+    padding-bottom:10px;
+  }
+  .workspace{
+    grid-template-rows:minmax(0,1fr) minmax(0,.44fr) 42px;
+    gap:6px;
+  }
+  .rail{gap:5px}
+  .days,.ntu{gap:5px}
+  .cool,.todo,.transfer{padding:7px 8px}
+  .module-head{margin-bottom:4px}
+  .deadline{
+    padding-top:4px;
+    padding-bottom:4px;
+  }
+  .deadline .bar{margin-top:4px}
+  .task{
+    padding-top:3px;
+    padding-bottom:3px;
+  }
+  .form{margin:6px 0}
+  .transfer textarea{height:44px}
+  .sendrow{margin-top:5px}
+  .transferitem{
+    padding-top:3px;
+    padding-bottom:3px;
+  }
+  .study{
+    padding-top:4px;
+  }
+  .studygrid{gap:5px}
+  .studykey{
+    padding-top:8px;
+  }
+  .studykey b{
+    font-size:13px;
+    margin-bottom:2px;
+  }
+  .studykey span{font-size:6px}
+}
+@media (min-width:860px) and (max-height:760px){
+  .machine{
+    height:calc(100dvh - 58px);
+    max-height:660px;
+    grid-template-rows:32px 90px minmax(0,1fr);
+  }
+  .statusrow,.display,.hanzi{
+    height:90px;
+    min-height:90px;
+  }
+  .workspace{
+    grid-template-rows:minmax(0,1fr) minmax(0,.40fr) 40px;
+  }
+}
+</style>
+
 </head>
 <body>
 <div class="desk-stage">
