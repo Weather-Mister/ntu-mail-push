@@ -2845,6 +2845,90 @@ h1{
 }
 </style>
 
+
+<style id="skeuo-functional-ui">
+.day.has-deadline::before{
+  content:"";position:absolute;right:7px;bottom:7px;width:4px;height:4px;border-radius:50%;
+  background:#a65b4e;box-shadow:0 0 4px rgba(166,91,78,.4);z-index:3
+}
+.lesson{cursor:pointer}
+.lesson.inactive{cursor:default;opacity:.52}
+.lesson.completed{opacity:.47}
+.lesson.live .lessoncard{box-shadow:inset 0 2px rgba(255,255,255,.22),0 3px 0 #676a63,0 0 0 1px var(--course),6px 8px 9px rgba(33,21,13,.20)}
+.lesson.live .lessoncard::after{box-shadow:0 0 7px var(--course),inset 0 1px rgba(255,255,255,.28)}
+.skeuo-reminder{
+  position:absolute;right:2px;top:0;max-width:42%;padding:3px 6px;border:1px solid #716b5e;border-radius:3px;
+  background:#928773;color:#efe8d7;font:700 6px/1.2 "Courier New",monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap
+}
+.skeuo-inline-status{
+  padding:12px 6px;color:#5d5a50;font:700 7px/1.35 "Courier New",monospace;text-align:center
+}
+.skeuo-cool-list{min-height:0;overflow:auto;scrollbar-width:thin}
+.skeuo-cool-row{
+  position:relative;display:grid;grid-template-columns:minmax(0,1fr) 22px;gap:5px;align-items:center;
+  border-top:1px solid #7f8179;padding:7px 1px 7px 11px;min-width:0
+}
+.skeuo-cool-row:first-child{border-top:0}
+.skeuo-cool-main{min-width:0;color:inherit;text-decoration:none}
+.skeuo-cool-main strong{display:block;font-size:9.5px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.skeuo-cool-main small{display:block;margin-top:3px;font:700 6px/1.15 "Courier New",monospace;color:#5d5a51;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.skeuo-cool-row.done{opacity:.48}
+.skeuo-cool-row.done strong{text-decoration:line-through}
+.skeuo-cool-check,.skeuo-todo-delete{
+  width:20px;height:20px;min-width:20px;padding:0;border:1px solid #736d60;border-radius:3px;background:#c9c0aa;color:#49443a;
+  font:800 10px/1 Arial;cursor:pointer
+}
+.skeuo-cool-row.done .skeuo-cool-check{background:#718361;color:#f3eee1}
+.skeuo-todo-list{min-height:0;max-height:150px;overflow:auto;scrollbar-width:thin}
+.skeuo-todo-item{
+  display:grid;grid-template-columns:19px minmax(0,1fr) 20px;align-items:center;gap:7px;padding:5px 2px;border-top:1px solid #85877f;font-size:9.5px
+}
+.skeuo-todo-item.done{opacity:.48}
+.skeuo-todo-item.done .skeuo-todo-text{text-decoration:line-through}
+.skeuo-todo-text{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.skeuo-todo-delete{border:0;background:transparent;color:#706a5d;font-size:14px}
+.skeuo-file-key{display:grid;place-items:center;min-height:27px!important;padding:5px 2px 2px!important;cursor:pointer;font:800 10px/1 Arial,sans-serif}
+.skeuo-transfer-row{
+  position:relative;display:grid;grid-template-columns:18px minmax(0,1fr) auto;gap:5px;align-items:center;
+  padding:5px;border:1px solid #7b7d75;border-radius:3px;background:#93958c;min-width:0
+}
+.skeuo-transfer-kind{width:16px;height:16px;display:grid;place-items:center;border:1px solid #666961;background:#7c7f77;color:#d9d6ca;font:700 5px "Courier New",monospace}
+.skeuo-transfer-copy{min-width:0}
+.skeuo-transfer-title{font-size:8.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.skeuo-transfer-meta{margin-top:2px;font:700 5.5px/1.1 "Courier New",monospace;color:#555850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.skeuo-transfer-actions{display:flex;gap:3px;align-items:center}
+.skeuo-transfer-action{
+  border:1px solid #706b5f;border-radius:2px;background:#bcb39f;color:#3e3a32;padding:3px 4px;font:700 5.5px/1 "Courier New",monospace;text-decoration:none;cursor:pointer
+}
+.skeuo-transfer-action.danger{color:#7d453e}
+.skeuo-dialog{
+  width:min(560px,calc(100vw - 28px));max-height:min(720px,calc(100dvh - 28px));padding:0;border:1px solid #756a56;border-radius:8px;
+  background:#c5baa1;color:#2d2921;box-shadow:0 8px 0 #837760,18px 24px 18px rgba(25,10,3,.45);overflow:hidden
+}
+.skeuo-dialog::backdrop{background:rgba(25,10,3,.42)}
+.skeuo-dialog-head{display:flex;align-items:center;gap:8px;padding:10px 11px;border-bottom:1px solid #847965;background:#b7ab91}
+.skeuo-dialog-head div{min-width:0;flex:1}
+.skeuo-dialog-head small{display:block;font:700 6px "Courier New",monospace;color:#675f52;letter-spacing:.12em}
+.skeuo-dialog-head strong{display:block;margin-top:2px;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.skeuo-dialog-close{width:31px;height:27px;border:1px solid #817661;border-radius:5px;background:linear-gradient(#eee5d2,#dbd0b8 63%,#bbae94);color:#3b352b;box-shadow:inset 0 2px rgba(255,255,255,.57),0 3px 0 #7f745f;font:900 15px/1 Arial;cursor:pointer}
+.skeuo-dialog-body{padding:13px;overflow:auto;max-height:calc(100dvh - 130px)}
+.skeuo-dialog-meta{font:700 8px/1.45 "Courier New",monospace;color:#5f584b}
+.skeuo-dialog-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
+.skeuo-dialog-key{
+  min-height:31px;border:1px solid #817661;border-radius:5px;background:linear-gradient(#f0e8d5,#e0d6bf 62%,#c1b49a);color:#2d2921;
+  box-shadow:inset 0 2px rgba(255,255,255,.62),0 4px 0 #817661;padding:7px 10px;font:800 8px "Courier New",monospace;text-decoration:none;cursor:pointer
+}
+.skeuo-places-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.skeuo-place{display:flex;align-items:center;gap:8px;padding:10px;border:1px solid #827762;border-radius:5px;background:#b5aa91;color:#2d2921;text-decoration:none;font-size:10px;font-weight:800}
+.skeuo-place b{width:24px;height:24px;display:grid;place-items:center;border:1px solid #756b58;background:#d9cfb7;font-size:12px}
+.skeuo-pair-form{display:grid;gap:9px}
+.skeuo-pair-form input{width:100%;border:2px solid #766b58;border-radius:4px;background:#817763;color:#eee7d8;box-shadow:inset 0 5px 9px rgba(34,24,14,.35);padding:10px;font:700 10px "Courier New",monospace}
+.skeuo-pair-status{min-height:16px;font:700 7px "Courier New",monospace;color:#73534b}
+@media(max-width:859px){
+  .skeuo-places-grid{grid-template-columns:1fr}
+  .skeuo-todo-list{max-height:none}
+}
+</style>
 </head>
 <body>
 <div class="desk-stage">
@@ -2866,20 +2950,20 @@ h1{
         </div>
       </div>
       <div class="topkeys">
-        <button class="key topkey" aria-label="Refresh"><span class="keylegend">RFRSH</span>↻</button>
-        <button class="key topkey wide"><span class="keylegend">LOC</span>⌖ &nbsp;PLACES</button>
+        <button class="key topkey" id="skeuoRefreshButton" aria-label="Refresh"><span class="keylegend">RFRSH</span>↻</button>
+        <button class="key topkey wide" id="skeuoPlacesButton"><span class="keylegend">LOC</span>⌖ &nbsp;PLACES</button>
         <button class="key topkey" id="mailDashboardButton" aria-label="Open Mail" title="Open Mail"><span class="keylegend" id="mailKeyLegend">MAIL</span><span id="mailKeyGlyph">✉</span></button>
       </div>
     </header>
 
     <section class="statusrow">
       <div class="panel display">
-        <div><span class="eyebrow">HAPPENING NOW / CHANNEL 01</span><strong>Engineering Mathematics</strong><p>ROOM 114 · END 16:10 · 42 MIN REMAINING</p></div>
-        <div class="display-right"><div class="indicator"><i class="led"></i>LIVE</div><div class="indicator"><i class="led off"></i>ALRM</div></div>
+        <div><span class="eyebrow" id="skeuoNowLabel">SYNCING / CHANNEL 01</span><strong id="skeuoNowTitle">Loading schedule…</strong><p id="skeuoNowMeta">Checking current class</p></div>
+        <div class="display-right"><div class="indicator"><i class="led off" id="skeuoLiveLed"></i><span id="skeuoLiveState">WAIT</span></div><div class="indicator"><i class="led off"></i>ALRM</div></div>
       </div>
       <div class="panel hanzi">
-        <div class="streak"><span class="micro">HANZI STEPS</span><b>12</b><span class="micro">DAY STREAK</span></div>
-        <div class="next"><div class="nexthead"><span class="micro">UP NEXT / UNIT 23</span><span class="micro">4/10</span></div><div class="charline"><span class="char">準備</span><span class="pinyin">zhǔnbèi<small>prepare · get ready</small></span></div></div>
+        <div class="streak"><span class="micro">HANZI STEPS</span><b id="skeuoHanziStreak">—</b><span class="micro">DAY STREAK</span></div>
+        <div class="next"><div class="nexthead"><span class="micro" id="skeuoHanziUnit">UP NEXT / SYNC</span><span class="micro" id="skeuoHanziProgress">—/10</span></div><div class="charline"><span class="char" id="skeuoHanziChar">字</span><span class="pinyin" id="skeuoHanziPinyin">syncing<small id="skeuoHanziMeaning">live progress…</small></span></div></div>
         <span class="panel-code">HS-AUX/23</span>
       </div>
     </section>
@@ -2888,69 +2972,61 @@ h1{
       <aside class="panel rail">
         <p class="rail-title">WEEK / SELECT</p>
         <nav class="days">
-          <button class="key day"><span class="keylegend">D1</span><span>Mon</span><small>05</small></button>
-          <button class="key day active"><span class="keylegend">D2</span><span>Tue</span><small>06</small></button>
-          <button class="key day"><span class="keylegend">D3</span><span>Wed</span><small>07</small></button>
-          <button class="key day"><span class="keylegend">D4</span><span>Thu</span><small>08</small></button>
-          <button class="key day"><span class="keylegend">D5</span><span>Fri</span><small>09</small></button>
-          <button class="key day"><span class="keylegend">D6</span><span>Sat</span><small>10</small></button>
+          <button class="key day" data-day="1" aria-pressed="false"><span class="keylegend">D1</span><span>Mon</span><small>--</small></button>
+          <button class="key day" data-day="2" aria-pressed="false"><span class="keylegend">D2</span><span>Tue</span><small>--</small></button>
+          <button class="key day" data-day="3" aria-pressed="false"><span class="keylegend">D3</span><span>Wed</span><small>--</small></button>
+          <button class="key day" data-day="4" aria-pressed="false"><span class="keylegend">D4</span><span>Thu</span><small>--</small></button>
+          <button class="key day" data-day="5" aria-pressed="false"><span class="keylegend">D5</span><span>Fri</span><small>--</small></button>
+          <button class="key day" data-day="6" aria-pressed="false"><span class="keylegend">D6</span><span>Sat</span><small>--</small></button>
         </nav>
         <p class="rail-title">NTU / SERVICES</p>
         <div class="ntu">
-          <button class="key"><span class="keylegend">N1</span><b>⌂</b><span>myNTU</span></button>
-          <button class="key"><span class="keylegend">N2</span><b>▰</b><span>COOL</span></button>
+          <button class="key" data-open-url="https://my.ntu.edu.tw/"><span class="keylegend">N1</span><b>⌂</b><span>myNTU</span></button>
+          <button class="key" data-open-url="https://cool.ntu.edu.tw/"><span class="keylegend">N2</span><b>▰</b><span>COOL</span></button>
           <button class="key"><span class="keylegend">N3</span><b>✉</b><span>MAIL</span></button>
         </div>
       </aside>
 
       <section class="schedule">
-        <div class="heading"><div><p>OCTOBER 06 / WEEK 05</p><h2>Tuesday</h2></div><span class="count">03 CLASSES · 01 OPEN SLOT</span></div>
-        <div class="lessons">
-          <div class="lesson"><div class="time">10:20<small>12:10</small></div><div class="lessoncard"><strong>Engineering Mathematics</strong><small>ME BUILDING · ROOM 114</small><span class="card-code">ME2001</span></div></div>
-          <div class="lesson"><div class="time">13:20<small>15:10</small></div><div class="lessoncard"><strong>Engineering Materials</strong><small>進學講堂 · ME COMPLEX</small><span class="card-code">ME-MAT</span></div></div>
-          <div class="lesson"><div class="time">15:30<small>17:20</small></div><div class="lessoncard"><strong>Statics</strong><small>繡山講堂 · ME COMPLEX</small><span class="card-code">ME-STAT</span></div></div>
-          <div class="lesson"><div class="time">—<small>OPEN</small></div><div class="lessoncard" style="opacity:.52"><strong>No fourth class</strong><small>SCHEDULE SLOT AVAILABLE</small><span class="card-code">EMPTY</span></div></div>
-        </div>
+        <div class="heading"><div><p id="skeuoSelectedDate">SYNCING WEEK</p><h2 id="skeuoSelectedDay">Today</h2></div><span class="count" id="skeuoClassCount">—</span></div>
+        <div class="lessons" id="skeuoScheduleList" aria-live="polite"></div>
       </section>
 
       <section class="panel cool">
-        <div class="module-head"><div><p>NTU COOL / FEED 01</p><h3>Upcoming deadlines</h3></div><button class="key mini"><span class="keylegend">SYNC</span>REFRESH</button></div>
-        <div class="deadline urgent"><strong>Engineering Mathematics — HW 4</strong><small>TONIGHT · 23:59 · 08H 14M</small><div class="bar"><i style="--p:88%"></i></div></div>
-        <div class="deadline soon"><strong>Psychology — Chapter response</strong><small>THU · 18:00 · 2 DAYS</small><div class="bar"><i style="--p:57%"></i></div></div>
-        <div class="deadline"><strong>Engineering Materials — Quiz</strong><small>FRI · 10:00 · 3 DAYS</small><div class="bar"><i style="--p:34%"></i></div></div>
-        <div class="deadline"><strong>Academic English — Reading</strong><small>MON · 09:00 · 6 DAYS</small><div class="bar"><i style="--p:18%"></i></div></div>
-        <span class="panel-code">COOL/ICS · AUTO</span>
+        <div class="module-head"><div><p>NTU COOL / FEED 01</p><h3>Upcoming deadlines</h3></div><button class="key mini" id="skeuoCoolRefresh"><span class="keylegend">SYNC</span>REFRESH</button></div>
+        <div id="skeuoCoolDeadlines" class="skeuo-cool-list" aria-live="polite"><div class="skeuo-inline-status">SYNCING COOL…</div></div>
+        <span class="panel-code" id="skeuoCoolCode">COOL/ICS · SYNC</span>
       </section>
 
       <section class="panel todo">
-        <div class="module-head"><div><p>TO DO / LOCAL</p><h3>Manual tasks</h3></div><span class="counter">03 TASKS</span></div>
-        <div class="form"><input class="input" placeholder="Add a task…"><button class="key mini add"><span class="keylegend">INS</span>ADD</button></div>
-        <div class="task"><button class="key taskbox"></button><span>Review Statics notes</span><small>01</small></div>
-        <div class="task"><button class="key taskbox"></button><span>Chinese worksheet</span><small>02</small></div>
-        <div class="task"><button class="key taskbox"></button><span>Check COOL deadlines</span><small>03</small></div>
-        <span class="panel-code">MEM/LOCAL</span>
+        <div class="module-head"><div><p>TO DO / SYNCED</p><h3>Manual tasks</h3></div><span class="counter" id="skeuoTodoCount">0 TASKS</span></div>
+        <form class="form" id="skeuoTodoForm"><input class="input" id="skeuoTodoInput" maxlength="140" autocomplete="off" placeholder="Add a task…"><button class="key mini add" type="submit"><span class="keylegend">INS</span>ADD</button></form>
+        <div id="skeuoTodoList" class="skeuo-todo-list" aria-live="polite"></div>
+        <span class="panel-code">MEM/SYNC</span>
       </section>
 
       <section class="panel transfer">
-        <div class="module-head"><div><p>DEVICE TRANSFER / PRIVATE</p><h3>Phone ↔ PC</h3></div><span class="transfer-status"><i class="led"></i>LINK OK</span></div>
-        <div class="transfer-compose"><textarea class="input" placeholder="Paste text or a link…"></textarea><div class="sendrow"><button class="key"><span class="keylegend">FILE</span>＋</button><button class="key"><span class="keylegend">TX</span>SEND</button></div></div>
-        <div class="inbox">
-          <div class="transferitem" data-kind="F"><strong>lecture-notes.pdf</strong><small>FILE · 2 MIN AGO · 1.8 MB</small></div>
-          <div class="transferitem" data-kind="L"><strong>cool.ntu.edu.tw/courses/...</strong><small>LINK · 14 MIN AGO</small></div>
-          <div class="transferitem" data-kind="T"><strong>Homework reminder</strong><small>TEXT · YESTERDAY</small></div>
-          <div class="transferitem" data-kind="F"><strong>materials-week4.pdf</strong><small>FILE · YESTERDAY · 4.2 MB</small></div>
-        </div>
-        <span class="panel-code">P2P/BUFFER · 04</span>
+        <div class="module-head"><div><p>DEVICE TRANSFER / PRIVATE</p><h3>Phone ↔ PC</h3></div><span class="transfer-status"><i class="led off" id="skeuoTransferLed"></i><span id="skeuoTransferStatus">SYNC</span></span></div>
+        <form class="transfer-compose" id="skeuoTransferForm">
+          <textarea class="input" id="skeuoTransferText" maxlength="20000" placeholder="Paste text or a link…"></textarea>
+          <div class="sendrow">
+            <label class="key skeuo-file-key" for="skeuoTransferFileInput"><span class="keylegend">FILE</span><span id="skeuoTransferFileLabel">＋</span></label>
+            <input id="skeuoTransferFileInput" type="file" multiple hidden>
+            <button class="key" id="skeuoTransferSend" type="submit"><span class="keylegend">TX</span>SEND</button>
+          </div>
+        </form>
+        <div class="inbox" id="skeuoTransferList" aria-live="polite"><div class="skeuo-inline-status">SYNCING TRANSFERS…</div></div>
+        <span class="panel-code" id="skeuoTransferCode">P2P/BUFFER · SYNC</span>
       </section>
 
       <section class="study">
         <div class="studygrid">
-          <button class="key studykey"><span class="keylegend">A1</span><b>漢</b><span>HANZI STEPS</span></button>
-          <button class="key studykey"><span class="keylegend">A2</span><b>∫</b><span>ENG MATH</span></button>
-          <button class="key studykey"><span class="keylegend">A3</span><b>Σ</b><span>STATICS</span></button>
-          <button class="key studykey"><span class="keylegend">A4</span><b>Ψ</b><span>PSYCH</span></button>
-          <button class="key studykey"><span class="keylegend">A5</span><b>◆</b><span>MATERIALS</span></button>
-          <button class="key studykey"><span class="keylegend">A6</span><b style="font-size:11px">PDF</b><span>I WEATHER</span></button>
+          <button class="key studykey" data-open-url="https://weather-mister.github.io/hanzi-steps/"><span class="keylegend">A1</span><b>漢</b><span>HANZI STEPS</span></button>
+          <button class="key studykey" data-open-url="https://weather-mister.github.io/eng-math-lab/"><span class="keylegend">A2</span><b>∫</b><span>ENG MATH</span></button>
+          <button class="key studykey" data-open-url="https://weather-mister.github.io/statics-lab/"><span class="keylegend">A3</span><b>Σ</b><span>STATICS</span></button>
+          <button class="key studykey" data-open-url="https://weather-mister.github.io/psychology-lab/"><span class="keylegend">A4</span><b>Ψ</b><span>PSYCH</span></button>
+          <button class="key studykey" data-open-url="https://weather-mister.github.io/materials/"><span class="keylegend">A5</span><b>◆</b><span>MATERIALS</span></button>
+          <button class="key studykey" data-open-url="https://weather-mister.github.io/i-weather-pdf/"><span class="keylegend">A6</span><b style="font-size:11px">PDF</b><span>I WEATHER</span></button>
         </div>
       </section>
     </section>
@@ -3350,13 +3426,34 @@ h1{
   </main>
 </div>
 
-<script>
-document.querySelectorAll('.day').forEach(k=>k.addEventListener('click',()=>{document.querySelectorAll('.day').forEach(x=>x.classList.remove('active'));k.classList.add('active')}));
-document.querySelectorAll('.taskbox').forEach(k=>k.addEventListener('click',()=>k.classList.toggle('pressed')));
-</script>
 
 
-
-
+<!-- SKEUO_FUNCTIONAL_DIALOGS_START -->
+<dialog class="skeuo-dialog" id="skeuoLessonDialog">
+  <div class="skeuo-dialog-head"><div><small id="skeuoLessonDay">CLASS / DETAILS</small><strong id="skeuoLessonTitle">Lesson</strong></div><button class="skeuo-dialog-close" data-close-dialog="skeuoLessonDialog">×</button></div>
+  <div class="skeuo-dialog-body"><p class="skeuo-dialog-meta" id="skeuoLessonTime"></p><p class="skeuo-dialog-meta" id="skeuoLessonLocation"></p><div class="skeuo-dialog-actions"><a class="skeuo-dialog-key" id="skeuoLessonMap" target="_blank" rel="noopener noreferrer external">OPEN MAPS</a><a class="skeuo-dialog-key" id="skeuoLessonMeeting" target="_blank" rel="noopener noreferrer external" hidden>OPEN MEETING</a></div></div>
+</dialog>
+<dialog class="skeuo-dialog" id="skeuoPlacesDialog">
+  <div class="skeuo-dialog-head"><div><small>GOOGLE MAPS / SAVED</small><strong>Places</strong></div><button class="skeuo-dialog-close" data-close-dialog="skeuoPlacesDialog">×</button></div>
+  <div class="skeuo-dialog-body"><div class="skeuo-places-grid">
+    <a class="skeuo-place" href="https://maps.app.goo.gl/5UjB1mboHGqLUTYD6?g_st=ic" target="_blank" rel="noopener noreferrer external"><b>🍌</b>Banana</a>
+    <a class="skeuo-place" href="https://www.google.com/maps/search/?api=1&query=National+Taiwan+University+College+of+Social+Sciences" target="_blank" rel="noopener noreferrer external"><b>社</b>Social Sciences</a>
+    <a class="skeuo-place" href="https://www.google.com/maps/search/?api=1&query=Taipei+Mandarin+Center+TMC+297+Section+3+Roosevelt+Road+Taipei" target="_blank" rel="noopener noreferrer external"><b>中</b>Mandarin Center</a>
+    <a class="skeuo-place" href="https://www.google.com/maps/search/?api=1&query=Gongguan+MRT+Station+Taipei" target="_blank" rel="noopener noreferrer external"><b>M</b>Gongguan MRT</a>
+    <a class="skeuo-place" href="https://www.google.com/maps/search/?api=1&query=National+Taiwan+University+Main+Library" target="_blank" rel="noopener noreferrer external"><b>▥</b>Main Library</a>
+    <a class="skeuo-place" href="https://maps.app.goo.gl/LdBacJ5jNVS8Hs4F7?g_st=ic" target="_blank" rel="noopener noreferrer external"><b>▣</b>Carrefour</a>
+  </div></div>
+</dialog>
+<dialog class="skeuo-dialog" id="skeuoPairingDialog">
+  <div class="skeuo-dialog-head"><div><small>PRIVATE SYNC / DEVICE</small><strong>Pair this console</strong></div><button class="skeuo-dialog-close" id="skeuoPairClose">×</button></div>
+  <div class="skeuo-dialog-body"><form id="skeuoPairingForm" class="skeuo-pair-form"><p class="skeuo-dialog-meta">Enter the same schedule pairing key used by the real dashboard. It stays in this browser only.</p><input id="skeuoPairingInput" type="password" autocomplete="off" placeholder="Pairing key"><div class="skeuo-pair-status" id="skeuoPairingStatus"></div><button class="skeuo-dialog-key" type="submit">PAIR DEVICE</button></form></div>
+</dialog>
+<dialog class="skeuo-dialog" id="skeuoTransferSaveDialog">
+  <div class="skeuo-dialog-head"><div><small>IPHONE SAVE / FILE</small><strong id="skeuoTransferSaveName">File ready</strong></div><button class="skeuo-dialog-close" data-close-dialog="skeuoTransferSaveDialog">×</button></div>
+  <div class="skeuo-dialog-body"><p class="skeuo-dialog-meta" id="skeuoTransferSaveMeta"></p><p class="skeuo-dialog-meta" id="skeuoTransferSaveHint"></p><div class="skeuo-dialog-actions"><button class="skeuo-dialog-key" id="skeuoTransferNativeSave" type="button">SAVE TO FILES</button></div></div>
+</dialog>
+<!-- SKEUO_FUNCTIONAL_DIALOGS_END -->
+<script src="./vendor/ffmpeg/ffmpeg.js?v=1"></script>
+<script src="./skeuo-demo-app.js?v=1"></script>
 </body>
 </html>
