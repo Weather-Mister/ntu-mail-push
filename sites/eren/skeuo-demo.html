@@ -531,12 +531,189 @@ h1{color:#29251e}
 }
 </style>
 
+
+<style id="fit-and-light-pass">
+/* Remove the old note treatment completely. */
+.postit,.note-a,.note-b,.note-c{display:none!important}
+
+/* Sharper, more directional lamp instead of a diffuse orange wash. */
+body::before{
+  background:
+    linear-gradient(132deg,
+      transparent 0 48%,
+      rgba(255,169,77,.08) 49%,
+      rgba(255,151,57,.24) 57%,
+      rgba(255,136,42,.12) 68%,
+      transparent 77%);
+  mix-blend-mode:screen;
+}
+body{
+  background:
+    repeating-linear-gradient(1deg,transparent 0 23px,rgba(31,12,3,.18) 24px,rgba(255,255,255,.018) 25px,transparent 28px 52px),
+    repeating-linear-gradient(91deg,rgba(255,255,255,.012) 0 1px,transparent 1px 11px),
+    linear-gradient(102deg,#3a1d10,#58301a 33%,#6d3a20 61%,#3a1d10);
+}
+.desk-stage::before{
+  left:5%;right:-1%;bottom:4%;height:78px;
+  filter:blur(8px);
+  background:rgba(10,4,1,.76);
+  transform:skewX(-14deg) translate(34px,10px);
+}
+.machine{
+  box-shadow:
+    inset 0 2px 0 rgba(255,255,255,.56),
+    inset 0 -4px 0 rgba(100,88,66,.24),
+    0 10px 0 #8b806a,
+    0 17px 0 #6e6453,
+    24px 34px 8px rgba(24,9,2,.52),
+    46px 58px 20px rgba(17,6,2,.40);
+  grid-template-rows:39px 90px minmax(0,1fr);
+  row-gap:9px;
+}
+
+/* Header sits inside the top shell instead of floating oversized. */
+.topbar{
+  height:39px;
+  min-height:0;
+  margin:0;
+  padding:0 5px;
+  align-items:center;
+}
+.brandline{align-items:center;gap:9px;min-width:0}
+.brandmark{width:24px;height:24px;margin:0;flex:0 0 24px}
+.brandline>div:last-child{min-width:0}
+.eyebrow{font-size:7px;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+h1{
+  font-size:21px;
+  line-height:.98;
+  letter-spacing:-.035em;
+  white-space:nowrap;
+}
+.serial{font-size:6px;margin-top:2px;line-height:1}
+.topkeys{align-items:center;padding:0;flex:0 0 auto}
+.topkey{height:28px}
+
+/* Give Happening Now more room and rebalance its contents. */
+.statusrow{
+  height:90px;
+  min-height:90px;
+  grid-template-columns:minmax(0,2.9fr) minmax(292px,1fr);
+  gap:10px;
+}
+.display{
+  height:90px;
+  min-height:90px;
+  padding:16px 18px;
+  grid-template-columns:minmax(0,1fr) auto;
+}
+.display>div:first-child{min-width:0}
+.display .eyebrow{font-size:7.5px}
+.display strong{
+  margin-top:7px;
+  font-size:20px;
+  line-height:1.05;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.display p{
+  margin-top:7px;
+  font-size:8.5px;
+  line-height:1.2;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.display-right{height:46px;padding-left:15px}
+.hanzi{height:90px;min-height:90px}
+.hanzi .streak,.hanzi .next{padding-top:11px;padding-bottom:10px}
+.hanzi b{font-size:28px}
+.hanzi .char{font-size:27px}
+
+/* Make every dashboard module respect its own box. */
+.workspace{min-height:0;overflow:hidden}
+.schedule,.cool,.todo,.transfer,.rail,.study{min-width:0;min-height:0}
+.cool,.todo,.transfer,.rail{overflow:hidden}
+.module-head{min-width:0}
+.module-head>div{min-width:0}
+.module-head h3{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.deadline{
+  min-height:0;
+  overflow:hidden;
+}
+.deadline strong{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.inbox{min-height:0;overflow:hidden}
+.transferitem{min-height:0}
+.transferitem strong,.transferitem small{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.task{min-width:0}
+.task>span{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.lessoncard{min-width:0}
+.lessoncard strong,.lessoncard small{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+/* The status row got taller, so trim low-value vertical padding elsewhere. */
+.workspace{
+  grid-template-rows:minmax(0,1fr) minmax(0,.60fr) 54px;
+}
+.cool,.todo,.transfer{padding:9px}
+.deadline{padding-top:7px;padding-bottom:7px}
+.task{padding-top:5px;padding-bottom:5px}
+.studygrid{gap:6px}
+.studykey{padding-top:12px}
+
+/* Keep the whole desktop scene in one viewport. */
+@media (min-width:860px) and (max-height:820px){
+  .machine{
+    grid-template-rows:35px 82px minmax(0,1fr);
+    row-gap:7px;
+  }
+  .topbar{height:35px}
+  h1{font-size:19px}
+  .eyebrow{font-size:6.5px}
+  .statusrow,.display,.hanzi{height:82px;min-height:82px}
+  .display{padding-top:13px;padding-bottom:13px}
+  .display strong{font-size:18px}
+  .display p{margin-top:5px;font-size:8px}
+  .hanzi .streak,.hanzi .next{padding-top:8px;padding-bottom:7px}
+  .workspace{
+    grid-template-rows:minmax(0,1fr) minmax(0,.54fr) 48px;
+    gap:7px;
+  }
+  .deadline{padding-top:5px;padding-bottom:5px}
+  .task{padding-top:4px;padding-bottom:4px}
+}
+@media(max-width:859px){
+  .topbar{height:auto;min-height:42px}
+  h1{font-size:22px}
+  .statusrow,.display{height:auto;min-height:88px}
+  .display strong{white-space:normal}
+  .display p{white-space:normal}
+}
+</style>
+
 </head>
 <body>
 <div class="desk-stage">
-  <aside class="postit note-a"><strong>FRIDAY</strong>Statics quiz<br>bring calculator<span class="scribble"></span></aside>
-  <aside class="postit note-b"><strong>買東西</strong>detergent<br>milk<br>AA batteries<span class="scribble"></span></aside>
-  <aside class="postit note-c"><strong>DON'T FORGET</strong>Upload HW before 23:59</aside>
   <div class="desk-crack"><i></i><i></i><i></i><i></i></div>
 
   <main class="machine">
