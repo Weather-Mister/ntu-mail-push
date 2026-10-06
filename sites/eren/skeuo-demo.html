@@ -946,6 +946,296 @@ h1{
 }
 </style>
 
+
+<style id="decoy-mail-keyboard-skin">
+/* Same mail architecture, rebuilt in the schedule's beige keyboard language. */
+#mailDemoDialog.mailx-dialog{
+  --mailx-list-w:356px;
+  width:min(1360px,calc(100vw - 44px));
+  height:min(790px,calc(100dvh - 44px));
+  max-width:none;max-height:none;padding:14px;
+  border:1px solid #756a56;border-radius:13px 13px 18px 18px;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.32),transparent 9%),
+    linear-gradient(180deg,#d8ceb5 0 7%,#c9bea4 7% 92%,#b1a48a 92%);
+  color:#29251e;
+  box-shadow:
+    inset 0 2px 0 rgba(255,255,255,.58),
+    inset 0 -4px 0 rgba(100,88,66,.25),
+    0 9px 0 #8a7f69,
+    0 15px 0 #6d6351,
+    24px 32px 7px rgba(24,9,2,.48),
+    42px 50px 17px rgba(17,6,2,.36);
+  overflow:hidden
+}
+#mailDemoDialog.mailx-dialog::backdrop{background:rgba(30,12,4,.34);backdrop-filter:none}
+#mailDemoDialog .mailx-shell{
+  height:100%;min-height:0;border:1px solid #877b65;border-radius:7px;
+  background:#b4a990;overflow:hidden;
+  box-shadow:inset 0 4px 10px rgba(64,49,31,.20),inset 0 -1px rgba(255,255,255,.18)
+}
+#mailDemoDialog svg{stroke-width:1.8}
+#mailDemoDialog .mailx-topbar{
+  min-height:58px;padding:10px 12px;gap:9px;border-bottom:1px solid #81755f;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.18),transparent 35%),
+    #c7bca2
+}
+#mailDemoDialog .mailx-brand{gap:8px}
+#mailDemoDialog .mailx-brand-icon{
+  width:31px;height:31px;border-radius:4px;border:1px solid #756b58;
+  background:#a99e86;color:#474135;
+  box-shadow:inset 0 2px rgba(255,255,255,.28),0 2px 0 #7c715d
+}
+#mailDemoDialog .mailx-title{font-size:18px;color:#28241d;font-weight:800}
+#mailDemoDialog .mailx-topbar>.mailx-search{
+  margin-left:14px;max-width:500px;height:34px;border:1px solid #695f4f;border-radius:4px;
+  background:#817763;color:#eee7d7;font-size:12px;
+  box-shadow:inset 0 4px 7px rgba(35,25,15,.35),0 1px rgba(255,255,255,.16)
+}
+#mailDemoDialog .mailx-topbar>.mailx-search::placeholder{color:#d3cab7}
+#mailDemoDialog .mailx-compose-main,
+#mailDemoDialog .mailx-topbar #mailxRefresh,
+#mailDemoDialog .mailx-topbar #mailxSettings,
+#mailDemoDialog .mailx-topbar #mailxClose,
+#mailDemoDialog .mailx-action,
+#mailDemoDialog .mailx-reply-button,
+#mailDemoDialog .mailx-send,
+#mailDemoDialog .mailx-schedule,
+#mailDemoDialog .mailx-ai-generate,
+#mailDemoDialog .mailx-ai-chip,
+#mailDemoDialog .mailx-format-toolbar button,
+#mailDemoDialog .mailx-format-toolbar select,
+#mailDemoDialog .mailx-attachment-download,
+#mailDemoDialog .mailx-sheet button{
+  border:1px solid #8b806a!important;border-radius:5px!important;
+  color:#2c2821!important;
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.33),transparent 31%),
+    linear-gradient(180deg,#f0e8d5,#e0d6bf 62%,#c1b49a)!important;
+  box-shadow:
+    inset 0 2px rgba(255,255,255,.62),
+    0 1px 0 #aea28a,
+    0 4px 0 #817661,
+    5px 7px 6px rgba(42,24,11,.24)!important;
+  transform:translateY(-3px);
+  transition:transform 60ms,box-shadow 60ms,filter 80ms;
+  text-shadow:0 1px rgba(255,255,255,.30)
+}
+#mailDemoDialog .mailx-compose-main:active,
+#mailDemoDialog .mailx-topbar #mailxRefresh:active,
+#mailDemoDialog .mailx-topbar #mailxSettings:active,
+#mailDemoDialog .mailx-topbar #mailxClose:active,
+#mailDemoDialog .mailx-action:active,
+#mailDemoDialog .mailx-reply-button:active,
+#mailDemoDialog .mailx-send:active,
+#mailDemoDialog .mailx-schedule:active,
+#mailDemoDialog .mailx-ai-generate:active,
+#mailDemoDialog .mailx-ai-chip:active,
+#mailDemoDialog .mailx-format-toolbar button:active{
+  transform:translateY(1px);box-shadow:inset 0 2px 3px rgba(72,61,45,.22),0 1px 0 #817661!important
+}
+#mailDemoDialog .mailx-topbar .mailx-compose-main{min-height:34px;padding:0 13px;font-size:10px;font-weight:800}
+#mailDemoDialog .mailx-topbar #mailxRefresh{margin-left:auto;width:34px;min-height:34px;font-size:18px}
+#mailDemoDialog .mailx-topbar #mailxSettings,
+#mailDemoDialog .mailx-topbar #mailxClose{width:32px;min-height:34px}
+#mailDemoDialog .mailx-account-switch{
+  width:33px;height:33px;flex:0 0 33px;border-radius:5px;background:#9d927b;color:#ede5d4;
+  border:1px solid #716653;box-shadow:inset 0 2px 4px rgba(39,28,17,.22)
+}
+#mailDemoDialog .mailx-main{
+  grid-template-columns:64px var(--mailx-list-w,356px) 9px minmax(0,1fr);
+  padding:9px;gap:0;background:#aa9e84;min-height:0
+}
+#mailDemoDialog .mailx-nav{padding:8px 8px 8px 0;gap:7px;background:transparent}
+#mailDemoDialog .mailx-nav .mailx-filter{
+  width:42px;height:42px;min-height:42px;border:1px solid #897d67;border-radius:6px;
+  color:#5b5448;
+  background:linear-gradient(180deg,#e8dfcb,#d6cbb3 66%,#baad93);
+  box-shadow:inset 0 2px rgba(255,255,255,.5),0 2px 0 #9e927a,0 5px 0 #776d5a,5px 7px 6px rgba(42,24,11,.20);
+  transform:translateY(-3px)
+}
+#mailDemoDialog .mailx-nav .mailx-filter.is-active{
+  color:#f1ede3;border-color:#354966;
+  background:linear-gradient(#7183a0,#526887 68%,#455b7b);
+  transform:translateY(1px);
+  box-shadow:inset 0 2px 4px rgba(29,39,56,.34),0 1px 0 #2e405d,2px 3px 3px rgba(35,22,13,.18)
+}
+#mailDemoDialog .mailx-rail-count{background:#9c5148;color:#fff;top:-2px;right:-3px}
+#mailDemoDialog .mailx-rail-divider{border-color:#756b59}
+#mailDemoDialog .mailx-list-pane,
+#mailDemoDialog .mailx-reader{
+  border:2px solid #7d715c;border-radius:5px;background:#b8ad94;
+  box-shadow:inset 0 5px 10px rgba(55,43,28,.27),0 1px rgba(255,255,255,.18);
+  overflow:hidden
+}
+#mailDemoDialog .mailx-list-tools{
+  padding:9px 10px 7px;border-bottom:1px solid #7f745f;background:#b9ad94
+}
+#mailDemoDialog .mailx-list-meta{font:700 7px "Courier New",monospace;color:#5e5649}
+#mailDemoDialog .mailx-list-extra select{
+  border:1px solid #786d5a;border-radius:4px;background:#918672;color:#eee6d4;
+  box-shadow:inset 0 2px 4px rgba(40,29,18,.24);font-size:9px
+}
+#mailDemoDialog .mailx-list-extra #mailxMarkAllRead{font-size:8px;padding:0 8px}
+#mailDemoDialog .mailx-message-wrap{border-color:#827762;background:#b8ad94}
+#mailDemoDialog .mailx-message-wrap .mailx-message{
+  grid-template-columns:34px minmax(0,1fr);gap:9px;padding:11px 10px;
+  background:#bdb19a;color:#2c2821
+}
+#mailDemoDialog .mailx-message-wrap .mailx-message:hover{background:#c8bda5}
+#mailDemoDialog .mailx-message-wrap .mailx-message.is-selected{
+  background:#d3c8ad;box-shadow:inset 4px 0 #506787
+}
+#mailDemoDialog .mailx-avatar{
+  width:33px;height:33px;border-radius:4px;border:1px solid #857a65;background:#9e927a;color:#eee6d4;
+  box-shadow:inset 0 1px rgba(255,255,255,.18)
+}
+#mailDemoDialog .mailx-avatar.tone-1{background:#748068;color:#f2edde}
+#mailDemoDialog .mailx-avatar.tone-2{background:#7b7083;color:#f2edde}
+#mailDemoDialog .mailx-avatar.tone-3{background:#8a735b;color:#f2edde}
+#mailDemoDialog .mailx-avatar.tone-4{background:#657985;color:#f2edde}
+#mailDemoDialog .mailx-sender{font-size:11px;color:#2d2922}
+#mailDemoDialog .mailx-subject{font-size:11px;color:#343027;line-height:1.35}
+#mailDemoDialog .mailx-snippet{font-size:9px;color:#675f51}
+#mailDemoDialog .mailx-time,
+#mailDemoDialog .mailx-message-foot .mailx-account,
+#mailDemoDialog .mailx-row-status{color:#716858}
+#mailDemoDialog .mailx-unread-dot{background:#65795a}
+#mailDemoDialog .mailx-row-actions{
+  border:1px solid #827761;border-radius:5px;background:#c6baa2;
+  box-shadow:0 4px 7px rgba(45,26,13,.18)
+}
+#mailDemoDialog .mailx-row-actions button{
+  color:#5c5447;border-radius:4px
+}
+#mailDemoDialog .mailx-resizer{cursor:col-resize;position:relative}
+#mailDemoDialog .mailx-resizer::after{
+  content:"";position:absolute;width:3px;top:9px;bottom:9px;left:3px;border-radius:3px;
+  background:#746a58;box-shadow:1px 0 rgba(255,255,255,.12)
+}
+#mailDemoDialog .mailx-reader{background:#918670}
+#mailDemoDialog .mailx-reader-toolbar{
+  min-height:52px;padding:9px 10px;gap:6px;border-bottom:1px solid #766b58;background:#b7ac93;
+  backdrop-filter:none
+}
+#mailDemoDialog .mailx-reader-toolbar .mailx-action{min-height:30px;font-size:8px;padding:0 8px}
+#mailDemoDialog .mailx-reader-scroll{
+  margin:0 8px 8px;border:3px solid #786d5a;border-radius:5px;
+  background:
+    repeating-linear-gradient(0deg,rgba(255,255,255,.014) 0 1px,transparent 1px 3px),
+    #282b25;
+  color:#dedccc;box-shadow:inset 0 7px 16px rgba(0,0,0,.58),8px 10px 12px rgba(40,23,11,.21);
+  overflow:auto
+}
+#mailDemoDialog .mailx-reader-head{padding:18px 20px 9px}
+#mailDemoDialog .mailx-reader-subject{font-size:22px;color:#ebe6d6;font-weight:650}
+#mailDemoDialog .mailx-reader-title-row{display:flex;align-items:flex-start;gap:10px}
+#mailDemoDialog .mailx-reader-title-row .mailx-reader-subject{flex:1;min-width:0}
+#mailDemoDialog .mailx-reader-head-actions{display:flex;gap:5px}
+#mailDemoDialog .mailx-reader-tags .mailx-account,
+#mailDemoDialog .mailx-reader-tags .mailx-chip{
+  background:#343830;color:#aeb5a4;border:1px solid #4c5247;border-radius:3px
+}
+#mailDemoDialog .mailx-chip.high{color:#e6b6a7}
+#mailDemoDialog .mailx-chip.reply{color:#d5c78c}
+#mailDemoDialog .mailx-thread-message{margin:0 20px;border-color:#464b41}
+#mailDemoDialog .mailx-thread-details>summary{color:#cdd0c2}
+#mailDemoDialog .mailx-thread-summary strong{color:#e1dfd1}
+#mailDemoDialog .mailx-thread-summary>span,
+#mailDemoDialog .mailx-thread-details>summary time,
+#mailDemoDialog .mailx-message-meta>summary{color:#939b8d}
+#mailDemoDialog .mailx-mail-body{color:#cfd2c4;font-size:13px;line-height:1.78}
+#mailDemoDialog .mailx-login-card{
+  border:1px solid #535a4d;background:#30352d;border-radius:5px
+}
+#mailDemoDialog .mailx-login-label{color:#9ba992}
+#mailDemoDialog .mailx-login-code{color:#d8d2a7}
+#mailDemoDialog .mailx-copy-code{
+  border:1px solid #716653;background:#d9ceb6;color:#312d25;border-radius:4px
+}
+#mailDemoDialog .mailx-attachment-download{
+  color:#d6d8cb!important;background:#353a31!important;border-color:#555c4f!important;
+  box-shadow:none!important;transform:none
+}
+#mailDemoDialog .mailx-file-type{background:#535b4d;color:#d9ddce}
+#mailDemoDialog .mailx-reply-bar{background:transparent;border-color:#464b41;padding:13px 20px 18px}
+#mailDemoDialog .mailx-reader-more>summary{color:#d7d5c6}
+#mailDemoDialog .mailx-reader-more[open]>summary{background:#44493f}
+#mailDemoDialog .mailx-reader-more>div{
+  background:#b8ad94;border:1px solid #766b58;border-radius:5px;box-shadow:8px 10px 14px rgba(25,11,3,.34)
+}
+#mailDemoDialog .mailx-compose,
+#mailDemoDialog .mailx-sheet{
+  border:1px solid #756a56;border-radius:8px;background:#c5baa1;
+  box-shadow:0 8px 0 #837760,18px 24px 18px rgba(25,10,3,.43)
+}
+#mailDemoDialog .mailx-compose-head{
+  background:#b7ab91;border-color:#827762;cursor:default
+}
+#mailDemoDialog .mailx-compose-fields{background:#c2b69d}
+#mailDemoDialog .mailx-field-row{border-color:#8e826b}
+#mailDemoDialog .mailx-field-row label{color:#5d5548}
+#mailDemoDialog .mailx-field-row input,
+#mailDemoDialog .mailx-field-row select{color:#2b271f}
+#mailDemoDialog .mailx-ai-wrap{
+  border:2px solid #7a705d;border-radius:5px;background:#918672;
+  box-shadow:inset 0 4px 7px rgba(37,27,16,.30)
+}
+#mailDemoDialog .mailx-ai-label{color:#e2d9c5}
+#mailDemoDialog .mailx-ai-label span:last-child{color:#c4baa6}
+#mailDemoDialog .mailx-ai-prompt{color:#f0e9da}
+#mailDemoDialog .mailx-ai-prompt::placeholder{color:#d1c7b3}
+#mailDemoDialog .mailx-ai-chip{font-size:8px!important;padding:5px 7px!important}
+#mailDemoDialog .mailx-editor-label{color:#60584b}
+#mailDemoDialog .mailx-editor-tools button{color:#655c4d}
+#mailDemoDialog .mailx-format-toolbar{
+  margin:0 14px 8px;padding:7px;border:1px solid #827762;border-radius:5px;background:#aea289;
+  display:flex;gap:5px;align-items:center;flex-wrap:wrap
+}
+#mailDemoDialog .mailx-format-toolbar button,
+#mailDemoDialog .mailx-format-toolbar select{
+  min-height:28px;padding:0 8px;font-size:9px
+}
+#mailDemoDialog .mailx-format-divider{width:1px;height:20px;background:#7f745f}
+#mailDemoDialog .mailx-format-spacer{flex:1}
+#mailDemoDialog .mailx-email-body{
+  margin:0 14px 9px;min-height:120px;border:2px solid #766b58;border-radius:4px;
+  background:#817763;color:#eee7d8;
+  box-shadow:inset 0 5px 9px rgba(34,24,14,.35);padding:11px
+}
+#mailDemoDialog .mailx-email-body:empty::before{content:attr(data-placeholder);color:#cfc6b3}
+#mailDemoDialog .mailx-attachment-list{padding:0 14px 7px;display:flex;gap:6px;flex-wrap:wrap}
+#mailDemoDialog .mailx-compose-foot{border-color:#887d67;background:#b8ac92}
+#mailDemoDialog .mailx-sheet-body{background:#c4b99f;color:#312d25}
+#mailDemoDialog .mailx-sheet-body h3{color:#2d2922}
+#mailDemoDialog .mailx-sheet-body label{color:#625a4c}
+#mailDemoDialog .mailx-sheet-body input,
+#mailDemoDialog .mailx-sheet-body select,
+#mailDemoDialog .mailx-callback{
+  border:1px solid #786d59;border-radius:4px;background:#8a806c;color:#efe7d7;
+  box-shadow:inset 0 3px 6px rgba(39,28,17,.28)
+}
+#mailDemoDialog .mailx-rule,
+#mailDemoDialog .mailx-settings-account{border-color:#8b806a}
+#mailDemoDialog .mailx-toast{background:#2c302a;color:#eee8d9;border-radius:4px}
+#mailDemoDialog .mailx-mobile-tabs{background:#b7ac93;border-color:#81765f}
+#mailDemoDialog .mailx-mobile-tab{
+  border:1px solid #8b806a;border-radius:5px;background:#ded4bd;color:#494236
+}
+#mailDemoDialog .mailx-mobile-tab.is-active{background:#526887;color:#f1ede3;border-color:#354966}
+#mailDemoDialog .mailx-shell.is-reader-focused .mailx-reader{
+  grid-column:1/-1
+}
+@media(max-width:860px){
+  #mailDemoDialog.mailx-dialog{width:100vw;height:100dvh;border:0;border-radius:0;padding:0}
+  #mailDemoDialog .mailx-shell{border:0;border-radius:0}
+  #mailDemoDialog .mailx-main{padding:0}
+  #mailDemoDialog .mailx-reader-scroll{margin:0;border-width:0;border-radius:0}
+  #mailDemoDialog .mailx-compose,#mailDemoDialog .mailx-sheet{border:0;border-radius:0}
+}
+</style>
+
 </head>
 <body>
 <div class="desk-stage">
@@ -1066,6 +1356,8 @@ document.querySelectorAll('.day').forEach(k=>k.addEventListener('click',()=>{doc
 document.querySelectorAll('.taskbox').forEach(k=>k.addEventListener('click',()=>k.classList.toggle('pressed')));
 </script>
 
+
+
 <!-- DECOY_MAIL_START -->
 <dialog id="mailDemoDialog" class="mailx-dialog">
   <div class="mailx-shell" id="mailxShell">
@@ -1076,18 +1368,22 @@ document.querySelectorAll('.taskbox').forEach(k=>k.addEventListener('click',()=>
         </span>
         <span class="mailx-title">Mail</span>
       </div>
+
       <input aria-label="Search mail" id="mailxSearch" class="mailx-search" type="search" placeholder="Search mail…" autocomplete="off">
       <button class="mailx-compose-main" type="button" id="mailxComposeMain">＋ Compose</button>
+      <button class="mailx-top-action mailx-compose-mobile" type="button" id="mailxComposeMobile" hidden>＋ Compose</button>
       <button class="mailx-icon-button" type="button" id="mailxRefresh" aria-label="Refresh mail">↻</button>
+
       <label class="mailx-account-switch" title="Switch connected account">
         <span id="mailxAccountAvatar" aria-hidden="true">∞</span>
-        <select class="mailx-top-account" aria-label="Connected account">
-          <option>All connected</option>
-          <option>NTU Mail</option>
-          <option>Personal</option>
+        <select class="mailx-account-select mailx-top-account" id="mailxAccount" aria-label="Connected account">
+          <option value="all">All connected</option>
+          <option value="ntu">NTU Mail</option>
+          <option value="personal">Personal</option>
         </select>
       </label>
-      <button class="mailx-top-action" type="button" id="mailxSettings" aria-label="Mail settings">
+
+      <button class="mailx-top-action" type="button" id="mailxSettings" aria-label="Accounts, rules and settings" title="Accounts, rules and settings">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>
       </button>
       <button class="mailx-icon-button" type="button" id="mailxClose" aria-label="Close mail">×</button>
@@ -1105,266 +1401,351 @@ document.querySelectorAll('.taskbox').forEach(k=>k.addEventListener('click',()=>
     <div class="mailx-main">
       <nav class="mailx-nav" aria-label="Mail views">
         <button class="mailx-filter is-active" data-mailx-filter="inbox" aria-label="Inbox" title="Inbox">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4zM4 13h4l2 3h4l2-3h4"/></svg>
-          <span class="mailx-rail-count">4</span>
+          <svg viewBox="0 0 24 24"><path d="M4 4h16v16H4zM4 13h4l2 3h4l2-3h4"/></svg><span class="mailx-rail-count" id="mailxUnreadCount">4</span>
         </button>
-        <button class="mailx-filter" data-mailx-filter="unread" aria-label="Unread" title="Unread">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 6 9 7 9-7"/></svg>
-        </button>
-        <button class="mailx-filter" data-mailx-filter="starred" aria-label="Starred" title="Starred">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2-5.5-2.9-5.5 2.9 1-6.2L3 9.6l6.2-.9z"/></svg>
-        </button>
-        <button class="mailx-filter" data-mailx-filter="sent" aria-label="Sent" title="Sent">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 3 18 9-18 9 4-9-4-9Zm4 9h14"/></svg>
-        </button>
-        <button class="mailx-filter" data-mailx-filter="drafts" aria-label="Drafts" title="Drafts">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 4H5v16h14v-8M11 13l1-4 7-7 3 3-7 7-4 1Z"/></svg>
-        </button>
-        <button class="mailx-filter" data-mailx-filter="trash" aria-label="Trash" title="Trash">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M9 6V3h6v3M6 6l1 15h10l1-15M10 10v7m4-7v7"/></svg>
-        </button>
+        <button class="mailx-filter" data-mailx-filter="unread" aria-label="Unread" title="Unread"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 6 9 7 9-7"/></svg></button>
+        <button class="mailx-filter" data-mailx-filter="starred" aria-label="Starred" title="Starred"><svg viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2-5.5-2.9-5.5 2.9 1-6.2L3 9.6l6.2-.9z"/></svg></button>
+        <button class="mailx-filter" data-mailx-filter="sent" aria-label="Sent" title="Sent"><svg viewBox="0 0 24 24"><path d="m3 3 18 9-18 9 4-9-4-9Zm4 9h14"/></svg></button>
+        <button class="mailx-filter" data-mailx-filter="drafts" aria-label="Drafts" title="Drafts"><svg viewBox="0 0 24 24"><path d="M13 4H5v16h14v-8M11 13l1-4 7-7 3 3-7 7-4 1Z"/></svg></button>
+        <button class="mailx-filter" data-mailx-filter="trash" aria-label="Trash" title="Trash"><svg viewBox="0 0 24 24"><path d="M3 6h18M9 6V3h6v3M6 6l1 15h10l1-15M10 10v7m4-7v7"/></svg></button>
         <span class="mailx-rail-divider"></span>
-        <button class="mailx-filter" data-mailx-filter="archived" aria-label="Archived" title="Archived">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h18v4H3zM5 8v12h14V8M10 12h4"/></svg>
-        </button>
+        <button class="mailx-filter" data-mailx-filter="archived" aria-label="Archived" title="Archived"><svg viewBox="0 0 24 24"><path d="M3 4h18v4H3zM5 8v12h14V8M10 12h4"/></svg></button>
       </nav>
 
       <section class="mailx-list-pane">
         <div class="mailx-list-tools">
-          <div class="mailx-list-meta" id="mailxListMeta">Inbox · 6 loaded</div>
+          <div class="mailx-list-meta" id="mailxListMeta">Inbox · 7 loaded</div>
           <div class="mailx-list-extra">
             <select id="mailxView" aria-label="Mail view">
-              <option>Inbox</option><option>Unread</option><option>Starred</option><option>Sent</option><option>Drafts</option><option>Trash</option>
+              <option value="inbox">Inbox</option><option value="unread">Unread</option><option value="starred">Starred</option>
+              <option value="trash">Trash</option><option value="important">Important</option><option value="reply">Needs reply</option>
+              <option value="codes">Codes</option><option value="low">Low</option><option value="all">All mail</option>
+              <option value="blocked">Blocked</option><option value="archived">Archived</option><option value="sent">Sent</option>
+              <option value="drafts">Drafts</option><option value="outbox">Outbox</option>
             </select>
             <button class="mailx-action" id="mailxMarkAllRead">Mark all read</button>
           </div>
+          <div id="mailxNotice" role="status" hidden></div>
         </div>
 
         <div class="mailx-list" id="mailxList">
-          <div class="mailx-message-wrap">
-            <button class="mailx-message is-selected is-unread" type="button"
-              data-subject="ME2001 — Homework 4 reminder" data-sender="Engineering Mathematics" data-email="meganho@ntu.edu.tw" data-date="Today · 14:22"
-              data-body="Reminder that Homework 4 is due tonight at 23:59. Please upload one PDF through NTU COOL.|The submission link will close automatically at the deadline, so please check that the uploaded file opens correctly before leaving the page.">
-              <span class="mailx-avatar tone-1" aria-hidden="true">ME</span>
-              <span class="mailx-row-content">
-                <span class="mailx-message-head"><span class="mailx-sender">Engineering Mathematics</span><span class="mailx-time">14:22</span></span>
-                <span class="mailx-subject"><span class="mailx-unread-dot" aria-label="Unread"></span>ME2001 — Homework 4 reminder</span>
-                <span class="mailx-snippet">Reminder that Homework 4 is due tonight at 23:59…</span>
-                <span class="mailx-message-foot"><span class="mailx-account">NTU Mail</span><span class="mailx-row-status">Deadline</span></span>
-              </span>
+          <div class="mailx-message-wrap" data-kind="inbox unread important">
+            <button class="mailx-message is-selected is-unread" type="button" data-subject="ME2001 — Homework 4 reminder" data-sender="Engineering Mathematics" data-email="meganho@ntu.edu.tw" data-date="Today · 14:22" data-type="University" data-context="Course" data-action="Deadline" data-attachment="HW4-instructions.pdf" data-body="Reminder that Homework 4 is due tonight at 23:59. Please upload one PDF through NTU COOL.|The submission link will close automatically at the deadline, so please check that the uploaded file opens correctly before leaving the page.">
+              <span class="mailx-avatar tone-1">ME</span><span class="mailx-row-content"><span class="mailx-message-head"><span class="mailx-sender">Engineering Mathematics</span><span class="mailx-time">14:22</span></span><span class="mailx-subject"><span class="mailx-unread-dot"></span>ME2001 — Homework 4 reminder</span><span class="mailx-snippet">Reminder that Homework 4 is due tonight at 23:59…</span><span class="mailx-message-foot"><span class="mailx-account">NTU Mail</span><span>⌁</span><span class="mailx-row-status">Deadline</span></span></span>
             </button>
+            <div class="mailx-row-actions"><button data-row-action="star" title="Star">★</button><button data-row-action="archive" title="Archive">▱</button><button data-row-action="trash" title="Move to Trash">×</button><button data-row-action="unread" title="Mark unread">✉</button></div>
           </div>
 
-          <div class="mailx-message-wrap">
-            <button class="mailx-message is-unread" type="button"
-              data-subject="Course announcement: Friday classroom" data-sender="Statics" data-email="statics@ntu.edu.tw" data-date="Today · 12:05"
-              data-body="Friday's class will remain in 繡山講堂. Please bring a calculator and your printed formula sheet.|The quiz will begin during the second half of the class.">
-              <span class="mailx-avatar tone-3" aria-hidden="true">ST</span>
-              <span class="mailx-row-content">
-                <span class="mailx-message-head"><span class="mailx-sender">Statics</span><span class="mailx-time">12:05</span></span>
-                <span class="mailx-subject"><span class="mailx-unread-dot"></span>Course announcement: Friday classroom</span>
-                <span class="mailx-snippet">Friday's class will remain in 繡山講堂…</span>
-                <span class="mailx-message-foot"><span class="mailx-account">NTU Mail</span></span>
-              </span>
+          <div class="mailx-message-wrap" data-kind="inbox unread important">
+            <button class="mailx-message is-unread" type="button" data-subject="Course announcement: Friday classroom" data-sender="Statics" data-email="statics@ntu.edu.tw" data-date="Today · 12:05" data-type="University" data-context="Course" data-action="FYI" data-body="Friday's class will remain in 繡山講堂. Please bring a calculator and your printed formula sheet.|The quiz will begin during the second half of the class.">
+              <span class="mailx-avatar tone-3">ST</span><span class="mailx-row-content"><span class="mailx-message-head"><span class="mailx-sender">Statics</span><span class="mailx-time">12:05</span></span><span class="mailx-subject"><span class="mailx-unread-dot"></span>Course announcement: Friday classroom</span><span class="mailx-snippet">Friday's class will remain in 繡山講堂…</span><span class="mailx-message-foot"><span class="mailx-account">NTU Mail</span></span></span>
             </button>
+            <div class="mailx-row-actions"><button data-row-action="star">★</button><button data-row-action="archive">▱</button><button data-row-action="trash">×</button><button data-row-action="unread">✉</button></div>
           </div>
 
-          <div class="mailx-message-wrap">
-            <button class="mailx-message is-unread" type="button"
-              data-subject="您的作業已批改" data-sender="NTU COOL" data-email="noreply@cool.ntu.edu.tw" data-date="Today · 09:18"
-              data-body="Your Engineering Materials assignment has been graded.|Open NTU COOL to view the score and instructor feedback.">
-              <span class="mailx-avatar tone-2" aria-hidden="true">NC</span>
-              <span class="mailx-row-content">
-                <span class="mailx-message-head"><span class="mailx-sender">NTU COOL</span><span class="mailx-time">09:18</span></span>
-                <span class="mailx-subject"><span class="mailx-unread-dot"></span>您的作業已批改</span>
-                <span class="mailx-snippet">Your Engineering Materials assignment has been graded…</span>
-                <span class="mailx-message-foot"><span class="mailx-account">NTU Mail</span></span>
-              </span>
+          <div class="mailx-message-wrap" data-kind="inbox unread">
+            <button class="mailx-message is-unread" type="button" data-subject="您的作業已批改" data-sender="NTU COOL" data-email="noreply@cool.ntu.edu.tw" data-date="Today · 09:18" data-type="Account Notification" data-context="NTU COOL" data-action="No action" data-body="Your Engineering Materials assignment has been graded.|Open NTU COOL to view the score and instructor feedback.">
+              <span class="mailx-avatar tone-2">NC</span><span class="mailx-row-content"><span class="mailx-message-head"><span class="mailx-sender">NTU COOL</span><span class="mailx-time">09:18</span></span><span class="mailx-subject"><span class="mailx-unread-dot"></span>您的作業已批改</span><span class="mailx-snippet">Your Engineering Materials assignment has been graded…</span><span class="mailx-message-foot"><span class="mailx-account">NTU Mail</span></span></span>
             </button>
+            <div class="mailx-row-actions"><button data-row-action="star">★</button><button data-row-action="archive">▱</button><button data-row-action="trash">×</button><button data-row-action="unread">✉</button></div>
           </div>
 
-          <div class="mailx-message-wrap">
-            <button class="mailx-message" type="button"
-              data-subject="Authorization code confirmation" data-sender="Office of Academic Affairs" data-email="course@ntu.edu.tw" data-date="Yesterday · 17:44"
-              data-body="Your course authorization request has been processed.|Please check the course selection system and confirm your registration status before the add/drop deadline.">
-              <span class="mailx-avatar tone-4" aria-hidden="true">AA</span>
-              <span class="mailx-row-content">
-                <span class="mailx-message-head"><span class="mailx-sender">Academic Affairs</span><span class="mailx-time">YDAY</span></span>
-                <span class="mailx-subject">Authorization code confirmation</span>
-                <span class="mailx-snippet">Your course authorization request has been processed…</span>
-                <span class="mailx-message-foot"><span class="mailx-account">NTU Mail</span></span>
-              </span>
+          <div class="mailx-message-wrap" data-kind="inbox codes">
+            <button class="mailx-message" type="button" data-subject="Your verification code" data-sender="Student Portal" data-email="noreply@ntu.edu.tw" data-date="Yesterday · 18:41" data-type="Login Code" data-context="NTU account" data-action="No action" data-code="418 205" data-body="Use the verification code below to continue signing in.|If you did not request this, you can ignore this message.">
+              <span class="mailx-avatar tone-4">SP</span><span class="mailx-row-content"><span class="mailx-message-head"><span class="mailx-sender">Student Portal</span><span class="mailx-time">YDAY</span></span><span class="mailx-subject">Your verification code</span><span class="mailx-snippet">Use the verification code below to continue signing in…</span><span class="mailx-message-foot"><span class="mailx-account">NTU Mail</span><span class="mailx-code-mini">418205</span></span></span>
             </button>
+            <div class="mailx-row-actions"><button data-row-action="star">★</button><button data-row-action="archive">▱</button><button data-row-action="trash">×</button><button data-row-action="unread">✉</button></div>
           </div>
 
-          <div class="mailx-message-wrap">
-            <button class="mailx-message" type="button"
-              data-subject="Psychology reading for next week" data-sender="General Psychology" data-email="psych@ntu.edu.tw" data-date="Yesterday · 11:02"
-              data-body="The reading for next week is now available on COOL.|Please finish Chapter 5 before class and bring one discussion question.">
-              <span class="mailx-avatar tone-1" aria-hidden="true">PS</span>
-              <span class="mailx-row-content">
-                <span class="mailx-message-head"><span class="mailx-sender">General Psychology</span><span class="mailx-time">YDAY</span></span>
-                <span class="mailx-subject">Psychology reading for next week</span>
-                <span class="mailx-snippet">The reading for next week is now available on COOL…</span>
-                <span class="mailx-message-foot"><span class="mailx-account">NTU Mail</span></span>
-              </span>
+          <div class="mailx-message-wrap" data-kind="inbox reply">
+            <button class="mailx-message" type="button" data-subject="Re: Global Marketing authorization" data-sender="Professor Chen" data-email="prof.chen@ntu.edu.tw" data-date="Yesterday · 16:12" data-type="University" data-context="Course add" data-action="Needs reply" data-body="There is one remaining seat in the course. I can issue an authorization code for you.|Please reply confirming that you still intend to enroll.">
+              <span class="mailx-avatar tone-1">PC</span><span class="mailx-row-content"><span class="mailx-message-head"><span class="mailx-sender">Professor Chen</span><span class="mailx-time">YDAY</span></span><span class="mailx-subject">Re: Global Marketing authorization</span><span class="mailx-snippet">There is one remaining seat in the course…</span><span class="mailx-message-foot"><span class="mailx-account">NTU Mail</span><span class="mailx-row-status">Needs reply</span></span></span>
             </button>
+            <div class="mailx-row-actions"><button data-row-action="star">★</button><button data-row-action="archive">▱</button><button data-row-action="trash">×</button><button data-row-action="unread">✉</button></div>
           </div>
 
-          <div class="mailx-message-wrap">
-            <button class="mailx-message" type="button"
-              data-subject="Receipt — NT$428" data-sender="Carrefour" data-email="service@carrefour.tw" data-date="Mon · 20:31"
-              data-body="Thank you for your purchase.|Total: NT$428. Your electronic receipt has been issued.">
-              <span class="mailx-avatar tone-3" aria-hidden="true">CF</span>
-              <span class="mailx-row-content">
-                <span class="mailx-message-head"><span class="mailx-sender">Carrefour</span><span class="mailx-time">MON</span></span>
-                <span class="mailx-subject">Receipt — NT$428</span>
-                <span class="mailx-snippet">Thank you for your purchase. Your electronic receipt…</span>
-                <span class="mailx-message-foot"><span class="mailx-account">Personal</span></span>
-              </span>
+          <div class="mailx-message-wrap" data-kind="inbox low">
+            <button class="mailx-message" type="button" data-subject="Receipt — NT$428" data-sender="Carrefour" data-email="service@carrefour.tw" data-date="Mon · 20:31" data-type="Receipt / Order" data-context="Shopping" data-action="No action" data-body="Thank you for your purchase.|Total: NT$428. Your electronic receipt has been issued.">
+              <span class="mailx-avatar tone-3">CF</span><span class="mailx-row-content"><span class="mailx-message-head"><span class="mailx-sender">Carrefour</span><span class="mailx-time">MON</span></span><span class="mailx-subject">Receipt — NT$428</span><span class="mailx-snippet">Thank you for your purchase. Your electronic receipt…</span><span class="mailx-message-foot"><span class="mailx-account">Personal</span></span></span>
             </button>
+            <div class="mailx-row-actions"><button data-row-action="star">★</button><button data-row-action="archive">▱</button><button data-row-action="trash">×</button><button data-row-action="unread">✉</button></div>
+          </div>
+
+          <div class="mailx-message-wrap" data-kind="inbox starred">
+            <button class="mailx-message" type="button" data-subject="Psychology reading for next week" data-sender="General Psychology" data-email="psych@ntu.edu.tw" data-date="Mon · 11:02" data-type="University" data-context="Course" data-action="FYI" data-body="The reading for next week is now available on COOL.|Please finish Chapter 5 before class and bring one discussion question.">
+              <span class="mailx-avatar tone-2">PS</span><span class="mailx-row-content"><span class="mailx-message-head"><span class="mailx-sender">General Psychology</span><span class="mailx-time">MON</span></span><span class="mailx-subject">Psychology reading for next week</span><span class="mailx-snippet">The reading for next week is now available on COOL…</span><span class="mailx-message-foot"><span class="mailx-account">NTU Mail</span><span class="mailx-star-indicator">★</span></span></span>
+            </button>
+            <div class="mailx-row-actions"><button data-row-action="unstar">★</button><button data-row-action="archive">▱</button><button data-row-action="trash">×</button><button data-row-action="unread">✉</button></div>
           </div>
         </div>
       </section>
 
-      <div class="mailx-resizer" aria-hidden="true"></div>
+      <div class="mailx-resizer" id="mailxListResizer" role="separator" tabindex="0" aria-orientation="vertical" aria-label="Resize message list"></div>
 
-      <section class="mailx-reader" id="mailxReader">
-        <div class="mailx-reader-toolbar">
-          <button class="mailx-action mailx-reader-back" type="button" id="mailxReaderBack">←</button>
-          <button class="mailx-action mailx-toolbar-reply" type="button">Reply</button>
-          <button class="mailx-action mailx-toolbar-forward" type="button">Forward</button>
-          <button class="mailx-action" type="button">Archive</button>
-          <button class="mailx-action" type="button">★</button>
-          <button class="mailx-action danger" type="button">Trash</button>
-        </div>
-        <div class="mailx-reader-scroll">
-          <div class="mailx-reader-head">
-            <h1 class="mailx-reader-subject" id="demoReaderSubject">ME2001 — Homework 4 reminder</h1>
-            <div class="mailx-reader-tags">
-              <span class="mailx-chip high">High</span>
-              <span class="mailx-chip reply">Deadline</span>
-              <span class="mailx-account">NTU Mail</span>
-            </div>
-            <div class="mailx-sender-row">
-              <span class="mailx-avatar tone-1" id="demoReaderAvatar">ME</span>
-              <div class="mailx-sender-details">
-                <div class="mailx-sender-name" id="demoReaderSender">Engineering Mathematics</div>
-                <div class="mailx-sender-email" id="demoReaderEmail">meganho@ntu.edu.tw</div>
-                <div class="mailx-recipient-line">to me</div>
-              </div>
-              <div class="mailx-reader-date" id="demoReaderDate">Today · 14:22</div>
-            </div>
-          </div>
-          <div class="mailx-thread-message is-current">
-            <details class="mailx-thread-details is-current" open>
-              <div class="mailx-mail-body" id="demoReaderBody">
-                Reminder that Homework 4 is due tonight at 23:59. Please upload one PDF through NTU COOL.
-
-                The submission link will close automatically at the deadline, so please check that the uploaded file opens correctly before leaving the page.
-              </div>
-            </details>
-          </div>
-          <div class="mailx-reply-bar">
-            <button class="mailx-reply-button" type="button">Reply</button>
-            <button class="mailx-reply-button secondary" type="button">Forward</button>
-          </div>
-        </div>
-      </section>
+      <section class="mailx-reader" id="mailxReader"></section>
     </div>
   </div>
 
   <section aria-label="Email composer" class="mailx-compose" id="mailxCompose">
     <div class="mailx-compose-head">
-      <div><div class="mailx-compose-title">New message</div><div class="mailx-compose-context">Decoy draft</div></div>
+      <div><div class="mailx-compose-title" id="mailxComposeTitle">New message</div><div class="mailx-compose-context" id="mailxComposeContext"></div></div>
       <button class="mailx-icon-button mailx-compose-close" id="mailxComposeClose" type="button" aria-label="Close composer">×</button>
     </div>
     <div class="mailx-compose-fields">
-      <div class="mailx-field-row"><label>From</label><select><option>NTU Mail</option><option>Personal</option></select></div>
-      <div class="mailx-field-row"><label>To</label><input type="email" placeholder="name@example.com"></div>
-      <div class="mailx-field-row"><label>Subject</label><input type="text" placeholder="Subject"></div>
+      <div class="mailx-field-row"><label for="mailxFrom">From</label><select id="mailxFrom"><option>NTU Mail</option><option>Personal</option></select></div>
+      <div class="mailx-field-row"><label for="mailxTo">To</label><input id="mailxTo" type="email" multiple placeholder="name@example.com"></div>
+      <div class="mailx-field-row"><label for="mailxSubject">Subject</label><input id="mailxSubject" type="text" placeholder="Subject"></div>
     </div>
+
     <div class="mailx-ai-wrap">
       <div class="mailx-ai-label"><span>AI COMMAND</span><span>Gemini</span></div>
-      <div class="mailx-ai-row"><textarea class="mailx-ai-prompt" placeholder="Tell AI what to write or change."></textarea><button class="mailx-ai-generate" type="button">Generate</button></div>
-      <div class="mailx-ai-chips"><button class="mailx-ai-chip" type="button">Shorter</button><button class="mailx-ai-chip" type="button">Warmer</button><button class="mailx-ai-chip" type="button">More formal</button><button class="mailx-ai-chip" type="button">Fix grammar</button></div>
+      <div class="mailx-ai-row">
+        <textarea id="mailxAiPrompt" class="mailx-ai-prompt" placeholder="Tell AI what to write or change. It always uses the current email draft below as reference."></textarea>
+        <button id="mailxGenerate" class="mailx-ai-generate" type="button"><span class="mailx-ai-generate-label">Generate</span></button>
+      </div>
+      <div class="mailx-ai-chips">
+        <button class="mailx-ai-chip" type="button" data-mailx-ai-chip="make it shorter">Shorter</button>
+        <button class="mailx-ai-chip" type="button" data-mailx-ai-chip="make it warmer and friendlier">Warmer</button>
+        <button class="mailx-ai-chip" type="button" data-mailx-ai-chip="make it more formal">More formal</button>
+        <button class="mailx-ai-chip" type="button" data-mailx-ai-chip="fix the grammar without changing my meaning">Fix grammar</button>
+      </div>
     </div>
-    <div class="mailx-editor-label"><span>EMAIL</span><span class="mailx-editor-tools"><button type="button">Undo AI</button><button type="button">Redo</button></span></div>
-    <div class="mailx-email-body" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="Write manually here…"></div>
+
+    <div class="mailx-editor-label"><span>EMAIL</span><span class="mailx-editor-tools"><button id="mailxUndo" type="button">Undo AI</button><button id="mailxRedo" type="button">Redo</button></span></div>
+
+    <div class="mailx-format-toolbar" role="toolbar" aria-label="Text formatting">
+      <select id="mailxBlockFormat" aria-label="Text style"><option value="p">Normal</option><option value="h3">Small heading</option><option value="h2">Heading</option><option value="h1">Large heading</option><option value="blockquote">Quote</option></select>
+      <span class="mailx-format-divider"></span>
+      <button type="button" data-format-command="bold"><strong>B</strong></button>
+      <button type="button" data-format-command="italic"><em>I</em></button>
+      <button type="button" data-format-command="underline"><u>U</u></button>
+      <button type="button" data-format-command="strikeThrough"><s>S</s></button>
+      <span class="mailx-format-divider"></span>
+      <button type="button" data-format-command="insertUnorderedList">• List</button>
+      <button type="button" data-format-command="insertOrderedList">1. List</button>
+      <button type="button" id="mailxLink">Link</button>
+      <button type="button" data-format-command="removeFormat">Clear</button>
+      <span class="mailx-format-spacer"></span>
+      <button type="button" id="mailxAttach" class="mailx-attach-button" title="Attach files">📎</button>
+      <input id="mailxAttachmentInput" type="file" multiple hidden>
+    </div>
+
+    <div id="mailxBody" class="mailx-email-body" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="Write manually here, or use the AI command above…"></div>
+    <div id="mailxAttachments" class="mailx-attachment-list" aria-live="polite"></div>
+    <div id="mailxComposeError" class="mailx-inline-error" role="alert"></div>
+
     <div class="mailx-compose-foot">
-      <span class="mailx-compose-note">Your editable draft</span>
-      <button class="mailx-schedule" type="button">Schedule</button>
-      <button class="mailx-send" type="button">Send</button>
+      <span class="mailx-compose-note"><span id="mailxDraftState">Your editable draft</span></span>
+      <button class="mailx-action mailx-save-draft-icon" id="mailxSaveDraft" type="button" title="Save draft">Save draft</button>
+      <button class="mailx-schedule" id="mailxSchedule" type="button">Schedule</button>
+      <button class="mailx-send" id="mailxSend" type="button">Send</button>
     </div>
   </section>
+
   <div class="mailx-toast" id="mailxToast" role="status"></div>
 </dialog>
 
 <script id="decoy-mail-behavior">
 (() => {
-  const launch = document.getElementById('mailDashboardButton');
   const dialog = document.getElementById('mailDemoDialog');
+  const launch = document.getElementById('mailDashboardButton');
   const shell = document.getElementById('mailxShell');
-  const search = document.getElementById('mailxSearch');
-  const compose = document.getElementById('mailxCompose');
   const list = document.getElementById('mailxList');
-  if (!launch || !dialog) return;
+  const reader = document.getElementById('mailxReader');
+  const compose = document.getElementById('mailxCompose');
+  if (!dialog || !launch || !shell || !list || !reader || !compose) return;
 
-  const rows = [...dialog.querySelectorAll('.mailx-message')];
-  const subject = document.getElementById('demoReaderSubject');
-  const sender = document.getElementById('demoReaderSender');
-  const email = document.getElementById('demoReaderEmail');
-  const date = document.getElementById('demoReaderDate');
-  const avatar = document.getElementById('demoReaderAvatar');
-  const body = document.getElementById('demoReaderBody');
+  const $ = (s,r=dialog) => r.querySelector(s);
+  const $ = (s,r=dialog) => [...r.querySelectorAll(s)];
+  let selected = $('.mailx-message.is-selected');
+  let previousBody = '';
+  let toastTimer;
 
-  launch.addEventListener('click', e => {
-    e.preventDefault();
-    dialog.showModal();
-  });
-  document.getElementById('mailxClose').onclick = () => dialog.close();
-  document.getElementById('mailxComposeMain').onclick = () => compose.classList.add('is-open');
-  document.getElementById('mailxComposeClose').onclick = () => compose.classList.remove('is-open');
-  document.getElementById('mailxRefresh').onclick = e => {
-    e.currentTarget.animate([{transform:'rotate(0deg)'},{transform:'rotate(360deg)'}],{duration:260});
+  const toast = text => {
+    const el = $('#mailxToast');
+    el.textContent = text;
+    el.classList.add('is-visible');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=>el.classList.remove('is-visible'),1800);
   };
 
-  rows.forEach(row => row.addEventListener('click', () => {
-    rows.forEach(x => x.classList.remove('is-selected'));
-    row.classList.add('is-selected');
+  const openCompose = (mode='New message', row=null) => {
+    $('#mailxComposeTitle').textContent = mode;
+    $('#mailxComposeContext').textContent = row ? row.dataset.subject : '';
+    if (row) {
+      $('#mailxTo').value = row.dataset.email || '';
+      $('#mailxSubject').value = mode==='Reply' ? 'Re: '+row.dataset.subject : 'Fwd: '+row.dataset.subject;
+    }
+    compose.classList.add('is-open');
+  };
+
+  const renderReader = row => {
+    selected = row;
+    $('.mailx-message').forEach(x=>x.classList.toggle('is-selected',x===row));
     row.classList.remove('is-unread');
     row.querySelector('.mailx-unread-dot')?.remove();
-    subject.textContent = row.dataset.subject;
-    sender.textContent = row.dataset.sender;
-    email.textContent = row.dataset.email;
-    date.textContent = row.dataset.date;
-    avatar.textContent = row.querySelector('.mailx-avatar')?.textContent || '';
-    body.textContent = row.dataset.body.split('|').join('\n\n');
+
+    const code = row.dataset.code || '';
+    const attachment = row.dataset.attachment || '';
+    const paras = (row.dataset.body || '').split('|').map(x=>'<p>'+x.replace(/</g,'&lt;')+'</p>').join('');
+    reader.innerHTML = `
+      <div class="mailx-reader-toolbar">
+        <button class="mailx-action mailx-reader-back" data-action="back">←</button>
+        <button class="mailx-action" data-action="archive">Archive</button>
+        <button class="mailx-action" data-action="mute">Mute</button>
+        <button class="mailx-action danger" data-action="block">Block</button>
+        <button class="mailx-action good" data-action="unsubscribe">Unsubscribe</button>
+        <button class="mailx-action" data-action="unread">Unread</button>
+        <button class="mailx-action mailx-toolbar-reply" data-action="reply">Reply</button>
+        <button class="mailx-action mailx-toolbar-forward" data-action="forward">Forward</button>
+        <details class="mailx-reader-more">
+          <summary aria-label="More message actions">•••</summary>
+          <div>
+            <button class="mailx-action" data-action="mute">Mute</button>
+            <button class="mailx-action danger" data-action="block">Block</button>
+            <button class="mailx-action good" data-action="unsubscribe">Unsubscribe</button>
+            <button class="mailx-action" data-action="classify">Rule</button>
+            <button class="mailx-action" data-action="sender">Sender</button>
+          </div>
+        </details>
+        <span class="mailx-toolbar-spacer"></span>
+        <button class="mailx-action mailx-focus-action" data-action="focus">Focus</button>
+      </div>
+      <div class="mailx-reader-scroll">
+        <div class="mailx-reader-head">
+          <div class="mailx-reader-title-row">
+            <h2 class="mailx-reader-subject">${row.dataset.subject}</h2>
+            <div class="mailx-reader-head-actions"><button class="mailx-action" data-action="classify">Rule</button><button class="mailx-action" data-action="sender">Sender</button></div>
+          </div>
+          <div class="mailx-reader-tags">
+            <span class="mailx-account">NTU Mail</span>
+            <span class="mailx-chip">${row.dataset.type || 'University'}</span>
+            <span class="mailx-chip">${row.dataset.context || 'No context'}</span>
+            ${row.dataset.action==='Needs reply'?'<span class="mailx-chip reply">Needs reply</span>':''}
+          </div>
+        </div>
+        <article class="mailx-thread-message is-current">
+          <details class="mailx-thread-details is-current" open>
+            <summary><span class="mailx-avatar tone-1">${row.querySelector('.mailx-avatar')?.textContent || '?'}</span><span class="mailx-thread-summary"><strong>${row.dataset.sender}</strong><span>${row.querySelector('.mailx-snippet')?.textContent || ''}</span></span><time>${row.dataset.date}</time></summary>
+            <details class="mailx-message-meta">
+              <summary>Message details</summary>
+              <div class="mailx-sender-row"><div class="mailx-sender-details"><div class="mailx-sender-email">From: ${row.dataset.sender} &lt;${row.dataset.email}&gt;</div><div class="mailx-recipient-line">To: me</div><div class="mailx-recipient-line">Date: ${row.dataset.date} · NTU Mail</div></div></div>
+            </details>
+            ${code?`<div class="mailx-login-card"><div class="mailx-login-label">VERIFICATION CODE</div><div class="mailx-login-code">${code}</div><button class="mailx-copy-code" data-copy-code="${code.replace(/\s/g,'')}">Copy code</button></div>`:''}
+            <div class="mailx-mail-body">${paras}</div>
+            ${attachment?`<div class="mailx-attachments"><button class="mailx-attachment-download"><span class="mailx-file-type">PDF</span><span><strong>${attachment}</strong><small>182 KB · Download ↓</small></span></button></div>`:''}
+          </details>
+        </article>
+        <div class="mailx-reply-bar"><button class="mailx-reply-button" data-action="reply">Reply</button><button class="mailx-reply-button secondary" data-action="forward">Forward</button></div>
+      </div>`;
+
     shell.classList.add('is-reading');
-  }));
 
-  document.getElementById('mailxReaderBack').onclick = () => shell.classList.remove('is-reading');
-  search.addEventListener('input', () => {
-    const q = search.value.toLowerCase();
-    rows.forEach(row => {
-      row.closest('.mailx-message-wrap').hidden = !row.innerText.toLowerCase().includes(q);
+    $('[data-action]',reader).forEach(b=>b.onclick=()=>{
+      const a=b.dataset.action;
+      if(a==='back'){shell.classList.remove('is-reading','is-reader-focused');return;}
+      if(a==='reply'){openCompose('Reply',row);return;}
+      if(a==='forward'){openCompose('Forward',row);return;}
+      if(a==='focus'){shell.classList.toggle('is-reader-focused');b.textContent=shell.classList.contains('is-reader-focused')?'Exit focus':'Focus';return;}
+      if(a==='unread'){row.classList.add('is-unread');toast('Marked unread');return;}
+      if(a==='classify'){openRuleSheet(row);return;}
+      if(a==='sender'){openSenderSheet(row);return;}
+      toast(a.charAt(0).toUpperCase()+a.slice(1)+' previewed');
     });
-  });
-
-  dialog.querySelectorAll('[data-mailx-filter]').forEach(btn => btn.onclick = () => {
-    dialog.querySelectorAll('[data-mailx-filter]').forEach(x => x.classList.remove('is-active'));
-    btn.classList.add('is-active');
-  });
-  dialog.querySelectorAll('[data-mailx-mobile-filter]').forEach(btn => btn.onclick = () => {
-    dialog.querySelectorAll('[data-mailx-mobile-filter]').forEach(x => x.classList.remove('is-active'));
-    btn.classList.add('is-active');
-  });
-  document.getElementById('mailxMarkAllRead').onclick = () => {
-    rows.forEach(row => {
-      row.classList.remove('is-unread');
-      row.querySelector('.mailx-unread-dot')?.remove();
-    });
+    $('[data-copy-code]',reader)?.addEventListener('click',e=>{navigator.clipboard?.writeText(e.currentTarget.dataset.copyCode);toast('Code copied');});
+    $('.mailx-attachment-download',reader)?.addEventListener('click',()=>toast('Attachment download preview'));
   };
+
+  const closeSheet = () => $('#mailxSheet')?.remove();
+  const makeSheet = (title,html) => {
+    closeSheet();
+    const p=document.createElement('section');
+    p.id='mailxSheet';p.className='mailx-sheet';p.setAttribute('aria-label',title);
+    p.innerHTML='<div class="mailx-compose-head"><strong>'+title+'</strong><button class="mailx-icon-button mailx-compose-close" aria-label="Close panel">×</button></div><div class="mailx-sheet-body">'+html+'</div><div class="mailx-inline-error" id="mailxSheetError"></div>';
+    dialog.appendChild(p);
+    p.querySelector('.mailx-compose-close').onclick=()=>p.remove();
+    return p;
+  };
+
+  const openSettings = () => {
+    const p=makeSheet('Mail settings',`
+      <h3>Connected accounts</h3>
+      <div class="mailx-settings-account"><strong>NTU Mail</strong><p>student@ntu.edu.tw · connected</p><small>Last sync 2 minutes ago</small><p><button class="mailx-action">Rename</button> <button class="mailx-action">Disconnect</button></p></div>
+      <div class="mailx-settings-account"><strong>Personal</strong><p>personal@gmail.com · connected</p><small>Last sync 4 minutes ago</small><p><button class="mailx-action">Rename</button> <button class="mailx-action">Disconnect</button></p></div>
+      <button class="mailx-send" id="demoConnect">Connect Gmail</button>
+      <h3>Rules · reversible</h3>
+      <div class="mailx-rule"><span>sender: newsletter@example.com<br>priority: Muted</span><button class="mailx-action">Remove</button></div>
+      <h3>Background service</h3><p>Last completed: 2 minutes ago</p>
+      <details><summary>Google & Gemini setup</summary><p>Decoy only — nothing here is submitted.</p>
+      <p>Google callback URL:</p><code class="mailx-callback">https://example.invalid/oauth/callback</code>
+      <form id="demoConfig"><label>Google Web OAuth client ID<input type="text" placeholder="Leave blank to keep current"></label><label>Google client secret<input type="password"></label><label>Gemini API key<input type="password"></label><label>Gemini model<input type="text" value="gemini-2.5-flash"></label><button class="mailx-send" type="submit">Save securely</button></form></details>`);
+    p.querySelectorAll('button').forEach(b=>{if(!b.classList.contains('mailx-compose-close'))b.onclick=e=>{e.preventDefault();toast('Decoy only');};});
+    p.querySelector('#demoConfig')?.addEventListener('submit',e=>{e.preventDefault();toast('Decoy only');});
+  };
+
+  const openRuleSheet = row => {
+    const p=makeSheet('Classification & rules',`<p>Permanent rules can be removed in Settings.</p><label>Apply to<select><option>This thread</option><option>${row.dataset.email}</option><option>Domain</option></select></label><label>Type<select><option>${row.dataset.type}</option><option>University</option><option>Newsletter</option><option>Promotion</option></select></label><label>Priority<select><option>Normal</option><option>High</option><option>Low</option><option>Muted</option></select></label><label>Context<input value="${row.dataset.context||''}"></label><label>Action<select><option>${row.dataset.action||'No action'}</option><option>Needs reply</option><option>Deadline</option><option>FYI</option><option>No action</option></select></label><button class="mailx-send" id="demoRuleSave">Save rule</button>`);
+    p.querySelector('#demoRuleSave').onclick=()=>{toast('Rule saved in preview');p.remove();};
+  };
+
+  const openSenderSheet = row => {
+    const p=makeSheet(row.dataset.sender,`<p>${row.dataset.email}</p><p>3 threads in the loaded results</p><p>${row.dataset.type} · 3</p><button class="mailx-action">View all sender mail</button> <button class="mailx-action">Set a type-specific rule</button>`);
+    p.querySelectorAll('.mailx-action').forEach(b=>b.onclick=()=>toast('Sender action preview'));
+  };
+
+  const openScheduleSheet = () => {
+    const p=makeSheet('Schedule send','<p>Sent by the server even when this PWA is closed.</p><label>Your device’s local time<input type="datetime-local" required></label><button class="mailx-send" id="demoScheduleConfirm">Schedule</button>');
+    p.querySelector('#demoScheduleConfirm').onclick=()=>{toast('Scheduled in preview');p.remove();compose.classList.remove('is-open');};
+  };
+
+  launch.onclick = e => {e.preventDefault();dialog.showModal();shell.classList.remove('is-reading','is-reader-focused');};
+  $('#mailxClose').onclick = () => {compose.classList.remove('is-open');closeSheet();dialog.close();};
+  $('#mailxComposeMain').onclick = () => openCompose();
+  $('#mailxComposeMobile').onclick = () => openCompose();
+  $('#mailxComposeClose').onclick = () => compose.classList.remove('is-open');
+  $('#mailxSettings').onclick = openSettings;
+  $('#mailxRefresh').onclick = () => toast('Mail refreshed');
+  $('#mailxMarkAllRead').onclick = () => {$('.mailx-message').forEach(r=>{r.classList.remove('is-unread');r.querySelector('.mailx-unread-dot')?.remove();});$('#mailxUnreadCount').textContent='';toast('Marked all read');};
+  $('#mailxSchedule').onclick = openScheduleSheet;
+  $('#mailxSend').onclick = () => {toast('Send preview only');compose.classList.remove('is-open');};
+  $('#mailxSaveDraft').onclick = () => toast('Draft saved locally in preview');
+
+  const search=$('#mailxSearch');
+  search.oninput=()=>{const q=search.value.toLowerCase();$('.mailx-message-wrap').forEach(w=>w.hidden=!w.innerText.toLowerCase().includes(q));};
+
+  const applyView = view => {
+    const rows=$('.mailx-message-wrap');
+    rows.forEach(w=>{w.hidden = view!=='all' && !w.dataset.kind.split(' ').includes(view) && !(view==='important'&&w.dataset.kind.includes('important'));});
+    $('#mailxListMeta').textContent=(view==='all'?'All mail':view.charAt(0).toUpperCase()+view.slice(1))+' · '+rows.filter(w=>!w.hidden).length+' loaded';
+  };
+  $('[data-mailx-filter]').forEach(b=>b.onclick=()=>{$('[data-mailx-filter]').forEach(x=>x.classList.remove('is-active'));b.classList.add('is-active');$('#mailxView').value=b.dataset.mailxFilter;applyView(b.dataset.mailxFilter);});
+  $('[data-mailx-mobile-filter]').forEach(b=>b.onclick=()=>{$('[data-mailx-mobile-filter]').forEach(x=>x.classList.remove('is-active'));b.classList.add('is-active');applyView(b.dataset.mailxMobileFilter);});
+  $('#mailxView').onchange=e=>applyView(e.target.value);
+
+  $('.mailx-message').forEach(row=>row.onclick=()=>renderReader(row));
+  $('.mailx-row-actions button').forEach(b=>b.onclick=e=>{e.stopPropagation();toast((b.dataset.rowAction||'Action')+' previewed');});
+
+  $('[data-mailx-ai-chip]')?.closest('.mailx-ai-chips');
+  $('[data-mailx-ai-chip]').forEach(b=>b.onclick=()=>{$('#mailxAiPrompt').value=b.dataset.mailxAiChip;});
+  $('#mailxGenerate').onclick=()=>{previousBody=$('#mailxBody').innerHTML;const cmd=$('#mailxAiPrompt').value||'Draft a concise reply';$('#mailxBody').innerHTML='<p><strong>Preview AI revision</strong></p><p>'+cmd.replace(/</g,'&lt;')+'.</p>';toast('AI revision preview');};
+  $('#mailxUndo').onclick=()=>{if(previousBody!==undefined){const now=$('#mailxBody').innerHTML;$('#mailxBody').innerHTML=previousBody;previousBody=now;}};
+  $('#mailxRedo').onclick=$('#mailxUndo').onclick;
+
+  $('[data-format-command]').forEach(b=>b.onclick=()=>{document.execCommand(b.dataset.formatCommand,false,null);$('#mailxBody').focus();});
+  $('#mailxBlockFormat').onchange=e=>{document.execCommand('formatBlock',false,e.target.value);$('#mailxBody').focus();};
+  $('#mailxLink').onclick=()=>{const href=prompt('Link URL');if(href)document.execCommand('createLink',false,href);};
+  $('#mailxAttach').onclick=()=>$('#mailxAttachmentInput').click();
+  $('#mailxAttachmentInput').onchange=e=>{const wrap=$('#mailxAttachments');wrap.innerHTML=[...e.target.files].map(f=>'<span class="mailx-chip">'+f.name+'</span>').join('');toast(e.target.files.length+' attachment(s) added');};
+
+  const resizer=$('#mailxListResizer');
+  let dragging=false,startX=0,startW=0;
+  resizer.addEventListener('pointerdown',e=>{if(innerWidth<=860)return;dragging=true;startX=e.clientX;startW=parseFloat(getComputedStyle($('.mailx-main')).getPropertyValue('--mailx-list-w'))||356;resizer.setPointerCapture(e.pointerId);});
+  resizer.addEventListener('pointermove',e=>{if(!dragging)return;const w=Math.max(280,Math.min(620,startW+(e.clientX-startX)));$('.mailx-main').style.setProperty('--mailx-list-w',w+'px');});
+  resizer.addEventListener('pointerup',()=>dragging=false);
+  resizer.addEventListener('pointercancel',()=>dragging=false);
+
+  renderReader(selected);
+  shell.classList.remove('is-reading');
 })();
 </script>
 <!-- DECOY_MAIL_END -->
