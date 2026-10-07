@@ -1041,6 +1041,11 @@ function renderCoolDeadlines(){
 
     return `
       <article class="cool-key-row ${done ? 'is-finished' : ''}" data-event-id="${escapeHtml(event.id)}">
+        <div class="cool-deadline-key" aria-label="Deadline ${escapeHtml(dueLabel)}">
+          <span class="cool-deadline-mon">${escapeHtml(shortMonths[due.getMonth()].toUpperCase())}</span>
+          <strong class="cool-deadline-day">${String(due.getDate()).padStart(2,'0')}</strong>
+          <small class="cool-deadline-time">${event.allDay ? 'ALL DAY' : escapeHtml(displayTime(`${String(due.getHours()).padStart(2,'0')}:${String(due.getMinutes()).padStart(2,'0')}`).replace(' ',''))}</small>
+        </div>
         <a class="cool-entry-key" href="${escapeHtml(event.url)}" target="_blank" rel="noopener noreferrer external">
           <span class="cool-entry-title">${escapeHtml(event.title)}</span>
           <span class="cool-entry-meta">${escapeHtml(course)} · ${escapeHtml(done ? 'FINISHED' : dueLabel)}</span>
