@@ -1073,35 +1073,62 @@ function renderCoolDeadlines(){
     return;
   }
 
+  const academicCourseLabel = courseName => ({
+    'Engineering Mathematics':'Eng Math',
+    'Engineering Materials':'Eng Materials',
+    'Psychology':'Psychology',
+    'Mechanism':'Mechanism',
+    'Statics':'Statics'
+  })[courseName] || courseName;
+
   coolDeadlinesEl.innerHTML = events.map(event => {
     const due = new Date(event.dueAt);
     const isAcademic = event.kind === 'academic';
     const done = !isAcademic && coolDone.has(event.id);
-    const dueLabel = isAcademic ? String(event.metaLabel || 'EXAM').toUpperCase() : coolDueLabel(event).toUpperCase();
-    const course = String(event.course || 'NTU COOL').toUpperCase();
+    const course = String(event.course || 'NTU COOL');
 
     const hours = Math.max(0, (due.getTime() - now) / 3600000);
     const urgency = hours <= 12 ? 'urgent' : (hours <= 72 ? 'soon' : '');
     const progress = Math.round(Math.max(12, Math.min(92, 92 - (hours / 168) * 70)));
 
-    const entry = isAcademic
-      ? `<div class="cool-entry-key academic-entry" aria-label="${escapeHtml(course)} ${escapeHtml(event.title)}">
-          <span class="cool-entry-title">${escapeHtml(event.title)}</span>
-          <span class="cool-entry-meta">${escapeHtml(course)} · ${escapeHtml(dueLabel)}</span>
-          <span class="cool-entry-bar" aria-hidden="true"><i style="--p:${progress}%"></i></span>
-        </div>`
-      : `<a class="cool-entry-key" href="${escapeHtml(event.url)}" target="_blank" rel="noopener noreferrer external">
-          <span class="cool-entry-title">${escapeHtml(event.title)}</span>
-          <span class="cool-entry-meta">${escapeHtml(course)} · ${escapeHtml(done ? 'FINISHED' : dueLabel)}</span>
-          <span class="cool-entry-bar" aria-hidden="true"><i style="--p:${progress}%"></i></span>
-        </a>`;
+    if (isAcademic){
+      const courseLabel = academicCourseLabel(course);
+      const isQuiz = /quiz/i.test(event.title);
+      const kindLabel = isQuiz ? 'QUIZ' : 'EXAM';
+      const extra = event.metaLabel && !/^exam$|^quiz$/i.test(event.metaLabel)
+        ? ` · ${event.metaLabel}`
+        : '';
+      const fullTitle = `${courseLabel} ${event.title}`;
 
-    const action = isAcademic
-      ? `<div class="cool-finish-key academic-badge" aria-label="${escapeHtml(dueLabel)}">
-          <span class="keylegend">TYPE</span>
-          <span class="cool-finish-label">${escapeHtml(dueLabel)}</span>
-        </div>`
-      : `<button
+      return `
+        <article class="academic-date-block ${urgency}" data-event-id="${escapeHtml(event.id)}" aria-label="${escapeHtml(fullTitle)} on ${escapeHtml(shortMonths[due.getMonth()])} ${due.getDate()}">
+          <div class="academic-date-inline">
+            <span>${escapeHtml(shortMonths[due.getMonth()].toUpperCase())}</span>
+            <strong>${String(due.getDate()).padStart(2,'0')}</strong>
+            <small>${escapeHtml(dayNames[due.getDay()].slice(0,3).toUpperCase())}</small>
+          </div>
+          <div class="academic-block-copy">
+            <strong>${escapeHtml(fullTitle)}</strong>
+            <span>${escapeHtml(kindLabel + extra)}</span>
+          </div>
+        </article>`;
+    }
+
+    const dueLabel = coolDueLabel(event).toUpperCase();
+
+    return `
+      <article class="cool-key-row ${urgency} ${done ? 'is-finished' : ''}" data-event-id="${escapeHtml(event.id)}">
+        <div class="cool-deadline-key" aria-label="Date ${escapeHtml(shortMonths[due.getMonth()])} ${due.getDate()}">
+          <span class="cool-deadline-mon">${escapeHtml(shortMonths[due.getMonth()].toUpperCase())}</span>
+          <strong class="cool-deadline-day">${String(due.getDate()).padStart(2,'0')}</strong>
+          <small class="cool-deadline-time">${event.allDay ? 'ALL DAY' : escapeHtml(displayTime(`${String(due.getHours()).padStart(2,'0')}:${String(due.getMinutes()).padStart(2,'0')}`).replace(' ',''))}</small>
+        </div>
+        <a class="cool-entry-key" href="${escapeHtml(event.url)}" target="_blank" rel="noopener noreferrer external">
+          <span class="cool-entry-title">${escapeHtml(event.title)}</span>
+          <span class="cool-entry-meta">${escapeHtml(course.toUpperCase())} · ${escapeHtml(done ? 'FINISHED' : dueLabel)}</span>
+          <span class="cool-entry-bar" aria-hidden="true"><i style="--p:${progress}%"></i></span>
+        </a>
+        <button
           class="cool-finish-key ${done ? 'is-pressed' : ''}"
           type="button"
           data-event-id="${escapeHtml(event.id)}"
@@ -1109,17 +1136,7 @@ function renderCoolDeadlines(){
           aria-label="${done ? 'Mark as not finished' : 'Mark as finished'}">
           <span class="keylegend">DONE</span>
           <span class="cool-finish-label">${done ? '✓' : 'FINISH'}</span>
-        </button>`;
-
-    return `
-      <article class="cool-key-row ${urgency} ${done ? 'is-finished' : ''} ${isAcademic ? 'is-academic' : ''}" data-event-id="${escapeHtml(event.id)}">
-        <div class="cool-deadline-key" aria-label="Date ${escapeHtml(shortMonths[due.getMonth()])} ${due.getDate()}">
-          <span class="cool-deadline-mon">${escapeHtml(shortMonths[due.getMonth()].toUpperCase())}</span>
-          <strong class="cool-deadline-day">${String(due.getDate()).padStart(2,'0')}</strong>
-          <small class="cool-deadline-time">${isAcademic ? escapeHtml(dueLabel) : (event.allDay ? 'ALL DAY' : escapeHtml(displayTime(`${String(due.getHours()).padStart(2,'0')}:${String(due.getMinutes()).padStart(2,'0')}`).replace(' ','')))}</small>
-        </div>
-        ${entry}
-        ${action}
+        </button>
       </article>`;
   }).join('');
 

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ntu-schedule-github-v34';
+const CACHE_NAME = 'ntu-schedule-github-v35';
 const NTU_MAIL_URL = 'https://wmail1.cc.ntu.edu.tw/rc/index.php';
 const ROOT = new URL(self.registration.scope).pathname;
 const asset = path => ROOT + (path.startsWith('/') ? path.slice(1) : path);
@@ -15,7 +15,7 @@ const APP_SHELL = [
   asset('app.js?v=110'),
   asset('mail-demo.js?v=22'),
   asset('skeuo-demo.html'),
-  asset('skeuo-runtime.js?v=21'),
+  asset('skeuo-runtime.js?v=22'),
   asset('manifest.webmanifest?v=2'),
   asset('favicon.svg'),
   asset('hub-statics.svg'),
