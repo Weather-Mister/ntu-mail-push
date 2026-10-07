@@ -528,7 +528,21 @@
     try{
       const isDraft=state.filter==='drafts',data=await api(isDraft?'drafts':'outbox');if(version!==state.loadVersion)return;
       const rows=(isDraft?data.drafts:data.jobs).filter(r=>state.account==='all'||r.account_id===state.account);
-      listEl.innerHTML=rows.map((r,i)=>`<div class="mailx-message"><strong>${escapeHtml(r.subject||'(no subject)')}</strong><div class="mailx-snippet">${escapeHtml(accountName(r.account_id))}${r.to_address?' · '+escapeHtml(r.to_address):''}</div><p>${isDraft?escapeHtml(time(r.updated_at)):escapeHtml(r.status+' · '+time(r.send_at))}</p>${r.error?`<p class="mailx-inline-error">${escapeHtml(r.error)}</p>`:''}${isDraft?`<button class="mailx-action" data-draft="${i}">Open draft</button> <button class="mailx-action" data-delete-draft="${i}">Delete draft</button>`:`${['pending','processing'].includes(r.status)?`<button class="mailx-action" data-cancel="${i}">Cancel send</button>`:''}${['sending','uncertain'].includes(r.status)?`<button class="mailx-action" data-check="${i}">Check Gmail delivery</button>`:''}${['cancelled','failed'].includes(r.status)?`<button class="mailx-action" data-restore="${i}">Restore draft</button>`:''}`}</div>`).join('')||'<div class="mailx-empty-list">Nothing here yet.</div>';
+      listEl.innerHTML=rows.map((r,i)=>isDraft
+        ? `<div class="mailx-message-wrap">
+            <button class="mailx-message" type="button" data-draft="${i}">
+              ${avatar(accountName(r.account_id))}
+              <span class="mailx-row-content">
+                <span class="mailx-message-head"><span class="mailx-sender">${escapeHtml(accountName(r.account_id))}</span><span class="mailx-time">${escapeHtml(time(r.updated_at))}</span></span>
+                <span class="mailx-subject">${escapeHtml(r.subject||'(no subject)')}</span>
+                <span class="mailx-snippet">${r.to_address?'To: '+escapeHtml(r.to_address):'No recipient yet'}</span>
+                <span class="mailx-message-foot"><span class="mailx-account">Draft</span><span class="mailx-row-status">Saved draft</span></span>
+              </span>
+            </button>
+            <div class="mailx-row-actions"><button data-row-action="trash" data-delete-draft="${i}" type="button" title="Delete draft" aria-label="Delete draft">×</button></div>
+          </div>`
+        : `<div class="mailx-message"><strong>${escapeHtml(r.subject||'(no subject)')}</strong><div class="mailx-snippet">${escapeHtml(accountName(r.account_id))}${r.to_address?' · '+escapeHtml(r.to_address):''}</div><p>${escapeHtml(r.status+' · '+time(r.send_at))}</p>${r.error?`<p class="mailx-inline-error">${escapeHtml(r.error)}</p>`:''}${['pending','processing'].includes(r.status)?`<button class="mailx-action" data-cancel="${i}">Cancel send</button>`:''}${['sending','uncertain'].includes(r.status)?`<button class="mailx-action" data-check="${i}">Check Gmail delivery</button>`:''}${['cancelled','failed'].includes(r.status)?`<button class="mailx-action" data-restore="${i}">Restore draft</button>`:''}</div>`
+      ).join('')||'<div class="mailx-empty-list">Nothing here yet.</div>';
       $$('[data-draft]').forEach(b=>b.onclick=guarded(async()=>{const {draft}=await api('drafts/open',{id:rows[+b.dataset.draft].id});await openComposer(null,draft);}));
       $$('[data-delete-draft]').forEach(b=>b.onclick=guarded(async()=>{if(!confirm('Delete this saved Mail draft?'))return;await api('drafts/delete',{id:rows[+b.dataset.deleteDraft].id});await loadSpecial();}));
       for(const action of ['cancel','check','restore'])$$('[data-'+action+']').forEach(b=>b.onclick=guarded(async()=>{const row=rows[+b.dataset[action]];if(action==='cancel'&&!confirm('Cancel this scheduled send?'))return;b.disabled=true;try{const data=await api('outbox/'+action,{id:row.id});if(action==='restore'){await openComposer(null,data.draft);showToast(data.note);}else{await loadSpecial();if(data.job?.error)showToast(data.job.error);}}finally{b.disabled=false;}}));
