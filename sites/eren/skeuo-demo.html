@@ -4029,6 +4029,80 @@ h1{
   box-shadow:inset 0 2px 3px rgba(72,61,45,.22),0 1px 0 #817661!important;
 }
 </style>
+<style id="mail-empty-terminal-theme">
+/* Empty mail reader: hardware standby terminal instead of the old modern-mail placeholder. */
+.machine.mail-mode .mailx-reader-empty{
+  position:relative;
+  width:min(360px,calc(100% - 34px))!important;
+  max-width:none!important;
+  margin:auto!important;
+  padding:34px 24px 28px!important;
+  border:3px solid #6d6453!important;
+  border-radius:4px!important;
+  background:
+    repeating-linear-gradient(0deg,rgba(255,255,255,.015) 0 1px,transparent 1px 3px),
+    radial-gradient(circle at 74% 18%,rgba(125,145,115,.045),transparent 28%),
+    #252820!important;
+  color:#9da695!important;
+  box-shadow:
+    inset 0 8px 18px rgba(0,0,0,.66),
+    inset 0 0 0 1px rgba(255,255,255,.025),
+    0 2px rgba(255,255,255,.10),
+    7px 9px 10px rgba(42,24,11,.20)!important;
+  text-align:center!important;
+  font-family:"Courier New",monospace!important;
+}
+.machine.mail-mode .mailx-reader-empty::before{
+  content:"MAIL READER / STANDBY";
+  position:absolute;
+  top:10px;
+  left:12px;
+  color:#737d70;
+  font:700 7px/1 "Courier New",monospace;
+  letter-spacing:.13em;
+}
+.machine.mail-mode .mailx-reader-empty-icon{
+  width:58px!important;
+  height:52px!important;
+  margin:8px auto 18px!important;
+  border:1px solid #817661!important;
+  border-radius:5px!important;
+  display:grid!important;
+  place-items:center!important;
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.34),transparent 31%),
+    linear-gradient(180deg,#f0e8d5,#e0d6bf 62%,#c1b49a)!important;
+  color:#58624f!important;
+  box-shadow:
+    inset 0 2px rgba(255,255,255,.62),
+    0 1px 0 #aea28a,
+    0 5px 0 #817661,
+    4px 7px 6px rgba(42,24,11,.22)!important;
+  transform:translateY(-4px);
+  font-size:20px!important;
+  text-shadow:0 1px rgba(255,255,255,.30);
+}
+.machine.mail-mode .mailx-reader-empty strong{
+  display:block!important;
+  margin:0 0 8px!important;
+  color:#d7dccf!important;
+  font:700 13px/1.15 "Courier New",monospace!important;
+  letter-spacing:.06em!important;
+  text-transform:uppercase;
+}
+.machine.mail-mode .mailx-reader-empty>span{
+  display:block!important;
+  color:#858e81!important;
+  font:700 8px/1.55 "Courier New",monospace!important;
+  letter-spacing:.02em;
+}
+@media(max-width:860px){
+  .machine.mail-mode .mailx-reader-empty{
+    width:min(330px,calc(100% - 28px))!important;
+    padding:32px 20px 25px!important;
+  }
+}
+</style>
 </head>
 <body>
 <div class="desk-stage">
