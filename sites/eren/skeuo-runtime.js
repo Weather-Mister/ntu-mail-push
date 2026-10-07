@@ -135,6 +135,22 @@ const dateReminders = {
   '2026-11-10': { title:'ICL trip', text:'ICL trip · Nov 9–10', color:'#c94747' }
 };
 
+const academicDates = [
+  { id:'academic-statics-quiz-1', date:'2026-10-06', dueAt:'2026-10-06T23:59:59+08:00', title:'Quiz I', course:'Statics', kind:'academic', metaLabel:'QUIZ' },
+  { id:'academic-engmath-midterm-1', date:'2026-10-14', dueAt:'2026-10-14T23:59:59+08:00', title:'Midterm 1', course:'Engineering Mathematics', kind:'academic', metaLabel:'EXAM' },
+  { id:'academic-materials-midterm-1', date:'2026-10-27', dueAt:'2026-10-27T23:59:59+08:00', title:'Midterm I', course:'Engineering Materials', kind:'academic', metaLabel:'EXAM' },
+  { id:'academic-statics-midterm', date:'2026-10-27', dueAt:'2026-10-27T23:59:59+08:00', title:'Midterm Exam', course:'Statics', kind:'academic', metaLabel:'EXAM' },
+  { id:'academic-psychology-midterm', date:'2026-11-02', dueAt:'2026-11-02T23:59:59+08:00', title:'Midterm Exam', course:'Psychology', kind:'academic', metaLabel:'EXAM' },
+  { id:'academic-mechanism-midterm-2', date:'2026-11-11', dueAt:'2026-11-11T23:59:59+08:00', title:'Midterm 2', course:'Mechanism', kind:'academic', metaLabel:'EXAM' },
+  { id:'academic-engmath-midterm-2', date:'2026-11-18', dueAt:'2026-11-18T23:59:59+08:00', title:'Midterm 2', course:'Engineering Mathematics', kind:'academic', metaLabel:'EXAM' },
+  { id:'academic-statics-quiz-2', date:'2026-11-24', dueAt:'2026-11-24T23:59:59+08:00', title:'Quiz II', course:'Statics', kind:'academic', metaLabel:'QUIZ' },
+  { id:'academic-engmath-final', date:'2026-12-21', dueAt:'2026-12-21T23:59:59+08:00', title:'Final Exam', course:'Engineering Mathematics', kind:'academic', metaLabel:'10:20–12:00' },
+  { id:'academic-psychology-final', date:'2026-12-21', dueAt:'2026-12-21T23:59:59+08:00', title:'Final Exam', course:'Psychology', kind:'academic', metaLabel:'EXAM' },
+  { id:'academic-materials-final', date:'2026-12-22', dueAt:'2026-12-22T23:59:59+08:00', title:'Final Exam', course:'Engineering Materials', kind:'academic', metaLabel:'EXAM' },
+  { id:'academic-statics-final', date:'2026-12-22', dueAt:'2026-12-22T23:59:59+08:00', title:'Final Exam', course:'Statics', kind:'academic', metaLabel:'EXAM' },
+  { id:'academic-mechanism-final', date:'2026-12-23', dueAt:'2026-12-23T23:59:59+08:00', title:'Final Exam', course:'Mechanism', kind:'academic', metaLabel:'EXAM' }
+];
+
 const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 const shortMonths = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const nowForWeek = new Date();
@@ -1029,11 +1045,18 @@ function coolDueLabel(event){
   return `Due ${shortMonths[due.getMonth()]} ${due.getDate()}`;
 }
 
+function combinedUpcomingEvents(){
+  return [...coolEvents, ...academicDates]
+    .filter(event => event && event.dueAt)
+    .sort((a,b) => new Date(a.dueAt).getTime() - new Date(b.dueAt).getTime());
+}
+
 function renderCoolDeadlineDots(){
+  const events = combinedUpcomingEvents();
   dayButtons.forEach(btn => {
     const day = Number(btn.dataset.day);
     const key = dateKey(dateForDay(day));
-    btn.classList.toggle('has-deadline', coolEvents.some(event => event.date === key));
+    btn.classList.toggle('has-deadline', events.some(event => event.date === key));
   });
 }
 
@@ -1041,39 +1064,44 @@ function renderCoolDeadlines(){
   if (!coolDeadlinesEl) return;
 
   const now = Date.now();
-  const events = [...coolEvents]
-    .filter(event => event && event.dueAt && new Date(event.dueAt).getTime() >= now - 60000)
-    .sort((a,b) => new Date(a.dueAt).getTime() - new Date(b.dueAt).getTime());
+  const events = combinedUpcomingEvents()
+    .filter(event => new Date(event.dueAt).getTime() >= now - 60000);
 
   if (!events.length){
-    coolDeadlinesEl.innerHTML = '<div class="cool-empty-key"><strong>NO COOL ENTRIES</strong><small>SYNCED · CLEAR</small></div>';
+    coolDeadlinesEl.innerHTML = '<div class="cool-empty-key"><strong>NO UPCOMING DATES</strong><small>SYNCED · CLEAR</small></div>';
     renderCoolDeadlineDots();
     return;
   }
 
   coolDeadlinesEl.innerHTML = events.map(event => {
     const due = new Date(event.dueAt);
-    const done = coolDone.has(event.id);
-    const dueLabel = coolDueLabel(event).toUpperCase();
+    const isAcademic = event.kind === 'academic';
+    const done = !isAcademic && coolDone.has(event.id);
+    const dueLabel = isAcademic ? String(event.metaLabel || 'EXAM').toUpperCase() : coolDueLabel(event).toUpperCase();
     const course = String(event.course || 'NTU COOL').toUpperCase();
 
     const hours = Math.max(0, (due.getTime() - now) / 3600000);
     const urgency = hours <= 12 ? 'urgent' : (hours <= 72 ? 'soon' : '');
     const progress = Math.round(Math.max(12, Math.min(92, 92 - (hours / 168) * 70)));
 
-    return `
-      <article class="cool-key-row ${urgency} ${done ? 'is-finished' : ''}" data-event-id="${escapeHtml(event.id)}">
-        <div class="cool-deadline-key" aria-label="Deadline ${escapeHtml(dueLabel)}">
-          <span class="cool-deadline-mon">${escapeHtml(shortMonths[due.getMonth()].toUpperCase())}</span>
-          <strong class="cool-deadline-day">${String(due.getDate()).padStart(2,'0')}</strong>
-          <small class="cool-deadline-time">${event.allDay ? 'ALL DAY' : escapeHtml(displayTime(`${String(due.getHours()).padStart(2,'0')}:${String(due.getMinutes()).padStart(2,'0')}`).replace(' ',''))}</small>
-        </div>
-        <a class="cool-entry-key" href="${escapeHtml(event.url)}" target="_blank" rel="noopener noreferrer external">
+    const entry = isAcademic
+      ? `<div class="cool-entry-key academic-entry" aria-label="${escapeHtml(course)} ${escapeHtml(event.title)}">
+          <span class="cool-entry-title">${escapeHtml(event.title)}</span>
+          <span class="cool-entry-meta">${escapeHtml(course)} · ${escapeHtml(dueLabel)}</span>
+          <span class="cool-entry-bar" aria-hidden="true"><i style="--p:${progress}%"></i></span>
+        </div>`
+      : `<a class="cool-entry-key" href="${escapeHtml(event.url)}" target="_blank" rel="noopener noreferrer external">
           <span class="cool-entry-title">${escapeHtml(event.title)}</span>
           <span class="cool-entry-meta">${escapeHtml(course)} · ${escapeHtml(done ? 'FINISHED' : dueLabel)}</span>
           <span class="cool-entry-bar" aria-hidden="true"><i style="--p:${progress}%"></i></span>
-        </a>
-        <button
+        </a>`;
+
+    const action = isAcademic
+      ? `<div class="cool-finish-key academic-badge" aria-label="${escapeHtml(dueLabel)}">
+          <span class="keylegend">TYPE</span>
+          <span class="cool-finish-label">${escapeHtml(dueLabel)}</span>
+        </div>`
+      : `<button
           class="cool-finish-key ${done ? 'is-pressed' : ''}"
           type="button"
           data-event-id="${escapeHtml(event.id)}"
@@ -1081,11 +1109,21 @@ function renderCoolDeadlines(){
           aria-label="${done ? 'Mark as not finished' : 'Mark as finished'}">
           <span class="keylegend">DONE</span>
           <span class="cool-finish-label">${done ? '✓' : 'FINISH'}</span>
-        </button>
+        </button>`;
+
+    return `
+      <article class="cool-key-row ${urgency} ${done ? 'is-finished' : ''} ${isAcademic ? 'is-academic' : ''}" data-event-id="${escapeHtml(event.id)}">
+        <div class="cool-deadline-key" aria-label="Date ${escapeHtml(shortMonths[due.getMonth()])} ${due.getDate()}">
+          <span class="cool-deadline-mon">${escapeHtml(shortMonths[due.getMonth()].toUpperCase())}</span>
+          <strong class="cool-deadline-day">${String(due.getDate()).padStart(2,'0')}</strong>
+          <small class="cool-deadline-time">${isAcademic ? escapeHtml(dueLabel) : (event.allDay ? 'ALL DAY' : escapeHtml(displayTime(`${String(due.getHours()).padStart(2,'0')}:${String(due.getMinutes()).padStart(2,'0')}`).replace(' ','')))}</small>
+        </div>
+        ${entry}
+        ${action}
       </article>`;
   }).join('');
 
-  coolDeadlinesEl.querySelectorAll('.cool-finish-key').forEach(button => {
+  coolDeadlinesEl.querySelectorAll('.cool-finish-key[data-event-id]').forEach(button => {
     button.addEventListener('click', () => {
       const id = button.dataset.eventId;
       if (!id) return;
