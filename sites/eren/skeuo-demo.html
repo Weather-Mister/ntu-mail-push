@@ -4281,10 +4281,294 @@ h1{
   .time-period{margin-top:4px!important;font-size:5.8px!important}
 }
 </style>
+<style id="desk-props-layer">
+/* Quiet desk clutter beneath the console: paper, pencil marks and old coffee. */
+.desk-stage{
+  position:relative;
+  isolation:isolate;
+}
+.desk-props{
+  position:absolute;
+  inset:0;
+  z-index:0;
+  overflow:hidden;
+  pointer-events:none;
+}
+.machine{
+  position:relative;
+  z-index:3;
+}
+.desk-crack{
+  z-index:1;
+}
+
+.desk-sheet{
+  position:absolute;
+  overflow:hidden;
+  border:1px solid rgba(86,66,43,.28);
+  border-radius:1px;
+  background:
+    linear-gradient(165deg,rgba(255,255,255,.30),transparent 21%),
+    linear-gradient(180deg,#e9ddc7,#d8cab0);
+  color:rgba(43,57,73,.72);
+  box-shadow:
+    inset 0 1px rgba(255,255,255,.38),
+    inset 0 -12px 20px rgba(92,69,35,.045),
+    4px 8px 13px rgba(20,8,2,.22);
+  font-family:"Segoe Print","Bradley Hand","Comic Sans MS",cursive;
+  transform-origin:center;
+}
+.desk-sheet::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:
+    radial-gradient(circle at 13% 18%,rgba(92,60,25,.055) 0 1px,transparent 1.5px),
+    radial-gradient(circle at 78% 64%,rgba(92,60,25,.04) 0 1px,transparent 1.4px),
+    repeating-linear-gradient(94deg,rgba(80,61,35,.012) 0 1px,transparent 1px 8px);
+  mix-blend-mode:multiply;
+}
+.desk-sheet .paper-title{
+  position:relative;
+  z-index:1;
+  display:block;
+  margin-bottom:9px;
+  color:rgba(58,52,43,.58);
+  font:700 7px/1 "Courier New",monospace;
+  letter-spacing:.11em;
+  text-transform:uppercase;
+}
+.desk-sheet .scribble{
+  position:relative;
+  z-index:1;
+  margin:6px 0;
+  font-size:14px;
+  line-height:1.35;
+  white-space:nowrap;
+  transform:rotate(var(--scribble-rot,0deg));
+}
+.desk-sheet .scribble.faint{opacity:.62}
+.desk-sheet .scribble.small{font-size:11px}
+.desk-sheet .underline{
+  position:relative;
+  display:inline-block;
+}
+.desk-sheet .underline::after{
+  content:"";
+  position:absolute;
+  left:-2px;right:-5px;bottom:-2px;
+  height:1px;
+  background:rgba(46,66,96,.40);
+  transform:rotate(-1deg);
+}
+
+/* Left edge: statics scratch sheet, mostly trapped under the chassis. */
+.desk-sheet.paper-statics{
+  width:245px;
+  height:168px;
+  left:2.5%;
+  bottom:3%;
+  padding:17px 17px 14px;
+  transform:rotate(-8deg);
+}
+.paper-statics{
+  background:
+    repeating-linear-gradient(0deg,transparent 0 21px,rgba(72,105,151,.075) 21px 22px),
+    linear-gradient(165deg,rgba(255,255,255,.30),transparent 21%),
+    linear-gradient(180deg,#e9ddc7,#d8cab0);
+}
+
+/* Right edge: engineering-math notes with a dog-eared corner. */
+.desk-sheet.paper-math{
+  width:265px;
+  height:184px;
+  right:2.7%;
+  bottom:5%;
+  padding:18px 17px 15px;
+  transform:rotate(8.5deg);
+}
+.paper-math::before{
+  content:"";
+  position:absolute;
+  right:-1px;
+  bottom:-1px;
+  width:24px;
+  height:24px;
+  clip-path:polygon(100% 0,0 100%,100% 100%);
+  background:linear-gradient(135deg,rgba(255,255,255,.04) 0 48%,#c5b496 50%,#e4d6bd 100%);
+  filter:drop-shadow(-1px -1px 1px rgba(70,52,29,.10));
+}
+
+/* Bottom-center: smaller mechanism sketch page. */
+.desk-sheet.paper-mech{
+  width:205px;
+  height:132px;
+  left:24%;
+  bottom:-18px;
+  padding:14px 15px;
+  opacity:.78;
+  transform:rotate(3.5deg);
+}
+.paper-mech{
+  background:
+    linear-gradient(90deg,rgba(164,82,65,.11) 0 1px,transparent 1px 100%),
+    repeating-linear-gradient(0deg,transparent 0 18px,rgba(72,105,151,.065) 18px 19px),
+    linear-gradient(180deg,#e5d9c1,#d3c3a8);
+  background-size:100% 100%,100% 19px,100% 100%;
+}
+.paper-mech .diagram{
+  position:absolute;
+  right:14px;
+  bottom:12px;
+  width:66px;
+  height:43px;
+  opacity:.56;
+}
+.paper-mech .diagram::before,
+.paper-mech .diagram::after{
+  content:"";
+  position:absolute;
+}
+.paper-mech .diagram::before{
+  left:5px;right:5px;bottom:10px;
+  height:1px;
+  background:#425a7c;
+  transform:rotate(-12deg);
+  box-shadow:9px -12px 0 -0.25px #425a7c,-5px -21px 0 -0.25px #425a7c;
+}
+.paper-mech .diagram::after{
+  width:8px;height:8px;
+  left:5px;bottom:6px;
+  border:1px solid #425a7c;
+  border-radius:50%;
+  box-shadow:26px -6px 0 -1px #d9ccb4,26px -6px 0 0 #425a7c,51px -13px 0 -1px #d9ccb4,51px -13px 0 0 #425a7c;
+}
+
+/* Coffee: irregular rings and a faint wiped smear, all underneath the keyboard. */
+.coffee-ring{
+  position:absolute;
+  border-radius:50%;
+  opacity:.48;
+  filter:blur(.15px);
+  background:
+    radial-gradient(circle,
+      transparent 55%,
+      rgba(91,48,20,.12) 56% 58%,
+      transparent 60% 63%,
+      rgba(105,57,25,.18) 64% 67%,
+      transparent 69%);
+  mix-blend-mode:multiply;
+}
+.coffee-ring.ring-left{
+  width:112px;
+  height:104px;
+  left:10%;
+  bottom:9%;
+  transform:rotate(-11deg) scaleX(.94);
+}
+.coffee-ring.ring-right{
+  width:86px;
+  height:81px;
+  right:16%;
+  bottom:8%;
+  opacity:.34;
+  transform:rotate(9deg) scaleY(.91);
+}
+.coffee-smear{
+  position:absolute;
+  width:145px;
+  height:54px;
+  left:31%;
+  bottom:3%;
+  border-radius:50%;
+  opacity:.24;
+  transform:rotate(-10deg);
+  background:radial-gradient(ellipse at center,
+    rgba(100,52,21,.23) 0,
+    rgba(100,52,21,.10) 35%,
+    rgba(100,52,21,.035) 59%,
+    transparent 78%);
+  filter:blur(1.2px);
+  mix-blend-mode:multiply;
+}
+.coffee-drop{
+  position:absolute;
+  width:8px;height:6px;
+  border-radius:50% 44% 55% 40%;
+  background:rgba(93,49,20,.20);
+  filter:blur(.3px);
+}
+.coffee-drop.d1{left:12%;bottom:20%;transform:rotate(21deg)}
+.coffee-drop.d2{right:19%;bottom:18%;width:5px;height:4px}
+.coffee-drop.d3{right:14%;bottom:12%;width:4px;height:3px;opacity:.65}
+
+@media(max-width:1180px) and (min-width:860px){
+  .desk-sheet.paper-statics{left:-22px}
+  .desk-sheet.paper-math{right:-28px}
+  .desk-sheet.paper-mech{left:20%}
+}
+@media(max-width:859px){
+  .desk-sheet.paper-math,
+  .desk-sheet.paper-mech,
+  .coffee-ring.ring-right,
+  .coffee-smear,
+  .coffee-drop.d2,
+  .coffee-drop.d3{display:none}
+  .desk-sheet.paper-statics{
+    width:205px;height:142px;
+    left:-44px;bottom:4px;
+    opacity:.42;
+    transform:rotate(-8deg) scale(.84);
+    transform-origin:left bottom;
+  }
+  .coffee-ring.ring-left{
+    left:-4px;bottom:22px;
+    opacity:.20;
+    transform:scale(.72) rotate(-11deg);
+  }
+  .coffee-drop.d1{opacity:.18}
+}
+</style>
 </head>
 <body>
 <div class="desk-stage">
   <div class="desk-crack"><i></i><i></i><i></i><i></i></div>
+
+  <div class="desk-props" aria-hidden="true">
+    <div class="desk-sheet paper-statics">
+      <span class="paper-title">Statics · scratch / 06</span>
+      <div class="scribble" style="--scribble-rot:-1deg">ΣFₓ = 0 &nbsp;&nbsp; ΣFᵧ = 0</div>
+      <div class="scribble" style="--scribble-rot:.6deg">ΣM<sub>A</sub> = 0</div>
+      <div class="scribble small faint">R<sub>A</sub> + R<sub>B</sub> − W = 0</div>
+      <div class="scribble small"><span class="underline">M = F · d⊥</span></div>
+      <div class="scribble faint" style="--scribble-rot:-1.4deg">→ check signs again</div>
+    </div>
+
+    <div class="desk-sheet paper-math">
+      <span class="paper-title">Engineering Mathematics · notes</span>
+      <div class="scribble" style="--scribble-rot:.8deg">y″ + 4y = 0</div>
+      <div class="scribble small">y = C₁ cos 2x + C₂ sin 2x</div>
+      <div class="scribble small faint">μ(x) = e<sup>∫P(x)dx</sup></div>
+      <div class="scribble small" style="--scribble-rot:-.6deg">∫ sec x dx = ln|sec x + tan x| + C</div>
+      <div class="scribble faint">IC → solve constants</div>
+    </div>
+
+    <div class="desk-sheet paper-mech">
+      <span class="paper-title">Mechanism / IC sketch</span>
+      <div class="scribble small">v<sub>B</sub> = v<sub>A</sub> + ω × r<sub>B/A</sub></div>
+      <div class="scribble small faint">v = ωr</div>
+      <div class="scribble small">I.C. ?</div>
+      <i class="diagram"></i>
+    </div>
+
+    <i class="coffee-ring ring-left"></i>
+    <i class="coffee-ring ring-right"></i>
+    <i class="coffee-smear"></i>
+    <i class="coffee-drop d1"></i>
+    <i class="coffee-drop d2"></i>
+    <i class="coffee-drop d3"></i>
+  </div>
 
   <main class="machine">
     <i class="screw s1"></i><i class="screw s2"></i><i class="screw s3"></i><i class="screw s4"></i>
