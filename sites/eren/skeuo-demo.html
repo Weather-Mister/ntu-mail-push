@@ -4281,6 +4281,94 @@ h1{
   .time-period{margin-top:4px!important;font-size:5.8px!important}
 }
 </style>
+<style id="transfer-breathing-room">
+/* Give Phone ↔ PC enough physical room without changing its left-compose/right-buffer layout. */
+@media (min-width:860px){
+  .workspace{
+    grid-template-columns:
+      100px
+      minmax(270px,1.10fr)
+      minmax(225px,.88fr)
+      minmax(310px,1.18fr)!important;
+  }
+  .transfer{
+    grid-template-columns:minmax(132px,.92fr) minmax(168px,1.18fr)!important;
+    grid-template-rows:auto minmax(0,1fr)!important;
+    column-gap:12px!important;
+    row-gap:7px!important;
+    padding:10px 11px!important;
+  }
+  .transfer .module-head{
+    margin-bottom:1px!important;
+  }
+  .transfer-compose{
+    min-width:0!important;
+    display:flex!important;
+    flex-direction:column!important;
+  }
+  .transfer textarea{
+    width:100%!important;
+    height:64px!important;
+    min-height:64px!important;
+    padding:9px 10px!important;
+    line-height:1.35!important;
+  }
+  .sendrow{
+    grid-template-columns:42px minmax(0,1fr)!important;
+    gap:9px!important;
+    margin-top:9px!important;
+  }
+  .sendrow .key{
+    height:32px!important;
+    min-height:32px!important;
+    padding-top:6px!important;
+  }
+  #transferFileLabel{
+    max-width:none!important;
+  }
+  .inbox{
+    min-width:0!important;
+    gap:6px!important;
+    padding-right:4px!important;
+  }
+  .transferitem{
+    min-height:34px!important;
+    padding:7px 26px 7px 29px!important;
+  }
+  .transferitem::before{
+    left:6px!important;
+    top:7px!important;
+    width:16px!important;
+    height:16px!important;
+  }
+  .transferitem strong{
+    font-size:9px!important;
+    line-height:1.2!important;
+  }
+  .transferitem small{
+    margin-top:3px!important;
+    font-size:6.5px!important;
+    line-height:1.15!important;
+  }
+  .transfer-actions-skeuo{
+    right:5px!important;
+    top:5px!important;
+  }
+}
+@media (min-width:860px) and (max-width:1180px){
+  .workspace{
+    grid-template-columns:
+      96px
+      minmax(238px,1.06fr)
+      minmax(200px,.84fr)
+      minmax(280px,1.20fr)!important;
+  }
+  .transfer{
+    grid-template-columns:minmax(118px,.88fr) minmax(150px,1.12fr)!important;
+    column-gap:9px!important;
+  }
+}
+</style>
 </head>
 <body>
 <div class="desk-stage">
