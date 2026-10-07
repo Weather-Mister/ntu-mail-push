@@ -88,6 +88,8 @@ export async function reconcile(admin:any,job:any) {
  }
  return {...job,error:'Not found in Sent yet. Gmail indexing can take time. Check again before composing a replacement.'};
 }
+const SYNC_BATCH_SIZE=8;
+const BACKFILL_BATCH_SIZE=8;
 export async function syncAccount(admin:any,account:any) {
  const lease=crypto.randomUUID(),now=new Date().toISOString();
  const locked=check(await admin.from('eren_mail_accounts').update({last_sync_attempt_at:new Date().toISOString(),sync_lock_id:lease,sync_lock_until:new Date(Date.now()+110000).toISOString()}).eq('id',account.id).or('sync_lock_until.is.null,sync_lock_until.lt.'+now).select('*').maybeSingle());
@@ -114,9 +116,9 @@ export async function syncAccount(admin:any,account:any) {
   }
   // A single Gmail history event can contain thousands of label changes.
   // Persist the remainder; only advance the Gmail cursor after the entire page drains.
-  if(ids.length>24) {
-   next={sync_pending:{ids:ids.slice(24),next}};
-   ids=ids.slice(0,24);
+  if(ids.length>SYNC_BATCH_SIZE) {
+   next={sync_pending:{ids:ids.slice(SYNC_BATCH_SIZE),next}};
+   ids=ids.slice(0,SYNC_BATCH_SIZE);
   }
   const fetchMessages=async(messageIds:string[])=>mapLimit(messageIds,async(id:string)=>{
    try {const m=await api('messages/'+id+'?format=full');await cacheMessages(admin,account,[m],rules);}
@@ -128,8 +130,8 @@ export async function syncAccount(admin:any,account:any) {
   if(!next.sync_pending && !next.sync_page && (!account.history_id || account.backfill_page)) {
    const baseline=account.history_id||(await api('profile')).historyId;
    let page;
-   try {page=await api('messages?'+new URLSearchParams({maxResults:'20',q:'-in:trash -in:spam',...(account.backfill_page?{pageToken:account.backfill_page}:{})}));}
-   catch(e) {if(e.status!==400||!account.backfill_page)throw e;page=await api('messages?maxResults=20&q=-in%3Atrash%20-in%3Aspam');}
+   try {page=await api('messages?'+new URLSearchParams({maxResults:String(BACKFILL_BATCH_SIZE),q:'-in:trash -in:spam',...(account.backfill_page?{pageToken:account.backfill_page}:{})}));}
+   catch(e) {if(e.status!==400||!account.backfill_page)throw e;page=await api('messages?maxResults='+BACKFILL_BATCH_SIZE+'&q=-in%3Atrash%20-in%3Aspam');}
    const older=(page.messages||[]).map((m:any)=>m.id);
    await fetchMessages(older);ids.push(...older);
    next={...next,backfill_page:page.nextPageToken||null,...(!account.history_id?{history_id:baseline}:{}),initial_history:null};
@@ -145,12 +147,19 @@ export async function tick(admin:any) {
  const started=new Date().toISOString();check(await admin.from('eren_mail_health').upsert({id:'worker',last_started_at:started}));
  check(await admin.from('eren_mail_outbox').update({status:'uncertain',error:'Delivery interrupted; check status before resending.'}).eq('status','sending').lt('locked_until',started));
  const jobs=check(await admin.rpc('eren_mail_claim',{}));
- await mapLimit(jobs,(job:any)=>deliver(admin,job),3);
- const accounts=check(await admin.from('eren_mail_accounts').select('*').eq('status','active').order('last_sync_attempt_at',{ascending:true,nullsFirst:true}).limit(3));
- const synced=await mapLimit(accounts,(a:any)=>syncAccount(admin,a),3);
- const expired=check(await admin.from('eren_mail_oauth').select('state_hash,pending_secret').lt('expires_at',started));
+ let synced:any[]=[];
+ // Keep each cron invocation deliberately small. A send (especially with attachments)
+ // gets the whole Edge budget; otherwise sync exactly one account in a bounded batch.
+ if(jobs.length) {
+  await deliver(admin,jobs[0]);
+ } else {
+  const accounts=check(await admin.from('eren_mail_accounts').select('*').eq('status','active').order('last_sync_attempt_at',{ascending:true,nullsFirst:true}).limit(1));
+  synced=await mapLimit(accounts,(a:any)=>syncAccount(admin,a),1);
+ }
+ const expired=check(await admin.from('eren_mail_oauth').select('state_hash,pending_secret').lt('expires_at',started).limit(20));
  for(const o of expired) {if(o.pending_secret) await secret(admin,o.pending_secret,null,true);check(await admin.from('eren_mail_oauth').delete().eq('state_hash',o.state_hash));}
- check(await admin.from('eren_mail_limits').delete().lt('started_at',new Date(Date.now()-86400000).toISOString()));
+ // Cleanup is maintenance, not part of the hot path.
+ if(new Date().getUTCMinutes()%15===0)check(await admin.from('eren_mail_limits').delete().lt('started_at',new Date(Date.now()-86400000).toISOString()));
  const result={jobs:jobs.length,accounts:synced.length,errors:synced.filter(x=>x.error).length};
  check(await admin.from('eren_mail_health').update({last_finished_at:new Date().toISOString(),result}).eq('id','worker'));
  return result;
