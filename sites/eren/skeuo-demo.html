@@ -3383,6 +3383,92 @@ h1{
 }
 </style>
 
+
+<style id="cool-deadline-left-pass">
+/* COOL deadline module: compact stamped date key on the left of each assignment. */
+.cool-key-row{
+  grid-template-columns:48px minmax(0,1fr) 57px!important;
+  gap:7px!important;
+}
+.cool-deadline-key{
+  position:relative;
+  min-width:0;
+  min-height:54px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:5px 3px 4px;
+  border:1px solid #65685f;
+  border-radius:4px;
+  color:#d7d6cc;
+  background:
+    repeating-linear-gradient(0deg,rgba(255,255,255,.018) 0 1px,transparent 1px 3px),
+    linear-gradient(180deg,#73766e,#61645d 67%,#555850);
+  box-shadow:
+    inset 0 1px rgba(255,255,255,.10),
+    inset 0 -2px 4px rgba(28,30,27,.22),
+    0 2px 0 #4d504a,
+    3px 5px 5px rgba(25,20,15,.20);
+  font-family:"Courier New",monospace;
+  text-align:center;
+  overflow:hidden;
+}
+.cool-deadline-key::before{
+  content:"DUE";
+  position:absolute;
+  left:4px;
+  top:3px;
+  color:#aeb1a8;
+  font:700 4.8px/1 "Courier New",monospace;
+  letter-spacing:.08em;
+}
+.cool-deadline-mon{
+  margin-top:5px;
+  color:#bfc1b8;
+  font:700 5.5px/1 "Courier New",monospace;
+  letter-spacing:.08em;
+}
+.cool-deadline-day{
+  display:block;
+  margin-top:2px;
+  font:800 15px/.95 "Courier New",monospace;
+  letter-spacing:-.06em;
+}
+.cool-deadline-time{
+  display:block;
+  margin-top:4px;
+  color:#adb0a7;
+  font:700 5.3px/1 "Courier New",monospace;
+  white-space:nowrap;
+}
+.cool-key-row.is-finished .cool-deadline-key{
+  color:#bfc8b9;
+  background:
+    repeating-linear-gradient(0deg,rgba(255,255,255,.012) 0 1px,transparent 1px 3px),
+    linear-gradient(180deg,#667060,#596352 68%,#4e5849);
+  box-shadow:
+    inset 0 2px 4px rgba(27,34,25,.26),
+    0 1px 0 #464f41,
+    1px 2px 2px rgba(25,20,15,.15);
+  transform:translateY(1px);
+}
+.cool-key-row.is-finished .cool-deadline-key::before,
+.cool-key-row.is-finished .cool-deadline-mon,
+.cool-key-row.is-finished .cool-deadline-time{
+  color:#a9b2a3;
+}
+
+@media(max-width:859px){
+  .cool-key-row{
+    grid-template-columns:44px minmax(0,1fr) 52px!important;
+    gap:6px!important;
+  }
+  .cool-deadline-day{font-size:14px}
+  .cool-deadline-time{font-size:5px}
+}
+</style>
+
 </head>
 <body>
 <div class="desk-stage">
@@ -3920,7 +4006,7 @@ h1{
 </dialog>
 <!-- SKEUO_FUNCTIONAL_DIALOGS_END -->
 <script src="./vendor/ffmpeg/ffmpeg.js?v=1"></script>
-<script src="./skeuo-runtime.js?v=5"></script>
+<script src="./skeuo-runtime.js?v=6"></script>
 
 </body>
 </html>
