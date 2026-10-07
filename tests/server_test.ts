@@ -188,10 +188,9 @@ Deno.test('large Gmail change pages resume without advancing history early or lo
   const id=u.match(/\/messages\/(m\d+)/)?.[1];if(id)return Response.json({id,threadId:'t1',internalDate:'123',payload:{headers:[],mimeType:'text/plain',body:{data:b64url('Hello')}}});
   throw new Error(u);
  },async()=>{
-  await syncAccount(db,a);assert.equal(a.history_id,'10');assert.equal(a.sync_pending.ids.length,45);assert.equal(db.tables.eren_mail_messages.length,8);
-  for(let i=0;i<5;i++)await syncAccount(db,a);
-  assert.equal(a.history_id,'10');assert.equal(a.sync_pending.ids.length,5);assert.equal(db.tables.eren_mail_messages.length,48);
-  await syncAccount(db,a);assert.equal(a.history_id,'99');assert.equal(a.sync_pending,null);assert.equal(db.tables.eren_mail_messages.length,53);assert.equal(historyRequests,1);
+  await syncAccount(db,a);assert.equal(a.history_id,'10');assert.equal(a.sync_pending.ids.length,50);assert.equal(db.tables.eren_mail_messages.length,3);
+  for(let i=0;i<30&&a.sync_pending;i++)await syncAccount(db,a);
+  assert.equal(a.history_id,'99');assert.equal(a.sync_pending,null);assert.equal(db.tables.eren_mail_messages.length,53);assert.equal(historyRequests,1);
  });
 });
 Deno.test('stale Gmail authorization refreshes once for reads; persistent 401 terminates',async()=>{

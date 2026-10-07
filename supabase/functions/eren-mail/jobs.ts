@@ -88,8 +88,8 @@ export async function reconcile(admin:any,job:any) {
  }
  return {...job,error:'Not found in Sent yet. Gmail indexing can take time. Check again before composing a replacement.'};
 }
-const SYNC_BATCH_SIZE=8;
-const BACKFILL_BATCH_SIZE=8;
+const SYNC_BATCH_SIZE=3;
+const BACKFILL_BATCH_SIZE=3;
 export async function syncAccount(admin:any,account:any) {
  const lease=crypto.randomUUID(),now=new Date().toISOString();
  const locked=check(await admin.from('eren_mail_accounts').update({last_sync_attempt_at:new Date().toISOString(),sync_lock_id:lease,sync_lock_until:new Date(Date.now()+110000).toISOString()}).eq('id',account.id).or('sync_lock_until.is.null,sync_lock_until.lt.'+now).select('*').maybeSingle());
