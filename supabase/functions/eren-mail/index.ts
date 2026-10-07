@@ -15,7 +15,7 @@ const uuid=(v:any,label='ID')=>{if(!/^[0-9a-f-]{36}$/i.test(v||''))throw new Mai
 const attachmentSecret=(workspace:string,draftId:string,attachmentId:string)=>'eren-mail:'+workspace+':draft:'+draftId+':attachment:'+attachmentId;
 const attachmentRef=(a:any)=>({id:a.id,name:a.name,type:a.type,size:a.size});
 function visible(v:any,filter:string) {
- const c=v.classification,l=v.labels;
+ const c=v.classification||{},l=v.labels||[];
  if(filter==='trash')return l.includes('TRASH');
  if(l.includes('TRASH')||l.includes('SPAM'))return false;
  if(filter==='starred')return l.includes('STARRED');
@@ -31,6 +31,28 @@ function visible(v:any,filter:string) {
  if(filter==='reply')return c.action==='Needs reply'&&l.includes('INBOX');
  if(filter==='codes')return c.type==='Login Code';
  return l.includes('INBOX')&&c.priority!=='Muted';
+}
+const MUTATION_ACTIONS=new Set(['star','unstar','archive','unarchive','read','unread','trash','untrash']);
+const wait=(ms:number)=>new Promise(resolve=>setTimeout(resolve,ms));
+async function mutateThread(api:any,threadId:string,action:string) {
+ if(!MUTATION_ACTIONS.has(action))throw new MailError(400,'Invalid mail action.');
+ const tid=id(threadId);
+ const mods=({star:{addLabelIds:['STARRED']},unstar:{removeLabelIds:['STARRED']},archive:{removeLabelIds:['INBOX']},unarchive:{addLabelIds:['INBOX']},read:{removeLabelIds:['UNREAD']},unread:{addLabelIds:['UNREAD']}} as any)[action];
+ for(let attempt=0;attempt<3;attempt++){
+  try{
+   if(action==='trash'||action==='untrash')await api('threads/'+tid+'/'+action,'POST');
+   else await api('threads/'+tid+'/modify','POST',mods);
+   return;
+  }catch(e){
+   const retryable=e instanceof MailError&&(e.status===429||e.status>=500||e.status===403&&['rateLimitExceeded','userRateLimitExceeded','RESOURCE_EXHAUSTED','UNAVAILABLE'].includes((e as any).reason));
+   if(!retryable||attempt===2)throw e;
+   await wait(250*(2**attempt));
+  }
+ }
+}
+async function syncCachedActions(admin:any,operations:any[]) {
+ if(!operations.length)return;
+ try{await admin.rpc('eren_mail_apply_cache_actions',{p_actions:operations});}catch{}
 }
 export async function handle(req:Request) {
  const reqOrigin=req.headers.get('Origin');
@@ -107,6 +129,22 @@ export async function handle(req:Request) {
    const preferences={account:String(input.account||'all').slice(0,50),filter:String(input.filter||'inbox').slice(0,30)};
    check(await admin.from('eren_mail_preferences').upsert({workspace_hash:workspace,preferences}));return response({ok:true});
   }
+  if(route==='cached-mail'&&req.method==='GET') {
+   const filter=String(get('filter')||'inbox'),query=String(get('q')||'').trim().slice(0,1000),which=get('accountId');
+   const accounts=which&&which!=='all'?[await ownedAccount(admin,workspace,which)]:check(await admin.from('eren_mail_accounts').select(ACCOUNT_FIELDS).eq('workspace_hash',workspace).neq('status','disconnecting').order('created_at'));
+   let cursors:any={};try{cursors=JSON.parse(String(get('cursor')||'{}'));}catch{throw new MailError(400,'Invalid mail page.');}
+   if(!cursors||typeof cursors!=='object'||Array.isArray(cursors))throw new MailError(400,'Invalid cursor.');
+   const rows=accounts.length?check(await admin.from('eren_mail_messages').select('id,account_id,thread_id,sender,sender_name,subject,snippet,internal_date,labels,classification').in('account_id',accounts.map((a:any)=>a.id)).order('internal_date',{ascending:false}).limit(1000)):[];
+   const preferred=filter==='sent'?'SENT':filter==='trash'?'TRASH':'INBOX';
+   let messages=cachedOverviews(rows,accounts,true,preferred).filter(m=>visible(m,filter));
+   if(query){
+    const terms=query.toLocaleLowerCase().split(/\s+/).filter(Boolean).slice(0,16);
+    messages=messages.filter(m=>{const hay=[m.sender,m.email,m.subject,m.snippet,m.accountName].join('\n').toLocaleLowerCase();return terms.every(term=>hay.includes(term));});
+   }
+   const offset=Math.max(0,Math.min(5000,Number(cursors.cache)||0)),pageSize=40,page=messages.slice(offset,offset+pageSize);
+   const next=offset+page.length<messages.length?offset+page.length:null;
+   return response({messages:page,cursor:{cache:next},hasMore:next!==null,errors:[],cached:true});
+  }
   if(route==='mail'&&req.method==='GET') {
    const filter=String(get('filter')||'inbox'),query=String(get('q')||'').slice(0,1000),which=get('accountId');
    const accounts=which&&which!=='all'?[await ownedAccount(admin,workspace,which)]:check(await admin.from('eren_mail_accounts').select('*').eq('workspace_hash',workspace).neq('status','disconnecting').order('created_at'));
@@ -161,12 +199,28 @@ export async function handle(req:Request) {
    if(typeof data!=='string'||!data)throw new MailError(502,'Attachment data is unavailable.');
    return response({data,filename:part.filename,mimeType:part.mimeType||'application/octet-stream',size:part.size});
   }
+  if(route==='modify-batch') {
+   mustPost(req);await rate(admin,workspace+':mutations',60);
+   if(!Array.isArray(input.operations)||!input.operations.length||input.operations.length>40)throw new MailError(400,'Use 1 to 40 mail actions.');
+   const operations=input.operations.map((op:any,index:number)=>({index,accountId:uuid(op?.accountId,'account ID'),threadId:id(op?.threadId),action:String(op?.action||'')}));
+   if(operations.some((op:any)=>!MUTATION_ACTIONS.has(op.action)))throw new MailError(400,'Invalid mail action.');
+   const groups=new Map<string,any[]>();for(const op of operations){if(!groups.has(op.accountId))groups.set(op.accountId,[]);groups.get(op.accountId)!.push(op);}
+   const results:any[]=new Array(operations.length),successful:any[]=[];
+   await mapLimit([...groups.entries()],async([accountId,ops]:any)=>{
+    try{
+     const a=await ownedAccount(admin,workspace,accountId),api=await gmailClient(admin,a);
+     await mapLimit(ops,async(op:any)=>{
+      try{await mutateThread(api,op.threadId,op.action);invalidateThread(workspace,a.id,op.threadId);successful.push({accountId:a.id,threadId:op.threadId,action:op.action});results[op.index]={ok:true};}
+      catch(e){results[op.index]={ok:false,error:e instanceof MailError?e.message:'Mail action failed.'};}
+     },3);
+    }catch(e){for(const op of ops)results[op.index]={ok:false,error:e instanceof MailError?e.message:'Mail action failed.'};}
+   },2);
+   await syncCachedActions(admin,successful);
+   return response({results});
+  }
   if(route==='modify') {
-   mustPost(req);const a=await ownedAccount(admin,workspace,input.accountId),api=await gmailClient(admin,a);
-   if(['trash','untrash'].includes(input.action)){await api('threads/'+id(input.threadId)+'/'+input.action,'POST');invalidateThread(workspace,a.id,input.threadId);return response({ok:true});}
-   const mods=({star:{addLabelIds:['STARRED']},unstar:{removeLabelIds:['STARRED']},archive:{removeLabelIds:['INBOX']},unarchive:{addLabelIds:['INBOX']},read:{removeLabelIds:['UNREAD']},unread:{addLabelIds:['UNREAD']}} as any)[input.action];
-   if(!mods)throw new MailError(400,'Invalid mail action.');
-   await api('threads/'+id(input.threadId)+'/modify','POST',mods);invalidateThread(workspace,a.id,input.threadId);return response({ok:true});
+   mustPost(req);const a=await ownedAccount(admin,workspace,input.accountId),api=await gmailClient(admin,a),action=String(input.action||''),threadId=id(input.threadId);
+   await mutateThread(api,threadId,action);invalidateThread(workspace,a.id,threadId);await syncCachedActions(admin,[{accountId:a.id,threadId,action}]);return response({ok:true});
   }
   if(route==='mark-all-read') {
    mustPost(req);

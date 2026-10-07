@@ -95,14 +95,14 @@ export async function accountRules(admin:any,account:any) {
  const rows=check(await admin.from('eren_mail_rules').select('*').eq('workspace_hash',account.workspace_hash).eq('enabled',true));
  return rows.filter((r:any)=>!r.account_id||r.account_id===account.id);
 }
-export function cachedOverviews(rows:any[],accounts:any[]) {
+export function cachedOverviews(rows:any[],accounts:any[],includeHidden=false,preferredLabel='INBOX') {
  const allowed=new Map(accounts.map(a=>[a.id,a])),threads=new Map<string,any[]>();
  for(const row of rows){if(!allowed.has(row.account_id))continue;const key=row.account_id+':'+row.thread_id;if(!threads.has(key))threads.set(key,[]);threads.get(key)!.push(row);}
  return [...threads.values()].map(rows=>{
   rows.sort((a,b)=>b.internal_date-a.internal_date);
-  const row=rows.find(r=>r.labels.includes('INBOX'))||rows[0],account=allowed.get(row.account_id)!;
-  return {id:row.id,threadId:row.thread_id,accountId:row.account_id,accountName:account.display_name,sender:row.sender_name,email:row.sender,subject:row.subject,snippet:row.snippet,timestamp:rows[0].internal_date,labels:[...new Set(rows.flatMap(r=>r.labels))],classification:row.classification,count:rows.length};
- }).filter(m=>!m.labels.includes('TRASH')&&!m.labels.includes('SPAM')).sort((a,b)=>b.timestamp-a.timestamp);
+  const row=rows.find(r=>r.labels.includes(preferredLabel))||rows.find(r=>r.labels.includes('INBOX'))||rows[0],account=allowed.get(row.account_id)!;
+  return {id:row.id,threadId:row.thread_id,accountId:row.account_id,accountName:account.display_name,sender:row.sender_name,email:row.sender,subject:row.subject,snippet:row.snippet,timestamp:rows[0].internal_date,labels:[...new Set(rows.flatMap(r=>r.labels))],classification:row.classification||{},count:rows.length};
+ }).filter(m=>includeHidden||!m.labels.includes('TRASH')&&!m.labels.includes('SPAM')).sort((a,b)=>b.timestamp-a.timestamp);
 }
 export function messageView(m:any,rules:any[],inherited:any={},externalImages=true,summaryOnly=false) {
  const content=bodies(m.payload), c=classify(m,rules,inherited), hasInlineImages=/\bsrc\s*=\s*["']?cid:/i.test(content.html||''), html=!summaryOnly&&content.html?safeHtml(content.html,{externalImages,inlineImages:inlineImages(m.payload)}):'';

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ntu-schedule-github-v23';
+const CACHE_NAME = 'ntu-schedule-github-v24';
 const NTU_MAIL_URL = 'https://wmail1.cc.ntu.edu.tw/rc/index.php';
 const ROOT = new URL(self.registration.scope).pathname;
 const asset = path => ROOT + (path.startsWith('/') ? path.slice(1) : path);
@@ -13,7 +13,9 @@ const APP_SHELL = [
   asset('vendor/ffmpeg/ffmpeg.js?v=1'),
   asset('vendor/ffmpeg/814.ffmpeg.js'),
   asset('app.js?v=107'),
-  asset('mail-demo.js?v=17'),
+  asset('mail-demo.js?v=19'),
+  asset('skeuo-demo.html'),
+  asset('skeuo-runtime.js?v=10'),
   asset('manifest.webmanifest?v=2'),
   asset('favicon.svg'),
   asset('hub-statics.svg'),
@@ -46,39 +48,19 @@ self.addEventListener('fetch', event => {
   if (url.pathname.startsWith(ROOT + 'begum/')) return;
 
   if (request.mode === 'navigate'){
+    const canonical = url.pathname.endsWith('/skeuo-demo.html') ? asset('skeuo-demo.html') : asset('index.html');
+    const network = fetch(request, { cache:'no-store' }).then(response => {
+      if (response.ok){
+        const copy = response.clone();
+        event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.put(canonical, copy)));
+      }
+      return response;
+    });
     event.respondWith(
-      fetch(request, { cache:'no-store' })
-        .then(response => {
-          if (response.ok){
-            const copy = response.clone();
-            caches.open(CACHE_NAME).then(cache => cache.put(asset('index.html'), copy));
-          }
-          return response;
-        })
-        .catch(() => caches.match(asset('index.html')).then(cached => cached || caches.match(ROOT)))
-    );
-    return;
-  }
-
-  const freshShell = new Set([
-    asset('styles.css'),
-    asset('mail-demo.css'),
-    asset('app.js'),
-    asset('mail-demo.js'),
-    asset('manifest.webmanifest')
-  ]);
-
-  if (freshShell.has(url.pathname)){
-    event.respondWith(
-      fetch(request, { cache:'no-store' })
-        .then(response => {
-          if (response.ok){
-            const copy = response.clone();
-            caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
-          }
-          return response;
-        })
-        .catch(() => caches.match(request))
+      caches.match(canonical).then(cached => {
+        if (cached){ event.waitUntil(network.catch(() => {})); return cached; }
+        return network.catch(() => caches.match(asset('index.html')).then(fallback => fallback || caches.match(ROOT)));
+      })
     );
     return;
   }

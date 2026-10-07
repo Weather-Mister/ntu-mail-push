@@ -6,11 +6,12 @@
   const state={filter:'inbox',account:'all',query:'',accounts:[],messages:[],selected:null,thread:null,cursor:{},hasMore:false,history:[],redo:[],replyContext:null,loadVersion:0,readVersion:0,composeVersion:0,editVersion:0,busySend:false,busyAi:false,requestId:null,requestPayload:null,draftId:null};
   let messagesKey='',bootstrapRequest=null,bootstrapAt=0;
   function bootstrap(){if(!bootstrapRequest||Date.now()-bootstrapAt>30000){bootstrapAt=Date.now();bootstrapRequest=api('bootstrap').catch(e=>{bootstrapRequest=null;throw e;});}return bootstrapRequest;}
-  const pageCache=new Map(),threadCache=new Map(),threadRequests=new Map(),threadImageRequests=new Map();
+  const pageCache=new Map(),threadCache=new Map(),threadRequests=new Map(),threadImageRequests=new Map(),getRequests=new Map();
   let cacheOwner='',cacheEpoch=0,initialized=false,preferenceTimer;
+  function clearPageCache(){bootstrapRequest=null;pageCache.clear();}
   const viewKey=()=>JSON.stringify([state.account,state.filter,state.query]);
   const threadKey=m=>m.accountId+':'+m.threadId;
-  function clearMailCache(){bootstrapRequest=null;cacheEpoch++;pageCache.clear();threadCache.clear();threadRequests.clear();threadImageRequests.clear();}
+  function clearMailCache(){bootstrapRequest=null;cacheEpoch++;pageCache.clear();threadCache.clear();threadRequests.clear();threadImageRequests.clear();getRequests.clear();}
   function ownCache(){const owner=typeof requirePairing==='function'?requirePairing():'';if(cacheOwner&&cacheOwner!==owner){clearMailCache();state.readVersion++;state.loadVersion++;initialized=false;state.accounts=[];state.messages=[];state.thread=null;}cacheOwner=owner;return owner;}
   function putCache(cache,key,value,limit=20){cache.delete(key);cache.set(key,{value,at:Date.now()});while(cache.size>limit)cache.delete(cache.keys().next().value);}
   async function fetchThread(m,force=false){
@@ -33,7 +34,12 @@
     }).catch(()=>{}).finally(()=>{if(threadImageRequests.get(key)===pending)threadImageRequests.delete(key);});
     threadImageRequests.set(key,pending);
   }
-  function prefetchReaders(){if(!dialog.open)return;state.messages.slice(0,5).forEach(m=>fetchThread(m).catch(()=>{}));}
+  function prefetchReaders(){
+    if(!dialog.open||navigator.connection?.saveData)return;
+    const targets=state.messages.slice(0,2);
+    const run=()=>targets.forEach((m,i)=>setTimeout(()=>{if(dialog.open)fetchThread(m).catch(()=>{});},i*250));
+    if('requestIdleCallback'in window)requestIdleCallback(run,{timeout:1200});else setTimeout(run,300);
+  }
   let dialog,shell,listEl,readerEl,searchEl,accountEls=[],toastTimer,searchTimer,draftTimer,draftSaveChain=Promise.resolve(),status={types:['University','Personal','Finance','Shopping','Travel','Work','Security','Login Code','Receipt / Order','Newsletter','Promotion','Account Notification','Social','Other'],priorities:['High','Normal','Low','Muted'],actions:['Needs reply','Deadline','Waiting','FYI','No action']},rules=[];
   const isEmbedded=()=>!!dialog?.classList?.contains('mail-console-view');
   const escapeHtml=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
@@ -151,9 +157,42 @@
   async function api(route,body=null,params={}) {
     let key;try{key=typeof requirePairing==='function'?requirePairing():'';}catch(e){dialog.close();throw e;}
     const url=new URL(API);url.searchParams.set('route',route);Object.entries(params).forEach(([k,v])=>{if(v!==undefined&&v!==null)url.searchParams.set(k,String(v));});
-    let r;try{r=await fetch(url,{method:body===null?'GET':'POST',headers:{'x-schedule-key':key,...(body===null?{}:{'Content-Type':'application/json'})},body:body===null?undefined:JSON.stringify(body),cache:'no-store',signal:AbortSignal.timeout(route==='ai'?65000:90000)});}catch{throw new Error('Connection interrupted. Your draft is safe. For sends, check Outbox before trying again.');}
-    const data=await r.json().catch(()=>({error:'Mail service is unavailable.'}));
-    if(!r.ok)throw new Error(data.error||'Mail request failed.');return data;
+    const requestKey=body===null?url.toString():'';
+    if(requestKey&&getRequests.has(requestKey))return getRequests.get(requestKey);
+    const pending=(async()=>{
+      let r;try{r=await fetch(url,{method:body===null?'GET':'POST',headers:{'x-schedule-key':key,...(body===null?{}:{'Content-Type':'application/json'})},body:body===null?undefined:JSON.stringify(body),cache:'no-store',signal:AbortSignal.timeout(route==='ai'?65000:['send','drafts/attachment'].includes(route)?90000:30000)});}catch{throw new Error('Connection interrupted. Your draft is safe. For sends, check Outbox before trying again.');}
+      const data=await r.json().catch(()=>({error:'Mail service is unavailable.'}));
+      if(!r.ok)throw new Error(data.error||'Mail request failed.');return data;
+    })();
+    if(requestKey)getRequests.set(requestKey,pending);
+    try{return await pending;}finally{if(requestKey&&getRequests.get(requestKey)===pending)getRequests.delete(requestKey);}
+  }
+  const mutationQueue=[];let mutationTimer=0,mutationFlushPromise=null;
+  const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+  function queueMailMutation(target,action){
+    return new Promise((resolve,reject)=>{
+      mutationQueue.push({accountId:target.accountId,threadId:target.threadId,action,resolve,reject});
+      clearTimeout(mutationTimer);
+      if(mutationQueue.length>=8)queueMicrotask(()=>flushMailMutations());
+      else mutationTimer=setTimeout(()=>flushMailMutations(),140);
+    });
+  }
+  async function flushMailMutations(){
+    if(mutationFlushPromise)return mutationFlushPromise;
+    clearTimeout(mutationTimer);
+    mutationFlushPromise=(async()=>{
+      while(mutationQueue.length){
+        const batch=mutationQueue.splice(0,40),operations=batch.map(({accountId,threadId,action})=>({accountId,threadId,action}));
+        let data,lastError;
+        for(let attempt=0;attempt<3;attempt++){
+          try{data=await api('modify-batch',{operations});break;}
+          catch(e){lastError=e;if(attempt<2)await pause(250*(2**attempt));}
+        }
+        if(!data){batch.forEach(item=>item.reject(lastError||new Error('Mail action failed.')));continue;}
+        batch.forEach((item,i)=>{const result=data.results?.[i];if(result?.ok)item.resolve(result);else item.reject(new Error(result?.error||'Mail action failed.'));});
+      }
+    })().finally(()=>{mutationFlushPromise=null;if(mutationQueue.length)mutationTimer=setTimeout(()=>flushMailMutations(),0);});
+    return mutationFlushPromise;
   }
   function notice(text=''){const el=$('#mailxNotice');el.textContent=text;el.hidden=!text;}
   function showToast(text,action=null){
@@ -190,10 +229,10 @@
     const key=viewKey(),previous=state.messages.slice(),labels=m.labels.slice();m.pendingAction=true;
     const changes={star:['STARRED',true],unstar:['STARRED',false],unread:['UNREAD',true],read:['UNREAD',false],trash:['TRASH',true],untrash:['TRASH',false]},[label,add]=changes[action];
     m.labels=add?[...new Set([...m.labels,label])]:m.labels.filter(x=>x!==label);
-    state.loadVersion++;clearMailCache();state.messages=state.messages.filter(x=>matchesView(x,state.filter));renderList();
+    state.loadVersion++;clearPageCache();state.messages=state.messages.filter(x=>matchesView(x,state.filter));renderList();
     if((action==='trash'||action==='untrash')&&state.selected===threadKey(m)){state.readVersion++;state.thread=null;state.selected=null;shell.classList.remove('is-reading','is-reader-focused');blankReader();}
-    try{await api('modify',{accountId:m.accountId,threadId:m.threadId,action});clearMailCache();
-      if(action==='trash')showToast('Moved to Trash',{label:'Undo',onClick:async()=>{await api('modify',{accountId:m.accountId,threadId:m.threadId,action:'untrash'});clearMailCache();if(key===viewKey()){m.labels=labels;state.messages=previous;renderList();}loadMail(false,true);}});
+    try{await queueMailMutation(m,action);clearPageCache();
+      if(action==='trash')showToast('Moved to Trash',{label:'Undo',onClick:async()=>{await queueMailMutation(m,'untrash');clearPageCache();if(key===viewKey()){m.labels=labels;state.messages=previous;renderList();}loadMail(false,true);}});
       else showToast(({star:'Starred',unstar:'Star removed',unread:'Marked unread',read:'Marked read',untrash:'Restored from Trash'})[action]);
     }catch(e){m.labels=labels;if(key===viewKey()){state.messages=previous;renderList();}showToast('Change failed: '+e.message);}finally{m.pendingAction=false;}
   }
@@ -242,10 +281,10 @@
     state.readVersion++;state.loadVersion++;state.messages=state.messages.filter(x=>threadKey(x)!==threadKey(m));clearMailCache();renderList();
     if(wasSelected){state.selected=null;state.thread=null;if(next&&matchMedia('(min-width:861px)').matches)selectMessage(next).catch(e=>showToast(e.message));else{shell.classList.remove('is-reading','is-reader-focused');blankReader();}}
     try{
-      await api('modify',{accountId:m.accountId,threadId:m.threadId,action:'archive'});clearMailCache();
+      await queueMailMutation(m,'archive');clearPageCache();
       showToast('Archived',{label:'Undo',onClick:async()=>{
         if(key===viewKey()){state.messages=previous;renderList();}
-        await api('modify',{accountId:m.accountId,threadId:m.threadId,action:'unarchive'});clearMailCache();showToast('Archive undone');loadMail(false,true);
+        await queueMailMutation(m,'unarchive');clearPageCache();showToast('Archive undone');loadMail(false,true);
       }});
       loadMail(false,true);
     }catch(e){if(key===viewKey()){state.messages=previous;renderList();}showToast('Change failed: '+e.message);}
@@ -253,11 +292,12 @@
   async function loadMail(more=false,force=false){
     ownCache();if(['drafts','outbox'].includes(state.filter))return loadSpecial();
     const version=++state.loadVersion,key=viewKey(),cached=pageCache.get(key);
-    if(!more&&cached){messagesKey=key;Object.assign(state,cached.value);renderList();if(!force&&Date.now()-cached.at<30000){notice('');prefetchReaders();return;}}
+    if(!more&&cached){messagesKey=key;Object.assign(state,cached.value);renderList();if(!force&&Date.now()-cached.at<60000){notice('');prefetchReaders();return;}}
     else if(!more){state.messages=state.query&&messagesKey!==key?[]:state.messages.filter(m=>(state.account==='all'||m.accountId===state.account)&&matchesView(m,state.filter));messagesKey=key;state.hasMore=false;renderList();}
     notice('Updating mailbox…');$('#mailxRefresh').disabled=true;
     try{
-      const data=await api('mail',null,{accountId:state.account,filter:state.filter,q:state.query,cursor:JSON.stringify(more?state.cursor:{})});
+      const advanced=/\b(?:from|to|cc|bcc|subject|has|is|in|label|before|after|newer|older):/i.test(state.query);
+      const data=await api(advanced?'mail':'cached-mail',null,{accountId:state.account,filter:state.filter,q:state.query,cursor:JSON.stringify(more?state.cursor:{})});
       if(version!==state.loadVersion)return;
       const failed=new Map((data.errors||[]).map(e=>[e.accountId,e.threadIds]));
       const retained=state.messages.filter(m=>failed.has(m.accountId)&&(!failed.get(m.accountId)||failed.get(m.accountId).includes(m.threadId)));
@@ -282,7 +322,7 @@
       hydrateThreadImages(m,version);
       if(m.labels.includes('UNREAD')){
         m.labels=m.labels.filter(x=>x!=='UNREAD');if(state.filter==='unread')state.messages=state.messages.filter(x=>x!==m);renderList();
-        api('modify',{accountId:m.accountId,threadId:m.threadId,action:'read'}).catch(()=>{if(!m.labels.includes('UNREAD'))m.labels.push('UNREAD');if(version===state.readVersion)renderList();});
+        queueMailMutation(m,'read').catch(()=>{if(!m.labels.includes('UNREAD'))m.labels.push('UNREAD');if(version===state.readVersion)renderList();});
       }
     }catch(e){if(version===state.readVersion){if(cached)showToast('Showing the saved view: '+e.message);else readerEl.insertAdjacentHTML('beforeend',`<p class="mailx-inline-error">${escapeHtml(e.message)}</p>`);}}
   }
@@ -307,9 +347,9 @@
       if(action==='sender')return senderDetails(incoming,t.accountId);
       if(action==='unsubscribe')return unsubscribe(incoming,t.accountId);
       if(action==='archive'&&!archived){const listMessage=state.messages.find(x=>threadKey(x)===threadKey(t))||{...m,accountId:t.accountId,threadId:t.threadId,labels:['INBOX']};return archiveFromList(listMessage);}
-      b.disabled=true;const key=viewKey(),previous=state.messages.slice();state.readVersion++;state.loadVersion++;clearMailCache();
+      b.disabled=true;const key=viewKey(),previous=state.messages.slice();state.readVersion++;state.loadVersion++;clearPageCache();
       state.messages=state.messages.filter(m=>threadKey(m)!==threadKey(t));renderList();shell.classList.remove('is-reading','is-reader-focused');showToast(action==='unread'?'Marking unread…':archived?'Returning to inbox…':'Archiving…');
-      try{await api('modify',{accountId:t.accountId,threadId:t.threadId,action:action==='archive'?(archived?'unarchive':'archive'):action});clearMailCache();showToast(action==='unread'?'Marked unread':archived?'Returned to inbox':'Archived in Gmail');loadMail(false,true);}
+      try{await queueMailMutation({accountId:t.accountId,threadId:t.threadId},action==='archive'?(archived?'unarchive':'archive'):action);clearPageCache();showToast(action==='unread'?'Marked unread':archived?'Returned to inbox':'Archived in Gmail');loadMail(false,true);}
       catch(e){if(key===viewKey()){state.messages=previous;renderList();}showToast('Change failed: '+e.message);}finally{b.disabled=false;}
     }));
   }
@@ -639,7 +679,14 @@
     $('#mailxAttach').onclick=()=>$('#mailxAttachmentInput').click();$('#mailxAttachmentInput').onchange=e=>{addFiles(e.target.files);e.target.value='';};
     $$('[data-format-command]').forEach(b=>{b.onmousedown=e=>e.preventDefault();b.onclick=()=>formatEditor(b.dataset.formatCommand);});
     $('#mailxBlockFormat').onchange=e=>{formatEditor('formatBlock',e.target.value);};$('#mailxLink').onmousedown=e=>e.preventDefault();$('#mailxLink').onclick=()=>{restoreEditorRange();const sel=getSelection();if(!sel||sel.isCollapsed)return showToast('Select text to turn into a link.');const href=prompt('Link URL');if(!href)return;try{const u=new URL(href);if(!['http:','https:','mailto:'].includes(u.protocol))throw 0;formatEditor('createLink',href);}catch{showToast('Use an http, https, or mailto link.');}};
-    $('#mailxRefresh').onclick=guarded(async()=>{clearMailCache();await Promise.all([refreshAccounts(),loadMail(false,true)]);});
+    $('#mailxRefresh').onclick=guarded(async()=>{
+      const button=$('#mailxRefresh');button.disabled=true;
+      try{
+        const ids=(state.account==='all'?state.accounts.map(a=>a.id):[state.account]).filter(Boolean).slice(0,3);
+        await Promise.all(ids.map(accountId=>api('sync',{accountId}).catch(()=>null)));
+        clearPageCache();await refreshAccounts();await loadMail(false,true);
+      }finally{button.disabled=false;}
+    });
     $('#mailxMarkAllRead').onclick=guarded(async()=>{const b=$('#mailxMarkAllRead');b.disabled=true;try{showToast('Marking all unread as read…');const data=await api('mark-all-read',{accountId:state.account});clearMailCache();state.messages.forEach(m=>{m.labels=m.labels.filter(x=>x!=='UNREAD');});state.messages=state.messages.filter(m=>matchesView(m,state.filter));renderList();showToast(data.count?('Marked '+data.count+' messages read'):'No unread messages');await loadMail(false,true);}finally{b.disabled=false;}});
     $('#mailxView').onchange=e=>setFilter(e.target.value);
     $$('[data-mailx-filter]').forEach(b=>b.onclick=()=>setFilter(b.dataset.mailxFilter));$$('[data-mailx-mobile-filter]').forEach(b=>b.onclick=()=>setFilter(b.dataset.mailxMobileFilter));

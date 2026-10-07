@@ -215,13 +215,20 @@ const TODO_PENDING_KEY = 'ntu-manual-todos-pending-v1';
 let coolDone = loadCoolDone();
 let todos = loadTodos();
 let transferItems = [];
+let transferLoadPromise = null;
+let todoSyncPromise = null;
 let todoExpanded = false;
 let transferExpanded = false;
 const preparedTransferFiles = new Map();
 let activePreparedTransferId = null;
+const HANZI_WIDGET_CACHE_KEY = 'ntu-hanzi-widget-cache-v1';
 let hanziWidgetData = null;
 let hanziWidgetLoading = false;
 let hanziWidgetError = false;
+try {
+  const cached = JSON.parse(localStorage.getItem(HANZI_WIDGET_CACHE_KEY) || 'null');
+  if (cached && typeof cached.streak === 'number') hanziWidgetData = cached;
+} catch (error) {}
 
 function isIOSDevice(){
   return /iPad|iPhone|iPod/.test(navigator.userAgent)
@@ -426,32 +433,37 @@ async function flushTodoPending(){
 }
 
 async function syncTodos(){
-  try {
-    const migrated = localStorage.getItem(TODO_MIGRATED_KEY) === '1';
+  if (todoSyncPromise) return todoSyncPromise;
+  todoSyncPromise = (async () => {
+    try {
+      const migrated = localStorage.getItem(TODO_MIGRATED_KEY) === '1';
 
-    if (!migrated){
-      if (todos.length){
-        await todoApi('/api/todos/import', {
-          tasks:todos.map(item => ({
-            id:String(item.id || ''),
-            text:String(item.text || ''),
-            done:Boolean(item.done)
-          }))
-        });
+      if (!migrated){
+        if (todos.length){
+          await todoApi('/api/todos/import', {
+            tasks:todos.map(item => ({
+              id:String(item.id || ''),
+              text:String(item.text || ''),
+              done:Boolean(item.done)
+            }))
+          });
+        }
+        localStorage.setItem(TODO_MIGRATED_KEY, '1');
       }
-      localStorage.setItem(TODO_MIGRATED_KEY, '1');
+
+      const pendingFlushed = await flushTodoPending();
+      if (!pendingFlushed) return;
+
+      const data = await todoApi('/api/todos/list');
+      todos = Array.isArray(data.tasks) ? data.tasks : [];
+      saveTodos();
+      renderTodos();
+    } catch (error) {
+      renderTodos();
     }
-
-    const pendingFlushed = await flushTodoPending();
-    if (!pendingFlushed) return;
-
-    const data = await todoApi('/api/todos/list');
-    todos = Array.isArray(data.tasks) ? data.tasks : [];
-    saveTodos();
-    renderTodos();
-  } catch (error) {
-    renderTodos();
-  }
+  })();
+  try { return await todoSyncPromise; }
+  finally { todoSyncPromise = null; }
 }
 
 function renderTodos(){
@@ -595,22 +607,27 @@ function renderTransfers(){
 
 async function loadTransfers(silent = false){
   if (!transferList) return;
-  if (!silent) {
-    if (transferRefresh) transferRefresh.disabled = true;
-    if (transferStatus) transferStatus.textContent = 'Syncing transfer inbox…';
-  }
-  try {
-    const response = await scheduleFetch('transfer/list', { cache:'no-store' });
-    if (!response.ok) throw new Error('Could not sync');
-    const data = await response.json();
-    transferItems = Array.isArray(data.items) ? data.items : [];
-    renderTransfers();
-    if (transferStatus && (!silent || transferStatusDot?.classList.contains('is-error'))) transferStatus.textContent = 'Synced';
-  } catch (error) {
-    if (!silent && transferStatus) transferStatus.textContent = 'Could not sync transfers right now.';
-  } finally {
-    if (transferRefresh) transferRefresh.disabled = false;
-  }
+  if (transferLoadPromise) return transferLoadPromise;
+  transferLoadPromise = (async () => {
+    if (!silent) {
+      if (transferRefresh) transferRefresh.disabled = true;
+      if (transferStatus) transferStatus.textContent = 'Syncing transfer inbox…';
+    }
+    try {
+      const response = await scheduleFetch('transfer/list', { cache:'no-store' });
+      if (!response.ok) throw new Error('Could not sync');
+      const data = await response.json();
+      transferItems = Array.isArray(data.items) ? data.items : [];
+      renderTransfers();
+      if (transferStatus && (!silent || transferStatusDot?.classList.contains('is-error'))) transferStatus.textContent = 'Synced';
+    } catch (error) {
+      if (!silent && transferStatus) transferStatus.textContent = 'Could not sync transfers right now.';
+    } finally {
+      if (transferRefresh) transferRefresh.disabled = false;
+    }
+  })();
+  try { return await transferLoadPromise; }
+  finally { transferLoadPromise = null; }
 }
 
 async function sendTransferText(content){
@@ -1296,6 +1313,7 @@ async function loadHanziWidget(){
     if (!data || typeof data.streak !== 'number') throw new Error('Invalid Hanzi widget payload');
     hanziWidgetData = data;
     hanziWidgetError = false;
+    try { localStorage.setItem(HANZI_WIDGET_CACHE_KEY, JSON.stringify(data)); } catch (error) {}
   } catch (error) {
     hanziWidgetError = true;
   } finally {
@@ -1740,17 +1758,19 @@ if (transferList){
   });
 }
 
-window.addEventListener('focus', () => {
-  loadTransfers(true);
+let lastForegroundRefresh = 0;
+function refreshForegroundData(force = false){
+  if (document.hidden) return;
+  const now = Date.now();
+  if (!force && now - lastForegroundRefresh < 10000) return;
+  lastForegroundRefresh = now;
+  void loadTransfers(true);
   void syncTodos();
   void loadHanziWidget();
-});
+}
+window.addEventListener('focus', () => refreshForegroundData());
 document.addEventListener('visibilitychange', () => {
-  if (!document.hidden){
-    loadTransfers(true);
-    void syncTodos();
-    void loadHanziWidget();
-  }
+  if (!document.hidden) refreshForegroundData();
 });
 
 renderDay();
@@ -1760,16 +1780,19 @@ void syncTodos();
 void loadHanziWidget();
 loadCoolDeadlines();
 loadTransfers();
-setInterval(() => { renderNextClass(); renderDay(); }, 30000);
+lastForegroundRefresh = Date.now();
+setInterval(() => {
+  if (!document.hidden){ renderNextClass(); renderDay(); }
+}, 30000);
 setInterval(() => {
   if (!document.hidden) void loadHanziWidget();
 }, 300000);
 setInterval(() => {
-  if (!document.hidden){
-    loadTransfers(true);
-    void syncTodos();
-  }
-}, 8000);
+  if (!document.hidden) void loadTransfers(true);
+}, 12000);
+setInterval(() => {
+  if (!document.hidden) void syncTodos();
+}, 60000);
 
 /* Decoy-only hardware-console enhancements. Production site remains untouched. */
 document.querySelectorAll('[data-open-url]').forEach(button => {
