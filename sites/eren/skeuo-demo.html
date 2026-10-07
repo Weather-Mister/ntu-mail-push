@@ -3768,6 +3768,108 @@ h1{
 }
 </style>
 
+<style id="ai-terminal-layout-refine">
+/* Decoy composer: prompt terminal plus one large physical GENERATE key. */
+.machine.mail-mode>.mail-console-view>.mailx-compose.is-open{
+  grid-template-rows:
+    38px
+    auto
+    minmax(132px,.68fr)
+    26px
+    37px
+    minmax(260px,1.42fr)
+    auto
+    auto
+    50px!important;
+}
+.machine.mail-mode .mailx-ai-hardware{
+  min-height:132px!important;
+  margin:5px 13px 5px!important;
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) 126px!important;
+  gap:12px!important;
+  align-items:stretch!important;
+}
+.machine.mail-mode .mailx-ai-hardware .mailx-ai-wrap{
+  height:100%!important;
+  min-height:0!important;
+  margin:0!important;
+  padding:10px 10px 9px!important;
+  grid-template-rows:auto minmax(0,1fr)!important;
+  gap:8px!important;
+}
+.machine.mail-mode .mailx-ai-hardware .mailx-ai-row{
+  min-height:0!important;
+  height:100%!important;
+  grid-template-columns:minmax(0,1fr)!important;
+}
+.machine.mail-mode .mailx-ai-hardware .mailx-ai-prompt{
+  min-height:0!important;
+  height:100%!important;
+}
+.machine.mail-mode .mailx-ai-hardware>.mailx-ai-generate{
+  align-self:center!important;
+  justify-self:stretch!important;
+  width:126px!important;
+  min-width:126px!important;
+  height:68px!important;
+  min-height:68px!important;
+  padding:0 14px!important;
+  border:1px solid #817661!important;
+  border-radius:6px!important;
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.34),transparent 31%),
+    linear-gradient(180deg,#f0e8d5,#e0d6bf 62%,#c1b49a)!important;
+  color:#2d2921!important;
+  box-shadow:
+    inset 0 2px rgba(255,255,255,.62),
+    0 1px 0 #aea28a,
+    0 5px 0 #817661,
+    5px 8px 7px rgba(42,24,11,.24)!important;
+  transform:translateY(-4px)!important;
+  text-shadow:0 1px rgba(255,255,255,.30)!important;
+  font:900 10px/1 Arial,sans-serif!important;
+  letter-spacing:.04em!important;
+  text-transform:uppercase;
+}
+@media (hover:hover) and (pointer:fine){
+  .machine.mail-mode .mailx-ai-hardware>.mailx-ai-generate:hover{
+    background:
+      linear-gradient(145deg,rgba(255,255,255,.38),transparent 31%),
+      linear-gradient(180deg,#f4eddd,#e5dcc8 62%,#c8baa0)!important;
+    color:#2d2921!important;
+    transform:translateY(-2px)!important;
+    box-shadow:
+      inset 0 2px rgba(255,255,255,.62),
+      0 1px 0 #aea28a,
+      0 3px 0 #817661,
+      4px 6px 6px rgba(42,24,11,.22)!important;
+  }
+}
+.machine.mail-mode .mailx-ai-hardware>.mailx-ai-generate:active{
+  transform:translateY(1px)!important;
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.28),transparent 31%),
+    linear-gradient(180deg,#e8dfcb,#d8cdb5 62%,#b9aa90)!important;
+  color:#2d2921!important;
+  box-shadow:
+    inset 0 2px 3px rgba(72,61,45,.22),
+    0 1px 0 #817661!important;
+}
+.machine.mail-mode .mailx-ai-chips{display:none!important}
+@media(max-width:860px){
+  .machine.mail-mode .mailx-ai-hardware{
+    grid-template-columns:minmax(0,1fr) 108px!important;
+    gap:8px!important;
+  }
+  .machine.mail-mode .mailx-ai-hardware>.mailx-ai-generate{
+    width:108px!important;
+    min-width:108px!important;
+    height:62px!important;
+    min-height:62px!important;
+  }
+}
+</style>
 </head>
 <body>
 <div class="desk-stage">
@@ -4021,18 +4123,14 @@ h1{
       <div class="mailx-field-row"><label for="mailxSubject">Subject</label><input id="mailxSubject" type="text" placeholder="Subject"></div>
     </div>
 
-    <div class="mailx-ai-wrap">
-      <div class="mailx-ai-label"><span>AI COMMAND</span><span>Gemini</span></div>
-      <div class="mailx-ai-row">
-        <textarea id="mailxAiPrompt" class="mailx-ai-prompt" placeholder="Tell AI what to write or change. It always uses the current email draft below as reference."></textarea>
-        <button id="mailxGenerate" class="mailx-ai-generate" type="button"><span class="mailx-ai-generate-label">Generate</span></button>
+    <div class="mailx-ai-hardware">
+      <div class="mailx-ai-wrap">
+        <div class="mailx-ai-label"><span>AI COMMAND</span><span>Gemini</span></div>
+        <div class="mailx-ai-row">
+          <textarea id="mailxAiPrompt" class="mailx-ai-prompt" placeholder="Tell AI what to write or change. It always uses the current email draft below as reference."></textarea>
+        </div>
       </div>
-      <div class="mailx-ai-chips">
-        <button class="mailx-ai-chip" type="button" data-mailx-ai-chip="make it shorter">Shorter</button>
-        <button class="mailx-ai-chip" type="button" data-mailx-ai-chip="make it warmer and friendlier">Warmer</button>
-        <button class="mailx-ai-chip" type="button" data-mailx-ai-chip="make it more formal">More formal</button>
-        <button class="mailx-ai-chip" type="button" data-mailx-ai-chip="fix the grammar without changing my meaning">Fix grammar</button>
-      </div>
+      <button id="mailxGenerate" class="mailx-ai-generate" type="button"><span class="mailx-ai-generate-label">Generate</span></button>
     </div>
 
     <div class="mailx-editor-label"><span>EMAIL</span><span class="mailx-editor-tools"><button id="mailxUndo" type="button">Undo AI</button><button id="mailxRedo" type="button">Redo</button></span></div>
