@@ -1023,8 +1023,9 @@ function renderCoolDeadlineDots(){
 function renderCoolDeadlines(){
   if (!coolDeadlinesEl) return;
 
+  const now = Date.now();
   const events = [...coolEvents]
-    .filter(event => event && event.dueAt)
+    .filter(event => event && event.dueAt && new Date(event.dueAt).getTime() >= now - 60000)
     .sort((a,b) => new Date(a.dueAt).getTime() - new Date(b.dueAt).getTime());
 
   if (!events.length){
@@ -1055,19 +1056,19 @@ function renderCoolDeadlines(){
           type="button"
           data-event-id="${escapeHtml(event.id)}"
           aria-pressed="${done}"
-          aria-label="${done ? 'Finished' : 'Mark as finished'}"
-          ${done ? 'disabled' : ''}>
+          aria-label="${done ? 'Mark as not finished' : 'Mark as finished'}">
           <span class="keylegend">DONE</span>
           <span class="cool-finish-label">${done ? '✓' : 'FINISH'}</span>
         </button>
       </article>`;
   }).join('');
 
-  coolDeadlinesEl.querySelectorAll('.cool-finish-key:not(.is-pressed)').forEach(button => {
+  coolDeadlinesEl.querySelectorAll('.cool-finish-key').forEach(button => {
     button.addEventListener('click', () => {
       const id = button.dataset.eventId;
-      if (!id || coolDone.has(id)) return;
-      coolDone.add(id);
+      if (!id) return;
+      if (coolDone.has(id)) coolDone.delete(id);
+      else coolDone.add(id);
       saveCoolDone();
       renderCoolDeadlines();
     });
