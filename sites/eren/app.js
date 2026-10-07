@@ -135,6 +135,22 @@ const dateReminders = {
   '2026-11-10': { title:'ICL trip', text:'ICL trip · Nov 9–10', color:'#c94747' }
 };
 
+const academicDates = [
+  { id:'academic-statics-quiz-1', date:'2026-10-06', dueAt:'2026-10-06T23:59:59+08:00', title:'Quiz I', course:'Statics', kind:'academic', metaLabel:'Quiz' },
+  { id:'academic-engmath-midterm-1', date:'2026-10-14', dueAt:'2026-10-14T23:59:59+08:00', title:'Midterm 1', course:'Engineering Mathematics', kind:'academic', metaLabel:'Exam' },
+  { id:'academic-materials-midterm-1', date:'2026-10-27', dueAt:'2026-10-27T23:59:59+08:00', title:'Midterm I', course:'Engineering Materials', kind:'academic', metaLabel:'Exam' },
+  { id:'academic-statics-midterm', date:'2026-10-27', dueAt:'2026-10-27T23:59:59+08:00', title:'Midterm Exam', course:'Statics', kind:'academic', metaLabel:'Exam' },
+  { id:'academic-psychology-midterm', date:'2026-11-02', dueAt:'2026-11-02T23:59:59+08:00', title:'Midterm Exam', course:'Psychology', kind:'academic', metaLabel:'Exam' },
+  { id:'academic-mechanism-midterm-2', date:'2026-11-11', dueAt:'2026-11-11T23:59:59+08:00', title:'Midterm 2', course:'Mechanism', kind:'academic', metaLabel:'Exam' },
+  { id:'academic-engmath-midterm-2', date:'2026-11-18', dueAt:'2026-11-18T23:59:59+08:00', title:'Midterm 2', course:'Engineering Mathematics', kind:'academic', metaLabel:'Exam' },
+  { id:'academic-statics-quiz-2', date:'2026-11-24', dueAt:'2026-11-24T23:59:59+08:00', title:'Quiz II', course:'Statics', kind:'academic', metaLabel:'Quiz' },
+  { id:'academic-engmath-final', date:'2026-12-21', dueAt:'2026-12-21T23:59:59+08:00', title:'Final Exam', course:'Engineering Mathematics', kind:'academic', metaLabel:'10:20 AM–12:00 PM' },
+  { id:'academic-psychology-final', date:'2026-12-21', dueAt:'2026-12-21T23:59:59+08:00', title:'Final Exam', course:'Psychology', kind:'academic', metaLabel:'Exam' },
+  { id:'academic-materials-final', date:'2026-12-22', dueAt:'2026-12-22T23:59:59+08:00', title:'Final Exam', course:'Engineering Materials', kind:'academic', metaLabel:'Exam' },
+  { id:'academic-statics-final', date:'2026-12-22', dueAt:'2026-12-22T23:59:59+08:00', title:'Final Exam', course:'Statics', kind:'academic', metaLabel:'Exam' },
+  { id:'academic-mechanism-final', date:'2026-12-23', dueAt:'2026-12-23T23:59:59+08:00', title:'Final Exam', course:'Mechanism', kind:'academic', metaLabel:'Exam' }
+];
+
 const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 const shortMonths = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const nowForWeek = new Date();
@@ -1023,11 +1039,17 @@ function coolDueLabel(event){
   return `Due ${shortMonths[due.getMonth()]} ${due.getDate()}`;
 }
 
+function combinedUpcomingEvents(){
+  return [...coolEvents, ...academicDates]
+    .sort((a,b) => new Date(a.dueAt).getTime() - new Date(b.dueAt).getTime());
+}
+
 function renderCoolDeadlineDots(){
+  const events = combinedUpcomingEvents();
   dayButtons.forEach(btn => {
     const day = Number(btn.dataset.day);
     const key = dateKey(dateForDay(day));
-    btn.classList.toggle('has-deadline', coolEvents.some(event => event.date === key));
+    btn.classList.toggle('has-deadline', events.some(event => event.date === key));
   });
 }
 
@@ -1035,11 +1057,11 @@ function renderCoolDeadlines(){
   if (!coolDeadlinesEl) return;
 
   const now = Date.now();
-  const upcoming = coolEvents
+  const upcoming = combinedUpcomingEvents()
     .filter(event => new Date(event.dueAt).getTime() >= now - 60000);
 
   if (!upcoming.length){
-    coolDeadlinesEl.innerHTML = `<div class="cool-status">No upcoming COOL deadlines.</div>`;
+    coolDeadlinesEl.innerHTML = `<div class="cool-status">No upcoming dates.</div>`;
     renderCoolDeadlineDots();
     return;
   }
@@ -1052,18 +1074,22 @@ function renderCoolDeadlines(){
     const due = new Date(event.dueAt);
     const dateText = `${shortMonths[due.getMonth()]} ${due.getDate()}`;
     const dayText = dayNames[due.getDay()].slice(0,3);
-    const done = coolDone.has(event.id);
+    const isAcademic = event.kind === 'academic';
+    const done = !isAcademic && coolDone.has(event.id);
+    const mainContent = `
+      <div class="cool-date"><strong>${dateText}</strong><span>${dayText}</span></div>
+      <div class="cool-copy">
+        <p class="cool-title">${escapeHtml(event.title)}</p>
+        <p class="cool-course">${escapeHtml(event.course)}</p>
+      </div>
+      <span class="cool-due">${isAcademic ? escapeHtml(event.metaLabel || 'Exam') : (done ? 'Done' : escapeHtml(coolDueLabel(event)))}</span>`;
+
     return `
-      <article class="cool-item ${done ? 'done' : ''}">
-        <a class="cool-main" href="${escapeHtml(event.url)}" target="_blank" rel="noopener noreferrer external" aria-label="Open ${escapeHtml(event.title)} in Safari">
-          <div class="cool-date"><strong>${dateText}</strong><span>${dayText}</span></div>
-          <div class="cool-copy">
-            <p class="cool-title">${escapeHtml(event.title)}</p>
-            <p class="cool-course">${escapeHtml(event.course)}</p>
-          </div>
-          <span class="cool-due">${done ? 'Done' : escapeHtml(coolDueLabel(event))}</span>
-        </a>
-        <button class="cool-done-button ${done ? 'is-done' : ''}" type="button" data-event-id="${escapeHtml(event.id)}" aria-pressed="${done}" aria-label="${done ? 'Mark as not done' : 'Mark as done'}">✓</button>
+      <article class="cool-item ${done ? 'done' : ''} ${isAcademic ? 'academic-date' : ''}">
+        ${isAcademic
+          ? `<div class="cool-main" aria-label="${escapeHtml(event.course)} ${escapeHtml(event.title)} on ${dateText}">${mainContent}</div>`
+          : `<a class="cool-main" href="${escapeHtml(event.url)}" target="_blank" rel="noopener noreferrer external" aria-label="Open ${escapeHtml(event.title)} in Safari">${mainContent}</a>
+             <button class="cool-done-button ${done ? 'is-done' : ''}" type="button" data-event-id="${escapeHtml(event.id)}" aria-pressed="${done}" aria-label="${done ? 'Mark as not done' : 'Mark as done'}">✓</button>`}
       </article>`;
   }).join('');
 
