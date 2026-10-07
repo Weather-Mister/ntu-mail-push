@@ -241,6 +241,9 @@
     state.loadVersion++;clearPageCache();state.messages=state.messages.filter(x=>matchesView(x,state.filter));renderList();
     if((action==='trash'||action==='untrash')&&state.selected===threadKey(m)){state.readVersion++;state.thread=null;state.selected=null;shell.classList.remove('is-reading','is-reader-focused');blankReader();}
     try{await queueMailMutation(m,action);clearPageCache();
+      // If Trash was opened while this queued mutation was still running, refresh it now.
+      // This closes the gap where the first Trash request could finish before Gmail moved the thread.
+      if(action==='trash'&&state.filter==='trash')loadMail(false,true).catch(e=>showToast(e.message));
       if(action==='trash')showToast('Moved to Trash',{label:'Undo',onClick:async()=>{
         const trashedLabels=m.labels.slice();restoreListMessage(m,key,labels);
         try{await queueMailMutation(m,'untrash');clearPageCache();showToast('Trash undone');loadMail(false,true);}
@@ -313,7 +316,8 @@
       const advanced=/\b(?:from|to|cc|bcc|subject|has|is|in|label|before|after|newer|older):/i.test(state.query);
       const params={accountId:state.account,filter:state.filter,q:state.query,cursor:JSON.stringify(more?state.cursor:{})};
       let data;
-      if(advanced)data=await api('mail',null,params);
+      // Trash must be authoritative: recently deleted threads can race the background cache.
+      if(advanced||state.filter==='trash')data=await api('mail',null,params);
       else{
         try{data=await api('cached-mail',null,params);}
         catch{data=await api('mail',null,params);}
