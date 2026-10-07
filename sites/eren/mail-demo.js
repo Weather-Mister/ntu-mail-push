@@ -297,13 +297,21 @@
     notice('Updating mailbox…');$('#mailxRefresh').disabled=true;
     try{
       const advanced=/\b(?:from|to|cc|bcc|subject|has|is|in|label|before|after|newer|older):/i.test(state.query);
-      const data=await api(advanced?'mail':'cached-mail',null,{accountId:state.account,filter:state.filter,q:state.query,cursor:JSON.stringify(more?state.cursor:{})});
+      const params={accountId:state.account,filter:state.filter,q:state.query,cursor:JSON.stringify(more?state.cursor:{})};
+      let data;
+      if(advanced)data=await api('mail',null,params);
+      else{
+        try{data=await api('cached-mail',null,params);}
+        catch{data=await api('mail',null,params);}
+      }
       if(version!==state.loadVersion)return;
-      const failed=new Map((data.errors||[]).map(e=>[e.accountId,e.threadIds]));
+      const incoming=Array.isArray(data?.messages)?data.messages:[];
+      const errors=Array.isArray(data?.errors)?data.errors:[];
+      const failed=new Map(errors.map(e=>[e.accountId,e.threadIds]));
       const retained=state.messages.filter(m=>failed.has(m.accountId)&&(!failed.get(m.accountId)||failed.get(m.accountId).includes(m.threadId)));
-      const rows=more?[...state.messages,...data.messages]:[...retained,...data.messages];
+      const rows=more?[...state.messages,...incoming]:[...retained,...incoming];
       state.messages=[...new Map(rows.map(m=>[threadKey(m),m])).values()].sort((a,b)=>b.timestamp-a.timestamp);
-      state.cursor=data.cursor;state.hasMore=data.hasMore;if(!data.errors?.length)putCache(pageCache,key,{messages:state.messages,cursor:state.cursor,hasMore:state.hasMore});renderList();prefetchReaders();
+      state.cursor=data?.cursor&&typeof data.cursor==='object'?data.cursor:{};state.hasMore=Boolean(data?.hasMore);if(!errors.length)putCache(pageCache,key,{messages:state.messages,cursor:state.cursor,hasMore:state.hasMore});renderList();prefetchReaders();
       notice(data.errors?.map(e=>accountName(e.accountId)+': '+e.error+' Previously loaded mail is kept; refresh to retry.').join(' · ')||'');
     }catch(e){if(version===state.loadVersion)notice(e.message);}
     finally{if(version===state.loadVersion)$('#mailxRefresh').disabled=false;}
