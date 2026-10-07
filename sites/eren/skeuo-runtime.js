@@ -1822,3 +1822,107 @@ if (skeuoNext){
   });
 }
 syncSkeuoLiveIndicator();
+
+/* Schedule interval oscilloscope.
+   The displayed ΔT is real time to the next schedule boundary.
+   Longer ΔT produces a longer wavelength; the trace compresses and jitters as the boundary approaches. */
+const scheduleScope = document.getElementById('scheduleScope');
+const scheduleScopeTrace = document.getElementById('scheduleScopeTrace');
+const scheduleScopeValue = document.getElementById('scheduleScopeValue');
+const scheduleScopeMode = document.getElementById('scheduleScopeMode');
+const scheduleScopeReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+let scheduleScopeState = { active:false, live:false, minutes:0, mode:'CLEAR', aria:'Schedule clear' };
+let scheduleScopeLastMeta = 0;
+let scheduleScopeLastDraw = 0;
+
+function formatScheduleScopeDelta(ms){
+  const seconds = Math.max(0, Math.ceil(ms / 1000));
+  if (seconds < 60) return `${seconds}s`;
+  const totalMinutes = Math.ceil(seconds / 60);
+  if (totalMinutes < 60) return `${totalMinutes}m`;
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return minutes ? `${hours}h${String(minutes).padStart(2,'0')}` : `${hours}h`;
+}
+
+function readScheduleScope(){
+  const next = getNextClass();
+  if (!next) return { active:false, live:false, minutes:0, mode:'CLEAR', aria:'Schedule interval monitor, no upcoming classes' };
+
+  const live = next.state === 'Now';
+  const target = live ? next.endAt : next.startAt;
+  const deltaMs = Math.max(0, target.getTime() - Date.now());
+  const value = formatScheduleScopeDelta(deltaMs);
+  return {
+    active:true,
+    live,
+    minutes:deltaMs / 60000,
+    mode:live ? 'LIVE END' : 'NEXT START',
+    value,
+    aria:`Schedule interval monitor, ${value} ${live ? 'until the current class ends' : 'until the next class starts'}`
+  };
+}
+
+function refreshScheduleScopeMeta(){
+  if (!scheduleScope) return;
+  scheduleScopeState = readScheduleScope();
+  if (scheduleScopeValue) scheduleScopeValue.textContent = scheduleScopeState.active ? scheduleScopeState.value : '--';
+  if (scheduleScopeMode) scheduleScopeMode.textContent = scheduleScopeState.mode;
+  scheduleScope.setAttribute('aria-label', scheduleScopeState.aria);
+}
+
+function drawScheduleScope(timestamp=0){
+  if (!scheduleScopeTrace) return;
+
+  const width = 160;
+  const mid = 21;
+  const minutes = Math.max(0, scheduleScopeState.minutes || 0);
+  const boundedMinutes = Math.min(360, minutes);
+  const wavelength = scheduleScopeState.active
+    ? 12 + Math.sqrt(boundedMinutes / 360) * 42
+    : 80;
+  const urgency = scheduleScopeState.active ? 1 - Math.min(1, minutes / 180) : 0;
+  const amplitude = scheduleScopeState.active ? (scheduleScopeState.live ? 8.1 : 6.4) : 1.1;
+  const phase = scheduleScopeReducedMotion ? 0 : timestamp * (0.00155 + urgency * 0.0042);
+  const jitterStrength = scheduleScopeState.active ? 0.35 + urgency * 1.05 : 0.12;
+
+  let d = '';
+  for (let x=0; x<=width; x+=2){
+    const base = Math.sin((x / wavelength) * Math.PI * 2 + phase) * amplitude;
+    const jitter =
+      Math.sin(x * 1.41 + phase * 3.2) * jitterStrength * 0.52 +
+      Math.sin(x * 0.37 - phase * 1.7) * jitterStrength * 0.34;
+    const y = mid + base + jitter;
+    d += `${x === 0 ? 'M' : 'L'}${x} ${y.toFixed(2)} `;
+  }
+  scheduleScopeTrace.setAttribute('d', d.trim());
+}
+
+function animateScheduleScope(timestamp){
+  if (!scheduleScope || !scheduleScopeTrace) return;
+
+  if (timestamp - scheduleScopeLastMeta > 1000){
+    scheduleScopeLastMeta = timestamp;
+    refreshScheduleScopeMeta();
+  }
+  if (!document.hidden && scheduleScope.offsetParent !== null && timestamp - scheduleScopeLastDraw > 55){
+    scheduleScopeLastDraw = timestamp;
+    drawScheduleScope(timestamp);
+  }
+  requestAnimationFrame(animateScheduleScope);
+}
+
+if (scheduleScope && scheduleScopeTrace){
+  refreshScheduleScopeMeta();
+  drawScheduleScope(0);
+  if (scheduleScopeReducedMotion){
+    setInterval(() => {
+      if (!document.hidden){
+        refreshScheduleScopeMeta();
+        drawScheduleScope(0);
+      }
+    }, 1000);
+  } else {
+    requestAnimationFrame(animateScheduleScope);
+  }
+}
