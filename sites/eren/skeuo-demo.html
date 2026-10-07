@@ -4282,7 +4282,7 @@ h1{
 }
 </style>
 <style id="desk-props-layer">
-/* Desk clutter under the console: larger notes, crumpled paper and directional lamp light. */
+/* Desk clutter under the console: subtle, partially hidden, and lit by the same lamp. */
 .desk-stage{
   position:relative;
   isolation:isolate;
@@ -4297,51 +4297,37 @@ h1{
 .desk-props::before{
   content:"";
   position:absolute;
-  inset:-7% -4%;
+  inset:-4%;
   z-index:0;
   background:
-    radial-gradient(ellipse at 72% -2%,rgba(255,247,220,.52) 0 7%,rgba(255,218,156,.24) 17%,rgba(255,173,91,.10) 34%,transparent 53%),
-    linear-gradient(140deg,rgba(255,237,201,.22) 0 18%,rgba(255,198,124,.09) 31%,transparent 49%);
+    radial-gradient(ellipse at 73% 1%,rgba(255,239,198,.28) 0 8%,rgba(255,195,112,.09) 22%,transparent 45%),
+    linear-gradient(143deg,rgba(255,226,177,.08) 0 20%,transparent 44%);
   mix-blend-mode:screen;
-  opacity:1;
-}
-.desk-props::after{
-  content:"";
-  position:absolute;
-  inset:0;
-  z-index:10;
-  background:
-    linear-gradient(180deg,rgba(0,0,0,.03),transparent 18% 77%,rgba(18,6,1,.09)),
-    radial-gradient(ellipse at 52% 52%,transparent 45%,rgba(18,7,2,.075) 100%);
-  pointer-events:none;
 }
 .machine{
   position:relative;
   z-index:3;
 }
-.desk-crack{
-  z-index:1;
-}
+.desk-crack{z-index:1}
 
 .desk-sheet{
   position:absolute;
   z-index:2;
   overflow:hidden;
   border:1px solid rgba(82,62,39,.24);
-  border-radius:2px;
+  border-radius:1px;
   background:
-    linear-gradient(150deg,rgba(255,255,255,.54) 0 7%,rgba(255,255,255,.18) 16%,transparent 34%),
-    linear-gradient(180deg,#eee3ce 0%,#dfd1b8 68%,#d1c0a2 100%);
-  color:rgba(42,59,82,.78);
+    linear-gradient(148deg,rgba(255,255,255,.48) 0 6%,rgba(255,255,255,.15) 15%,transparent 31%),
+    linear-gradient(180deg,#eadfc9 0%,#ddceb4 70%,#cfbd9f 100%);
+  color:rgba(45,61,82,.74);
   box-shadow:
-    inset 0 1px rgba(255,255,255,.65),
-    inset -16px -19px 26px rgba(90,64,29,.055),
-    -8px -4px 15px rgba(255,226,169,.045),
-    8px 14px 14px rgba(20,8,2,.21),
-    18px 27px 27px rgba(20,8,2,.085);
+    inset 0 1px rgba(255,255,255,.55),
+    inset -10px -12px 18px rgba(90,64,29,.04),
+    5px 9px 10px rgba(20,8,2,.17),
+    12px 18px 20px rgba(20,8,2,.06);
   font-family:"Segoe Print","Bradley Hand","Marker Felt","Comic Sans MS",cursive;
   transform-origin:center;
-  filter:saturate(.94) contrast(1.015);
+  filter:saturate(.92);
 }
 .desk-sheet::after{
   content:"";
@@ -4349,33 +4335,32 @@ h1{
   inset:0;
   pointer-events:none;
   background:
-    radial-gradient(circle at 13% 18%,rgba(92,60,25,.06) 0 1px,transparent 1.6px),
-    radial-gradient(circle at 78% 64%,rgba(92,60,25,.045) 0 1px,transparent 1.5px),
-    repeating-linear-gradient(94deg,rgba(80,61,35,.013) 0 1px,transparent 1px 8px);
+    radial-gradient(circle at 13% 18%,rgba(92,60,25,.05) 0 1px,transparent 1.5px),
+    radial-gradient(circle at 78% 64%,rgba(92,60,25,.04) 0 1px,transparent 1.5px),
+    repeating-linear-gradient(94deg,rgba(80,61,35,.011) 0 1px,transparent 1px 8px);
   mix-blend-mode:multiply;
 }
 .desk-sheet .paper-title{
   position:relative;
   z-index:1;
   display:block;
-  margin-bottom:10px;
-  color:rgba(56,50,41,.60);
-  font:700 7px/1 "Courier New",monospace;
-  letter-spacing:.115em;
+  margin-bottom:8px;
+  color:rgba(56,50,41,.55);
+  font:700 6.5px/1 "Courier New",monospace;
+  letter-spacing:.10em;
   text-transform:uppercase;
 }
 .desk-sheet .scribble{
   position:relative;
   z-index:1;
-  margin:7px 0;
-  font-size:15px;
-  line-height:1.34;
+  margin:5px 0;
+  font-size:13px;
+  line-height:1.3;
   white-space:nowrap;
   transform:rotate(var(--scribble-rot,0deg));
-  text-shadow:0 .5px rgba(255,255,255,.16);
 }
-.desk-sheet .scribble.faint{opacity:.62}
-.desk-sheet .scribble.small{font-size:11.5px}
+.desk-sheet .scribble.faint{opacity:.58}
+.desk-sheet .scribble.small{font-size:10.5px}
 .desk-sheet .underline{
   position:relative;
   display:inline-block;
@@ -4385,114 +4370,135 @@ h1{
   position:absolute;
   left:-2px;right:-5px;bottom:-2px;
   height:1px;
-  background:rgba(46,66,96,.42);
+  background:rgba(46,66,96,.35);
   transform:rotate(-1deg);
 }
 
-/* Large sheets peeking out from under the chassis. */
+/* These sheets are intentionally mostly under the console. */
 .desk-sheet.paper-statics{
-  width:390px;
-  height:258px;
-  left:-112px;
+  width:255px;
+  height:176px;
+  left:-74px;
   bottom:-22px;
-  padding:22px 23px 18px;
-  transform:rotate(-8.8deg);
+  padding:17px 18px 14px;
+  transform:rotate(-7.5deg);
 }
 .paper-statics{
   background:
-    repeating-linear-gradient(0deg,transparent 0 22px,rgba(72,105,151,.075) 22px 23px),
-    linear-gradient(150deg,rgba(255,255,255,.54) 0 7%,rgba(255,255,255,.18) 16%,transparent 34%),
-    linear-gradient(180deg,#eee3ce,#d4c3a5);
+    repeating-linear-gradient(0deg,transparent 0 21px,rgba(72,105,151,.06) 21px 22px),
+    linear-gradient(148deg,rgba(255,255,255,.48) 0 6%,transparent 31%),
+    linear-gradient(180deg,#e8dcc5,#d2c0a1);
 }
-
 .desk-sheet.paper-math{
-  width:402px;
-  height:266px;
-  right:-116px;
-  bottom:-16px;
-  padding:22px 22px 18px;
-  transform:rotate(8.8deg);
+  width:270px;
+  height:188px;
+  right:-82px;
+  bottom:-24px;
+  padding:17px 18px 14px;
+  transform:rotate(7.2deg);
 }
 .paper-math::before{
   content:"";
   position:absolute;
-  right:-1px;
-  bottom:-1px;
-  width:29px;
-  height:29px;
+  right:-1px;bottom:-1px;
+  width:22px;height:22px;
   clip-path:polygon(100% 0,0 100%,100% 100%);
-  background:linear-gradient(135deg,rgba(255,255,255,.04) 0 48%,#c3b08f 50%,#e7dac4 100%);
-  filter:drop-shadow(-1px -1px 1px rgba(70,52,29,.12));
+  background:linear-gradient(135deg,transparent 0 48%,#c3b08f 50%,#e6d8c0 100%);
 }
-
 .desk-sheet.paper-mech{
-  width:315px;
-  height:198px;
-  left:19%;
-  bottom:-74px;
-  padding:18px 19px;
-  opacity:.88;
-  transform:rotate(4.2deg);
+  width:190px;
+  height:125px;
+  left:22%;
+  bottom:-58px;
+  padding:13px 14px;
+  opacity:.70;
+  transform:rotate(3.2deg);
 }
 .paper-mech{
   background:
-    linear-gradient(90deg,rgba(164,82,65,.11) 0 1px,transparent 1px 100%),
-    repeating-linear-gradient(0deg,transparent 0 19px,rgba(72,105,151,.067) 19px 20px),
-    linear-gradient(180deg,#e9dec9,#d2c0a2);
-  background-size:100% 100%,100% 20px,100% 100%;
+    repeating-linear-gradient(0deg,transparent 0 18px,rgba(72,105,151,.055) 18px 19px),
+    linear-gradient(180deg,#e7dbc4,#cfbd9e);
 }
 
-/* Extra notes higher on the desk, visible above the console shoulders. */
+/* Only thin paper shoulders peek out above the machine. */
 .desk-sheet.paper-top-left{
-  width:365px;
-  height:226px;
-  left:5%;
-  top:-28px;
-  padding:19px 21px 15px;
-  opacity:.94;
-  transform:rotate(-5.6deg);
-  box-shadow:
-    inset 0 1px rgba(255,255,255,.76),
-    -6px -3px 15px rgba(255,229,180,.14),
-    10px 17px 18px rgba(20,8,2,.25),
-    24px 34px 34px rgba(20,8,2,.10);
+  width:230px;
+  height:142px;
+  left:6%;
+  top:-103px;
+  padding:14px 15px 12px;
+  opacity:.72;
+  transform:rotate(-5.2deg);
 }
 .desk-sheet.paper-top-right{
-  width:348px;
-  height:218px;
-  right:5.5%;
-  top:-24px;
-  padding:19px 20px 15px;
-  opacity:.92;
-  transform:rotate(6.1deg);
-  box-shadow:
-    inset 0 1px rgba(255,255,255,.76),
-    -5px -3px 14px rgba(255,229,180,.13),
-    11px 17px 19px rgba(20,8,2,.24),
-    25px 35px 35px rgba(20,8,2,.095);
+  width:240px;
+  height:148px;
+  right:7%;
+  top:-107px;
+  padding:14px 15px 12px;
+  opacity:.70;
+  transform:rotate(5.6deg);
 }
 .paper-top-left{
   background:
-    repeating-linear-gradient(0deg,transparent 0 19px,rgba(72,105,151,.06) 19px 20px),
-    linear-gradient(150deg,rgba(255,255,255,.52) 0 8%,transparent 34%),
-    linear-gradient(180deg,#ede0c9,#d8c5a6);
+    repeating-linear-gradient(0deg,transparent 0 19px,rgba(72,105,151,.05) 19px 20px),
+    linear-gradient(180deg,#e9ddc7,#d3c0a0);
 }
 .paper-top-right{
   background:
-    linear-gradient(90deg,rgba(179,72,61,.12) 0 1px,transparent 1px 100%),
-    repeating-linear-gradient(0deg,transparent 0 20px,rgba(72,105,151,.055) 20px 21px),
-    linear-gradient(180deg,#ece0cb,#d4c1a1);
-  background-size:100% 100%,100% 21px,100% 100%;
+    repeating-linear-gradient(0deg,transparent 0 20px,rgba(72,105,151,.05) 20px 21px),
+    linear-gradient(180deg,#eadfc9,#d4c1a1);
 }
 
-/* Hand-drawn mechanism doodle. */
+/* Small wrinkled scraps, not spherical "paper balls". */
+.desk-crumple{
+  position:absolute;
+  z-index:2;
+  width:52px;
+  height:34px;
+  clip-path:polygon(8% 18%,29% 3%,51% 12%,76% 4%,95% 27%,86% 55%,97% 78%,68% 94%,43% 84%,17% 96%,3% 67%);
+  background:
+    linear-gradient(32deg,transparent 0 42%,rgba(91,65,35,.10) 43% 46%,transparent 47%),
+    linear-gradient(143deg,transparent 0 48%,rgba(91,65,35,.11) 49% 52%,transparent 53%),
+    radial-gradient(circle at 25% 24%,rgba(255,255,255,.42),transparent 30%),
+    linear-gradient(145deg,#e9ddc5,#c9b695);
+  border:1px solid rgba(85,63,38,.15);
+  box-shadow:
+    inset 4px 3px 6px rgba(255,255,255,.18),
+    inset -5px -4px 7px rgba(105,76,39,.10),
+    5px 8px 8px rgba(20,8,2,.14);
+  opacity:.72;
+}
+.crumple-a{
+  left:32%;
+  top:10px;
+  transform:rotate(12deg);
+}
+.crumple-b{
+  right:29%;
+  top:12px;
+  width:44px;
+  height:29px;
+  opacity:.62;
+  transform:rotate(-11deg);
+}
+.crumple-c{
+  right:1.5%;
+  top:37%;
+  width:43px;
+  height:28px;
+  opacity:.55;
+  transform:rotate(18deg);
+}
+
+/* Simple mechanism doodle. */
 .paper-mech .diagram{
   position:absolute;
-  right:15px;
-  bottom:13px;
-  width:74px;
-  height:49px;
-  opacity:.60;
+  right:12px;
+  bottom:10px;
+  width:60px;
+  height:38px;
+  opacity:.48;
 }
 .paper-mech .diagram::before,
 .paper-mech .diagram::after{
@@ -4500,190 +4506,76 @@ h1{
   position:absolute;
 }
 .paper-mech .diagram::before{
-  left:5px;right:5px;bottom:11px;
-  height:1px;
-  background:#425a7c;
+  left:5px;right:5px;bottom:9px;
+  height:1px;background:#425a7c;
   transform:rotate(-12deg);
-  box-shadow:10px -13px 0 -.25px #425a7c,-6px -23px 0 -.25px #425a7c;
+  box-shadow:8px -11px 0 -.25px #425a7c,-4px -19px 0 -.25px #425a7c;
 }
 .paper-mech .diagram::after{
-  width:9px;height:9px;
+  width:7px;height:7px;
   left:5px;bottom:6px;
-  border:1px solid #425a7c;
-  border-radius:50%;
-  box-shadow:29px -7px 0 -1px #d9ccb4,29px -7px 0 0 #425a7c,57px -15px 0 -1px #d9ccb4,57px -15px 0 0 #425a7c;
+  border:1px solid #425a7c;border-radius:50%;
+  box-shadow:24px -5px 0 -1px #d9ccb4,24px -5px 0 0 #425a7c,47px -11px 0 -1px #d9ccb4,47px -11px 0 0 #425a7c;
 }
 
-/* Crumpled discarded notes. */
-.desk-crumple{
-  position:absolute;
-  z-index:3;
-  width:68px;
-  height:61px;
-  border-radius:42% 58% 47% 53% / 41% 49% 51% 59%;
-  background:
-    linear-gradient(128deg,transparent 0 30%,rgba(102,76,42,.09) 31% 33%,transparent 34% 100%),
-    linear-gradient(45deg,transparent 0 44%,rgba(94,68,38,.10) 45% 47%,transparent 48% 100%),
-    radial-gradient(circle at 31% 24%,rgba(255,255,255,.61),transparent 22%),
-    radial-gradient(circle at 70% 66%,rgba(109,79,42,.11),transparent 27%),
-    linear-gradient(145deg,#eee3cf,#cdbb9c);
-  border:1px solid rgba(85,64,39,.19);
-  box-shadow:
-    inset 8px 7px 11px rgba(255,255,255,.16),
-    inset -9px -8px 13px rgba(105,76,39,.12),
-    7px 11px 10px rgba(20,8,2,.20),
-    15px 19px 18px rgba(20,8,2,.07);
-  opacity:.91;
-}
-.desk-crumple::before,
-.desk-crumple::after{
-  content:"";
-  position:absolute;
-  border:1px solid rgba(94,68,38,.12);
-  border-radius:50%;
-}
-.desk-crumple::before{
-  inset:11px 15px 14px 10px;
-  transform:rotate(19deg);
-}
-.desk-crumple::after{
-  inset:17px 10px 9px 18px;
-  transform:rotate(-27deg);
-}
-.crumple-a{
-  left:34%;
-  top:7px;
-  transform:rotate(14deg) scale(1.08);
-}
-.crumple-b{
-  right:29%;
-  top:10px;
-  width:60px;
-  height:56px;
-  opacity:.86;
-  transform:rotate(-12deg);
-}
-.crumple-c{
-  right:2%;
-  top:29%;
-  width:58px;
-  height:52px;
-  opacity:.76;
-  transform:rotate(21deg);
-}
-
-/* Coffee: stronger rings but still part of the desk rather than the UI. */
+/* Coffee belongs on the wood around the console, not on top of the UI. */
 .coffee-ring{
   position:absolute;
   z-index:1;
   border-radius:50%;
-  opacity:.57;
-  filter:blur(.13px);
+  opacity:.40;
   background:
     radial-gradient(circle,
-      transparent 54%,
-      rgba(91,48,20,.13) 55% 57%,
-      transparent 59% 62%,
-      rgba(105,57,25,.23) 63% 67%,
+      transparent 55%,
+      rgba(91,48,20,.10) 56% 58%,
+      transparent 60% 63%,
+      rgba(105,57,25,.18) 64% 67%,
       transparent 69%);
   mix-blend-mode:multiply;
 }
 .coffee-ring.ring-left{
-  width:126px;
-  height:117px;
-  left:9%;
-  bottom:8%;
-  transform:rotate(-11deg) scaleX(.94);
+  width:102px;height:96px;
+  left:2.4%;bottom:12%;
+  transform:rotate(-10deg) scaleX(.94);
 }
 .coffee-ring.ring-right{
-  width:96px;
-  height:91px;
-  right:15%;
-  bottom:7%;
-  opacity:.42;
-  transform:rotate(9deg) scaleY(.91);
+  width:78px;height:74px;
+  right:2.6%;bottom:15%;
+  opacity:.31;
+  transform:rotate(8deg) scaleY(.92);
 }
 .coffee-smear{
   position:absolute;
   z-index:1;
-  width:160px;
-  height:58px;
-  left:30%;
-  bottom:2%;
+  width:118px;height:42px;
+  left:15%;bottom:2%;
   border-radius:50%;
-  opacity:.29;
-  transform:rotate(-10deg);
+  opacity:.20;
+  transform:rotate(-11deg);
   background:radial-gradient(ellipse at center,
-    rgba(100,52,21,.23) 0,
-    rgba(100,52,21,.10) 35%,
-    rgba(100,52,21,.035) 59%,
-    transparent 78%);
-  filter:blur(1.15px);
+    rgba(100,52,21,.18) 0,
+    rgba(100,52,21,.075) 38%,
+    rgba(100,52,21,.025) 61%,
+    transparent 80%);
+  filter:blur(1px);
   mix-blend-mode:multiply;
 }
 .coffee-drop{
   position:absolute;
   z-index:1;
-  width:8px;height:6px;
+  width:6px;height:5px;
   border-radius:50% 44% 55% 40%;
-  background:rgba(93,49,20,.22);
-  filter:blur(.3px);
+  background:rgba(93,49,20,.16);
 }
-.coffee-drop.d1{left:12%;bottom:20%;transform:rotate(21deg)}
-.coffee-drop.d2{right:19%;bottom:18%;width:5px;height:4px}
-.coffee-drop.d3{right:14%;bottom:12%;width:4px;height:3px;opacity:.65}
-
-/* Paper creases catch the desk lamp so the sheets read as physical objects. */
-.paper-top-left::before,
-.paper-top-right::before,
-.paper-statics::before{
-  content:"";
-  position:absolute;
-  z-index:0;
-  left:10%;
-  top:-18%;
-  width:1px;
-  height:145%;
-  background:linear-gradient(180deg,transparent,rgba(104,78,43,.13) 20% 68%,transparent);
-  box-shadow:2px 0 0 rgba(255,255,255,.23);
-  transform:rotate(31deg);
-  opacity:.82;
-}
-.paper-top-right::before{
-  left:67%;
-  transform:rotate(-25deg);
-}
-.paper-statics::before{
-  left:63%;
-  transform:rotate(18deg);
-  opacity:.48;
-}
-
-@media(min-width:860px){
-  /* The console used to start almost at y=0, hiding every prop placed under it.
-     Reserve a real strip of desk above it so papers can visibly peek out. */
-  .desk-stage{
-    padding-top:54px!important;
-  }
-  .desk-sheet .paper-title{
-    font-size:8px;
-  }
-  .desk-sheet .scribble{
-    font-size:16px;
-  }
-  .desk-sheet .scribble.small{
-    font-size:12px;
-  }
-}
+.coffee-drop.d1{left:5.7%;bottom:21%;transform:rotate(21deg)}
+.coffee-drop.d2{right:6%;bottom:22%;width:4px;height:3px}
+.coffee-drop.d3{right:3.5%;bottom:17%;width:3px;height:3px;opacity:.55}
 
 @media(max-width:1180px) and (min-width:860px){
-  .desk-sheet.paper-statics{left:-145px}
-  .desk-sheet.paper-math{right:-150px}
-  .desk-sheet.paper-mech{left:15%}
-  .desk-sheet.paper-top-left{left:-34px}
-  .desk-sheet.paper-top-right{right:-34px}
-  .crumple-a{left:28%}
-  .crumple-b{right:25%}
+  .desk-sheet.paper-statics{left:-100px}
+  .desk-sheet.paper-math{right:-104px}
+  .desk-sheet.paper-top-left{left:1%}
+  .desk-sheet.paper-top-right{right:2%}
 }
 @media(max-width:859px){
   .desk-sheet.paper-math,
@@ -4696,18 +4588,18 @@ h1{
   .coffee-drop.d2,
   .coffee-drop.d3{display:none}
   .desk-sheet.paper-statics{
-    width:215px;height:148px;
-    left:-48px;bottom:4px;
-    opacity:.44;
-    transform:rotate(-8deg) scale(.84);
+    width:205px;height:142px;
+    left:-70px;bottom:2px;
+    opacity:.35;
+    transform:rotate(-7deg) scale(.82);
     transform-origin:left bottom;
   }
   .coffee-ring.ring-left{
-    left:-5px;bottom:22px;
-    opacity:.22;
-    transform:scale(.72) rotate(-11deg);
+    left:-22px;bottom:20px;
+    opacity:.16;
+    transform:scale(.70) rotate(-10deg);
   }
-  .coffee-drop.d1{opacity:.18}
+  .coffee-drop.d1{opacity:.14}
 }
 </style>
 </head>
