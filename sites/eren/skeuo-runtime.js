@@ -1040,8 +1040,12 @@ function renderCoolDeadlines(){
     const dueLabel = coolDueLabel(event).toUpperCase();
     const course = String(event.course || 'NTU COOL').toUpperCase();
 
+    const hours = Math.max(0, (due.getTime() - now) / 3600000);
+    const urgency = hours <= 12 ? 'urgent' : (hours <= 72 ? 'soon' : '');
+    const progress = Math.round(Math.max(12, Math.min(92, 92 - (hours / 168) * 70)));
+
     return `
-      <article class="cool-key-row ${done ? 'is-finished' : ''}" data-event-id="${escapeHtml(event.id)}">
+      <article class="cool-key-row ${urgency} ${done ? 'is-finished' : ''}" data-event-id="${escapeHtml(event.id)}">
         <div class="cool-deadline-key" aria-label="Deadline ${escapeHtml(dueLabel)}">
           <span class="cool-deadline-mon">${escapeHtml(shortMonths[due.getMonth()].toUpperCase())}</span>
           <strong class="cool-deadline-day">${String(due.getDate()).padStart(2,'0')}</strong>
@@ -1050,6 +1054,7 @@ function renderCoolDeadlines(){
         <a class="cool-entry-key" href="${escapeHtml(event.url)}" target="_blank" rel="noopener noreferrer external">
           <span class="cool-entry-title">${escapeHtml(event.title)}</span>
           <span class="cool-entry-meta">${escapeHtml(course)} · ${escapeHtml(done ? 'FINISHED' : dueLabel)}</span>
+          <span class="cool-entry-bar" aria-hidden="true"><i style="--p:${progress}%"></i></span>
         </a>
         <button
           class="cool-finish-key ${done ? 'is-pressed' : ''}"
