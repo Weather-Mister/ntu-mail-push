@@ -2846,98 +2846,44 @@ h1{
 </style>
 
 
-<style id="skeuo-functional-ui">
-.day.has-deadline::before{
-  content:"";position:absolute;right:7px;bottom:7px;width:4px;height:4px;border-radius:50%;
-  background:#a65b4e;box-shadow:0 0 4px rgba(166,91,78,.4);z-index:3
+<style id="functionality-dialog-skin">
+.lesson-dialog.skeuo-function-dialog{
+  width:min(480px,calc(100vw - 28px));padding:0;border:1px solid #6e695e;border-radius:7px;
+  background:#bdb39b;color:#292a25;box-shadow:0 7px 0 #756b58,15px 20px 18px rgba(26,12,4,.42);overflow:hidden
 }
-.lesson{cursor:pointer}
-.lesson.inactive{cursor:default;opacity:.52}
+.lesson-dialog.skeuo-function-dialog::backdrop{background:rgba(26,12,4,.42)}
+.skeuo-function-head{display:flex;align-items:center;gap:9px;padding:10px;border-bottom:1px solid #827762;background:#afa48d}
+.skeuo-function-head>div{min-width:0;flex:1}
+.skeuo-function-head small{display:block;font:700 6px/1 "Courier New",monospace;letter-spacing:.12em;color:#686155}
+.skeuo-function-head strong{display:block;margin-top:3px;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.skeuo-function-close{width:31px;height:27px;border:1px solid #817661;border-radius:5px;background:linear-gradient(#eee5d2,#dbd0b8 63%,#bbae94);color:#3b352b;box-shadow:inset 0 2px rgba(255,255,255,.57),0 3px 0 #7f745f;font:900 15px/1 Arial;cursor:pointer}
+.skeuo-function-body{padding:13px}
+.skeuo-function-meta{margin:0 0 8px;font:700 8px/1.45 "Courier New",monospace;color:#5f584b}
+.skeuo-function-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.skeuo-function-key{min-height:31px;border:1px solid #817661;border-radius:5px;background:linear-gradient(#f0e8d5,#e0d6bf 62%,#c1b49a);color:#2d2921;box-shadow:inset 0 2px rgba(255,255,255,.62),0 4px 0 #817661;padding:7px 10px;font:800 8px "Courier New",monospace;cursor:pointer}
+.skeuo-function-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.skeuo-function-grid a{display:flex;align-items:center;gap:8px;padding:10px;border:1px solid #827762;border-radius:5px;background:#b5aa91;color:#2d2921;text-decoration:none;font-size:10px;font-weight:800}
+.skeuo-function-grid b{width:24px;height:24px;display:grid;place-items:center;border:1px solid #756b58;background:#d9cfb7}
+#pairingForm{display:grid;gap:9px}
+#pairingInput{width:100%;border:2px solid #766b58;border-radius:4px;background:#817763;color:#eee7d8;box-shadow:inset 0 5px 9px rgba(34,24,14,.35);padding:10px;font:700 10px "Courier New",monospace}
+#pairingStatus{min-height:16px}
+.lesson.live .lessoncard{outline:1px solid var(--course);outline-offset:-1px}
 .lesson.completed{opacity:.47}
-.lesson.live .lessoncard{box-shadow:inset 0 2px rgba(255,255,255,.22),0 3px 0 #676a63,0 0 0 1px var(--course),6px 8px 9px rgba(33,21,13,.20)}
-.lesson.live .lessoncard::after{box-shadow:0 0 7px var(--course),inset 0 1px rgba(255,255,255,.28)}
-.skeuo-reminder{
-  position:absolute;right:2px;top:0;max-width:42%;padding:3px 6px;border:1px solid #716b5e;border-radius:3px;
-  background:#928773;color:#efe8d7;font:700 6px/1.2 "Courier New",monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap
-}
-.skeuo-inline-status{
-  padding:12px 6px;color:#5d5a50;font:700 7px/1.35 "Courier New",monospace;text-align:center
-}
-.skeuo-cool-list{min-height:0;overflow:auto;scrollbar-width:thin}
-.skeuo-cool-row{
-  position:relative;display:grid;grid-template-columns:minmax(0,1fr) 22px;gap:5px;align-items:center;
-  border-top:1px solid #7f8179;padding:7px 1px 7px 11px;min-width:0
-}
-.skeuo-cool-row:first-child{border-top:0}
-.skeuo-cool-main{min-width:0;color:inherit;text-decoration:none}
-.skeuo-cool-main strong{display:block;font-size:9.5px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.skeuo-cool-main small{display:block;margin-top:3px;font:700 6px/1.15 "Courier New",monospace;color:#5d5a51;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.skeuo-cool-row.done{opacity:.48}
-.skeuo-cool-row.done strong{text-decoration:line-through}
-.skeuo-cool-check,.skeuo-todo-delete{
-  width:20px;height:20px;min-width:20px;padding:0;border:1px solid #736d60;border-radius:3px;background:#c9c0aa;color:#49443a;
-  font:800 10px/1 Arial;cursor:pointer
-}
-.skeuo-cool-row.done .skeuo-cool-check{background:#718361;color:#f3eee1}
-.skeuo-todo-list{min-height:0;max-height:150px;overflow:auto;scrollbar-width:thin}
-.skeuo-todo-item{
-  display:grid;grid-template-columns:19px minmax(0,1fr) 20px;align-items:center;gap:7px;padding:5px 2px;border-top:1px solid #85877f;font-size:9.5px
-}
-.skeuo-todo-item.done{opacity:.48}
-.skeuo-todo-item.done .skeuo-todo-text{text-decoration:line-through}
-.skeuo-todo-text{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.skeuo-todo-delete{border:0;background:transparent;color:#706a5d;font-size:14px}
-.skeuo-file-key{display:grid;place-items:center;min-height:27px!important;padding:5px 2px 2px!important;cursor:pointer;font:800 10px/1 Arial,sans-serif}
-.skeuo-transfer-row{
-  position:relative;display:grid;grid-template-columns:18px minmax(0,1fr) auto;gap:5px;align-items:center;
-  padding:5px;border:1px solid #7b7d75;border-radius:3px;background:#93958c;min-width:0
-}
-.skeuo-transfer-kind{width:16px;height:16px;display:grid;place-items:center;border:1px solid #666961;background:#7c7f77;color:#d9d6ca;font:700 5px "Courier New",monospace}
-.skeuo-transfer-copy{min-width:0}
-.skeuo-transfer-title{font-size:8.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.skeuo-transfer-meta{margin-top:2px;font:700 5.5px/1.1 "Courier New",monospace;color:#555850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.skeuo-transfer-actions{display:flex;gap:3px;align-items:center}
-.skeuo-transfer-action{
-  border:1px solid #706b5f;border-radius:2px;background:#bcb39f;color:#3e3a32;padding:3px 4px;font:700 5.5px/1 "Courier New",monospace;text-decoration:none;cursor:pointer
-}
-.skeuo-transfer-action.danger{color:#7d453e}
-.skeuo-dialog{
-  width:min(560px,calc(100vw - 28px));max-height:min(720px,calc(100dvh - 28px));padding:0;border:1px solid #756a56;border-radius:8px;
-  background:#c5baa1;color:#2d2921;box-shadow:0 8px 0 #837760,18px 24px 18px rgba(25,10,3,.45);overflow:hidden
-}
-.skeuo-dialog::backdrop{background:rgba(25,10,3,.42)}
-.skeuo-dialog-head{display:flex;align-items:center;gap:8px;padding:10px 11px;border-bottom:1px solid #847965;background:#b7ab91}
-.skeuo-dialog-head div{min-width:0;flex:1}
-.skeuo-dialog-head small{display:block;font:700 6px "Courier New",monospace;color:#675f52;letter-spacing:.12em}
-.skeuo-dialog-head strong{display:block;margin-top:2px;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.skeuo-dialog-close{width:31px;height:27px;border:1px solid #817661;border-radius:5px;background:linear-gradient(#eee5d2,#dbd0b8 63%,#bbae94);color:#3b352b;box-shadow:inset 0 2px rgba(255,255,255,.57),0 3px 0 #7f745f;font:900 15px/1 Arial;cursor:pointer}
-.skeuo-dialog-body{padding:13px;overflow:auto;max-height:calc(100dvh - 130px)}
-.skeuo-dialog-meta{font:700 8px/1.45 "Courier New",monospace;color:#5f584b}
-.skeuo-dialog-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
-.skeuo-dialog-key{
-  min-height:31px;border:1px solid #817661;border-radius:5px;background:linear-gradient(#f0e8d5,#e0d6bf 62%,#c1b49a);color:#2d2921;
-  box-shadow:inset 0 2px rgba(255,255,255,.62),0 4px 0 #817661;padding:7px 10px;font:800 8px "Courier New",monospace;text-decoration:none;cursor:pointer
-}
-.skeuo-places-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.skeuo-place{display:flex;align-items:center;gap:8px;padding:10px;border:1px solid #827762;border-radius:5px;background:#b5aa91;color:#2d2921;text-decoration:none;font-size:10px;font-weight:800}
-.skeuo-place b{width:24px;height:24px;display:grid;place-items:center;border:1px solid #756b58;background:#d9cfb7;font-size:12px}
-.skeuo-pair-form{display:grid;gap:9px}
-.skeuo-pair-form input{width:100%;border:2px solid #766b58;border-radius:4px;background:#817763;color:#eee7d8;box-shadow:inset 0 5px 9px rgba(34,24,14,.35);padding:10px;font:700 10px "Courier New",monospace}
-.skeuo-pair-status{min-height:16px;font:700 7px "Courier New",monospace;color:#73534b}
-@media(max-width:859px){
-  .skeuo-places-grid{grid-template-columns:1fr}
-  .skeuo-todo-list{max-height:none}
-}
-</style>
-
-<style id="production-functionality-skin">
-.skeuo-next-slot{min-width:0;align-self:start!important}.skeuo-next-slot .next-copy{min-width:0}.skeuo-next-slot .next-label{margin:0 0 5px!important;font:800 7px/1 "Courier New",monospace!important;letter-spacing:.11em;color:#9aa095!important;text-transform:uppercase}.skeuo-next-slot .next-title{margin:0!important;color:var(--screen-ink)!important;font-size:20px!important;line-height:1.05!important;font-weight:800!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.skeuo-next-slot .next-meta{margin:5px 0 0!important;color:#aeb4a9!important;font:700 7px/1.2 "Courier New",monospace!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.skeuo-next-slot .next-countdown{margin:4px 0 0!important;color:#c7cdbf!important;font:800 7px/1 "Courier New",monospace!important}.skeuo-next-slot .next-badge{display:none!important}
-.skeuo-hanzi-slot{width:100%;height:100%;min-width:0;min-height:0}.skeuo-hanzi-slot .hanzi-bar-widget{height:100%;display:grid!important;grid-template-columns:96px minmax(0,1fr)!important;color:inherit!important;text-decoration:none!important}.skeuo-hanzi-slot .hanzi-bar-left{padding:10px!important;border-right:1px solid #797c74!important;background:rgba(0,0,0,.055)!important}.skeuo-hanzi-slot .hanzi-status-row{font:700 6px/1 "Courier New",monospace!important;color:#55584f!important}.skeuo-hanzi-slot .hanzi-flame,.skeuo-hanzi-slot .hanzi-progress-ring{display:none!important}.skeuo-hanzi-slot .hanzi-streak-row{margin-top:4px!important;display:flex!important;align-items:baseline!important;gap:5px!important}.skeuo-hanzi-slot .hanzi-streak-row strong{font-size:27px!important;line-height:1!important}.skeuo-hanzi-slot .hanzi-streak-row span,.skeuo-hanzi-slot .hanzi-practice-row{font:700 6px "Courier New",monospace!important}.skeuo-hanzi-slot .hanzi-practice-row{margin-top:5px!important}.skeuo-hanzi-slot .hanzi-up-next{padding:10px 11px!important;min-width:0}.skeuo-hanzi-slot .hanzi-up-next-head{display:flex!important;justify-content:space-between!important;font:700 6px "Courier New",monospace!important;color:#575a52!important}.skeuo-hanzi-slot .hanzi-upcoming-list{display:flex!important;gap:9px!important;margin-top:5px!important}.skeuo-hanzi-slot .hanzi-upcoming-item{display:flex!important;gap:7px!important;align-items:center!important;min-width:0}.skeuo-hanzi-slot .hanzi-next-char{font-size:25px!important;line-height:1!important;white-space:nowrap}.skeuo-hanzi-slot .hanzi-next-meta{display:flex!important;flex-direction:column!important;min-width:0;font:700 7px "Courier New",monospace!important}.skeuo-hanzi-slot .hanzi-next-meta small{margin-top:2px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#55584f!important}.skeuo-hanzi-slot .hanzi-loading-copy{height:100%;display:flex;align-items:center;gap:9px;padding:10px}.skeuo-hanzi-slot .hanzi-loading-mark{font-size:28px}.skeuo-hanzi-slot .hanzi-loading-copy span:last-child{display:flex;flex-direction:column;font:700 7px "Courier New",monospace}
-#scheduleList .time-block{display:flex!important;flex-direction:column!important;justify-content:center!important;padding:0 7px 0 0!important;border-right:1px solid #7d8078!important;text-align:right!important;font:800 8px/1.1 "Courier New",monospace!important}#scheduleList .time-start{font-size:9px!important}#scheduleList .time-end{margin-top:4px!important;color:#5c5f57!important}#scheduleList .time-period{margin-top:3px!important;color:#666960!important;font-size:5.5px!important}#scheduleList .lesson-card{position:relative;min-width:0!important;min-height:0!important;height:100%!important;padding:10px 30px 8px 12px!important;border:1px solid #777b73!important;border-radius:4px!important;background:#91948b!important;color:#272a27!important;box-shadow:inset 0 2px rgba(255,255,255,.16),0 3px 0 #666961,6px 8px 8px rgba(35,22,13,.20)!important;overflow:hidden!important}#scheduleList .lesson-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--course-color)!important}#scheduleList .lesson-title{display:block!important;font-size:11px!important;font-weight:800!important;line-height:1.15!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#scheduleList .lesson-meta{display:block!important;margin-top:4px!important;font:700 6px/1.1 "Courier New",monospace!important;color:#565950!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#scheduleList .lesson-arrow{position:absolute;right:9px;top:50%;transform:translateY(-50%);font-size:15px;color:#5b5e57}#scheduleList .live-pill{color:var(--course-color)!important;margin-right:5px!important}#scheduleList .lesson.completed{opacity:.47!important}#scheduleList .lesson.inactive{opacity:.5!important}#scheduleList .empty-state{display:grid;place-items:center;height:100%;font:700 8px "Courier New",monospace;color:#5c5f57}
-#coolDeadlines{min-height:0;overflow:auto;scrollbar-width:thin}#coolDeadlines .cool-status{padding:12px 5px;font:700 7px/1.35 "Courier New",monospace;color:#5d5a50;text-align:center}#coolDeadlines .cool-item{display:grid!important;grid-template-columns:minmax(0,1fr) 22px!important;gap:4px!important;align-items:center!important;border:0!important;border-top:1px solid #81837b!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;overflow:visible!important}#coolDeadlines .cool-item:first-child{border-top:0!important}#coolDeadlines .cool-main{display:grid!important;grid-template-columns:43px minmax(0,1fr) auto!important;gap:6px!important;padding:7px 2px 7px 5px!important;color:inherit!important;text-decoration:none!important}#coolDeadlines .cool-title{font-size:9px!important;line-height:1.15!important;margin:0!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#coolDeadlines .cool-course{font:700 5.5px/1.1 "Courier New",monospace!important;margin-top:3px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#coolDeadlines .cool-due{font:800 5.5px/1 "Courier New",monospace!important;padding:3px 4px!important;border-radius:2px!important;background:#7f8279!important;color:#e7e4d8!important;white-space:nowrap!important}#coolDeadlines .cool-done-button{width:19px!important;height:19px!important;border:1px solid #746e61!important;border-radius:3px!important;background:#c4bba5!important;color:#4b463d!important;padding:0!important;font-size:9px!important}#coolDeadlines .cool-done-button.is-done{background:#718361!important;color:#f4eee2!important}
-#todoList{min-height:0;max-height:150px;overflow:auto;scrollbar-width:thin}#todoList .todo-empty{padding:11px 4px!important;border:0!important;background:transparent!important;font:700 7px "Courier New",monospace!important;color:#5d5a50!important;text-align:center!important}#todoList .todo-item{display:grid!important;grid-template-columns:20px minmax(0,1fr) 20px!important;gap:7px!important;align-items:center!important;min-height:0!important;padding:5px 2px!important;border:0!important;border-top:1px solid #85877f!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}#todoList .todo-check{width:19px!important;height:19px!important;border:1px solid #736d60!important;border-radius:3px!important;background:#c9c0aa!important;color:transparent!important;padding:0!important}#todoList .todo-item.done .todo-check{background:#718361!important;color:#f4eee2!important}#todoList .todo-text{font-size:9.5px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#todoList .todo-delete{width:19px!important;height:19px!important;border:0!important;background:transparent!important;color:#706a5d!important;font-size:14px!important;padding:0!important}
-#transferList{min-height:0;overflow:auto!important;scrollbar-width:thin}#transferList .transfer-empty{padding:11px 4px;font:700 7px "Courier New",monospace;color:#555850;text-align:center}#transferList .transfer-item{display:grid!important;grid-template-columns:18px minmax(0,1fr) auto!important;gap:5px!important;align-items:center!important;padding:5px!important;border:1px solid #7b7d75!important;border-radius:3px!important;background:#93958c!important;min-width:0!important}#transferList .transfer-kind{width:16px!important;height:16px!important;display:grid!important;place-items:center!important;border:1px solid #666961!important;background:#7c7f77!important;color:#d9d6ca!important;font:700 6px "Courier New",monospace!important}#transferList .transfer-copy{min-width:0!important}#transferList .transfer-title{font-size:8.5px!important;font-weight:800!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}#transferList .transfer-meta{margin-top:2px!important;font:700 5.5px/1.1 "Courier New",monospace!important;color:#555850!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}#transferList .transfer-actions{display:flex!important;gap:3px!important;align-items:center!important}#transferList .transfer-action{border:1px solid #706b5f!important;border-radius:2px!important;background:#bcb39f!important;color:#3e3a32!important;padding:3px 4px!important;font:700 5.5px/1 "Courier New",monospace!important;text-decoration:none!important;cursor:pointer!important}#transferList .transfer-delete{color:#7d453e!important}#transferStatusDot.is-ok{background:#6f885f!important;box-shadow:0 0 5px rgba(111,136,95,.45)!important}#transferStatusDot.is-error{background:#995a50!important;box-shadow:0 0 5px rgba(153,90,80,.45)!important}
-#transferFileLabel{max-width:30px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lesson.inactive{opacity:.52}
+.lesson[role="button"]:not(.inactive){cursor:pointer}
+.deadline.done{opacity:.48}
+.deadline.done strong{text-decoration:line-through}
+.deadline-link{display:block;color:inherit;text-decoration:none}
+.deadline-dot-action{position:absolute;left:-1px;top:10px;width:12px;height:12px;border:0;background:transparent;cursor:pointer;z-index:3}
+#todoList{max-height:170px;overflow:auto;scrollbar-width:thin}
+.task.done{opacity:.48}.task.done>span{text-decoration:line-through}
+.todo-delete-skeuo{border:0;background:transparent;color:#686a63;padding:0;font:700 6px "Courier New",monospace;cursor:pointer}
+.transfer-actions-skeuo{position:absolute;right:4px;top:4px;display:flex;gap:3px;opacity:0;transition:opacity .12s}
+.transferitem:hover .transfer-actions-skeuo,.transferitem:focus-within .transfer-actions-skeuo{opacity:1}
+.transfer-action-skeuo{border:1px solid #676961;border-radius:2px;background:#b8b09d;color:#3b3b35;padding:2px 3px;font:700 5px "Courier New",monospace;text-decoration:none;cursor:pointer}
+#transferFileLabel{display:block;max-width:24px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.date-reminder-skeuo{position:absolute;right:2px;top:0;max-width:42%;padding:3px 6px;border:1px solid #716b5e;border-radius:3px;background:#928773;color:#efe8d7;font:700 6px/1.2 "Courier New",monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;z-index:4}
+@media(max-width:859px){.skeuo-function-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -2968,10 +2914,14 @@ h1{
 
     <section class="statusrow">
       <div class="panel display">
-        <div id="nextClass" class="skeuo-next-slot"></div>
-        <div class="display-right"><div class="indicator"><i class="led off" id="skeuoLiveLed"></i><span id="skeuoLiveState">WAIT</span></div><div class="indicator"><i class="led off"></i>ALRM</div></div>
+        <div id="nextClass"><span class="eyebrow">HAPPENING NOW / CHANNEL 01</span><strong>Engineering Mathematics</strong><p>ROOM 114 · END 16:10 · 42 MIN REMAINING</p></div>
+        <div class="display-right"><div class="indicator"><i class="led" id="skeuoLiveLed"></i><span id="skeuoLiveState">LIVE</span></div><div class="indicator"><i class="led off"></i>ALRM</div></div>
       </div>
-      <div class="panel hanzi"><div id="hanziWidgetSlot" class="skeuo-hanzi-slot"></div><span class="panel-code">HS-AUX/LIVE</span></div>
+      <div class="panel hanzi" id="hanziWidgetSlot">
+        <div class="streak"><span class="micro">HANZI STEPS</span><b>12</b><span class="micro">DAY STREAK</span></div>
+        <div class="next"><div class="nexthead"><span class="micro">UP NEXT / UNIT 23</span><span class="micro">4/10</span></div><div class="charline"><span class="char">準備</span><span class="pinyin">zhǔnbèi<small>prepare · get ready</small></span></div></div>
+        <span class="panel-code">HS-AUX/23</span>
+      </div>
     </section>
 
     <section class="workspace">
@@ -2994,35 +2944,47 @@ h1{
       </aside>
 
       <section class="schedule">
-        <div class="heading"><div><p id="selectedDate">SYNCING WEEK</p><h2 id="selectedDay">Today</h2></div><span class="count" id="classCount">—</span></div>
-        <div class="lessons" id="scheduleList" aria-live="polite"></div>
+        <div class="heading"><div><p id="selectedDate">OCTOBER 06 / WEEK 05</p><h2 id="selectedDay">Tuesday</h2></div><span class="count" id="classCount">03 CLASSES · 01 OPEN SLOT</span></div>
+        <div class="lessons" id="scheduleList" aria-live="polite">
+          <div class="lesson"><div class="time">10:20<small>12:10</small></div><div class="lessoncard"><strong>Engineering Mathematics</strong><small>ME BUILDING · ROOM 114</small><span class="card-code">ME2001</span></div></div>
+          <div class="lesson"><div class="time">13:20<small>15:10</small></div><div class="lessoncard"><strong>Engineering Materials</strong><small>進學講堂 · ME COMPLEX</small><span class="card-code">ME-MAT</span></div></div>
+          <div class="lesson"><div class="time">15:30<small>17:20</small></div><div class="lessoncard"><strong>Statics</strong><small>繡山講堂 · ME COMPLEX</small><span class="card-code">ME-STAT</span></div></div>
+          <div class="lesson"><div class="time">—<small>OPEN</small></div><div class="lessoncard" style="opacity:.52"><strong>No fourth class</strong><small>SCHEDULE SLOT AVAILABLE</small><span class="card-code">EMPTY</span></div></div>
+        </div>
       </section>
 
       <section class="panel cool">
         <div class="module-head"><div><p>NTU COOL / FEED 01</p><h3>Upcoming deadlines</h3></div><button class="key mini" id="coolRefresh"><span class="keylegend">SYNC</span>REFRESH</button></div>
-        <div id="coolDeadlines" class="skeuo-cool-list" aria-live="polite"><div class="skeuo-inline-status">SYNCING COOL…</div></div>
-        <span class="panel-code" id="skeuoCoolCode">COOL/ICS · SYNC</span>
+        <div id="coolDeadlines" aria-live="polite">
+          <div class="deadline urgent"><strong>Engineering Mathematics — HW 4</strong><small>SYNCING LIVE DEADLINES…</small><div class="bar"><i style="--p:35%"></i></div></div>
+        </div>
+        <span class="panel-code">COOL/ICS · AUTO</span>
       </section>
 
       <section class="panel todo">
-        <div class="module-head"><div><p>TO DO / SYNCED</p><h3>Manual tasks</h3></div><span class="counter" id="todoCount">0 TASKS</span></div>
+        <div class="module-head"><div><p>TO DO / SYNCED</p><h3>Manual tasks</h3></div><span class="counter" id="todoCount">00 TASKS</span></div>
         <form class="form" id="todoForm"><input class="input" id="todoInput" maxlength="140" autocomplete="off" placeholder="Add a task…"><button class="key mini add" type="submit"><span class="keylegend">INS</span>ADD</button></form>
-        <div id="todoList" class="skeuo-todo-list" aria-live="polite"></div><button id="todoMoreButton" type="button" hidden>Show more</button>
+        <div id="todoList" aria-live="polite"></div>
+        <button id="todoMoreButton" type="button" hidden>Show more</button>
         <span class="panel-code">MEM/SYNC</span>
       </section>
 
       <section class="panel transfer">
-        <div class="module-head"><div><p>DEVICE TRANSFER / PRIVATE</p><h3>Phone ↔ PC</h3></div><span class="transfer-status"><i class="led off" id="transferStatusDot" class="led off transfer-status-dot is-ok"></i><span id="transferStatus">SYNC</span></span></div>
+        <div class="module-head"><div><p>DEVICE TRANSFER / PRIVATE</p><h3>Phone ↔ PC</h3></div><span class="transfer-status"><i class="led" id="transferStatusDot"></i><span id="transferStatus">LINK OK</span></span></div>
         <form class="transfer-compose" id="transferForm">
           <textarea class="input" id="transferText" maxlength="20000" placeholder="Paste text or a link…"></textarea>
           <div class="sendrow">
-            <label class="key skeuo-file-key" for="skeuoTransferFileInput"><span class="keylegend">FILE</span><span id="transferFileLabel">＋</span></label>
+            <label class="key" for="transferFileInput"><span class="keylegend">FILE</span><span id="transferFileLabel">＋</span></label>
             <input id="transferFileInput" type="file" multiple hidden>
             <button class="key" id="transferSendButton" type="submit"><span class="keylegend">TX</span>SEND</button>
           </div>
         </form>
-        <div class="inbox" id="transferList" aria-live="polite"><div class="skeuo-inline-status">SYNCING TRANSFERS…</div></div><button id="transferRefresh" type="button" hidden>Refresh</button><button id="transferMoreButton" type="button" hidden>Show more</button>
-        <span class="panel-code" id="skeuoTransferCode">P2P/BUFFER · SYNC</span>
+        <div class="inbox" id="transferList" aria-live="polite">
+          <div class="transferitem" data-kind="T"><strong>Syncing transfer buffer…</strong><small>PRIVATE LINK</small></div>
+        </div>
+        <button id="transferRefresh" type="button" hidden>Refresh</button>
+        <button id="transferMoreButton" type="button" hidden>Show more</button>
+        <span class="panel-code">P2P/BUFFER · LIVE</span>
       </section>
 
       <section class="study">
@@ -3431,32 +3393,36 @@ h1{
     <div class="chassis-label">NTU PERSONAL CONSOLE · REV C · 2026</div>
   </main>
 </div>
+
+
+
 <!-- SKEUO_FUNCTIONAL_DIALOGS_START -->
-<dialog class="skeuo-dialog lesson-dialog" id="lessonDialog">
-  <div class="skeuo-dialog-head"><span id="dialogCourseDot" hidden></span><div><small id="dialogDay">CLASS / DETAILS</small><strong id="dialogTitle">Lesson</strong></div><button class="skeuo-dialog-close" id="closeDialog" type="button">×</button></div>
-  <div class="skeuo-dialog-body"><p class="skeuo-dialog-meta" id="dialogTime"></p><p class="skeuo-dialog-meta" id="dialogLocation"></p><div class="skeuo-dialog-actions"><button class="skeuo-dialog-key" id="mapButton" type="button">OPEN MAPS</button><button class="skeuo-dialog-key" id="meetingButton" type="button" hidden>OPEN MEETING</button></div></div>
+<dialog id="lessonDialog" class="lesson-dialog skeuo-function-dialog">
+  <div class="skeuo-function-head"><div><small id="dialogDay">CLASS / DETAILS</small><strong id="dialogTitle">Lesson</strong></div><button id="closeDialog" class="skeuo-function-close" type="button" aria-label="Close">×</button></div>
+  <div class="skeuo-function-body"><p id="dialogTime" class="skeuo-function-meta"></p><p id="dialogLocation" class="skeuo-function-meta"></p><div class="skeuo-function-actions"><button id="mapButton" class="skeuo-function-key" type="button">OPEN MAPS</button><button id="meetingButton" class="skeuo-function-key" type="button" hidden>OPEN MEETING</button></div></div>
 </dialog>
-<dialog class="skeuo-dialog lesson-dialog places-dialog" id="placesDialog">
-  <div class="skeuo-dialog-head"><div><small>GOOGLE MAPS / SAVED</small><strong>Places</strong></div><button class="skeuo-dialog-close" id="closePlacesDialog" type="button">×</button></div>
-  <div class="skeuo-dialog-body"><div class="skeuo-places-grid">
-    <a class="skeuo-place place-link" href="https://maps.app.goo.gl/5UjB1mboHGqLUTYD6?g_st=ic" target="_blank" rel="noopener noreferrer external"><b>🍌</b>Banana</a>
-    <a class="skeuo-place place-link" href="https://www.google.com/maps/search/?api=1&query=National+Taiwan+University+College+of+Social+Sciences" target="_blank" rel="noopener noreferrer external"><b>社</b>Social Sciences</a>
-    <a class="skeuo-place place-link" href="https://www.google.com/maps/search/?api=1&query=Taipei+Mandarin+Center+TMC+297+Section+3+Roosevelt+Road+Taipei" target="_blank" rel="noopener noreferrer external"><b>中</b>Mandarin Center</a>
-    <a class="skeuo-place place-link" href="https://www.google.com/maps/search/?api=1&query=Gongguan+MRT+Station+Taipei" target="_blank" rel="noopener noreferrer external"><b>M</b>Gongguan MRT</a>
-    <a class="skeuo-place place-link" href="https://www.google.com/maps/search/?api=1&query=National+Taiwan+University+Main+Library" target="_blank" rel="noopener noreferrer external"><b>▥</b>Main Library</a>
-    <a class="skeuo-place place-link" href="https://maps.app.goo.gl/LdBacJ5jNVS8Hs4F7?g_st=ic" target="_blank" rel="noopener noreferrer external"><b>▣</b>Carrefour</a>
+<dialog id="placesDialog" class="lesson-dialog skeuo-function-dialog">
+  <div class="skeuo-function-head"><div><small>GOOGLE MAPS / SAVED</small><strong>Places</strong></div><button id="closePlacesDialog" class="skeuo-function-close" type="button" aria-label="Close">×</button></div>
+  <div class="skeuo-function-body"><div class="skeuo-function-grid">
+    <a class="place-link" href="https://maps.app.goo.gl/5UjB1mboHGqLUTYD6?g_st=ic" target="_blank" rel="noopener noreferrer external"><b>🍌</b>Banana</a>
+    <a class="place-link" href="https://www.google.com/maps/search/?api=1&query=National+Taiwan+University+College+of+Social+Sciences" target="_blank" rel="noopener noreferrer external"><b>社</b>Social Sciences</a>
+    <a class="place-link" href="https://www.google.com/maps/search/?api=1&query=Taipei+Mandarin+Center+TMC+297+Section+3+Roosevelt+Road+Taipei" target="_blank" rel="noopener noreferrer external"><b>中</b>Mandarin Center</a>
+    <a class="place-link" href="https://www.google.com/maps/search/?api=1&query=Gongguan+MRT+Station+Taipei" target="_blank" rel="noopener noreferrer external"><b>M</b>Gongguan MRT</a>
+    <a class="place-link" href="https://www.google.com/maps/search/?api=1&query=National+Taiwan+University+Main+Library" target="_blank" rel="noopener noreferrer external"><b>▥</b>Main Library</a>
+    <a class="place-link" href="https://maps.app.goo.gl/LdBacJ5jNVS8Hs4F7?g_st=ic" target="_blank" rel="noopener noreferrer external"><b>▣</b>Carrefour</a>
   </div></div>
 </dialog>
-<dialog class="skeuo-dialog lesson-dialog pairing-dialog" id="pairingDialog">
-  <div class="skeuo-dialog-head"><div><small>PRIVATE SYNC / DEVICE</small><strong>Pair this console</strong></div><button class="skeuo-dialog-close" id="closePairingDialog" type="button">×</button></div>
-  <div class="skeuo-dialog-body"><form id="pairingForm" class="skeuo-pair-form"><p class="skeuo-dialog-meta">Enter the same schedule pairing key used by the real dashboard. It stays in this browser only.</p><input id="pairingInput" type="password" autocomplete="off" placeholder="Pairing key"><div class="skeuo-pair-status" id="pairingStatus"></div><button class="skeuo-dialog-key" type="submit">PAIR DEVICE</button></form></div>
+<dialog id="pairingDialog" class="lesson-dialog skeuo-function-dialog">
+  <div class="skeuo-function-head"><div><small>PRIVATE SYNC / DEVICE</small><strong>Pair this console</strong></div><button id="closePairingDialog" class="skeuo-function-close" type="button" aria-label="Close">×</button></div>
+  <div class="skeuo-function-body"><form id="pairingForm"><p class="skeuo-function-meta">Enter the same schedule pairing key used by the original dashboard.</p><input id="pairingInput" type="password" autocomplete="off" placeholder="Pairing key"><p id="pairingStatus" class="skeuo-function-meta"></p><button class="skeuo-function-key" type="submit">PAIR DEVICE</button></form></div>
 </dialog>
-<dialog class="skeuo-dialog lesson-dialog transfer-save-dialog" id="transferSaveDialog">
-  <div class="skeuo-dialog-head"><div><small>IPHONE SAVE / FILE</small><strong id="transferSaveName">File ready</strong></div><button class="skeuo-dialog-close" id="closeTransferSaveDialog" type="button">×</button></div>
-  <div class="skeuo-dialog-body"><p class="skeuo-dialog-meta" id="transferSaveMeta"></p><p class="skeuo-dialog-meta" id="transferSaveHint"></p><div class="skeuo-dialog-actions"><button class="skeuo-dialog-key" id="transferNativeSaveButton" type="button">SAVE TO FILES</button></div></div>
+<dialog id="transferSaveDialog" class="lesson-dialog skeuo-function-dialog">
+  <div class="skeuo-function-head"><div><small>IPHONE SAVE / FILE</small><strong id="transferSaveName">File ready</strong></div><button id="closeTransferSaveDialog" class="skeuo-function-close" type="button" aria-label="Close">×</button></div>
+  <div class="skeuo-function-body"><p id="transferSaveMeta" class="skeuo-function-meta"></p><p id="transferSaveHint" class="skeuo-function-meta"></p><button id="transferNativeSaveButton" class="skeuo-function-key" type="button">SAVE TO FILES</button></div>
 </dialog>
 <!-- SKEUO_FUNCTIONAL_DIALOGS_END -->
 <script src="./vendor/ffmpeg/ffmpeg.js?v=1"></script>
-<script src="./skeuo-runtime.js?v=2"></script>
+<script src="./skeuo-runtime.js?v=3"></script>
+
 </body>
 </html>
