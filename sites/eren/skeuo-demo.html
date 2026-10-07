@@ -5009,7 +5009,19 @@ h1{
     0 4px 0 #777166,
     4px 7px 7px rgba(25,20,15,.24)!important;
 }
-.academic-date-block::before{display:none!important}
+.academic-date-block::before{
+  content:"";
+  display:block!important;
+  position:absolute!important;
+  left:63px!important;
+  top:9px!important;
+  bottom:9px!important;
+  width:4px!important;
+  border-radius:2px!important;
+  background:#74776f!important;
+  opacity:.65!important;
+  pointer-events:none!important;
+}
 
 /* Exact ordinary-date geometry: same left edge, width, centering and type rhythm. */
 .academic-date-inline{
@@ -5026,7 +5038,7 @@ h1{
   align-items:center!important;
   justify-content:center!important;
   padding:5px 3px 4px!important;
-  border:1px solid rgba(101,104,95,.34)!important;
+  border:0!important;
   border-radius:5px 0 0 5px!important;
   color:#34322c!important;
   background:
@@ -5081,8 +5093,8 @@ h1{
   justify-content:center;
   min-width:0;
   min-height:56px;
-  margin-left:48px!important;
-  padding:10px 13px 9px 14px!important;
+  margin-left:55px!important;
+  padding:10px 13px 9px 20px!important;
   box-sizing:border-box!important;
 }
 .academic-block-copy strong{
@@ -5110,11 +5122,14 @@ h1{
     width:44px!important;
     min-width:44px!important;
   }
+  .academic-date-block::before{
+    left:58px!important;
+  }
   .academic-date-inline strong{font-size:14px!important}
   .academic-date-inline small{font-size:5px!important}
   .academic-block-copy{
-    margin-left:44px!important;
-    padding-left:12px!important;
+    margin-left:50px!important;
+    padding-left:20px!important;
     padding-right:10px!important;
   }
   .academic-block-copy strong{font-size:9.8px}
