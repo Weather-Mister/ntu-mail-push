@@ -4369,6 +4369,119 @@ h1{
   }
 }
 </style>
+<style id="transfer-full-height-layout">
+/* Structural desktop layout: dedicate the full right rail to Phone ↔ PC. */
+@media (min-width:860px){
+  .workspace{
+    grid-template-columns:
+      100px
+      minmax(285px,1.18fr)
+      minmax(245px,.94fr)
+      minmax(335px,1.18fr)!important;
+  }
+
+  .cool{
+    grid-column:3!important;
+    grid-row:1!important;
+  }
+  .todo{
+    grid-column:3!important;
+    grid-row:2!important;
+  }
+  .transfer{
+    grid-column:4!important;
+    grid-row:1/4!important;
+    grid-template-columns:minmax(145px,.90fr) minmax(180px,1.10fr)!important;
+    grid-template-rows:auto minmax(0,1fr)!important;
+    align-content:stretch!important;
+    gap:11px 14px!important;
+    padding:11px 12px!important;
+  }
+  .study{
+    grid-column:2/4!important;
+    grid-row:3!important;
+  }
+
+  .transfer .module-head{
+    grid-column:1/-1!important;
+    margin-bottom:2px!important;
+  }
+  .transfer-compose{
+    align-self:start!important;
+  }
+  .transfer textarea{
+    height:108px!important;
+    min-height:108px!important;
+    padding:11px!important;
+    font-size:10px!important;
+    line-height:1.42!important;
+  }
+  .sendrow{
+    grid-template-columns:48px minmax(0,1fr)!important;
+    gap:10px!important;
+    margin-top:11px!important;
+  }
+  .sendrow .key{
+    height:35px!important;
+    min-height:35px!important;
+  }
+
+  .transfer .inbox{
+    height:100%!important;
+    max-height:none!important;
+    min-height:0!important;
+    gap:8px!important;
+    padding:1px 5px 8px 0!important;
+    overflow-y:auto!important;
+  }
+  .transferitem{
+    min-height:42px!important;
+    padding:9px 29px 9px 32px!important;
+  }
+  .transferitem::before{
+    left:7px!important;
+    top:9px!important;
+    width:17px!important;
+    height:17px!important;
+  }
+  .transferitem strong{
+    font-size:9.5px!important;
+  }
+  .transferitem small{
+    margin-top:4px!important;
+    font-size:6.5px!important;
+  }
+
+  /* The middle stack now has one module per row, so let both use their box cleanly. */
+  .cool,.todo{
+    min-height:0!important;
+    overflow:hidden!important;
+  }
+  #todoList{
+    max-height:none!important;
+    min-height:0!important;
+    overflow-y:auto!important;
+  }
+}
+
+@media (min-width:860px) and (max-width:1180px){
+  .workspace{
+    grid-template-columns:
+      94px
+      minmax(235px,1.12fr)
+      minmax(205px,.90fr)
+      minmax(300px,1.20fr)!important;
+  }
+  .transfer{
+    grid-template-columns:minmax(125px,.88fr) minmax(165px,1.12fr)!important;
+    gap:9px!important;
+  }
+  .transfer textarea{
+    height:94px!important;
+    min-height:94px!important;
+  }
+}
+</style>
 </head>
 <body>
 <div class="desk-stage">
