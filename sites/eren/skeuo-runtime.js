@@ -1884,20 +1884,19 @@ function drawScheduleScope(timestamp=0){
   const urgency = scheduleScopeState.active ? 1 - Math.min(1, minutes / 180) : 0;
   const amplitude = scheduleScopeState.active ? (scheduleScopeState.live ? 10.2 : 8.4) : 1.3;
   const phase = scheduleScopeReducedMotion ? 0 : timestamp * (0.00135 + urgency * 0.0036);
-  // Strong, slow amplitude drift only: broad analog swells with zero high-frequency shake.
-  const gainDrift =
-    0.92 +
-    Math.sin(timestamp * 0.00062) * 0.24 +
-    Math.sin(timestamp * 0.00023 + 1.3) * 0.14;
+  const tau = Math.PI * 2;
 
   let d = '';
   for (let x=0; x<=width; x+=2){
-    const localEnvelope =
-      0.74 +
-      Math.sin(x * 0.041 + timestamp * 0.00072) * 0.28 +
-      Math.sin(x * 0.016 - timestamp * 0.00031 + 0.9) * 0.18;
-    const effectiveAmplitude = amplitude * Math.max(0.30, gainDrift * localEnvelope);
-    const y = mid + Math.sin((x / wavelength) * Math.PI * 2 + phase) * effectiveAmplitude;
+    // Amplitude belongs to the wavelength itself. Once a wave enters the scope,
+    // its gain is deterministic and never breathes, jitters or changes while travelling.
+    const wavePosition = x / wavelength + phase / tau;
+    const cycleIndex = Math.floor(wavePosition);
+    const hashed = Math.sin(cycleIndex * 12.9898 + 78.233) * 43758.5453;
+    const unit = hashed - Math.floor(hashed);
+    const cycleGain = scheduleScopeState.active ? 0.42 + unit * 1.12 : 1;
+    const effectiveAmplitude = amplitude * cycleGain;
+    const y = mid + Math.sin(wavePosition * tau) * effectiveAmplitude;
     d += `${x === 0 ? 'M' : 'L'}${x} ${y.toFixed(2)} `;
   }
   scheduleScopeTrace.setAttribute('d', d.trim());
