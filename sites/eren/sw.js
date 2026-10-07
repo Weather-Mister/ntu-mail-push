@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ntu-schedule-github-v28';
+const CACHE_NAME = 'ntu-schedule-github-v29';
 const NTU_MAIL_URL = 'https://wmail1.cc.ntu.edu.tw/rc/index.php';
 const ROOT = new URL(self.registration.scope).pathname;
 const asset = path => ROOT + (path.startsWith('/') ? path.slice(1) : path);
@@ -12,10 +12,10 @@ const APP_SHELL = [
   asset('mail-modern.css?v=4'),
   asset('vendor/ffmpeg/ffmpeg.js?v=1'),
   asset('vendor/ffmpeg/814.ffmpeg.js'),
-  asset('app.js?v=107'),
-  asset('mail-demo.js?v=21'),
+  asset('app.js?v=108'),
+  asset('mail-demo.js?v=22'),
   asset('skeuo-demo.html'),
-  asset('skeuo-runtime.js?v=10'),
+  asset('skeuo-runtime.js?v=12'),
   asset('manifest.webmanifest?v=2'),
   asset('favicon.svg'),
   asset('hub-statics.svg'),
@@ -56,10 +56,12 @@ self.addEventListener('fetch', event => {
       }
       return response;
     });
-    event.waitUntil(network.then(() => {}).catch(() => {}));
     event.respondWith(
-      caches.match(canonical).then(cached => cached || network)
-        .catch(() => caches.match(asset('index.html')).then(fallback => fallback || caches.match(ROOT)))
+      network.catch(() =>
+        caches.match(canonical)
+          .then(cached => cached || caches.match(asset('index.html')))
+          .then(fallback => fallback || caches.match(ROOT))
+      )
     );
     return;
   }
