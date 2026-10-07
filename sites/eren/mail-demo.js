@@ -590,7 +590,6 @@
       if($('#mailxConnection'))$('#mailxConnection').textContent=state.accounts.length?'Gmail':'Setup';renderList();prefetchReaders();
       api('status').then(value=>{status=value;if($('#mailxConnection'))$('#mailxConnection').textContent=status.configured?'Gmail':'Setup needed';}).catch(()=>{});
       if(readStore(OAUTH,null))await finishConnection();else loadMail(false,true);
-      const draft=readStore(DRAFT,null);if(draft&&!ce().pane.classList.contains('is-open')&&state.accounts.some(a=>a.id===draft.accountId)){notice('An unsent draft is saved on this tab.');$('#mailxNotice').insertAdjacentHTML('beforeend',' <button class="mailx-action" id="mailxResume">Resume draft</button>');$('#mailxResume').onclick=guarded(()=>openComposer(null,draft));}
       const params=new URLSearchParams(location.search);if(params.has('connect_error'))showToast('Google connection was not completed. Try connecting again.');
       if(params.has('connected')&&!readStore(OAUTH,null)&&!state.accounts.length)notice('Return to the browser or PWA where you started connecting to complete account pairing.');
       if(params.has('connected')||params.has('connect_error')){params.delete('connected');params.delete('connect_error');history.replaceState({},'',location.pathname+'?'+params.toString());}
