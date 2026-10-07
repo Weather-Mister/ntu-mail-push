@@ -1882,16 +1882,17 @@ function drawScheduleScope(timestamp=0){
     ? 12 + Math.sqrt(boundedMinutes / 360) * 42
     : 80;
   const urgency = scheduleScopeState.active ? 1 - Math.min(1, minutes / 180) : 0;
-  const amplitude = scheduleScopeState.active ? (scheduleScopeState.live ? 8.1 : 6.4) : 1.1;
-  const phase = scheduleScopeReducedMotion ? 0 : timestamp * (0.00155 + urgency * 0.0042);
-  const jitterStrength = scheduleScopeState.active ? 0.35 + urgency * 1.05 : 0.12;
+  const amplitude = scheduleScopeState.active ? (scheduleScopeState.live ? 10.2 : 8.4) : 1.3;
+  const phase = scheduleScopeReducedMotion ? 0 : timestamp * (0.00185 + urgency * 0.0054);
+  const jitterStrength = scheduleScopeState.active ? 0.85 + urgency * 1.75 : 0.18;
 
   let d = '';
   for (let x=0; x<=width; x+=2){
     const base = Math.sin((x / wavelength) * Math.PI * 2 + phase) * amplitude;
     const jitter =
-      Math.sin(x * 1.41 + phase * 3.2) * jitterStrength * 0.52 +
-      Math.sin(x * 0.37 - phase * 1.7) * jitterStrength * 0.34;
+      Math.sin(x * 1.65 + phase * 3.6) * jitterStrength * 0.62 +
+      Math.sin(x * 0.49 - phase * 2.05) * jitterStrength * 0.42 +
+      Math.sin(x * 2.4 + phase * 1.2) * jitterStrength * 0.18;
     const y = mid + base + jitter;
     d += `${x === 0 ? 'M' : 'L'}${x} ${y.toFixed(2)} `;
   }
