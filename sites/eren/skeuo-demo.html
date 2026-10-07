@@ -5010,17 +5010,8 @@ h1{
     4px 7px 7px rgba(25,20,15,.24)!important;
 }
 .academic-date-block::before{
-  content:"";
-  display:block!important;
-  position:absolute!important;
-  left:58px!important;
-  top:9px!important;
-  bottom:9px!important;
-  width:2px!important;
-  border-radius:0!important;
-  background:#74776f!important;
-  opacity:.65!important;
-  pointer-events:none!important;
+  display:none!important;
+  content:none!important;
 }
 
 /* Exact ordinary-date geometry: same left edge, width, centering and type rhythm. */
@@ -5039,6 +5030,7 @@ h1{
   justify-content:center!important;
   padding:5px 3px 4px!important;
   border:0!important;
+  border-right:2px solid rgba(116,119,111,.65)!important;
   border-radius:5px 0 0 5px!important;
   color:#34322c!important;
   background:
@@ -5116,9 +5108,6 @@ h1{
   .academic-date-inline{
     width:54px!important;
     min-width:54px!important;
-  }
-  .academic-date-block::before{
-    left:54px!important;
   }
   .academic-date-inline strong{font-size:16px!important}
   .academic-date-inline small{font-size:5px!important}
