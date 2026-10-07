@@ -4971,16 +4971,15 @@ h1{
 </style>
 
 <style id="academic-fixed-block-pass">
-/* Academic dates use the same raised beige hardware language as the other console keys,
-   with their date column aligned exactly to the normal deadline list. */
+/* Academic dates use the same raised beige hardware language as the other console keys.
+   The date plate occupies the exact same 48px lane as ordinary deadline dates. */
 .academic-date-block{
   position:relative!important;
-  display:grid!important;
-  grid-template-columns:48px minmax(0,1fr)!important;
-  align-items:stretch!important;
+  display:block!important;
   min-height:58px!important;
   flex:0 0 auto!important;
   overflow:hidden!important;
+  box-sizing:border-box!important;
   border:1px solid #6e695e!important;
   border-radius:5px!important;
   color:#292a25!important;
@@ -5011,45 +5010,62 @@ h1{
     4px 7px 7px rgba(25,20,15,.24)!important;
 }
 .academic-date-block::before{display:none!important}
+
+/* Exact ordinary-date geometry: same left edge, width, centering and type rhythm. */
 .academic-date-inline{
-  position:relative;
+  position:absolute!important;
   z-index:1;
-  min-width:0;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  margin:0!important;
+  left:-1px!important;
+  top:-1px!important;
+  bottom:-1px!important;
+  width:48px!important;
+  min-width:48px!important;
+  box-sizing:border-box!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
   padding:5px 3px 4px!important;
-  border-right:1px solid rgba(83,78,69,.28);
-  color:#34322c;
+  border:1px solid rgba(101,104,95,.34)!important;
+  border-radius:5px 0 0 5px!important;
+  color:#34322c!important;
   background:
     linear-gradient(145deg,rgba(255,255,255,.14),transparent 35%),
     rgba(108,103,92,.07)!important;
-  box-shadow:inset -1px 0 rgba(255,255,255,.20);
-  font-family:"Courier New",monospace;
-  text-align:center;
+  box-shadow:inset -1px 0 rgba(255,255,255,.20)!important;
+  font-family:"Courier New",monospace!important;
+  text-align:center!important;
 }
-.academic-date-inline span{
-  margin-top:5px;
-  color:#68645b;
-  font:700 5.5px/1 "Courier New",monospace;
+.academic-date-inline::before{
+  content:"DUE";
+  position:absolute;
+  left:4px;
+  top:3px;
+  color:#777268;
+  font:700 4.8px/1 "Courier New",monospace;
   letter-spacing:.08em;
 }
+.academic-date-inline span{
+  margin-top:5px!important;
+  color:#68645b!important;
+  font:700 5.5px/1 "Courier New",monospace!important;
+  letter-spacing:.08em!important;
+}
 .academic-date-inline strong{
-  display:block;
-  margin-top:2px;
-  color:#302e29;
-  font:800 15px/.95 "Courier New",monospace;
-  letter-spacing:-.06em;
-  text-shadow:0 1px rgba(255,255,255,.42);
+  display:block!important;
+  margin-top:2px!important;
+  color:#302e29!important;
+  font:800 15px/.95 "Courier New",monospace!important;
+  letter-spacing:-.06em!important;
+  text-shadow:0 1px rgba(255,255,255,.42)!important;
 }
 .academic-date-inline small{
-  display:block;
-  margin-top:4px;
-  color:#777268;
-  font:700 5.3px/1 "Courier New",monospace;
-  letter-spacing:0;
+  display:block!important;
+  margin-top:4px!important;
+  color:#777268!important;
+  font:700 5.3px/1 "Courier New",monospace!important;
+  letter-spacing:0!important;
+  white-space:nowrap!important;
 }
 .academic-block-copy{
   position:relative;
@@ -5058,7 +5074,10 @@ h1{
   flex-direction:column;
   justify-content:center;
   min-width:0;
-  padding:10px 13px 9px 14px;
+  min-height:56px;
+  margin-left:48px!important;
+  padding:10px 13px 9px 14px!important;
+  box-sizing:border-box!important;
 }
 .academic-block-copy strong{
   display:block;
@@ -5081,18 +5100,16 @@ h1{
   text-overflow:ellipsis;
 }
 @media(max-width:859px){
-  .academic-date-block{
-    grid-template-columns:44px minmax(0,1fr)!important;
-    min-height:58px!important;
-  }
   .academic-date-inline{
-    padding:5px 3px 4px!important;
+    width:44px!important;
+    min-width:44px!important;
   }
-  .academic-date-inline strong{font-size:14px}
-  .academic-date-inline small{font-size:5px}
+  .academic-date-inline strong{font-size:14px!important}
+  .academic-date-inline small{font-size:5px!important}
   .academic-block-copy{
-    padding-left:12px;
-    padding-right:10px;
+    margin-left:44px!important;
+    padding-left:12px!important;
+    padding-right:10px!important;
   }
   .academic-block-copy strong{font-size:9.8px}
 }
