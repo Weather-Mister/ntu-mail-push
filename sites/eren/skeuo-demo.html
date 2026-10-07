@@ -5067,6 +5067,12 @@ h1{
   letter-spacing:0!important;
   white-space:nowrap!important;
 }
+/* Optical correction: the embedded beige-block date text was ~3px left of the normal date-key text. */
+.academic-date-inline > span,
+.academic-date-inline > strong,
+.academic-date-inline > small{
+  transform:translateX(3px)!important;
+}
 .academic-block-copy{
   position:relative;
   z-index:1;
