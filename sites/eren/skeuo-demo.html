@@ -4282,7 +4282,7 @@ h1{
 }
 </style>
 <style id="desk-props-layer">
-/* Desk clutter should feel accidental, not staged. */
+/* Quiet desk clutter beneath the console: paper, pencil marks and old coffee. */
 .desk-stage{
   position:relative;
   isolation:isolate;
@@ -4291,31 +4291,31 @@ h1{
   position:absolute;
   inset:0;
   z-index:0;
-  overflow:visible;
+  overflow:hidden;
   pointer-events:none;
 }
 .machine{
   position:relative;
   z-index:3;
 }
-.desk-crack{z-index:1}
+.desk-crack{
+  z-index:1;
+}
 
-/* Shared paper material */
 .desk-sheet{
   position:absolute;
-  z-index:1;
   overflow:hidden;
-  border:1px solid rgba(77,57,35,.16);
+  border:1px solid rgba(86,66,43,.28);
+  border-radius:1px;
   background:
-    linear-gradient(145deg,rgba(255,255,255,.30),transparent 24%),
-    linear-gradient(180deg,#e4d9c3 0%,#d5c4a7 100%);
-  color:rgba(46,58,73,.54);
+    linear-gradient(165deg,rgba(255,255,255,.30),transparent 21%),
+    linear-gradient(180deg,#e9ddc7,#d8cab0);
+  color:rgba(43,57,73,.72);
   box-shadow:
     inset 0 1px rgba(255,255,255,.38),
-    4px 7px 10px rgba(22,8,2,.11),
-    10px 13px 16px rgba(22,8,2,.045);
-  font-family:"Segoe Print","Bradley Hand","Marker Felt","Comic Sans MS",cursive;
-  filter:saturate(.84);
+    inset 0 -12px 20px rgba(92,69,35,.045),
+    4px 8px 13px rgba(20,8,2,.22);
+  font-family:"Segoe Print","Bradley Hand","Comic Sans MS",cursive;
   transform-origin:center;
 }
 .desk-sheet::after{
@@ -4324,161 +4324,210 @@ h1{
   inset:0;
   pointer-events:none;
   background:
-    linear-gradient(73deg,transparent 0 47%,rgba(92,67,36,.045) 48% 49%,rgba(255,255,255,.08) 50%,transparent 51%),
-    repeating-linear-gradient(95deg,rgba(72,52,30,.006) 0 1px,transparent 1px 11px);
+    radial-gradient(circle at 13% 18%,rgba(92,60,25,.055) 0 1px,transparent 1.5px),
+    radial-gradient(circle at 78% 64%,rgba(92,60,25,.04) 0 1px,transparent 1.4px),
+    repeating-linear-gradient(94deg,rgba(80,61,35,.012) 0 1px,transparent 1px 8px);
+  mix-blend-mode:multiply;
 }
 .desk-sheet .paper-title{
   position:relative;
   z-index:1;
   display:block;
-  margin-bottom:7px;
-  color:rgba(57,50,41,.39);
-  font:700 5.5px/1 "Courier New",monospace;
-  letter-spacing:.10em;
+  margin-bottom:9px;
+  color:rgba(58,52,43,.58);
+  font:700 7px/1 "Courier New",monospace;
+  letter-spacing:.11em;
   text-transform:uppercase;
 }
 .desk-sheet .scribble{
   position:relative;
   z-index:1;
-  margin:4px 0;
-  font-size:10.5px;
-  line-height:1.28;
+  margin:6px 0;
+  font-size:14px;
+  line-height:1.35;
   white-space:nowrap;
-  opacity:.62;
   transform:rotate(var(--scribble-rot,0deg));
 }
-.desk-sheet .scribble.small{font-size:8.8px}
-.desk-sheet .scribble.faint{opacity:.34}
-.desk-sheet .underline::after{display:none}
-
-/* Left sheet: mostly hidden under the chassis, only a side corner peeks out. */
-.desk-sheet.paper-statics{
-  width:330px;
-  height:215px;
-  left:-88px;
-  top:58%;
-  padding:16px 18px;
-  opacity:.54;
-  transform:translateY(-50%) rotate(-5.2deg);
-  clip-path:polygon(3% 5%,96% 0,100% 93%,8% 100%,0 78%);
-  background:
-    repeating-linear-gradient(0deg,transparent 0 20px,rgba(74,104,145,.035) 20px 21px),
-    linear-gradient(145deg,rgba(255,255,255,.28),transparent 24%),
-    linear-gradient(180deg,#e3d7c0,#d1bea0);
+.desk-sheet .scribble.faint{opacity:.62}
+.desk-sheet .scribble.small{font-size:11px}
+.desk-sheet .underline{
+  position:relative;
+  display:inline-block;
+}
+.desk-sheet .underline::after{
+  content:"";
+  position:absolute;
+  left:-2px;right:-5px;bottom:-2px;
+  height:1px;
+  background:rgba(46,66,96,.40);
+  transform:rotate(-1deg);
 }
 
-/* Right sheet: another partial sheet, less exposed than the left one. */
+/* Left edge: statics scratch sheet, mostly trapped under the chassis. */
+.desk-sheet.paper-statics{
+  width:245px;
+  height:168px;
+  left:2.5%;
+  bottom:3%;
+  padding:17px 17px 14px;
+  transform:rotate(-8deg);
+}
+.paper-statics{
+  background:
+    repeating-linear-gradient(0deg,transparent 0 21px,rgba(72,105,151,.075) 21px 22px),
+    linear-gradient(165deg,rgba(255,255,255,.30),transparent 21%),
+    linear-gradient(180deg,#e9ddc7,#d8cab0);
+}
+
+/* Right edge: engineering-math notes with a dog-eared corner. */
 .desk-sheet.paper-math{
-  width:345px;
-  height:225px;
-  right:-112px;
-  top:52%;
-  padding:16px 18px;
-  opacity:.50;
-  transform:translateY(-50%) rotate(4.8deg);
-  clip-path:polygon(1% 3%,93% 0,100% 18%,97% 96%,7% 100%,0 84%);
+  width:265px;
+  height:184px;
+  right:2.7%;
+  bottom:5%;
+  padding:18px 17px 15px;
+  transform:rotate(8.5deg);
 }
 .paper-math::before{
   content:"";
   position:absolute;
-  right:10px;
-  bottom:9px;
-  width:22px;
-  height:18px;
-  background:linear-gradient(135deg,transparent 0 47%,rgba(114,87,51,.08) 49% 52%,rgba(255,255,255,.10) 53%);
+  right:-1px;
+  bottom:-1px;
+  width:24px;
+  height:24px;
   clip-path:polygon(100% 0,0 100%,100% 100%);
+  background:linear-gradient(135deg,rgba(255,255,255,.04) 0 48%,#c5b496 50%,#e4d6bd 100%);
+  filter:drop-shadow(-1px -1px 1px rgba(70,52,29,.10));
 }
 
-/* Bottom-center notebook edge: mainly texture, not content. */
+/* Bottom-center: smaller mechanism sketch page. */
 .desk-sheet.paper-mech{
-  width:230px;
-  height:128px;
-  left:28%;
-  bottom:-76px;
-  padding:12px 14px;
-  opacity:.34;
-  transform:rotate(2deg);
-  clip-path:polygon(2% 0,97% 3%,100% 90%,6% 100%,0 78%);
+  width:205px;
+  height:132px;
+  left:24%;
+  bottom:-18px;
+  padding:14px 15px;
+  opacity:.78;
+  transform:rotate(3.5deg);
+}
+.paper-mech{
   background:
-    repeating-linear-gradient(0deg,transparent 0 17px,rgba(74,104,145,.035) 17px 18px),
-    linear-gradient(180deg,#dfd2ba,#cbb797);
+    linear-gradient(90deg,rgba(164,82,65,.11) 0 1px,transparent 1px 100%),
+    repeating-linear-gradient(0deg,transparent 0 18px,rgba(72,105,151,.065) 18px 19px),
+    linear-gradient(180deg,#e5d9c1,#d3c3a8);
+  background-size:100% 100%,100% 19px,100% 100%;
 }
-.paper-mech .diagram{display:none!important}
-
-/* Top-facing sheets looked staged; remove them. */
-.desk-sheet.paper-top-left,
-.desk-sheet.paper-top-right,
-.desk-crumple{
-  display:none!important;
+.paper-mech .diagram{
+  position:absolute;
+  right:14px;
+  bottom:12px;
+  width:66px;
+  height:43px;
+  opacity:.56;
+}
+.paper-mech .diagram::before,
+.paper-mech .diagram::after{
+  content:"";
+  position:absolute;
+}
+.paper-mech .diagram::before{
+  left:5px;right:5px;bottom:10px;
+  height:1px;
+  background:#425a7c;
+  transform:rotate(-12deg);
+  box-shadow:9px -12px 0 -0.25px #425a7c,-5px -21px 0 -0.25px #425a7c;
+}
+.paper-mech .diagram::after{
+  width:8px;height:8px;
+  left:5px;bottom:6px;
+  border:1px solid #425a7c;
+  border-radius:50%;
+  box-shadow:26px -6px 0 -1px #d9ccb4,26px -6px 0 0 #425a7c,51px -13px 0 -1px #d9ccb4,51px -13px 0 0 #425a7c;
 }
 
-/* Coffee is ambient only. */
+/* Coffee: irregular rings and a faint wiped smear, all underneath the keyboard. */
 .coffee-ring{
   position:absolute;
-  z-index:0;
   border-radius:50%;
-  opacity:.17;
+  opacity:.48;
+  filter:blur(.15px);
   background:
     radial-gradient(circle,
-      transparent 57%,
-      rgba(93,49,20,.07) 58% 60%,
-      transparent 62% 65%,
-      rgba(105,57,25,.10) 66% 68%,
-      transparent 70%);
+      transparent 55%,
+      rgba(91,48,20,.12) 56% 58%,
+      transparent 60% 63%,
+      rgba(105,57,25,.18) 64% 67%,
+      transparent 69%);
   mix-blend-mode:multiply;
 }
 .coffee-ring.ring-left{
-  width:84px;height:80px;
-  left:5%;bottom:9%;
-  transform:rotate(-8deg) scaleX(.95);
+  width:112px;
+  height:104px;
+  left:10%;
+  bottom:9%;
+  transform:rotate(-11deg) scaleX(.94);
 }
 .coffee-ring.ring-right{
-  width:66px;height:62px;
-  right:5%;bottom:13%;
-  opacity:.12;
+  width:86px;
+  height:81px;
+  right:16%;
+  bottom:8%;
+  opacity:.34;
+  transform:rotate(9deg) scaleY(.91);
 }
 .coffee-smear{
   position:absolute;
-  z-index:0;
-  width:96px;height:30px;
-  left:18%;bottom:1%;
+  width:145px;
+  height:54px;
+  left:31%;
+  bottom:3%;
   border-radius:50%;
-  opacity:.075;
-  transform:rotate(-9deg);
+  opacity:.24;
+  transform:rotate(-10deg);
   background:radial-gradient(ellipse at center,
-    rgba(100,52,21,.13) 0,
-    rgba(100,52,21,.045) 42%,
+    rgba(100,52,21,.23) 0,
+    rgba(100,52,21,.10) 35%,
+    rgba(100,52,21,.035) 59%,
     transparent 78%);
-  filter:blur(1px);
+  filter:blur(1.2px);
   mix-blend-mode:multiply;
 }
-.coffee-drop{display:none!important}
-
-@media(min-width:860px){
-  .desk-stage{overflow:visible!important}
-  .desk-props{overflow:visible!important}
+.coffee-drop{
+  position:absolute;
+  width:8px;height:6px;
+  border-radius:50% 44% 55% 40%;
+  background:rgba(93,49,20,.20);
+  filter:blur(.3px);
 }
+.coffee-drop.d1{left:12%;bottom:20%;transform:rotate(21deg)}
+.coffee-drop.d2{right:19%;bottom:18%;width:5px;height:4px}
+.coffee-drop.d3{right:14%;bottom:12%;width:4px;height:3px;opacity:.65}
+
 @media(max-width:1180px) and (min-width:860px){
-  .desk-sheet.paper-statics{left:-120px}
-  .desk-sheet.paper-math{right:-140px}
-  .desk-sheet.paper-mech{left:24%}
+  .desk-sheet.paper-statics{left:-22px}
+  .desk-sheet.paper-math{right:-28px}
+  .desk-sheet.paper-mech{left:20%}
 }
 @media(max-width:859px){
   .desk-sheet.paper-math,
   .desk-sheet.paper-mech,
   .coffee-ring.ring-right,
-  .coffee-smear{display:none}
+  .coffee-smear,
+  .coffee-drop.d2,
+  .coffee-drop.d3{display:none}
   .desk-sheet.paper-statics{
-    width:190px;height:132px;
-    left:-96px;top:auto;bottom:5px;
-    opacity:.20;
-    transform:rotate(-5deg);
+    width:205px;height:142px;
+    left:-44px;bottom:4px;
+    opacity:.42;
+    transform:rotate(-8deg) scale(.84);
+    transform-origin:left bottom;
   }
   .coffee-ring.ring-left{
-    left:-22px;bottom:16px;
-    opacity:.08;
-    transform:scale(.68) rotate(-8deg);
+    left:-4px;bottom:22px;
+    opacity:.20;
+    transform:scale(.72) rotate(-11deg);
   }
+  .coffee-drop.d1{opacity:.18}
 }
 </style>
 </head>
@@ -4512,26 +4561,6 @@ h1{
       <div class="scribble small">I.C. ?</div>
       <i class="diagram"></i>
     </div>
-
-    <div class="desk-sheet paper-top-left">
-      <span class="paper-title">Differential Equations · rough</span>
-      <div class="scribble" style="--scribble-rot:-.9deg">y″ + 3y′ + 2y = 0</div>
-      <div class="scribble small">r² + 3r + 2 = 0</div>
-      <div class="scribble small faint">r = −1, −2</div>
-      <div class="scribble small" style="--scribble-rot:.7deg">y = C₁e<sup>−x</sup> + C₂e<sup>−2x</sup></div>
-    </div>
-
-    <div class="desk-sheet paper-top-right">
-      <span class="paper-title">Free-body diagram · check</span>
-      <div class="scribble" style="--scribble-rot:.7deg">ΣM<sub>O</sub> = 0</div>
-      <div class="scribble small">Aᵧ + Bᵧ − W = 0</div>
-      <div class="scribble small faint">→ reaction direction?</div>
-      <div class="scribble small" style="--scribble-rot:-.5deg">F = ma</div>
-    </div>
-
-    <i class="desk-crumple crumple-a"></i>
-    <i class="desk-crumple crumple-b"></i>
-    <i class="desk-crumple crumple-c"></i>
 
     <i class="coffee-ring ring-left"></i>
     <i class="coffee-ring ring-right"></i>
@@ -4868,121 +4897,7 @@ h1{
   <div class="skeuo-function-body"><p id="transferSaveMeta" class="skeuo-function-meta"></p><p id="transferSaveHint" class="skeuo-function-meta"></p><button id="transferNativeSaveButton" class="skeuo-function-key" type="button">SAVE TO FILES</button></div>
 </dialog>
 <!-- SKEUO_FUNCTIONAL_DIALOGS_END -->
-<script id="desk-clutter-randomizer">
-(function(){
-  const layer=document.querySelector('.desk-props');
-  if(!layer || !window.matchMedia('(min-width:860px)').matches) return;
 
-  const papers=[
-    layer.querySelector('.paper-statics'),
-    layer.querySelector('.paper-math'),
-    layer.querySelector('.paper-mech')
-  ].filter(Boolean);
-
-  if(!papers.length) return;
-
-  const now=new Date();
-  let seed=(now.getFullYear()*10000)+((now.getMonth()+1)*100)+now.getDate();
-
-  function rand(){
-    seed|=0;
-    seed=seed+0x6D2B79F5|0;
-    let t=seed;
-    t=Math.imul(t^t>>>15,t|1);
-    t^=t+Math.imul(t^t>>>7,t|61);
-    return ((t^t>>>14)>>>0)/4294967296;
-  }
-  function pick(arr){return arr[Math.floor(rand()*arr.length)]}
-  function between(a,b){return a+(b-a)*rand()}
-  function px(n){return Math.round(n)+'px'}
-
-  const zones=[
-    {
-      name:'left',
-      apply(p){
-        const w=between(250,335), h=w*between(.58,.69);
-        p.style.width=px(w);
-        p.style.height=px(h);
-        p.style.left=px(between(-150,-72));
-        p.style.right='auto';
-        p.style.top=pick(['43%','48%','53%','58%','63%']);
-        p.style.bottom='auto';
-        p.style.transform='translateY(-50%) rotate('+between(-8.5,-3.5).toFixed(1)+'deg)';
-        p.style.opacity=between(.34,.56).toFixed(2);
-      }
-    },
-    {
-      name:'right',
-      apply(p){
-        const w=between(255,345), h=w*between(.57,.68);
-        p.style.width=px(w);
-        p.style.height=px(h);
-        p.style.right=px(between(-155,-78));
-        p.style.left='auto';
-        p.style.top=pick(['41%','47%','52%','57%','62%']);
-        p.style.bottom='auto';
-        p.style.transform='translateY(-50%) rotate('+between(3.2,8.0).toFixed(1)+'deg)';
-        p.style.opacity=between(.32,.53).toFixed(2);
-      }
-    },
-    {
-      name:'bottom',
-      apply(p){
-        const w=between(180,255), h=w*between(.48,.60);
-        p.style.width=px(w);
-        p.style.height=px(h);
-        p.style.left=between(19,55).toFixed(1)+'%';
-        p.style.right='auto';
-        p.style.top='auto';
-        p.style.bottom=px(between(-86,-42));
-        p.style.transform='rotate('+between(-3.0,4.0).toFixed(1)+'deg)';
-        p.style.opacity=between(.24,.42).toFixed(2);
-      }
-    }
-  ];
-
-  // Fisher-Yates so each visible paper gets a different edge.
-  for(let i=zones.length-1;i>0;i--){
-    const j=Math.floor(rand()*(i+1));
-    [zones[i],zones[j]]=[zones[j],zones[i]];
-  }
-
-  papers.forEach((paper,i)=>{
-    paper.style.display='block';
-    zones[i%zones.length].apply(paper);
-    paper.style.filter='saturate('+(between(.78,.92).toFixed(2))+')';
-  });
-
-  // About one third of days use only two sheets.
-  if(rand()<.34 && papers.length>2){
-    papers[2].style.display='none';
-  }
-
-  // Randomize ambient coffee marks independently so they do not mirror the papers.
-  const leftRing=layer.querySelector('.ring-left');
-  const rightRing=layer.querySelector('.ring-right');
-  const smear=layer.querySelector('.coffee-smear');
-
-  if(leftRing){
-    leftRing.style.left=between(1.5,10).toFixed(1)+'%';
-    leftRing.style.bottom=between(5,17).toFixed(1)+'%';
-    leftRing.style.transform='rotate('+between(-18,11).toFixed(1)+'deg) scaleX('+between(.88,1.04).toFixed(2)+')';
-    leftRing.style.opacity=between(.10,.20).toFixed(2);
-  }
-  if(rightRing){
-    rightRing.style.right=between(1.5,9).toFixed(1)+'%';
-    rightRing.style.bottom=between(7,19).toFixed(1)+'%';
-    rightRing.style.transform='rotate('+between(-10,17).toFixed(1)+'deg) scaleY('+between(.88,1.03).toFixed(2)+')';
-    rightRing.style.opacity=between(.07,.16).toFixed(2);
-  }
-  if(smear){
-    smear.style.left=between(12,45).toFixed(1)+'%';
-    smear.style.bottom=between(-1,5).toFixed(1)+'%';
-    smear.style.transform='rotate('+between(-15,10).toFixed(1)+'deg)';
-    smear.style.opacity=between(.04,.09).toFixed(2);
-  }
-})();
-</script>
 
 <script src="./vendor/ffmpeg/ffmpeg.js?v=1"></script>
 <script src="./skeuo-runtime.js?v=9"></script>
