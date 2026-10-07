@@ -3897,7 +3897,6 @@ h1{
       <button class="mailx-top-action" type="button" id="mailxSettings" aria-label="Accounts, rules and settings" title="Accounts, rules and settings">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>
       </button>
-      <button class="mailx-icon-button" type="button" id="mailxClose" aria-label="Close mail">×</button>
     </header>
 
     <div class="mailx-mobile-tabs">
@@ -4056,206 +4055,7 @@ h1{
   <div class="mailx-toast" id="mailxToast" role="status"></div>
 </section>
 
-<script id="decoy-mail-behavior">
-(() => {
-  const dialog = document.getElementById('mailDemoDialog');
-  const launch = document.getElementById('mailDashboardButton');
-  const shell = document.getElementById('mailxShell');
-  const list = document.getElementById('mailxList');
-  const reader = document.getElementById('mailxReader');
-  const compose = document.getElementById('mailxCompose');
-  if (!dialog || !launch || !shell || !list || !reader || !compose) return;
 
-  const $ = (s,r=dialog) => r.querySelector(s);
-  const $$ = (s,r=dialog) => [...r.querySelectorAll(s)];
-  let selected = $('.mailx-message.is-selected');
-  let previousBody = '';
-  let toastTimer;
-
-  const toast = text => {
-    const el = $('#mailxToast');
-    el.textContent = text;
-    el.classList.add('is-visible');
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(()=>el.classList.remove('is-visible'),1800);
-  };
-
-  const openCompose = (mode='New message', row=null) => {
-    $('#mailxComposeTitle').textContent = mode;
-    $('#mailxComposeContext').textContent = row ? row.dataset.subject : '';
-    if (row) {
-      $('#mailxTo').value = row.dataset.email || '';
-      $('#mailxSubject').value = mode==='Reply' ? 'Re: '+row.dataset.subject : 'Fwd: '+row.dataset.subject;
-    }
-    compose.classList.add('is-open');
-  };
-
-  const renderReader = row => {
-    selected = row;
-    $$('.mailx-message').forEach(x=>x.classList.toggle('is-selected',x===row));
-    row.classList.remove('is-unread');
-    row.querySelector('.mailx-unread-dot')?.remove();
-
-    const code = row.dataset.code || '';
-    const attachment = row.dataset.attachment || '';
-    const paras = (row.dataset.body || '').split('|').map(x=>'<p>'+x.replace(/</g,'&lt;')+'</p>').join('');
-    reader.innerHTML = `
-      <div class="mailx-reader-toolbar">
-        <button class="mailx-action mailx-reader-back" data-action="back">←</button>
-        <button class="mailx-action" data-action="archive">Archive</button>
-        <button class="mailx-action" data-action="unread">Unread</button>
-        <button class="mailx-action mailx-toolbar-reply" data-action="reply">Reply</button>
-        <button class="mailx-action mailx-toolbar-forward" data-action="forward">Forward</button>
-        <details class="mailx-reader-more">
-          <summary aria-label="More message actions">•••</summary>
-          <div>
-            <button class="mailx-action" data-action="mute">Mute</button>
-            <button class="mailx-action danger" data-action="block">Block</button>
-            <button class="mailx-action good" data-action="unsubscribe">Unsubscribe</button>
-            <button class="mailx-action" data-action="classify">Rule</button>
-            <button class="mailx-action" data-action="sender">Sender</button>
-          </div>
-        </details>
-        <span class="mailx-toolbar-spacer"></span>
-        <button class="mailx-action mailx-focus-action" data-action="focus">Focus</button>
-      </div>
-      <div class="mailx-reader-scroll">
-        <div class="mailx-reader-head">
-          <div class="mailx-reader-title-row">
-            <h2 class="mailx-reader-subject">${row.dataset.subject}</h2>
-            <div class="mailx-reader-head-actions"><button class="mailx-action" data-action="classify">Rule</button><button class="mailx-action" data-action="sender">Sender</button></div>
-          </div>
-          <div class="mailx-reader-tags">
-            <span class="mailx-account">NTU Mail</span>
-            <span class="mailx-chip">${row.dataset.type || 'University'}</span>
-            <span class="mailx-chip">${row.dataset.context || 'No context'}</span>
-            ${row.dataset.action==='Needs reply'?'<span class="mailx-chip reply">Needs reply</span>':''}
-          </div>
-        </div>
-        <article class="mailx-thread-message is-current">
-          <details class="mailx-thread-details is-current" open>
-            <summary><span class="mailx-avatar tone-1">${row.querySelector('.mailx-avatar')?.textContent || '?'}</span><span class="mailx-thread-summary"><strong>${row.dataset.sender}</strong><span>${row.querySelector('.mailx-snippet')?.textContent || ''}</span></span><time>${row.dataset.date}</time></summary>
-            <details class="mailx-message-meta">
-              <summary>Message details</summary>
-              <div class="mailx-sender-row"><div class="mailx-sender-details"><div class="mailx-sender-email">From: ${row.dataset.sender} &lt;${row.dataset.email}&gt;</div><div class="mailx-recipient-line">To: me</div><div class="mailx-recipient-line">Date: ${row.dataset.date} · NTU Mail</div></div></div>
-            </details>
-            ${code?`<div class="mailx-login-card"><div class="mailx-login-label">VERIFICATION CODE</div><div class="mailx-login-code">${code}</div><button class="mailx-copy-code" data-copy-code="${code.replace(/\s/g,'')}">Copy code</button></div>`:''}
-            <div class="mailx-mail-body">${paras}</div>
-            ${attachment?`<div class="mailx-attachments"><button class="mailx-attachment-download"><span class="mailx-file-type">PDF</span><span><strong>${attachment}</strong><small>182 KB · Download ↓</small></span></button></div>`:''}
-          </details>
-        </article>
-        
-      </div>`;
-
-    shell.classList.add('is-reading');
-
-    $$('[data-action]',reader).forEach(b=>b.onclick=()=>{
-      const a=b.dataset.action;
-      if(a==='back'){shell.classList.remove('is-reading','is-reader-focused');return;}
-      if(a==='reply'){openCompose('Reply',row);return;}
-      if(a==='forward'){openCompose('Forward',row);return;}
-      if(a==='focus'){shell.classList.toggle('is-reader-focused');b.textContent=shell.classList.contains('is-reader-focused')?'Exit focus':'Focus';return;}
-      if(a==='unread'){row.classList.add('is-unread');toast('Marked unread');return;}
-      if(a==='classify'){openRuleSheet(row);return;}
-      if(a==='sender'){openSenderSheet(row);return;}
-      toast(a.charAt(0).toUpperCase()+a.slice(1)+' previewed');
-    });
-    $('[data-copy-code]',reader)?.addEventListener('click',e=>{navigator.clipboard?.writeText(e.currentTarget.dataset.copyCode);toast('Code copied');});
-    $('.mailx-attachment-download',reader)?.addEventListener('click',()=>toast('Attachment download preview'));
-  };
-
-  const closeSheet = () => $('#mailxSheet')?.remove();
-  const makeSheet = (title,html) => {
-    closeSheet();
-    const p=document.createElement('section');
-    p.id='mailxSheet';p.className='mailx-sheet';p.setAttribute('aria-label',title);
-    p.innerHTML='<div class="mailx-compose-head"><strong>'+title+'</strong><button class="mailx-icon-button mailx-compose-close" aria-label="Close panel">×</button></div><div class="mailx-sheet-body">'+html+'</div><div class="mailx-inline-error" id="mailxSheetError"></div>';
-    dialog.appendChild(p);
-    p.querySelector('.mailx-compose-close').onclick=()=>p.remove();
-    return p;
-  };
-
-  const openSettings = () => {
-    const p=makeSheet('Mail settings',`
-      <h3>Connected accounts</h3>
-      <div class="mailx-settings-account"><strong>NTU Mail</strong><p>student@ntu.edu.tw · connected</p><small>Last sync 2 minutes ago</small><p><button class="mailx-action">Rename</button> <button class="mailx-action">Disconnect</button></p></div>
-      <div class="mailx-settings-account"><strong>Personal</strong><p>personal@gmail.com · connected</p><small>Last sync 4 minutes ago</small><p><button class="mailx-action">Rename</button> <button class="mailx-action">Disconnect</button></p></div>
-      <button class="mailx-send" id="demoConnect">Connect Gmail</button>
-      <h3>Rules · reversible</h3>
-      <div class="mailx-rule"><span>sender: newsletter@example.com<br>priority: Muted</span><button class="mailx-action">Remove</button></div>
-      <h3>Background service</h3><p>Last completed: 2 minutes ago</p>
-      <details><summary>Google & Gemini setup</summary><p>Decoy only — nothing here is submitted.</p>
-      <p>Google callback URL:</p><code class="mailx-callback">https://example.invalid/oauth/callback</code>
-      <form id="demoConfig"><label>Google Web OAuth client ID<input type="text" placeholder="Leave blank to keep current"></label><label>Google client secret<input type="password"></label><label>Gemini API key<input type="password"></label><label>Gemini model<input type="text" value="gemini-2.5-flash"></label><button class="mailx-send" type="submit">Save securely</button></form></details>`);
-    p.querySelectorAll('button').forEach(b=>{if(!b.classList.contains('mailx-compose-close'))b.onclick=e=>{e.preventDefault();toast('Decoy only');};});
-    p.querySelector('#demoConfig')?.addEventListener('submit',e=>{e.preventDefault();toast('Decoy only');});
-  };
-
-  const openRuleSheet = row => {
-    const p=makeSheet('Classification & rules',`<p>Permanent rules can be removed in Settings.</p><label>Apply to<select><option>This thread</option><option>${row.dataset.email}</option><option>Domain</option></select></label><label>Type<select><option>${row.dataset.type}</option><option>University</option><option>Newsletter</option><option>Promotion</option></select></label><label>Priority<select><option>Normal</option><option>High</option><option>Low</option><option>Muted</option></select></label><label>Context<input value="${row.dataset.context||''}"></label><label>Action<select><option>${row.dataset.action||'No action'}</option><option>Needs reply</option><option>Deadline</option><option>FYI</option><option>No action</option></select></label><button class="mailx-send" id="demoRuleSave">Save rule</button>`);
-    p.querySelector('#demoRuleSave').onclick=()=>{toast('Rule saved in preview');p.remove();};
-  };
-
-  const openSenderSheet = row => {
-    const p=makeSheet(row.dataset.sender,`<p>${row.dataset.email}</p><p>3 threads in the loaded results</p><p>${row.dataset.type} · 3</p><button class="mailx-action">View all sender mail</button> <button class="mailx-action">Set a type-specific rule</button>`);
-    p.querySelectorAll('.mailx-action').forEach(b=>b.onclick=()=>toast('Sender action preview'));
-  };
-
-  const openScheduleSheet = () => {
-    const p=makeSheet('Schedule send','<p>Sent by the server even when this PWA is closed.</p><label>Your device’s local time<input type="datetime-local" required></label><button class="mailx-send" id="demoScheduleConfirm">Schedule</button>');
-    p.querySelector('#demoScheduleConfirm').onclick=()=>{toast('Scheduled in preview');p.remove();compose.classList.remove('is-open');};
-  };
-
-  launch.onclick = e => {e.preventDefault(); const machine=launch.closest('.machine'); const opening=!machine.classList.contains('mail-mode'); machine.classList.toggle('mail-mode',opening); dialog.classList.toggle('is-open',opening); shell.classList.remove('is-reading','is-reader-focused'); document.getElementById('consoleTitle').textContent=opening?'Mail':'My Schedule'; document.getElementById('consoleEyebrow').textContent=opening?'NTU PERSONAL MAIL TERMINAL · LOCAL PREVIEW':'NATIONAL TAIWAN UNIVERSITY · FALL 2026'; document.getElementById('consoleSerial').textContent=opening?'MAIL WORKSPACE / NTU-ME-06':'PERSONAL ACADEMIC CONSOLE / NTU-ME-06'; document.getElementById('mailKeyLegend').textContent=opening?'BACK':'MAIL'; document.getElementById('mailKeyGlyph').textContent=opening?'←':'✉';};
-  $('#mailxClose').onclick = () => {compose.classList.remove('is-open');closeSheet();const machine=launch.closest('.machine');machine.classList.remove('mail-mode');dialog.classList.remove('is-open');document.getElementById('consoleTitle').textContent='My Schedule';document.getElementById('consoleEyebrow').textContent='NATIONAL TAIWAN UNIVERSITY · FALL 2026';document.getElementById('consoleSerial').textContent='PERSONAL ACADEMIC CONSOLE / NTU-ME-06';document.getElementById('mailKeyLegend').textContent='MAIL';document.getElementById('mailKeyGlyph').textContent='✉';};
-  $('#mailxComposeMain').onclick = () => openCompose();
-  $('#mailxComposeMobile').onclick = () => openCompose();
-  $('#mailxComposeClose').onclick = () => compose.classList.remove('is-open');
-  $('#mailxSettings').onclick = openSettings;
-  $('#mailxRefresh').onclick = () => toast('Mail refreshed');
-  $('#mailxMarkAllRead').onclick = () => {$$('.mailx-message').forEach(r=>{r.classList.remove('is-unread');r.querySelector('.mailx-unread-dot')?.remove();});$('#mailxUnreadCount').textContent='';toast('Marked all read');};
-  $('#mailxSchedule').onclick = openScheduleSheet;
-  $('#mailxSend').onclick = () => {toast('Send preview only');compose.classList.remove('is-open');};
-  $('#mailxSaveDraft').onclick = () => toast('Draft saved locally in preview');
-
-  const search=$('#mailxSearch');
-  search.oninput=()=>{const q=search.value.toLowerCase();$$('.mailx-message-wrap').forEach(w=>w.hidden=!w.innerText.toLowerCase().includes(q));};
-
-  const applyView = view => {
-    const rows=$$('.mailx-message-wrap');
-    rows.forEach(w=>{w.hidden = view!=='all' && !w.dataset.kind.split(' ').includes(view) && !(view==='important'&&w.dataset.kind.includes('important'));});
-    $('#mailxListMeta').textContent=(view==='all'?'All mail':view.charAt(0).toUpperCase()+view.slice(1))+' · '+rows.filter(w=>!w.hidden).length+' loaded';
-  };
-  $$('[data-mailx-filter]').forEach(b=>b.onclick=()=>{$$('[data-mailx-filter]').forEach(x=>x.classList.remove('is-active'));b.classList.add('is-active');$('#mailxView').value=b.dataset.mailxFilter;applyView(b.dataset.mailxFilter);});
-  $$('[data-mailx-mobile-filter]').forEach(b=>b.onclick=()=>{$$('[data-mailx-mobile-filter]').forEach(x=>x.classList.remove('is-active'));b.classList.add('is-active');applyView(b.dataset.mailxMobileFilter);});
-  $('#mailxView').onchange=e=>applyView(e.target.value);
-
-  $$('.mailx-message').forEach(row=>row.onclick=()=>renderReader(row));
-  $$('.mailx-row-actions button').forEach(b=>b.onclick=e=>{e.stopPropagation();toast((b.dataset.rowAction||'Action')+' previewed');});
-
-  $('[data-mailx-ai-chip]')?.closest('.mailx-ai-chips');
-  $$('[data-mailx-ai-chip]').forEach(b=>b.onclick=()=>{$('#mailxAiPrompt').value=b.dataset.mailxAiChip;});
-  $('#mailxGenerate').onclick=()=>{previousBody=$('#mailxBody').innerHTML;const cmd=$('#mailxAiPrompt').value||'Draft a concise reply';$('#mailxBody').innerHTML='<p><strong>Preview AI revision</strong></p><p>'+cmd.replace(/</g,'&lt;')+'.</p>';toast('AI revision preview');};
-  $('#mailxUndo').onclick=()=>{if(previousBody!==undefined){const now=$('#mailxBody').innerHTML;$('#mailxBody').innerHTML=previousBody;previousBody=now;}};
-  $('#mailxRedo').onclick=$('#mailxUndo').onclick;
-
-  $$('[data-format-command]').forEach(b=>b.onclick=()=>{document.execCommand(b.dataset.formatCommand,false,null);$('#mailxBody').focus();});
-  $('#mailxBlockFormat').onchange=e=>{document.execCommand('formatBlock',false,e.target.value);$('#mailxBody').focus();};
-  $('#mailxLink').onclick=()=>{const href=prompt('Link URL');if(href)document.execCommand('createLink',false,href);};
-  $('#mailxAttach').onclick=()=>$('#mailxAttachmentInput').click();
-  $('#mailxAttachmentInput').onchange=e=>{const wrap=$('#mailxAttachments');wrap.innerHTML=[...e.target.files].map(f=>'<span class="mailx-chip">'+f.name+'</span>').join('');toast(e.target.files.length+' attachment(s) added');};
-
-  const resizer=$('#mailxListResizer');
-  let dragging=false,startX=0,startW=0;
-  resizer.addEventListener('pointerdown',e=>{if(innerWidth<=860)return;dragging=true;startX=e.clientX;startW=parseFloat(getComputedStyle($('.mailx-main')).getPropertyValue('--mailx-list-w'))||356;resizer.setPointerCapture(e.pointerId);});
-  resizer.addEventListener('pointermove',e=>{if(!dragging)return;const w=Math.max(280,Math.min(620,startW+(e.clientX-startX)));$('.mailx-main').style.setProperty('--mailx-list-w',w+'px');});
-  resizer.addEventListener('pointerup',()=>dragging=false);
-  resizer.addEventListener('pointercancel',()=>dragging=false);
-
-  renderReader(selected);
-  shell.classList.remove('is-reading');
-})();
-</script>
 <!-- DECOY_MAIL_END -->
 
     <div class="vent"><i></i><i></i><i></i><i></i><i></i></div>
@@ -4292,6 +4092,7 @@ h1{
 <!-- SKEUO_FUNCTIONAL_DIALOGS_END -->
 <script src="./vendor/ffmpeg/ffmpeg.js?v=1"></script>
 <script src="./skeuo-runtime.js?v=8"></script>
+<script src="./mail-demo.js?v=18"></script>
 
 </body>
 </html>
