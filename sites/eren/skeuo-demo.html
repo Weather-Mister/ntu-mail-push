@@ -3560,6 +3560,171 @@ h1{
 }
 </style>
 
+
+<style id="cool-flat-row-restore">
+/* Restore the original COOL list feel: flat deadline rows, not giant keycaps. */
+.cool-key-row{
+  grid-template-columns:58px minmax(0,1fr) 50px!important;
+  min-height:54px!important;
+  gap:7px!important;
+  align-items:stretch!important;
+  padding:0!important;
+}
+
+/* Date is now a simple stamped label, not a raised button. */
+.cool-deadline-key{
+  min-height:52px!important;
+  transform:none!important;
+  border:0!important;
+  border-right:1px solid #7b7d75!important;
+  border-radius:0!important;
+  padding:7px 7px 5px 2px!important;
+  color:#44463f!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  justify-content:center!important;
+}
+.cool-deadline-key::before{
+  display:none!important;
+}
+.cool-deadline-mon{
+  margin:0!important;
+  color:#62645d!important;
+  font-size:7px!important;
+  letter-spacing:.08em!important;
+}
+.cool-deadline-day{
+  margin:3px 0 0!important;
+  color:#32342f!important;
+  font-size:19px!important;
+  line-height:.92!important;
+}
+.cool-deadline-time{
+  margin-top:5px!important;
+  color:#686a62!important;
+  font-size:6.5px!important;
+}
+
+/* Assignment itself goes back to the old flat deadline-row treatment. */
+.cool-entry-key{
+  position:relative!important;
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:center!important;
+  min-width:0!important;
+  min-height:52px!important;
+  padding:8px 8px 11px 12px!important;
+  border:0!important;
+  border-radius:0!important;
+  color:#292a25!important;
+  text-decoration:none!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  transform:none!important;
+  filter:none!important;
+}
+.cool-entry-key:hover{
+  background:rgba(255,255,255,.035)!important;
+  filter:none!important;
+}
+.cool-entry-key:active{
+  transform:none!important;
+  box-shadow:none!important;
+}
+.cool-entry-key::before{
+  content:"";
+  position:absolute;
+  left:1px;
+  top:12px;
+  width:6px;
+  height:6px;
+  border-radius:50%;
+  background:#74776f;
+  border:1px solid #5b5e57;
+}
+.cool-key-row.urgent .cool-entry-key::before{background:var(--red)!important}
+.cool-key-row.soon .cool-entry-key::before{background:var(--amber)!important}
+
+.cool-entry-title{
+  padding-left:0!important;
+  font-size:10.5px!important;
+  line-height:1.22!important;
+  font-weight:800!important;
+}
+.cool-entry-meta{
+  margin-top:5px!important;
+  padding-left:0!important;
+  color:#595c54!important;
+  font-size:6.7px!important;
+  line-height:1.15!important;
+}
+
+.cool-entry-bar{
+  position:absolute;
+  left:12px;
+  right:8px;
+  bottom:4px;
+  height:2px;
+  background:#777a72;
+  overflow:hidden;
+}
+.cool-entry-bar i{
+  display:block;
+  width:var(--p);
+  height:100%;
+  background:#5f6260;
+}
+.cool-key-row.urgent .cool-entry-bar i{background:var(--red)}
+.cool-key-row.soon .cool-entry-bar i{background:var(--amber)}
+
+/* Finished state: subtle, like the old list, while still reversible. */
+.cool-key-row.is-finished .cool-entry-key{
+  background:transparent!important;
+  box-shadow:none!important;
+  transform:none!important;
+  opacity:.55!important;
+}
+.cool-key-row.is-finished .cool-entry-title{
+  text-decoration:line-through!important;
+}
+.cool-key-row.is-finished .cool-deadline-key{
+  transform:none!important;
+  border-color:#7b7d75!important;
+  color:#565850!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+.cool-key-row.is-finished .cool-deadline-key::before,
+.cool-key-row.is-finished .cool-deadline-mon,
+.cool-key-row.is-finished .cool-deadline-time{
+  color:#74766f!important;
+}
+.cool-key-row.is-finished .cool-deadline-day{
+  color:#5f615a!important;
+}
+
+/* Keep FINISH small and tactile; it's the only control meant to look like a key. */
+.cool-finish-key{
+  min-height:42px!important;
+  align-self:center!important;
+  padding:15px 3px 4px!important;
+  font-size:6px!important;
+}
+.cool-finish-key .keylegend{
+  font-size:5px!important;
+}
+.cool-finish-key.is-pressed{
+  cursor:pointer!important;
+}
+
+@media(max-width:859px){
+  .cool-key-row{
+    grid-template-columns:54px minmax(0,1fr) 48px!important;
+  }
+  .cool-deadline-day{font-size:18px!important}
+}
+</style>
+
 </head>
 <body>
 <div class="desk-stage">
@@ -4097,7 +4262,7 @@ h1{
 </dialog>
 <!-- SKEUO_FUNCTIONAL_DIALOGS_END -->
 <script src="./vendor/ffmpeg/ffmpeg.js?v=1"></script>
-<script src="./skeuo-runtime.js?v=7"></script>
+<script src="./skeuo-runtime.js?v=8"></script>
 
 </body>
 </html>
