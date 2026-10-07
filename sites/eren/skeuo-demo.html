@@ -3870,6 +3870,165 @@ h1{
   }
 }
 </style>
+<style id="pairing-terminal-theme">
+/* Pairing belongs to the console hardware, not a generic web modal. */
+#pairingDialog.skeuo-function-dialog{
+  width:min(430px,calc(100vw - 28px))!important;
+  border:1px solid #565950!important;
+  border-radius:7px!important;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.14),transparent 16%),
+    #a9a38f!important;
+  color:#292a25!important;
+  box-shadow:
+    inset 0 1px rgba(255,255,255,.24),
+    0 7px 0 #66675f,
+    14px 20px 18px rgba(24,12,5,.42)!important;
+}
+#pairingDialog::backdrop{
+  background:rgba(23,12,6,.54)!important;
+  backdrop-filter:blur(1px);
+}
+#pairingDialog .skeuo-function-head{
+  min-height:56px!important;
+  padding:10px 11px!important;
+  border-bottom:1px solid #777568!important;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.14),transparent 42%),
+    #969488!important;
+  box-shadow:inset 0 -2px rgba(58,57,51,.11)!important;
+}
+#pairingDialog .skeuo-function-head small{
+  color:#55564f!important;
+  font:700 7px/1 "Courier New",monospace!important;
+  letter-spacing:.14em!important;
+}
+#pairingDialog .skeuo-function-head strong{
+  margin-top:4px!important;
+  color:#272822!important;
+  font:800 16px/1 Arial,sans-serif!important;
+  letter-spacing:-.01em!important;
+}
+#pairingDialog .skeuo-function-close{
+  width:34px!important;
+  height:30px!important;
+  border:1px solid #747266!important;
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.36),transparent 34%),
+    linear-gradient(180deg,#eee6d3,#ddd2ba 62%,#bdb198)!important;
+  box-shadow:
+    inset 0 2px rgba(255,255,255,.56),
+    0 1px 0 #a49b86,
+    0 4px 0 #747266!important;
+  transform:translateY(-3px);
+}
+#pairingDialog .skeuo-function-close:active{
+  transform:translateY(1px)!important;
+  box-shadow:inset 0 2px 3px rgba(65,60,50,.23),0 1px 0 #747266!important;
+}
+#pairingDialog .skeuo-function-body{
+  padding:12px!important;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.07),transparent 18%),
+    #aaa38f!important;
+}
+#pairingDialog #pairingForm{
+  position:relative;
+  display:grid!important;
+  gap:9px!important;
+  padding:28px 12px 12px!important;
+  border:3px solid #666457!important;
+  border-radius:4px!important;
+  background:
+    repeating-linear-gradient(0deg,rgba(255,255,255,.014) 0 1px,transparent 1px 3px),
+    radial-gradient(circle at 78% 17%,rgba(131,151,121,.035),transparent 26%),
+    #252820!important;
+  box-shadow:
+    inset 0 7px 15px rgba(0,0,0,.62),
+    inset 0 0 0 1px rgba(255,255,255,.025),
+    0 2px rgba(255,255,255,.10)!important;
+}
+#pairingDialog #pairingForm::before{
+  content:"PAIRING TERMINAL / SEC-01";
+  position:absolute;
+  top:9px;left:11px;
+  color:#858d80;
+  font:700 7px/1 "Courier New",monospace;
+  letter-spacing:.12em;
+}
+#pairingDialog .skeuo-function-meta{
+  margin:0!important;
+  color:#aeb5a7!important;
+  font:700 8px/1.55 "Courier New",monospace!important;
+}
+#pairingDialog #pairingStatus:empty{display:none}
+#pairingDialog #pairingStatus:not(:empty){
+  min-height:0!important;
+  padding:6px 8px!important;
+  border:1px solid #454a40;
+  border-radius:2px;
+  background:#30342c;
+  color:#d3d8ca!important;
+}
+#pairingDialog #pairingInput{
+  width:100%!important;
+  height:44px!important;
+  padding:0 11px!important;
+  border:1px solid #4e5549!important;
+  border-radius:2px!important;
+  outline:0!important;
+  background:
+    linear-gradient(90deg,rgba(135,151,127,.025) 1px,transparent 1px),
+    #20231d!important;
+  background-size:16px 100%!important;
+  color:#dbe0d3!important;
+  caret-color:#bdcbae!important;
+  box-shadow:inset 0 4px 8px rgba(0,0,0,.48)!important;
+  font:700 11px/1 "Courier New",monospace!important;
+  letter-spacing:.03em;
+}
+#pairingDialog #pairingInput::placeholder{color:#737c70!important}
+#pairingDialog #pairingInput:focus{
+  border-color:#7b8b72!important;
+  box-shadow:
+    inset 0 4px 8px rgba(0,0,0,.48),
+    0 0 0 1px rgba(142,160,130,.18)!important;
+}
+#pairingDialog .skeuo-function-key{
+  justify-self:end!important;
+  min-width:118px!important;
+  height:38px!important;
+  padding:0 14px!important;
+  border:1px solid #817661!important;
+  border-radius:5px!important;
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.34),transparent 31%),
+    linear-gradient(180deg,#f0e8d5,#e0d6bf 62%,#c1b49a)!important;
+  color:#2d2921!important;
+  box-shadow:
+    inset 0 2px rgba(255,255,255,.62),
+    0 1px 0 #aea28a,
+    0 4px 0 #817661,
+    4px 6px 5px rgba(42,24,11,.22)!important;
+  transform:translateY(-3px);
+  font:900 8px/1 "Courier New",monospace!important;
+  letter-spacing:.06em;
+}
+@media (hover:hover) and (pointer:fine){
+  #pairingDialog .skeuo-function-key:hover{
+    transform:translateY(-1px)!important;
+    box-shadow:
+      inset 0 2px rgba(255,255,255,.62),
+      0 1px 0 #aea28a,
+      0 2px 0 #817661,
+      3px 4px 4px rgba(42,24,11,.20)!important;
+  }
+}
+#pairingDialog .skeuo-function-key:active{
+  transform:translateY(1px)!important;
+  box-shadow:inset 0 2px 3px rgba(72,61,45,.22),0 1px 0 #817661!important;
+}
+</style>
 </head>
 <body>
 <div class="desk-stage">
@@ -4195,7 +4354,7 @@ h1{
 </dialog>
 <dialog id="pairingDialog" class="lesson-dialog skeuo-function-dialog">
   <div class="skeuo-function-head"><div><small>PRIVATE SYNC / DEVICE</small><strong>Pair this console</strong></div><button id="closePairingDialog" class="skeuo-function-close" type="button" aria-label="Close">×</button></div>
-  <div class="skeuo-function-body"><form id="pairingForm"><p class="skeuo-function-meta">Enter the same schedule pairing key used by the original dashboard.</p><input id="pairingInput" type="password" autocomplete="off" placeholder="Pairing key"><p id="pairingStatus" class="skeuo-function-meta"></p><button class="skeuo-function-key" type="submit">PAIR DEVICE</button></form></div>
+  <div class="skeuo-function-body"><form id="pairingForm"><p class="skeuo-function-meta">Enter the console sync key used on your other device.</p><input id="pairingInput" type="password" autocomplete="off" placeholder="Pairing key"><p id="pairingStatus" class="skeuo-function-meta"></p><button class="skeuo-function-key" type="submit">PAIR DEVICE</button></form></div>
 </dialog>
 <dialog id="transferSaveDialog" class="lesson-dialog skeuo-function-dialog">
   <div class="skeuo-function-head"><div><small>IPHONE SAVE / FILE</small><strong id="transferSaveName">File ready</strong></div><button id="closeTransferSaveDialog" class="skeuo-function-close" type="button" aria-label="Close">×</button></div>
