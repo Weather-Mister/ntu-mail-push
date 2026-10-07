@@ -1178,11 +1178,12 @@ function renderDay(){
       ? 'NO LECTURE'
       : `${course.location.toUpperCase()}${live ? ' · HAPPENING NOW' : ''}`;
 
+    const desktopStatic = window.matchMedia('(hover:hover) and (pointer:fine)').matches;
     return `
       <div class="lesson ${live ? 'live' : ''} ${completed ? 'completed' : ''} ${inactive ? 'inactive' : ''}"
-           data-index="${index}" role="${inactive ? 'presentation' : 'button'}" ${inactive ? 'aria-disabled="true"' : 'tabindex="0"'}
+           data-index="${index}" role="${inactive || desktopStatic ? 'presentation' : 'button'}" ${inactive ? 'aria-disabled="true"' : (desktopStatic ? '' : 'tabindex="0"')}
            style="--course:${course.color}">
-        <div class="time">${lesson.start}<small>${lesson.end}</small>${lesson.period ? `<span class="time-period">${escapeHtml(lesson.period)}</span>` : ""}</div>
+        <div class="time"><span class="time-slot"><span class="time-start">${lesson.start}</span><span class="time-sep">–</span><span class="time-end">${lesson.end}</span></span>${lesson.period ? `<span class="time-period">PERIOD ${escapeHtml(lesson.period)}</span>` : ""}</div>
         <div class="lessoncard">
           <strong>${escapeHtml(course.name)}</strong>
           <small>${escapeHtml(meta)}</small>
@@ -1193,7 +1194,7 @@ function renderDay(){
 
   const emptyHtml = Array.from({ length:openSlots }, (_,slot) => `
     <div class="lesson open-slot">
-      <div class="time">—<small>OPEN</small><span class="time-period">—</span></div>
+      <div class="time"><span class="time-slot"><span class="time-start">—</span><span class="time-sep">·</span><span class="time-end">OPEN</span></span><span class="time-period">NO PERIOD</span></div>
       <div class="lessoncard" style="opacity:.52;--course:#6d7069">
         <strong>${lessons.length || slot ? 'Open schedule slot' : 'No classes'}</strong>
         <small>SCHEDULE SLOT AVAILABLE</small>
@@ -1204,12 +1205,15 @@ function renderDay(){
   list.innerHTML = reminderHtml + lessonHtml + emptyHtml;
 
   list.querySelectorAll('.lesson[data-index]:not(.inactive)').forEach(item => {
+    const canOpenLesson = () => !window.matchMedia('(hover:hover) and (pointer:fine)').matches;
     const open = () => {
+      if (!canOpenLesson()) return;
       const lesson = lessons[Number(item.dataset.index)];
       if (lesson) openLesson(lesson, selectedDay);
     };
     item.addEventListener('click', open);
     item.addEventListener('keydown', event => {
+      if (!canOpenLesson()) return;
       if (event.key === 'Enter' || event.key === ' '){
         event.preventDefault();
         open();
