@@ -458,32 +458,25 @@ function renderTodos(){
   if (!todoList || !todoCount) return;
 
   const openCount = todos.filter(item => !item.done).length;
-  todoCount.textContent = `${openCount} ${openCount === 1 ? 'task' : 'tasks'}`;
-  todoList.classList.toggle('is-expanded', todoExpanded);
-  if (todoMoreButton){
-    todoMoreButton.hidden = todos.length <= 3;
-    todoMoreButton.textContent = todoExpanded ? 'Show less' : `Show more (${Math.max(0, todos.length - 3)})`;
-  }
+  todoCount.textContent = `${String(openCount).padStart(2,'0')} ${openCount === 1 ? 'TASK' : 'TASKS'}`;
+  if (todoMoreButton) todoMoreButton.hidden = true;
 
   if (!todos.length){
-    todoList.innerHTML = '<div class="todo-empty">No manual tasks yet.</div>';
+    todoList.innerHTML = '<div class="task"><button class="key taskbox" type="button" disabled></button><span>No manual tasks yet</span><small>--</small></div>';
     return;
   }
 
-  todoList.innerHTML = todos.map(item => `
-    <article class="todo-item ${item.done ? 'done' : ''}" data-todo-id="${escapeHtml(item.id)}">
-      <button class="todo-check" type="button" aria-label="${item.done ? 'Mark as not done' : 'Mark as done'}" aria-pressed="${item.done}">✓</button>
-      <span class="todo-text">${escapeHtml(item.text)}</span>
-      <button class="todo-delete" type="button" aria-label="Delete task">×</button>
-    </article>`).join('');
+  todoList.innerHTML = todos.map((item,index) => `
+    <div class="task ${item.done ? 'done' : ''}" data-todo-id="${escapeHtml(item.id)}">
+      <button class="key taskbox ${item.done ? 'pressed' : ''}" type="button" aria-label="${item.done ? 'Mark as not done' : 'Mark as done'}" aria-pressed="${item.done}"></button>
+      <span>${escapeHtml(item.text)}</span>
+      <button class="todo-delete-skeuo" type="button" aria-label="Delete task" title="Delete task">${String(index + 1).padStart(2,'0')}</button>
+    </div>`).join('');
 
-  todoList.querySelectorAll('.todo-item').forEach(itemEl => {
+  todoList.querySelectorAll('.task').forEach(itemEl => {
     const id = itemEl.dataset.todoId;
-    const check = itemEl.querySelector('.todo-check');
-    const remove = itemEl.querySelector('.todo-delete');
-
-    check?.addEventListener('click', () => void toggleTodo(id));
-    remove?.addEventListener('click', () => void removeTodo(id));
+    itemEl.querySelector('.taskbox')?.addEventListener('click', () => void toggleTodo(id));
+    itemEl.querySelector('.todo-delete-skeuo')?.addEventListener('click', () => void removeTodo(id));
   });
 }
 
@@ -557,50 +550,46 @@ function transferSize(bytes){
 
 function renderTransfers(){
   if (!transferList) return;
-  transferList.classList.toggle('is-expanded', transferExpanded);
-  if (transferMoreButton){
-    transferMoreButton.hidden = transferItems.length <= 2;
-    transferMoreButton.textContent = transferExpanded ? 'Show less' : `Show more (${Math.max(0, transferItems.length - 2)})`;
-  }
+  if (transferMoreButton) transferMoreButton.hidden = true;
+
   if (!transferItems.length){
-    transferList.innerHTML = '<div class="transfer-empty">Nothing here yet. Send something from your phone or PC.</div>';
+    transferList.innerHTML = '<div class="transferitem" data-kind="T"><strong>Nothing here yet</strong><small>TRANSFER BUFFER EMPTY</small></div>';
     return;
   }
 
   transferList.innerHTML = transferItems.map(item => {
     const isFile = item.kind === 'file';
     const isLink = item.kind === 'link';
+    const kind = isFile ? 'F' : (isLink ? 'L' : 'T');
     const title = isFile ? (item.filename || 'File') : (item.content || '');
     const meta = isFile
-      ? `${transferSize(item.bytes)} · ${transferTime(item.createdAt)}`
-      : `${isLink ? 'Link' : 'Text'} · ${transferTime(item.createdAt)}`;
-    const icon = isFile ? '↓' : (isLink ? '↗' : 'T');
+      ? `FILE · ${transferTime(item.createdAt).toUpperCase()} · ${transferSize(item.bytes)}`
+      : `${isLink ? 'LINK' : 'TEXT'} · ${transferTime(item.createdAt).toUpperCase()}`;
     const hasDirectFile = isFile && Boolean(item.url);
     const hasChunks = isFile && Number(item.chunkCount || 0) > 0;
+
     const openAction = hasDirectFile
-      ? `<a class="transfer-action" href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer external">Open ↗</a><a class="transfer-action" href="${escapeHtml(item.downloadUrl || item.url)}" target="_blank" rel="noopener noreferrer external">Download</a>`
+      ? `<a class="transfer-action-skeuo" href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer external">OPEN</a><a class="transfer-action-skeuo" href="${escapeHtml(item.downloadUrl || item.url)}" target="_blank" rel="noopener noreferrer external">SAVE</a>`
       : hasChunks
-        ? `<button class="transfer-action" type="button" data-transfer-action="download" data-id="${escapeHtml(item.id)}">${isIOSDevice() ? (preparedTransferFiles.has(item.id) ? 'Save' : 'Prepare') : 'Download'}</button>`
+        ? `<button class="transfer-action-skeuo" type="button" data-transfer-action="download" data-id="${escapeHtml(item.id)}">${isIOSDevice() ? (preparedTransferFiles.has(item.id) ? 'SAVE' : 'PREP') : 'SAVE'}</button>`
         : isLink
-          ? `<a class="transfer-action" href="${escapeHtml(item.content)}" target="_blank" rel="noopener noreferrer external">Open ↗</a>`
+          ? `<a class="transfer-action-skeuo" href="${escapeHtml(item.content)}" target="_blank" rel="noopener noreferrer external">OPEN</a>`
           : '';
+
     const copyAction = !isFile
-      ? `<button class="transfer-action" type="button" data-transfer-action="copy" data-id="${escapeHtml(item.id)}">Copy</button>`
+      ? `<button class="transfer-action-skeuo" type="button" data-transfer-action="copy" data-id="${escapeHtml(item.id)}">COPY</button>`
       : '';
 
     return `
-      <article class="transfer-item">
-        <div class="transfer-kind ${isFile ? 'transfer-kind-file' : ''}" aria-hidden="true">${icon}</div>
-        <div class="transfer-copy">
-          <div class="transfer-title" title="${escapeHtml(title)}">${escapeHtml(title)}</div>
-          <div class="transfer-meta">${escapeHtml(meta)}</div>
-        </div>
-        <div class="transfer-actions">
+      <div class="transferitem" data-kind="${kind}" tabindex="0">
+        <strong title="${escapeHtml(title)}">${escapeHtml(title)}</strong>
+        <small>${escapeHtml(meta)}</small>
+        <div class="transfer-actions-skeuo">
           ${openAction}
           ${copyAction}
-          <button class="transfer-action transfer-delete" type="button" data-transfer-action="delete" data-id="${escapeHtml(item.id)}" aria-label="Delete transfer">×</button>
+          <button class="transfer-action-skeuo" type="button" data-transfer-action="delete" data-id="${escapeHtml(item.id)}" aria-label="Delete transfer">×</button>
         </div>
-      </article>`;
+      </div>`;
   }).join('');
 }
 
@@ -1036,52 +1025,34 @@ function renderCoolDeadlines(){
 
   const now = Date.now();
   const upcoming = coolEvents
-    .filter(event => new Date(event.dueAt).getTime() >= now - 60000);
+    .filter(event => new Date(event.dueAt).getTime() >= now - 60000)
+    .slice(0, 4);
 
   if (!upcoming.length){
-    coolDeadlinesEl.innerHTML = `<div class="cool-status">No upcoming COOL deadlines.</div>`;
+    coolDeadlinesEl.innerHTML = '<div class="deadline"><strong>No upcoming COOL deadlines</strong><small>SYNCED · CLEAR</small><div class="bar"><i style="--p:10%"></i></div></div>';
     renderCoolDeadlineDots();
     return;
   }
 
-  const desktopDeadlines = desktopTransferQuery.matches;
-  const visible = desktopDeadlines ? upcoming : (coolExpanded ? upcoming : upcoming.slice(0, 3));
-  const hiddenCount = Math.max(0, upcoming.length - 3);
-
-  const itemsHtml = visible.map(event => {
+  coolDeadlinesEl.innerHTML = upcoming.map(event => {
     const due = new Date(event.dueAt);
-    const dateText = `${shortMonths[due.getMonth()]} ${due.getDate()}`;
-    const dayText = dayNames[due.getDay()].slice(0,3);
     const done = coolDone.has(event.id);
+    const hours = Math.max(0, (due.getTime() - now) / 3600000);
+    const urgency = hours <= 12 ? 'urgent' : (hours <= 72 ? 'soon' : '');
+    const progress = Math.round(Math.max(12, Math.min(92, 92 - (hours / 168) * 70)));
+    const dueLabel = coolDueLabel(event).toUpperCase();
     return `
-      <article class="cool-item ${done ? 'done' : ''}">
-        <a class="cool-main" href="${escapeHtml(event.url)}" target="_blank" rel="noopener noreferrer external" aria-label="Open ${escapeHtml(event.title)} in Safari">
-          <div class="cool-date"><strong>${dateText}</strong><span>${dayText}</span></div>
-          <div class="cool-copy">
-            <p class="cool-title">${escapeHtml(event.title)}</p>
-            <p class="cool-course">${escapeHtml(event.course)}</p>
-          </div>
-          <span class="cool-due">${done ? 'Done' : escapeHtml(coolDueLabel(event))}</span>
+      <div class="deadline ${urgency} ${done ? 'done' : ''}">
+        <button class="deadline-dot-action" type="button" data-event-id="${escapeHtml(event.id)}" aria-pressed="${done}" aria-label="${done ? 'Mark as not done' : 'Mark as done'}"></button>
+        <a class="deadline-link" href="${escapeHtml(event.url)}" target="_blank" rel="noopener noreferrer external">
+          <strong>${escapeHtml(event.title)}</strong>
+          <small>${escapeHtml(event.course.toUpperCase())} · ${escapeHtml(done ? 'DONE' : dueLabel)}</small>
+          <div class="bar"><i style="--p:${progress}%"></i></div>
         </a>
-        <button class="cool-done-button ${done ? 'is-done' : ''}" type="button" data-event-id="${escapeHtml(event.id)}" aria-pressed="${done}" aria-label="${done ? 'Mark as not done' : 'Mark as done'}">✓</button>
-      </article>`;
+      </div>`;
   }).join('');
 
-  const toggleHtml = !desktopDeadlines && upcoming.length > 3
-    ? `<button id="coolToggle" class="cool-toggle" type="button" aria-expanded="${coolExpanded}">${coolExpanded ? 'Show less' : `Show ${hiddenCount} more`}</button>`
-    : '';
-
-  coolDeadlinesEl.innerHTML = itemsHtml + toggleHtml;
-
-  const toggle = document.getElementById('coolToggle');
-  if (toggle){
-    toggle.addEventListener('click', () => {
-      coolExpanded = !coolExpanded;
-      renderCoolDeadlines();
-    });
-  }
-
-  coolDeadlinesEl.querySelectorAll('.cool-done-button').forEach(button => {
+  coolDeadlinesEl.querySelectorAll('.deadline-dot-action').forEach(button => {
     button.addEventListener('click', () => {
       const id = button.dataset.eventId;
       if (!id) return;
@@ -1155,56 +1126,80 @@ function isLessonCompleted(day, lesson, date = dateForDay(day)){
 function renderDay(){
   const date = dateForDay(selectedDay);
   const lessons = lessonsForDate(date, selectedDay);
+  const semesterStart = new Date(2026, 8, 7, 12, 0, 0, 0);
+  const semesterWeek = Math.max(1, Math.floor((date.getTime() - semesterStart.getTime()) / 604800000) + 1);
+
   selectedDayEl.textContent = dayNames[selectedDay];
-  selectedDateEl.textContent = `${shortMonths[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
-  classCountEl.textContent = `${lessons.length} ${lessons.length === 1 ? 'class' : 'classes'}`;
+  selectedDateEl.textContent = `${shortMonths[date.getMonth()].toUpperCase()} ${String(date.getDate()).padStart(2,'0')} / WEEK ${String(semesterWeek).padStart(2,'0')}`;
+  const openSlots = Math.max(0, 4 - lessons.length);
+  classCountEl.textContent = `${String(lessons.length).padStart(2,'0')} ${lessons.length === 1 ? 'CLASS' : 'CLASSES'} · ${String(openSlots).padStart(2,'0')} ${openSlots === 1 ? 'OPEN SLOT' : 'OPEN SLOTS'}`;
 
   dayButtons.forEach(btn => {
     const day = Number(btn.dataset.day);
     btn.classList.toggle('active', day === selectedDay);
     btn.classList.toggle('today', day === new Date().getDay());
-    btn.querySelector('small').textContent = dateForDay(day).getDate();
+    const small = btn.querySelector('small');
+    if (small) small.textContent = String(dateForDay(day).getDate()).padStart(2,'0');
     btn.setAttribute('aria-pressed', day === selectedDay ? 'true' : 'false');
   });
 
   const reminder = dateReminders[dateKey(date)];
-  const reminderHtml = reminder ? `
-    <div class="date-reminder" style="--reminder-color:${reminder.color}">
-      <span class="date-reminder-dot"></span>
-      <div><strong>${reminder.title}</strong><span>${reminder.text}</span></div>
-    </div>` : '';
+  const reminderHtml = reminder
+    ? `<div class="date-reminder-skeuo" title="${escapeHtml(reminder.text)}">${escapeHtml(reminder.text)}</div>`
+    : '';
 
-  if (!lessons.length){
-    list.innerHTML = reminderHtml || `<div class="empty-state"><strong>No classes</strong>Saturday is clear.</div>`;
-    return;
-  }
+  const codes = {
+    mechanism:'ME-MECH', engmath:'ME2001', statics:'ME-STAT', intro:'ME-INTRO',
+    materials:'ME-MAT', pe:'PE', psychology:'PSY', chinese:'CHN', english:'ENG', icl:'ICL'
+  };
 
-  list.innerHTML = reminderHtml + lessons.map((lesson,index) => {
+  const lessonHtml = lessons.map((lesson,index) => {
     const course = courses[lesson.course];
     const inactive = isLessonInactive(selectedDay, lesson, date);
     const live = !inactive && isCurrentLesson(selectedDay, lesson);
     const completed = !inactive && isLessonCompleted(selectedDay, lesson, date);
+    const meta = inactive
+      ? 'NO LECTURE'
+      : `${course.location.toUpperCase()}${live ? ' · HAPPENING NOW' : ''}`;
+
     return `
-      <button class="lesson ${live ? 'live' : ''} ${completed ? 'completed' : ''} ${inactive ? 'inactive' : ''}" type="button" data-index="${index}" style="--course-color:${course.color}" ${inactive ? 'disabled aria-disabled="true"' : ''}>
-        <span class="time-block">
-          <span class="time-start">${lesson.start}</span>
-          <span class="time-end">${lesson.end}</span>
-          ${lesson.period ? `<span class="time-period">${lesson.period}</span>` : ''}
-        </span>
-        <span class="lesson-card">
-          <span class="lesson-title">${course.name}</span>
-          <span class="lesson-meta">
-            ${inactive ? '<span class="no-lecture">No lecture</span>' : `${live ? '<span class="live-pill">Happening now</span>' : ''}<span>${course.location}</span>`}
-          </span>
-          ${inactive ? '' : '<span class="lesson-arrow">›</span>'}
-        </span>
-      </button>`;
+      <div class="lesson ${live ? 'live' : ''} ${completed ? 'completed' : ''} ${inactive ? 'inactive' : ''}"
+           data-index="${index}" role="${inactive ? 'presentation' : 'button'}" ${inactive ? 'aria-disabled="true"' : 'tabindex="0"'}
+           style="--course:${course.color}">
+        <div class="time">${lesson.start}<small>${lesson.end}</small></div>
+        <div class="lessoncard">
+          <strong>${escapeHtml(course.name)}</strong>
+          <small>${escapeHtml(meta)}</small>
+          <span class="card-code">${escapeHtml(codes[lesson.course] || lesson.course.toUpperCase())}</span>
+        </div>
+      </div>`;
   }).join('');
 
-  list.querySelectorAll('.lesson').forEach(btn => btn.addEventListener('click', () => {
-    const lesson = lessons[Number(btn.dataset.index)];
-    openLesson(lesson, selectedDay);
-  }));
+  const emptyHtml = Array.from({ length:openSlots }, (_,slot) => `
+    <div class="lesson open-slot">
+      <div class="time">—<small>OPEN</small></div>
+      <div class="lessoncard" style="opacity:.52;--course:#6d7069">
+        <strong>${lessons.length || slot ? 'Open schedule slot' : 'No classes'}</strong>
+        <small>SCHEDULE SLOT AVAILABLE</small>
+        <span class="card-code">EMPTY</span>
+      </div>
+    </div>`).join('');
+
+  list.innerHTML = reminderHtml + lessonHtml + emptyHtml;
+
+  list.querySelectorAll('.lesson[data-index]:not(.inactive)').forEach(item => {
+    const open = () => {
+      const lesson = lessons[Number(item.dataset.index)];
+      if (lesson) openLesson(lesson, selectedDay);
+    };
+    item.addEventListener('click', open);
+    item.addEventListener('keydown', event => {
+      if (event.key === 'Enter' || event.key === ' '){
+        event.preventDefault();
+        open();
+      }
+    });
+  });
 }
 
 function getNextClass(){
@@ -1247,61 +1242,28 @@ function hanziWidgetStatus(){
 }
 
 function hanziWidgetMarkup(){
-  const href = 'https://weather-mister.github.io/hanzi-steps/';
   if (!hanziWidgetData){
     return `
-      <a class="hanzi-bar-widget is-loading" href="${href}" target="_blank" rel="noopener noreferrer external" aria-label="Open Hanzi Steps">
-        <div class="hanzi-loading-copy">
-          <span class="hanzi-loading-mark" lang="zh-Hant-TW">字</span>
-          <span><strong>Hanzi Steps</strong><small>${hanziWidgetError ? 'Live progress unavailable' : 'Syncing live progress…'}</small></span>
-        </div>
-      </a>`;
+      <div class="streak"><span class="micro">HANZI STEPS</span><b>—</b><span class="micro">DAY STREAK</span></div>
+      <div class="next"><div class="nexthead"><span class="micro">UP NEXT / SYNC</span><span class="micro">—/10</span></div><div class="charline"><span class="char">字</span><span class="pinyin">${hanziWidgetError ? 'offline' : 'syncing'}<small>${hanziWidgetError ? 'live progress unavailable' : 'live progress…'}</small></span></div></div>
+      <span class="panel-code">HS-AUX/SYNC</span>`;
   }
 
   const data = hanziWidgetData;
-  const upcoming = (Array.isArray(data.nextCharacters) && data.nextCharacters.length
-    ? data.nextCharacters
-    : [data.nextCharacter].filter(Boolean)).slice(0, 2);
-  const next = upcoming[0] || {};
+  const next = (Array.isArray(data.nextCharacters) && data.nextCharacters.length
+    ? data.nextCharacters[0]
+    : data.nextCharacter) || {};
   const goal = Math.max(1, Number(data.todayGoal) || 10);
   const progress = Math.max(0, Math.min(goal, Number(data.todayProgress) || 0));
-  const degrees = Math.round(progress / goal * 360);
-  const accent = /^#[0-9a-f]{6}$/i.test(data.unitColor || '') ? data.unitColor : '#456f9f';
-  const status = hanziWidgetStatus();
+  const unit = next.unit || data.unit || '';
 
   return `
-    <a class="hanzi-bar-widget" style="--hanzi-accent:${accent};--hanzi-progress:${degrees}deg" href="${href}" target="_blank" rel="noopener noreferrer external" aria-label="Open Hanzi Steps. ${escapeHtml(String(data.streak))} day streak, ${progress} of ${goal} practices today.">
-      <div class="hanzi-bar-left">
-        <div class="hanzi-status-row">
-          <span class="hanzi-flame" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12.8 2.2c.5 3.4-1.4 4.8-2.7 6.3-1.2 1.4-1.8 2.8-1 4.7.6-1.6 1.7-2.6 3-3.4-.1 2.5 2.4 3.6 2.4 6 0 1.7-1.1 3.2-2.8 3.7 3.8.1 6.3-2.5 6.3-6 0-4.1-3.4-7.6-5.2-11.3ZM9.3 20c-2.1-.8-3.5-2.8-3.5-5.1 0-2.2 1-4.1 2.5-5.9-.3 2.5.6 4.1 1.8 5.4-1.5 1.4-1.7 3.6-.8 5.6Z"/></svg></span>
-          <span>${escapeHtml(status)}</span>
-        </div>
-        <div class="hanzi-streak-row">
-          <strong>${escapeHtml(String(data.streak))}</strong>
-          <span>DAY</span>
-        </div>
-        <div class="hanzi-practice-row">
-          <span class="hanzi-progress-ring" aria-hidden="true"></span>
-          <span>${progress}/${goal} today</span>
-        </div>
-      </div>
-      <div class="hanzi-up-next">
-        <div class="hanzi-up-next-head">
-          <span>UP NEXT</span>
-          <small>U${escapeHtml(String(next.unit || data.unit || ''))}</small>
-        </div>
-        <div class="hanzi-upcoming-list">
-          ${upcoming.map((item, index) => `
-            <div class="hanzi-upcoming-item hanzi-upcoming-${index + 1}">
-              <strong class="hanzi-next-char" lang="zh-Hant-TW">${escapeHtml(item.character || '字')}</strong>
-              <div class="hanzi-next-meta">
-                <span>${escapeHtml(item.pinyin || '')}</span>
-                <small>${escapeHtml(item.meaning || 'next character')}</small>
-              </div>
-            </div>`).join('')}
-        </div>
-      </div>
-    </a>`;
+    <div class="streak"><span class="micro">HANZI STEPS</span><b>${escapeHtml(String(data.streak))}</b><span class="micro">DAY STREAK</span></div>
+    <div class="next">
+      <div class="nexthead"><span class="micro">UP NEXT / UNIT ${escapeHtml(String(unit))}</span><span class="micro">${progress}/${goal}</span></div>
+      <div class="charline"><span class="char">${escapeHtml(next.character || '字')}</span><span class="pinyin">${escapeHtml(next.pinyin || '')}<small>${escapeHtml(next.meaning || 'next character')}</small></span></div>
+    </div>
+    <span class="panel-code">HS-AUX/${escapeHtml(String(unit || 'LIVE'))}</span>`;
 }
 
 async function loadHanziWidget(){
@@ -1324,28 +1286,20 @@ async function loadHanziWidget(){
 
 function renderNextClass(){
   const next = getNextClass();
-  let classMarkup = `
-    <div class="next-copy">
-      <p class="next-label">Up next</p>
-      <p class="next-title">No upcoming classes</p>
-    </div>`;
 
-  if (next){
+  if (!next){
+    nextClassEl.innerHTML = '<span class="eyebrow">UP NEXT / CHANNEL 01</span><strong>No upcoming classes</strong><p>SCHEDULE CLEAR</p>';
+  } else {
     const course = courses[next.lesson.course];
-    const countdown = next.state === 'Now'
-      ? `<p class="next-countdown">ends ${countdownText(next.endAt)}</p>`
-      : `<p class="next-countdown">${countdownText(next.startAt)}</p>`;
-    classMarkup = `
-      <div class="next-copy">
-        <p class="next-label">${next.state === 'Now' ? 'Happening now' : 'Up next'}</p>
-        <p class="next-title">${course.name}</p>
-        <p class="next-meta">${dayNames[next.day]} · ${displayTime(next.lesson.start)}–${displayTime(next.lesson.end)}${next.lesson.period ? ` · Period ${next.lesson.period}` : ''}</p>
-        ${countdown}
-      </div>
-      <div class="next-badge"><strong>${next.state}</strong><small>${next.lesson.start}</small></div>`;
+    if (next.state === 'Now'){
+      const remaining = countdownText(next.endAt).replace(/^in /,'').toUpperCase();
+      nextClassEl.innerHTML = `<span class="eyebrow">HAPPENING NOW / CHANNEL 01</span><strong>${escapeHtml(course.name)}</strong><p>${escapeHtml(course.location.toUpperCase())} · END ${next.lesson.end} · ${escapeHtml(remaining)} REMAINING</p>`;
+    } else {
+      const until = countdownText(next.startAt).toUpperCase();
+      nextClassEl.innerHTML = `<span class="eyebrow">UP NEXT / CHANNEL 01</span><strong>${escapeHtml(course.name)}</strong><p>${escapeHtml(course.location.toUpperCase())} · START ${next.lesson.start} · ${escapeHtml(until)}</p>`;
+    }
   }
 
-  nextClassEl.innerHTML = classMarkup;
   if (hanziWidgetSlot) hanziWidgetSlot.innerHTML = hanziWidgetMarkup();
 }
 
@@ -1811,7 +1765,7 @@ const skeuoLiveState = document.getElementById('skeuoLiveState');
 
 function syncSkeuoLiveIndicator(){
   if (!skeuoNext || !skeuoLiveLed || !skeuoLiveState) return;
-  const label = String(skeuoNext.querySelector('.next-label')?.textContent || '').toLowerCase();
+  const label = String(skeuoNext.querySelector('.eyebrow')?.textContent || '').toLowerCase();
   const live = label.includes('happening');
   skeuoLiveLed.classList.toggle('off', !live);
   skeuoLiveState.textContent = live ? 'LIVE' : 'NEXT';
