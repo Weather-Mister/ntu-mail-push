@@ -1806,7 +1806,7 @@ if (launchParams.get('open') === 'ntu-mail'){
 if ('serviceWorker' in navigator){
   window.addEventListener('load', async () => {
     try {
-      const registration = await navigator.serviceWorker.register('./sw.js?v=92', { updateViaCache:'none' });
+      const registration = await navigator.serviceWorker.register('./sw.js?v=93', { updateViaCache:'none' });
       await registration.update();
     } catch (error) {}
   });
