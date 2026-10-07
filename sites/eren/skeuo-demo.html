@@ -153,6 +153,18 @@ h1{margin:0;font-size:26px;line-height:1;letter-spacing:-.045em;color:#20221e}
   clip-path:polygon(45% 0,100% 20%,73% 100%,0 80%);opacity:.62
 }
 .key:hover{filter:brightness(1.035)}
+@media (hover:hover) and (pointer:fine){
+  .key:hover{
+    transform:translateY(-2px);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.46),
+      inset 1px 0 0 rgba(255,255,255,.12),
+      inset -1px 0 0 rgba(60,57,51,.08),
+      0 1px 0 #8d897e,
+      0 3px 0 var(--key-side),
+      4px 7px 6px rgba(25,20,15,.26);
+  }
+}
 .key:active,.key.pressed{transform:translateY(1px);box-shadow:inset 0 1px 2px rgba(48,46,41,.18),0 1px 0 var(--key-side),2px 3px 3px rgba(25,20,15,.18)}
 .keylegend{position:absolute;left:6px;top:5px;font-size:6.5px;font-weight:700;color:#777267;letter-spacing:.04em}
 .topkey{height:31px;min-width:35px;padding:8px 10px 3px;font:800 9px/1 Arial,sans-serif}.topkey.wide{min-width:76px}.topkey .keylegend{font-size:6px}
@@ -877,8 +889,26 @@ h1{
 /* No identical corner-chip artifact on every key. */
 .key::after{display:none!important}
 
-/* Selected day stays physically depressed while selected. */
+/* Selected day stays clearly highlighted without looking permanently held down. */
 .day.active{
+  transform:translateY(-4px)!important;
+  box-shadow:
+    inset 0 1px rgba(255,255,255,.20),
+    0 1px 0 #354966,
+    0 5px 0 #293a55,
+    5px 9px 8px rgba(25,20,15,.30)!important;
+}
+@media (hover:hover) and (pointer:fine){
+  .day.active:hover{
+    transform:translateY(-2px)!important;
+    box-shadow:
+      inset 0 1px rgba(255,255,255,.20),
+      0 1px 0 #354966,
+      0 3px 0 #293a55,
+      4px 7px 6px rgba(25,20,15,.26)!important;
+  }
+}
+.day.active:active{
   transform:translateY(1px)!important;
   box-shadow:
     inset 0 2px 4px rgba(29,39,56,.34),
@@ -886,7 +916,6 @@ h1{
     0 1px 0 #2e405d,
     2px 3px 3px rgba(35,22,13,.18)!important;
 }
-.day.active:active{transform:translateY(1px)!important}
 
 /* Slightly slimmer lesson cards without changing the schedule grid. */
 .lesson{
