@@ -3187,6 +3187,202 @@ h1{
 }
 </style>
 
+
+<style id="cool-button-list-pass">
+/* COOL becomes a scrollable bank of physical assignment keys. */
+.cool{
+  min-height:0!important;
+  overflow:hidden!important;
+}
+#coolDeadlines{
+  display:flex!important;
+  flex-direction:column!important;
+  gap:8px!important;
+  min-height:0!important;
+  height:calc(100% - 42px)!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  padding:2px 6px 10px 2px!important;
+  scrollbar-width:thin;
+  scrollbar-color:#6e7068 transparent;
+}
+#coolDeadlines::-webkit-scrollbar{width:5px}
+#coolDeadlines::-webkit-scrollbar-track{background:transparent}
+#coolDeadlines::-webkit-scrollbar-thumb{
+  background:#6e7068;
+  border:1px solid #575a53;
+  border-radius:4px;
+}
+
+.cool-key-row{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) 57px!important;
+  gap:8px!important;
+  align-items:stretch!important;
+  flex:0 0 auto!important;
+  min-height:58px!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  opacity:1!important;
+}
+
+.cool-entry-key{
+  position:relative!important;
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:center!important;
+  min-width:0!important;
+  min-height:54px!important;
+  padding:10px 13px 9px 15px!important;
+  border:1px solid #6e695e!important;
+  border-radius:5px!important;
+  color:#292a25!important;
+  text-decoration:none!important;
+  background:
+    radial-gradient(circle at 83% 18%,rgba(72,47,25,.09),transparent 18%),
+    linear-gradient(145deg,rgba(255,255,255,.20),transparent 32%),
+    linear-gradient(180deg,#dcd6c5,#cec7b5 66%,#b4ad9d)!important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.48),
+    0 1px 0 #8d897e,
+    0 4px 0 #777166,
+    4px 7px 7px rgba(25,20,15,.24)!important;
+  transform:translateY(-3px)!important;
+}
+.cool-entry-key:hover{filter:brightness(1.035)}
+.cool-entry-key:active{
+  transform:translateY(0)!important;
+  box-shadow:
+    inset 0 2px 3px rgba(48,46,41,.20),
+    0 1px 0 #777166,
+    1px 2px 2px rgba(25,20,15,.17)!important;
+}
+.cool-entry-key::before{
+  content:"";
+  position:absolute;
+  left:8px;
+  top:9px;
+  bottom:9px;
+  width:4px;
+  border-radius:2px;
+  background:#74776f;
+  opacity:.65;
+}
+
+.cool-entry-title{
+  display:block!important;
+  padding-left:5px!important;
+  font-size:10px!important;
+  font-weight:800!important;
+  line-height:1.18!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+.cool-entry-meta{
+  display:block!important;
+  margin-top:6px!important;
+  padding-left:5px!important;
+  color:#5b5d56!important;
+  font:700 6.5px/1.15 "Courier New",monospace!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+
+.cool-finish-key{
+  --finish-top:#d2cbb9;
+  --finish-side:#736d62;
+  position:relative!important;
+  min-width:0!important;
+  min-height:54px!important;
+  padding:17px 4px 5px!important;
+  border:1px solid #6e695e!important;
+  border-radius:5px!important;
+  color:#292a25!important;
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.22),transparent 32%),
+    linear-gradient(180deg,#ded8c7,var(--finish-top) 66%,#bcb4a2)!important;
+  box-shadow:
+    inset 0 1px rgba(255,255,255,.48),
+    0 1px 0 #8d897e,
+    0 5px 0 var(--finish-side),
+    4px 8px 7px rgba(25,20,15,.26)!important;
+  transform:translateY(-4px)!important;
+  cursor:pointer!important;
+  font:800 7px/1 "Courier New",monospace!important;
+}
+.cool-finish-key .keylegend{
+  left:6px!important;
+  top:5px!important;
+  font-size:5.5px!important;
+}
+.cool-finish-key:active,
+.cool-finish-key.is-pressed{
+  transform:translateY(1px)!important;
+  box-shadow:
+    inset 0 3px 5px rgba(37,48,35,.31),
+    inset 0 -1px rgba(255,255,255,.10),
+    0 1px 0 #596450,
+    1px 2px 2px rgba(25,20,15,.16)!important;
+}
+.cool-finish-key.is-pressed{
+  --finish-top:#829375;
+  --finish-side:#58644f;
+  color:#f0eee6!important;
+  border-color:#58644f!important;
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.11),transparent 32%),
+    linear-gradient(180deg,#8fa081,#718363 70%,#627255)!important;
+  cursor:default!important;
+  opacity:1!important;
+}
+.cool-finish-key.is-pressed .keylegend{color:#dfe7d8!important}
+.cool-finish-label{display:block!important}
+
+.cool-key-row.is-finished .cool-entry-key{
+  transform:translateY(0)!important;
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.12),transparent 32%),
+    linear-gradient(180deg,#bbb8aa,#aaa79a 68%,#979489)!important;
+  box-shadow:
+    inset 0 2px 4px rgba(50,51,47,.17),
+    0 1px 0 #74756e,
+    2px 3px 3px rgba(25,20,15,.16)!important;
+}
+.cool-key-row.is-finished .cool-entry-title{
+  text-decoration:line-through;
+  opacity:.68;
+}
+.cool-key-row.is-finished .cool-entry-meta{opacity:.72}
+
+.cool-empty-key{
+  padding:13px!important;
+  border:1px solid #777970!important;
+  border-radius:4px!important;
+  background:#92948b!important;
+  box-shadow:inset 0 1px rgba(255,255,255,.10)!important;
+}
+.cool-empty-key strong{display:block;font-size:9px}
+.cool-empty-key small{
+  display:block;
+  margin-top:4px;
+  color:#575a52;
+  font:700 6px "Courier New",monospace;
+}
+
+@media(max-width:859px){
+  #coolDeadlines{
+    height:auto!important;
+    max-height:360px!important;
+  }
+  .cool-key-row{
+    grid-template-columns:minmax(0,1fr) 54px!important;
+  }
+}
+</style>
+
 </head>
 <body>
 <div class="desk-stage">
@@ -3724,7 +3920,7 @@ h1{
 </dialog>
 <!-- SKEUO_FUNCTIONAL_DIALOGS_END -->
 <script src="./vendor/ffmpeg/ffmpeg.js?v=1"></script>
-<script src="./skeuo-runtime.js?v=4"></script>
+<script src="./skeuo-runtime.js?v=5"></script>
 
 </body>
 </html>
