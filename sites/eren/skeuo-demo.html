@@ -4776,6 +4776,71 @@ h1{
   }
 }
 </style>
+<style id="mail-load-more-skeuo-fix">
+/* Mail pagination is part of the console hardware, never a modern full-width web CTA. */
+.machine.mail-mode #mailxMore.mailx-load-more{
+  position:relative!important;
+  display:block!important;
+  width:calc(100% - 24px)!important;
+  min-height:34px!important;
+  margin:11px 12px 15px!important;
+  padding:9px 14px 7px!important;
+  border:1px solid #817661!important;
+  border-radius:5px!important;
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.32),transparent 31%),
+    linear-gradient(180deg,#eee5d2,#ddd2bb 62%,#bdb096)!important;
+  color:#3a342a!important;
+  box-shadow:
+    inset 0 2px rgba(255,255,255,.57),
+    0 1px 0 #a79b83,
+    0 4px 0 #7f745f,
+    4px 6px 5px rgba(40,23,11,.19)!important;
+  transform:translateY(-3px)!important;
+  font:800 9px/1 "Courier New",monospace!important;
+  letter-spacing:.045em!important;
+  text-transform:uppercase!important;
+  text-align:center!important;
+  cursor:pointer!important;
+}
+.machine.mail-mode #mailxMore.mailx-load-more::before{
+  content:"PAGE / NEXT";
+  display:block;
+  margin-bottom:4px;
+  color:#776d5c;
+  font:700 5.5px/1 "Courier New",monospace;
+  letter-spacing:.12em;
+}
+.machine.mail-mode #mailxMore.mailx-load-more:disabled{
+  cursor:wait!important;
+  opacity:.55!important;
+}
+@media (hover:hover) and (pointer:fine){
+  .machine.mail-mode #mailxMore.mailx-load-more:not(:disabled):hover{
+    transform:translateY(-1px)!important;
+    filter:brightness(1.035)!important;
+    box-shadow:
+      inset 0 2px rgba(255,255,255,.58),
+      0 1px 0 #a79b83,
+      0 2px 0 #7f745f,
+      3px 4px 4px rgba(40,23,11,.17)!important;
+  }
+}
+.machine.mail-mode #mailxMore.mailx-load-more:not(:disabled):active{
+  transform:translateY(1px)!important;
+  filter:none!important;
+  box-shadow:
+    inset 0 2px 3px rgba(72,61,45,.22),
+    0 1px 0 #7f745f!important;
+}
+@media(max-width:860px){
+  .machine.mail-mode #mailxMore.mailx-load-more{
+    width:calc(100% - 20px)!important;
+    margin:10px 10px 14px!important;
+    min-height:38px!important;
+  }
+}
+</style>
 </head>
 <body>
 <div class="desk-stage">
