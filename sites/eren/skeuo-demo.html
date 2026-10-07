@@ -4282,7 +4282,7 @@ h1{
 }
 </style>
 <style id="desk-props-layer">
-/* Quiet desk clutter beneath the console: paper, pencil marks and old coffee. */
+/* Desk clutter under the console: larger notes, crumpled paper and directional lamp light. */
 .desk-stage{
   position:relative;
   isolation:isolate;
@@ -4292,6 +4292,27 @@ h1{
   inset:0;
   z-index:0;
   overflow:hidden;
+  pointer-events:none;
+}
+.desk-props::before{
+  content:"";
+  position:absolute;
+  inset:-5% -3%;
+  z-index:0;
+  background:
+    radial-gradient(ellipse at 62% 3%,rgba(255,240,196,.27) 0 9%,rgba(255,199,119,.12) 21%,transparent 48%),
+    linear-gradient(147deg,rgba(255,225,173,.13) 0 24%,transparent 50%);
+  mix-blend-mode:screen;
+  opacity:.95;
+}
+.desk-props::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:10;
+  background:
+    linear-gradient(180deg,rgba(0,0,0,.03),transparent 18% 77%,rgba(18,6,1,.09)),
+    radial-gradient(ellipse at 52% 52%,transparent 45%,rgba(18,7,2,.075) 100%);
   pointer-events:none;
 }
 .machine{
@@ -4304,19 +4325,23 @@ h1{
 
 .desk-sheet{
   position:absolute;
+  z-index:2;
   overflow:hidden;
-  border:1px solid rgba(86,66,43,.28);
-  border-radius:1px;
+  border:1px solid rgba(82,62,39,.24);
+  border-radius:2px;
   background:
-    linear-gradient(165deg,rgba(255,255,255,.30),transparent 21%),
-    linear-gradient(180deg,#e9ddc7,#d8cab0);
-  color:rgba(43,57,73,.72);
+    linear-gradient(150deg,rgba(255,255,255,.54) 0 7%,rgba(255,255,255,.18) 16%,transparent 34%),
+    linear-gradient(180deg,#eee3ce 0%,#dfd1b8 68%,#d1c0a2 100%);
+  color:rgba(42,59,82,.78);
   box-shadow:
-    inset 0 1px rgba(255,255,255,.38),
-    inset 0 -12px 20px rgba(92,69,35,.045),
-    4px 8px 13px rgba(20,8,2,.22);
-  font-family:"Segoe Print","Bradley Hand","Comic Sans MS",cursive;
+    inset 0 1px rgba(255,255,255,.65),
+    inset -16px -19px 26px rgba(90,64,29,.055),
+    -8px -4px 15px rgba(255,226,169,.045),
+    8px 14px 14px rgba(20,8,2,.21),
+    18px 27px 27px rgba(20,8,2,.085);
+  font-family:"Segoe Print","Bradley Hand","Marker Felt","Comic Sans MS",cursive;
   transform-origin:center;
+  filter:saturate(.94) contrast(1.015);
 }
 .desk-sheet::after{
   content:"";
@@ -4324,32 +4349,33 @@ h1{
   inset:0;
   pointer-events:none;
   background:
-    radial-gradient(circle at 13% 18%,rgba(92,60,25,.055) 0 1px,transparent 1.5px),
-    radial-gradient(circle at 78% 64%,rgba(92,60,25,.04) 0 1px,transparent 1.4px),
-    repeating-linear-gradient(94deg,rgba(80,61,35,.012) 0 1px,transparent 1px 8px);
+    radial-gradient(circle at 13% 18%,rgba(92,60,25,.06) 0 1px,transparent 1.6px),
+    radial-gradient(circle at 78% 64%,rgba(92,60,25,.045) 0 1px,transparent 1.5px),
+    repeating-linear-gradient(94deg,rgba(80,61,35,.013) 0 1px,transparent 1px 8px);
   mix-blend-mode:multiply;
 }
 .desk-sheet .paper-title{
   position:relative;
   z-index:1;
   display:block;
-  margin-bottom:9px;
-  color:rgba(58,52,43,.58);
+  margin-bottom:10px;
+  color:rgba(56,50,41,.60);
   font:700 7px/1 "Courier New",monospace;
-  letter-spacing:.11em;
+  letter-spacing:.115em;
   text-transform:uppercase;
 }
 .desk-sheet .scribble{
   position:relative;
   z-index:1;
-  margin:6px 0;
-  font-size:14px;
-  line-height:1.35;
+  margin:7px 0;
+  font-size:15px;
+  line-height:1.34;
   white-space:nowrap;
   transform:rotate(var(--scribble-rot,0deg));
+  text-shadow:0 .5px rgba(255,255,255,.16);
 }
 .desk-sheet .scribble.faint{opacity:.62}
-.desk-sheet .scribble.small{font-size:11px}
+.desk-sheet .scribble.small{font-size:11.5px}
 .desk-sheet .underline{
   position:relative;
   display:inline-block;
@@ -4359,71 +4385,112 @@ h1{
   position:absolute;
   left:-2px;right:-5px;bottom:-2px;
   height:1px;
-  background:rgba(46,66,96,.40);
+  background:rgba(46,66,96,.42);
   transform:rotate(-1deg);
 }
 
-/* Left edge: statics scratch sheet, mostly trapped under the chassis. */
+/* Large sheets peeking out from under the chassis. */
 .desk-sheet.paper-statics{
-  width:245px;
-  height:168px;
-  left:2.5%;
-  bottom:3%;
-  padding:17px 17px 14px;
-  transform:rotate(-8deg);
+  width:300px;
+  height:202px;
+  left:-.2%;
+  bottom:-1%;
+  padding:20px 20px 16px;
+  transform:rotate(-8.2deg);
 }
 .paper-statics{
   background:
-    repeating-linear-gradient(0deg,transparent 0 21px,rgba(72,105,151,.075) 21px 22px),
-    linear-gradient(165deg,rgba(255,255,255,.30),transparent 21%),
-    linear-gradient(180deg,#e9ddc7,#d8cab0);
+    repeating-linear-gradient(0deg,transparent 0 22px,rgba(72,105,151,.075) 22px 23px),
+    linear-gradient(150deg,rgba(255,255,255,.54) 0 7%,rgba(255,255,255,.18) 16%,transparent 34%),
+    linear-gradient(180deg,#eee3ce,#d4c3a5);
 }
 
-/* Right edge: engineering-math notes with a dog-eared corner. */
 .desk-sheet.paper-math{
-  width:265px;
-  height:184px;
-  right:2.7%;
-  bottom:5%;
-  padding:18px 17px 15px;
-  transform:rotate(8.5deg);
+  width:322px;
+  height:218px;
+  right:-.7%;
+  bottom:1%;
+  padding:20px 19px 16px;
+  transform:rotate(8.3deg);
 }
 .paper-math::before{
   content:"";
   position:absolute;
   right:-1px;
   bottom:-1px;
-  width:24px;
-  height:24px;
+  width:29px;
+  height:29px;
   clip-path:polygon(100% 0,0 100%,100% 100%);
-  background:linear-gradient(135deg,rgba(255,255,255,.04) 0 48%,#c5b496 50%,#e4d6bd 100%);
-  filter:drop-shadow(-1px -1px 1px rgba(70,52,29,.10));
+  background:linear-gradient(135deg,rgba(255,255,255,.04) 0 48%,#c3b08f 50%,#e7dac4 100%);
+  filter:drop-shadow(-1px -1px 1px rgba(70,52,29,.12));
 }
 
-/* Bottom-center: smaller mechanism sketch page. */
 .desk-sheet.paper-mech{
-  width:205px;
-  height:132px;
-  left:24%;
-  bottom:-18px;
-  padding:14px 15px;
-  opacity:.78;
-  transform:rotate(3.5deg);
+  width:250px;
+  height:160px;
+  left:21%;
+  bottom:-25px;
+  padding:16px 17px;
+  opacity:.84;
+  transform:rotate(3.7deg);
 }
 .paper-mech{
   background:
     linear-gradient(90deg,rgba(164,82,65,.11) 0 1px,transparent 1px 100%),
-    repeating-linear-gradient(0deg,transparent 0 18px,rgba(72,105,151,.065) 18px 19px),
-    linear-gradient(180deg,#e5d9c1,#d3c3a8);
-  background-size:100% 100%,100% 19px,100% 100%;
+    repeating-linear-gradient(0deg,transparent 0 19px,rgba(72,105,151,.067) 19px 20px),
+    linear-gradient(180deg,#e9dec9,#d2c0a2);
+  background-size:100% 100%,100% 20px,100% 100%;
 }
+
+/* Extra notes higher on the desk, visible above the console shoulders. */
+.desk-sheet.paper-top-left{
+  width:244px;
+  height:154px;
+  left:7%;
+  top:2.2%;
+  padding:15px 17px 13px;
+  opacity:.86;
+  transform:rotate(-6.8deg);
+  box-shadow:
+    inset 0 1px rgba(255,255,255,.62),
+    7px 11px 13px rgba(20,8,2,.18),
+    18px 25px 24px rgba(20,8,2,.075);
+}
+.desk-sheet.paper-top-right{
+  width:260px;
+  height:164px;
+  right:8%;
+  top:1.5%;
+  padding:16px 17px 13px;
+  opacity:.84;
+  transform:rotate(7deg);
+  box-shadow:
+    inset 0 1px rgba(255,255,255,.62),
+    8px 12px 14px rgba(20,8,2,.18),
+    18px 25px 24px rgba(20,8,2,.075);
+}
+.paper-top-left{
+  background:
+    repeating-linear-gradient(0deg,transparent 0 19px,rgba(72,105,151,.06) 19px 20px),
+    linear-gradient(150deg,rgba(255,255,255,.52) 0 8%,transparent 34%),
+    linear-gradient(180deg,#ede0c9,#d8c5a6);
+}
+.paper-top-right{
+  background:
+    linear-gradient(90deg,rgba(179,72,61,.12) 0 1px,transparent 1px 100%),
+    repeating-linear-gradient(0deg,transparent 0 20px,rgba(72,105,151,.055) 20px 21px),
+    linear-gradient(180deg,#ece0cb,#d4c1a1);
+  background-size:100% 100%,100% 21px,100% 100%;
+}
+
+/* Hand-drawn mechanism doodle. */
 .paper-mech .diagram{
   position:absolute;
-  right:14px;
-  bottom:12px;
-  width:66px;
-  height:43px;
-  opacity:.56;
+  right:15px;
+  bottom:13px;
+  width:74px;
+  height:49px;
+  opacity:.60;
 }
 .paper-mech .diagram::before,
 .paper-mech .diagram::after{
@@ -4431,72 +4498,133 @@ h1{
   position:absolute;
 }
 .paper-mech .diagram::before{
-  left:5px;right:5px;bottom:10px;
+  left:5px;right:5px;bottom:11px;
   height:1px;
   background:#425a7c;
   transform:rotate(-12deg);
-  box-shadow:9px -12px 0 -0.25px #425a7c,-5px -21px 0 -0.25px #425a7c;
+  box-shadow:10px -13px 0 -.25px #425a7c,-6px -23px 0 -.25px #425a7c;
 }
 .paper-mech .diagram::after{
-  width:8px;height:8px;
+  width:9px;height:9px;
   left:5px;bottom:6px;
   border:1px solid #425a7c;
   border-radius:50%;
-  box-shadow:26px -6px 0 -1px #d9ccb4,26px -6px 0 0 #425a7c,51px -13px 0 -1px #d9ccb4,51px -13px 0 0 #425a7c;
+  box-shadow:29px -7px 0 -1px #d9ccb4,29px -7px 0 0 #425a7c,57px -15px 0 -1px #d9ccb4,57px -15px 0 0 #425a7c;
 }
 
-/* Coffee: irregular rings and a faint wiped smear, all underneath the keyboard. */
+/* Crumpled discarded notes. */
+.desk-crumple{
+  position:absolute;
+  z-index:3;
+  width:68px;
+  height:61px;
+  border-radius:42% 58% 47% 53% / 41% 49% 51% 59%;
+  background:
+    linear-gradient(128deg,transparent 0 30%,rgba(102,76,42,.09) 31% 33%,transparent 34% 100%),
+    linear-gradient(45deg,transparent 0 44%,rgba(94,68,38,.10) 45% 47%,transparent 48% 100%),
+    radial-gradient(circle at 31% 24%,rgba(255,255,255,.61),transparent 22%),
+    radial-gradient(circle at 70% 66%,rgba(109,79,42,.11),transparent 27%),
+    linear-gradient(145deg,#eee3cf,#cdbb9c);
+  border:1px solid rgba(85,64,39,.19);
+  box-shadow:
+    inset 8px 7px 11px rgba(255,255,255,.16),
+    inset -9px -8px 13px rgba(105,76,39,.12),
+    7px 11px 10px rgba(20,8,2,.20),
+    15px 19px 18px rgba(20,8,2,.07);
+  opacity:.91;
+}
+.desk-crumple::before,
+.desk-crumple::after{
+  content:"";
+  position:absolute;
+  border:1px solid rgba(94,68,38,.12);
+  border-radius:50%;
+}
+.desk-crumple::before{
+  inset:11px 15px 14px 10px;
+  transform:rotate(19deg);
+}
+.desk-crumple::after{
+  inset:17px 10px 9px 18px;
+  transform:rotate(-27deg);
+}
+.crumple-a{
+  left:31%;
+  top:6%;
+  transform:rotate(14deg);
+}
+.crumple-b{
+  right:27%;
+  top:7.5%;
+  width:54px;
+  height:50px;
+  opacity:.78;
+  transform:rotate(-12deg);
+}
+.crumple-c{
+  right:4%;
+  top:24%;
+  width:48px;
+  height:43px;
+  opacity:.68;
+  transform:rotate(21deg);
+}
+
+/* Coffee: stronger rings but still part of the desk rather than the UI. */
 .coffee-ring{
   position:absolute;
+  z-index:1;
   border-radius:50%;
-  opacity:.48;
-  filter:blur(.15px);
+  opacity:.57;
+  filter:blur(.13px);
   background:
     radial-gradient(circle,
-      transparent 55%,
-      rgba(91,48,20,.12) 56% 58%,
-      transparent 60% 63%,
-      rgba(105,57,25,.18) 64% 67%,
+      transparent 54%,
+      rgba(91,48,20,.13) 55% 57%,
+      transparent 59% 62%,
+      rgba(105,57,25,.23) 63% 67%,
       transparent 69%);
   mix-blend-mode:multiply;
 }
 .coffee-ring.ring-left{
-  width:112px;
-  height:104px;
-  left:10%;
-  bottom:9%;
+  width:126px;
+  height:117px;
+  left:9%;
+  bottom:8%;
   transform:rotate(-11deg) scaleX(.94);
 }
 .coffee-ring.ring-right{
-  width:86px;
-  height:81px;
-  right:16%;
-  bottom:8%;
-  opacity:.34;
+  width:96px;
+  height:91px;
+  right:15%;
+  bottom:7%;
+  opacity:.42;
   transform:rotate(9deg) scaleY(.91);
 }
 .coffee-smear{
   position:absolute;
-  width:145px;
-  height:54px;
-  left:31%;
-  bottom:3%;
+  z-index:1;
+  width:160px;
+  height:58px;
+  left:30%;
+  bottom:2%;
   border-radius:50%;
-  opacity:.24;
+  opacity:.29;
   transform:rotate(-10deg);
   background:radial-gradient(ellipse at center,
     rgba(100,52,21,.23) 0,
     rgba(100,52,21,.10) 35%,
     rgba(100,52,21,.035) 59%,
     transparent 78%);
-  filter:blur(1.2px);
+  filter:blur(1.15px);
   mix-blend-mode:multiply;
 }
 .coffee-drop{
   position:absolute;
+  z-index:1;
   width:8px;height:6px;
   border-radius:50% 44% 55% 40%;
-  background:rgba(93,49,20,.20);
+  background:rgba(93,49,20,.22);
   filter:blur(.3px);
 }
 .coffee-drop.d1{left:12%;bottom:20%;transform:rotate(21deg)}
@@ -4504,27 +4632,34 @@ h1{
 .coffee-drop.d3{right:14%;bottom:12%;width:4px;height:3px;opacity:.65}
 
 @media(max-width:1180px) and (min-width:860px){
-  .desk-sheet.paper-statics{left:-22px}
-  .desk-sheet.paper-math{right:-28px}
-  .desk-sheet.paper-mech{left:20%}
+  .desk-sheet.paper-statics{left:-52px}
+  .desk-sheet.paper-math{right:-58px}
+  .desk-sheet.paper-mech{left:17%}
+  .desk-sheet.paper-top-left{left:-12px}
+  .desk-sheet.paper-top-right{right:-10px}
+  .crumple-a{left:27%}
+  .crumple-b{right:24%}
 }
 @media(max-width:859px){
   .desk-sheet.paper-math,
   .desk-sheet.paper-mech,
+  .desk-sheet.paper-top-left,
+  .desk-sheet.paper-top-right,
+  .desk-crumple,
   .coffee-ring.ring-right,
   .coffee-smear,
   .coffee-drop.d2,
   .coffee-drop.d3{display:none}
   .desk-sheet.paper-statics{
-    width:205px;height:142px;
-    left:-44px;bottom:4px;
-    opacity:.42;
+    width:215px;height:148px;
+    left:-48px;bottom:4px;
+    opacity:.44;
     transform:rotate(-8deg) scale(.84);
     transform-origin:left bottom;
   }
   .coffee-ring.ring-left{
-    left:-4px;bottom:22px;
-    opacity:.20;
+    left:-5px;bottom:22px;
+    opacity:.22;
     transform:scale(.72) rotate(-11deg);
   }
   .coffee-drop.d1{opacity:.18}
@@ -4561,6 +4696,26 @@ h1{
       <div class="scribble small">I.C. ?</div>
       <i class="diagram"></i>
     </div>
+
+    <div class="desk-sheet paper-top-left">
+      <span class="paper-title">Differential Equations · rough</span>
+      <div class="scribble" style="--scribble-rot:-.9deg">y″ + 3y′ + 2y = 0</div>
+      <div class="scribble small">r² + 3r + 2 = 0</div>
+      <div class="scribble small faint">r = −1, −2</div>
+      <div class="scribble small" style="--scribble-rot:.7deg">y = C₁e<sup>−x</sup> + C₂e<sup>−2x</sup></div>
+    </div>
+
+    <div class="desk-sheet paper-top-right">
+      <span class="paper-title">Free-body diagram · check</span>
+      <div class="scribble" style="--scribble-rot:.7deg">ΣM<sub>O</sub> = 0</div>
+      <div class="scribble small">Aᵧ + Bᵧ − W = 0</div>
+      <div class="scribble small faint">→ reaction direction?</div>
+      <div class="scribble small" style="--scribble-rot:-.5deg">F = ma</div>
+    </div>
+
+    <i class="desk-crumple crumple-a"></i>
+    <i class="desk-crumple crumple-b"></i>
+    <i class="desk-crumple crumple-c"></i>
 
     <i class="coffee-ring ring-left"></i>
     <i class="coffee-ring ring-right"></i>
