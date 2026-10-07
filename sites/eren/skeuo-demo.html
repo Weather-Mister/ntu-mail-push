@@ -4971,34 +4971,35 @@ h1{
 </style>
 
 <style id="academic-fixed-block-pass">
-/* Academic dates are one-piece, fixed equipment labels — not buttons. */
+/* Academic dates: warm beige fixed blocks that belong to the same console hardware. */
 .academic-date-block{
   position:relative!important;
   display:grid!important;
-  grid-template-columns:64px minmax(0,1fr)!important;
+  grid-template-columns:66px minmax(0,1fr)!important;
   align-items:stretch!important;
   min-height:62px!important;
   flex:0 0 auto!important;
   overflow:hidden!important;
-  border:1px solid #777a72!important;
-  border-radius:5px!important;
+  border:1px solid #8a8172!important;
+  border-radius:6px!important;
+  color:#2d2b26!important;
   background:
-    linear-gradient(145deg,rgba(255,255,255,.16),transparent 30%),
-    linear-gradient(180deg,#c9c5b8,#bdb8aa 72%,#aaa497)!important;
+    linear-gradient(145deg,rgba(255,255,255,.34),transparent 31%),
+    linear-gradient(180deg,#e3dccd,#d4ccbc 70%,#c3baa9)!important;
   box-shadow:
-    inset 0 1px rgba(255,255,255,.38),
-    inset 0 -1px rgba(72,69,62,.17),
-    0 2px 0 #858076,
-    3px 4px 5px rgba(25,20,15,.17)!important;
+    inset 0 1px 0 rgba(255,255,255,.56),
+    inset 0 -1px 0 rgba(90,78,62,.10),
+    0 2px 0 #aaa08f,
+    3px 4px 5px rgba(48,39,29,.14)!important;
   transform:none!important;
   cursor:default!important;
   user-select:none!important;
 }
-.academic-date-block::after{
+.academic-date-block::before{
   content:"";
   position:absolute;
   inset:4px;
-  border:1px solid rgba(78,80,74,.13);
+  border:1px solid rgba(99,88,72,.10);
   border-radius:3px;
   pointer-events:none;
 }
@@ -5010,33 +5011,33 @@ h1{
   align-items:center;
   justify-content:center;
   padding:6px 5px;
-  border-right:1px solid #6e726a;
-  color:#e4e6dd;
+  border-right:1px solid #9d9384;
+  color:#39362f;
   background:
-    repeating-linear-gradient(0deg,rgba(255,255,255,.018) 0 1px,transparent 1px 3px),
-    linear-gradient(180deg,#6f746c,#5e635c);
+    linear-gradient(145deg,rgba(255,255,255,.22),transparent 34%),
+    linear-gradient(180deg,#c9c0b0,#b9af9e)!important;
   box-shadow:
-    inset -1px 0 rgba(255,255,255,.06),
-    inset 0 1px rgba(255,255,255,.09);
+    inset -1px 0 rgba(255,255,255,.22),
+    inset 0 1px rgba(255,255,255,.34);
   font-family:"Courier New",monospace;
   text-align:center;
 }
 .academic-date-inline span{
   font:800 7px/1 "Courier New",monospace;
   letter-spacing:.12em;
-  color:#c9cdc3;
+  color:#6c655b;
 }
 .academic-date-inline strong{
   margin:3px 0 2px;
-  font:900 24px/.88 "Arial Narrow",Arial,sans-serif;
-  letter-spacing:-.04em;
-  color:#f0f1eb;
-  text-shadow:0 1px rgba(0,0,0,.28);
+  font:900 24px/.9 "Arial Narrow",Arial,sans-serif;
+  letter-spacing:-.035em;
+  color:#312f2a;
+  text-shadow:0 1px rgba(255,255,255,.34);
 }
 .academic-date-inline small{
   font:700 6px/1 "Courier New",monospace;
   letter-spacing:.09em;
-  color:#abb0a7;
+  color:#777065;
 }
 .academic-block-copy{
   position:relative;
@@ -5049,7 +5050,7 @@ h1{
 }
 .academic-block-copy strong{
   display:block;
-  color:#292b27;
+  color:#2b2924;
   font-size:11px;
   font-weight:850;
   line-height:1.15;
@@ -5061,22 +5062,27 @@ h1{
 .academic-block-copy span{
   display:block;
   margin-top:7px;
-  color:#64665f;
+  color:#746d62;
   font:800 6.5px/1 "Courier New",monospace;
   letter-spacing:.08em;
 }
 .academic-date-block.urgent{
-  border-color:#8b6258!important;
+  border-color:#9b6c5d!important;
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.30),transparent 31%),
+    linear-gradient(180deg,#e3d4c8,#d3c2b5 70%,#bea99c)!important;
 }
 .academic-date-block.urgent .academic-date-inline{
-  background:linear-gradient(180deg,#855f57,#704e48)!important;
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.18),transparent 34%),
+    linear-gradient(180deg,#c9aea1,#b79587)!important;
 }
 .academic-date-block.soon{
-  border-color:#8a7953!important;
+  border-color:#9a875d!important;
 }
 @media(max-width:859px){
   .academic-date-block{
-    grid-template-columns:58px minmax(0,1fr)!important;
+    grid-template-columns:60px minmax(0,1fr)!important;
     min-height:60px!important;
   }
   .academic-date-inline strong{font-size:22px}
