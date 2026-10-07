@@ -15,7 +15,7 @@ const APP_SHELL = [
   asset('app.js?v=108'),
   asset('mail-demo.js?v=22'),
   asset('skeuo-demo.html'),
-  asset('skeuo-runtime.js?v=17'),
+  asset('skeuo-runtime.js?v=18'),
   asset('manifest.webmanifest?v=2'),
   asset('favicon.svg'),
   asset('hub-statics.svg'),
