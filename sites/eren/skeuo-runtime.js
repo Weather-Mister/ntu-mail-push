@@ -1883,16 +1883,23 @@ function drawScheduleScope(timestamp=0){
     : 80;
   const urgency = scheduleScopeState.active ? 1 - Math.min(1, minutes / 180) : 0;
   const amplitude = scheduleScopeState.active ? (scheduleScopeState.live ? 10.2 : 8.4) : 1.3;
-  const phase = scheduleScopeReducedMotion ? 0 : timestamp * (0.00185 + urgency * 0.0054);
-  const jitterStrength = scheduleScopeState.active ? 0.85 + urgency * 1.75 : 0.18;
+  const phase = scheduleScopeReducedMotion ? 0 : timestamp * (0.00165 + urgency * 0.0047);
+  // Let the signal "breathe" instead of shaking: slow global gain drift plus a soft
+  // amplitude envelope along the trace, like an imperfect old analog instrument.
+  const gainDrift = 0.88 + Math.sin(timestamp * 0.00105) * 0.11 + Math.sin(timestamp * 0.00043 + 1.4) * 0.06;
+  const jitterStrength = scheduleScopeState.active ? 0.34 + urgency * 0.62 : 0.10;
 
   let d = '';
   for (let x=0; x<=width; x+=2){
-    const base = Math.sin((x / wavelength) * Math.PI * 2 + phase) * amplitude;
+    const localEnvelope =
+      0.82 +
+      Math.sin(x * 0.052 + timestamp * 0.00115) * 0.15 +
+      Math.sin(x * 0.019 - timestamp * 0.00055 + 0.8) * 0.08;
+    const effectiveAmplitude = amplitude * gainDrift * localEnvelope;
+    const base = Math.sin((x / wavelength) * Math.PI * 2 + phase) * effectiveAmplitude;
     const jitter =
-      Math.sin(x * 1.65 + phase * 3.6) * jitterStrength * 0.62 +
-      Math.sin(x * 0.49 - phase * 2.05) * jitterStrength * 0.42 +
-      Math.sin(x * 2.4 + phase * 1.2) * jitterStrength * 0.18;
+      Math.sin(x * 1.42 + phase * 2.5) * jitterStrength * 0.50 +
+      Math.sin(x * 0.41 - phase * 1.55) * jitterStrength * 0.28;
     const y = mid + base + jitter;
     d += `${x === 0 ? 'M' : 'L'}${x} ${y.toFixed(2)} `;
   }
