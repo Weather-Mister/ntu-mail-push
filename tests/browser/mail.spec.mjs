@@ -27,7 +27,7 @@ async function boot(page,options={}){
     data={attachment:{id:body.id,name:body.name,type:body.type,size:body.size}};
    }
    if(r==='drafts/attachment/delete')data={ok:true};
-   if((r==='modify'||r==='modify-batch')&&options.modifyFail)return route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'Gmail unavailable'})});if(r==='modify-batch')data={results:(body.operations||[]).map(()=>({ok:true}))};if(r==='sync')data={synced:0};if(r==='send'){if(options.sendDelay)await new Promise(r=>setTimeout(r,options.sendDelay));data={job:{id:body.id,status:body.sendAt?'pending':'sent'}};}
+   if((r==='modify'||r==='modify-batch')&&options.modifyFail)return route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'Gmail unavailable'})});if(r==='modify-batch'){if(options.modifyDelay)await new Promise(r=>setTimeout(r,options.modifyDelay));data={results:(body.operations||[]).map(op=>op.threadId===options.modifyPartialFailThread?{ok:false,error:'Gmail unavailable'}:{ok:true})};}if(r==='sync')data={synced:0};if(r==='send'){if(options.sendDelay)await new Promise(r=>setTimeout(r,options.sendDelay));data={job:{id:body.id,status:body.sendAt?'pending':'sent'}};}
   }else if(url.pathname.includes('ntu-schedule-api')){
    if(r==='todos/list')data={tasks:[{id:'task1',text:'Existing manual task',done:false}]};
    if(r==='transfer/list')data={items:[{id:'x1',kind:'text',content:'Existing transfer',createdAt:new Date().toISOString()}]};
@@ -272,6 +272,15 @@ test('collapsed older messages load their HTML only when expanded',async({page})
 test('star and reversible trash actions work without opening the reader',async({page})=>{
  const {calls}=await boot(page);const row=page.locator('[data-swipe-row="0"]');await row.hover();await row.locator('[data-row-action="star"]').click();await expect.poll(()=>calls.some(c=>c.route==='modify-batch'&&(c.body.operations||[]).some(o=>o.action==='star'))).toBe(true);await expect(page.locator('#mailxShell')).not.toHaveClass(/is-reading/);
  await row.hover();await row.locator('[data-row-action="trash"]').click();await expect(page.locator('#mailxToast')).toContainText('Moved to Trash');await expect.poll(()=>calls.some(c=>c.route==='modify-batch'&&(c.body.operations||[]).some(o=>o.action==='trash'))).toBe(true);await page.locator('#mailxToast button').click();await expect.poll(()=>calls.some(c=>c.route==='modify-batch'&&(c.body.operations||[]).some(o=>o.action==='untrash'))).toBe(true);
+});
+
+test('rapid trash keeps successful deletes removed when one queued action fails',async({page})=>{
+ const {calls}=await boot(page,{modifyPartialFailThread:'t1',modifyDelay:500});
+ let row=page.locator('[data-swipe-row="0"]');await row.hover();await row.locator('[data-row-action="trash"]').click();
+ row=page.locator('[data-swipe-row="0"]');await row.hover();await row.locator('[data-row-action="trash"]').click();
+ await expect.poll(()=>calls.filter(c=>c.route==='modify-batch').flatMap(c=>(c.body.operations||[]).map(o=>o.threadId)).sort().join(',')).toBe('t1,t2');
+ await expect(page.locator('#mailxList')).toContainText('Thursday meeting');
+ await expect(page.locator('#mailxList')).not.toContainText('Your receipt');
 });
 
 test('mail rail icons are centered in their buttons',async({page},info)=>{

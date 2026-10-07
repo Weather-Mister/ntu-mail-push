@@ -223,18 +223,31 @@
     peek.innerHTML='<strong>Latest unread</strong>'+unread.slice(0,3).map((m,i)=>'<button data-peek="'+i+'">'+avatar(m.sender)+'<span><b>'+escapeHtml(m.sender)+'</b><span>'+escapeHtml(m.subject)+'</span></span></button>').join('')+(unread.length?'':'<p>No unread messages in loaded mail.</p>');
     peek.querySelectorAll('[data-peek]').forEach(b=>b.onclick=guarded(async()=>{const m=unread[+b.dataset.peek];peek.hidden=true;await openDialog();await selectMessage(m);}));
   }
+  function restoreListMessage(m,key,labels=null){
+    if(!m||key!==viewKey())return;
+    if(labels)m.labels=labels.slice();
+    const id=threadKey(m),index=state.messages.findIndex(x=>threadKey(x)===id),visible=matchesView(m,state.filter);
+    if(visible&&index<0)state.messages.push(m);
+    else if(!visible&&index>=0)state.messages.splice(index,1);
+    state.messages.sort((a,b)=>b.timestamp-a.timestamp);
+    renderList();
+  }
   async function rowAction(m,action){
     if(action==='archive')return archiveFromList(m);
     if(m.pendingAction)return;
-    const key=viewKey(),previous=state.messages.slice(),labels=m.labels.slice();m.pendingAction=true;
+    const key=viewKey(),labels=m.labels.slice();m.pendingAction=true;
     const changes={star:['STARRED',true],unstar:['STARRED',false],unread:['UNREAD',true],read:['UNREAD',false],trash:['TRASH',true],untrash:['TRASH',false]},[label,add]=changes[action];
     m.labels=add?[...new Set([...m.labels,label])]:m.labels.filter(x=>x!==label);
     state.loadVersion++;clearPageCache();state.messages=state.messages.filter(x=>matchesView(x,state.filter));renderList();
     if((action==='trash'||action==='untrash')&&state.selected===threadKey(m)){state.readVersion++;state.thread=null;state.selected=null;shell.classList.remove('is-reading','is-reader-focused');blankReader();}
     try{await queueMailMutation(m,action);clearPageCache();
-      if(action==='trash')showToast('Moved to Trash',{label:'Undo',onClick:async()=>{await queueMailMutation(m,'untrash');clearPageCache();if(key===viewKey()){m.labels=labels;state.messages=previous;renderList();}loadMail(false,true);}});
+      if(action==='trash')showToast('Moved to Trash',{label:'Undo',onClick:async()=>{
+        const trashedLabels=m.labels.slice();restoreListMessage(m,key,labels);
+        try{await queueMailMutation(m,'untrash');clearPageCache();showToast('Trash undone');loadMail(false,true);}
+        catch(e){restoreListMessage(m,key,trashedLabels);throw e;}
+      }});
       else showToast(({star:'Starred',unstar:'Star removed',unread:'Marked unread',read:'Marked read',untrash:'Restored from Trash'})[action]);
-    }catch(e){m.labels=labels;if(key===viewKey()){state.messages=previous;renderList();}showToast('Change failed: '+e.message);}finally{m.pendingAction=false;}
+    }catch(e){restoreListMessage(m,key,labels);showToast('Change failed: '+e.message);}finally{m.pendingAction=false;}
   }
   function renderList(){
     renderFilters();$('#mailxListMeta').textContent=`${categoryLabel(state.filter)} · ${state.messages.length} loaded`;
@@ -276,18 +289,19 @@
   }
   async function archiveFromList(m){
     if(!m||!m.labels?.includes('INBOX'))return;
-    const key=viewKey(),previous=state.messages.slice(),index=state.messages.findIndex(x=>threadKey(x)===threadKey(m)),wasSelected=state.selected===threadKey(m);
+    const key=viewKey(),index=state.messages.findIndex(x=>threadKey(x)===threadKey(m)),wasSelected=state.selected===threadKey(m);
     const next=state.messages[index+1]||state.messages[index-1]||null;
-    state.readVersion++;state.loadVersion++;state.messages=state.messages.filter(x=>threadKey(x)!==threadKey(m));clearMailCache();renderList();
+    state.readVersion++;state.loadVersion++;state.messages=state.messages.filter(x=>threadKey(x)!==threadKey(m));clearPageCache();renderList();
     if(wasSelected){state.selected=null;state.thread=null;if(next&&matchMedia('(min-width:861px)').matches)selectMessage(next).catch(e=>showToast(e.message));else{shell.classList.remove('is-reading','is-reader-focused');blankReader();}}
     try{
       await queueMailMutation(m,'archive');clearPageCache();
       showToast('Archived',{label:'Undo',onClick:async()=>{
-        if(key===viewKey()){state.messages=previous;renderList();}
-        await queueMailMutation(m,'unarchive');clearPageCache();showToast('Archive undone');loadMail(false,true);
+        restoreListMessage(m,key);
+        try{await queueMailMutation(m,'unarchive');clearPageCache();showToast('Archive undone');loadMail(false,true);}
+        catch(e){if(key===viewKey()){state.messages=state.messages.filter(x=>threadKey(x)!==threadKey(m));renderList();}throw e;}
       }});
       loadMail(false,true);
-    }catch(e){if(key===viewKey()){state.messages=previous;renderList();}showToast('Change failed: '+e.message);}
+    }catch(e){restoreListMessage(m,key);showToast('Change failed: '+e.message);}
   }
   async function loadMail(more=false,force=false){
     ownCache();if(['drafts','outbox'].includes(state.filter))return loadSpecial();
@@ -355,10 +369,10 @@
       if(action==='sender')return senderDetails(incoming,t.accountId);
       if(action==='unsubscribe')return unsubscribe(incoming,t.accountId);
       if(action==='archive'&&!archived){const listMessage=state.messages.find(x=>threadKey(x)===threadKey(t))||{...m,accountId:t.accountId,threadId:t.threadId,labels:['INBOX']};return archiveFromList(listMessage);}
-      b.disabled=true;const key=viewKey(),previous=state.messages.slice();state.readVersion++;state.loadVersion++;clearPageCache();
+      b.disabled=true;const key=viewKey(),removed=state.messages.find(x=>threadKey(x)===threadKey(t))||null;state.readVersion++;state.loadVersion++;clearPageCache();
       state.messages=state.messages.filter(m=>threadKey(m)!==threadKey(t));renderList();shell.classList.remove('is-reading','is-reader-focused');showToast(action==='unread'?'Marking unread…':archived?'Returning to inbox…':'Archiving…');
       try{await queueMailMutation({accountId:t.accountId,threadId:t.threadId},action==='archive'?(archived?'unarchive':'archive'):action);clearPageCache();showToast(action==='unread'?'Marked unread':archived?'Returned to inbox':'Archived in Gmail');loadMail(false,true);}
-      catch(e){if(key===viewKey()){state.messages=previous;renderList();}showToast('Change failed: '+e.message);}finally{b.disabled=false;}
+      catch(e){if(removed)restoreListMessage(removed,key);showToast('Change failed: '+e.message);}finally{b.disabled=false;}
     }));
   }
   function address(v=''){return (v.match(/<([^<>]+)>/)?.[1]||v).trim().toLowerCase();}
