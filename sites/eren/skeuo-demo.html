@@ -4530,6 +4530,252 @@ h1{
   .coffee-drop.d1{opacity:.18}
 }
 </style>
+<style id="interaction-consistency-pass">
+/* Final interaction contract: raised controls always travel toward the chassis on hover/press. */
+:where(
+  .key,
+  .cool-finish-key,
+  .skeuo-function-key,
+  .skeuo-function-close,
+  .transfer-action-skeuo,
+  #mailDemoDialog button,
+  #mailDemoDialog .mailx-attachment-download
+){
+  -webkit-tap-highlight-color:transparent;
+}
+
+:where(
+  .key,
+  .cool-finish-key,
+  .skeuo-function-key,
+  .skeuo-function-close,
+  .transfer-action-skeuo,
+  #mailDemoDialog .mailx-compose-main,
+  #mailDemoDialog .mailx-top-action,
+  #mailDemoDialog .mailx-icon-button,
+  #mailDemoDialog .mailx-action,
+  #mailDemoDialog .mailx-reply-button,
+  #mailDemoDialog .mailx-send,
+  #mailDemoDialog .mailx-schedule,
+  #mailDemoDialog .mailx-ai-generate,
+  #mailDemoDialog .mailx-format-toolbar button,
+  #mailDemoDialog .mailx-attachment-download,
+  #mailDemoDialog .mailx-sheet button
+){
+  transition:
+    transform 70ms cubic-bezier(.2,.8,.3,1),
+    box-shadow 70ms cubic-bezier(.2,.8,.3,1),
+    filter 80ms ease,
+    background-color 80ms ease!important;
+}
+
+/* Tiny transfer controls are mini keycaps, not floating flat web buttons. */
+.transfer-action-skeuo{
+  box-shadow:inset 0 1px rgba(255,255,255,.30),0 2px 0 #77786f!important;
+  transform:translateY(-1px);
+}
+.transfer-action-skeuo:active{
+  transform:translateY(1px)!important;
+  box-shadow:inset 0 2px 3px rgba(54,52,47,.22),0 1px 0 #6b6d65!important;
+}
+
+/* Raised mail controls all use the same 3px rest / 1px hover / 1px pressed travel. */
+.machine.mail-mode :is(
+  .mailx-compose-main,
+  .mailx-top-action,
+  .mailx-icon-button,
+  .mailx-action,
+  .mailx-reply-button,
+  .mailx-send,
+  .mailx-schedule,
+  .mailx-format-toolbar button,
+  .mailx-attachment-download,
+  .mailx-sheet button
+):not(:disabled){
+  cursor:pointer;
+}
+.machine.mail-mode .mailx-format-toolbar select{
+  transform:none!important;
+  box-shadow:inset 0 2px 4px rgba(57,46,31,.22),0 1px rgba(255,255,255,.16)!important;
+}
+
+/* Rail keys are raised when available and remain visibly depressed when selected. */
+.machine.mail-mode .mailx-nav .mailx-filter:not(.is-active){
+  transition:transform 70ms cubic-bezier(.2,.8,.3,1),box-shadow 70ms cubic-bezier(.2,.8,.3,1),filter 80ms!important;
+}
+.machine.mail-mode .mailx-nav .mailx-filter.is-active{
+  transform:translateY(1px)!important;
+}
+
+/* Flat icon actions stay flat, but still give one small tactile movement. */
+#mailDemoDialog .mailx-row-actions button,
+.todo-delete-skeuo,
+.mailx-load-more{
+  transition:transform 70ms cubic-bezier(.2,.8,.3,1),background-color 80ms ease,color 80ms ease,filter 80ms ease!important;
+}
+#mailDemoDialog .mailx-row-actions button:active,
+.todo-delete-skeuo:active,
+.mailx-load-more:active{
+  transform:translateY(1px)!important;
+}
+
+/* Disabled controls do not react as if they were available. */
+:where(
+  .key,
+  .cool-finish-key,
+  .skeuo-function-key,
+  .skeuo-function-close,
+  #mailDemoDialog button
+):disabled{
+  filter:saturate(.55) brightness(.94)!important;
+}
+
+/* One focus treatment across keyboard, dialogs and mail hardware. */
+.machine :is(button,a,input,textarea,select,[role="button"]):focus-visible,
+.skeuo-function-dialog :is(button,a,input,textarea,select):focus-visible{
+  outline:2px solid #52698c!important;
+  outline-offset:2px!important;
+}
+
+@media (hover:hover) and (pointer:fine){
+  /* Main keyboard keys: 4px raised -> 2px raised. */
+  .key:not(:disabled):not(.day.active):hover{
+    transform:translateY(-2px)!important;
+    filter:brightness(1.04)!important;
+    box-shadow:
+      inset 0 2px rgba(255,255,255,.54),
+      0 1px 0 var(--key-hi),
+      0 3px 0 var(--key-side),
+      4px 6px 5px rgba(25,20,15,.22)!important;
+  }
+
+  /* Selected day stays selected, but still yields slightly under the pointer. */
+  .day.active:hover{
+    transform:translateY(-2px)!important;
+    filter:brightness(1.035)!important;
+  }
+
+  /* COOL completion key had press behavior but no hover travel. */
+  .cool-finish-key:not(.is-pressed):not(:disabled):hover{
+    transform:translateY(-2px)!important;
+    filter:brightness(1.035)!important;
+    box-shadow:
+      inset 0 1px rgba(255,255,255,.48),
+      0 1px 0 #8d897e,
+      0 3px 0 var(--finish-side),
+      3px 5px 5px rgba(25,20,15,.22)!important;
+  }
+
+  /* Generic console dialog keys. */
+  .skeuo-function-key:not(:disabled):hover,
+  .skeuo-function-close:not(:disabled):hover{
+    transform:translateY(-1px)!important;
+    filter:brightness(1.035)!important;
+    box-shadow:
+      inset 0 2px rgba(255,255,255,.58),
+      0 1px 0 #a49b86,
+      0 2px 0 #817661,
+      3px 4px 4px rgba(42,24,11,.18)!important;
+  }
+
+  .transfer-action-skeuo:hover{
+    transform:translateY(0)!important;
+    filter:brightness(1.04)!important;
+    box-shadow:inset 0 1px rgba(255,255,255,.30),0 1px 0 #77786f!important;
+  }
+
+  /* Cream mail keys: visibly move down and lose two pixels of side depth. */
+  .machine.mail-mode :is(
+    .mailx-compose-main,
+    .mailx-top-action,
+    .mailx-icon-button,
+    .mailx-action,
+    .mailx-reply-button,
+    .mailx-send,
+    .mailx-schedule,
+    .mailx-format-toolbar button,
+    .mailx-attachment-download,
+    .mailx-sheet button
+  ):not(:disabled):hover{
+    transform:translateY(-1px)!important;
+    filter:brightness(1.035)!important;
+    box-shadow:
+      inset 0 2px rgba(255,255,255,.60),
+      0 1px 0 #aea28a,
+      0 2px 0 #817661,
+      3px 4px 4px rgba(42,24,11,.18)!important;
+  }
+
+  /* The large AI key starts one pixel higher, so preserve its larger travel. */
+  .machine.mail-mode .mailx-ai-hardware>.mailx-ai-generate:not(:disabled):hover{
+    transform:translateY(-2px)!important;
+    box-shadow:
+      inset 0 2px rgba(255,255,255,.62),
+      0 1px 0 #aea28a,
+      0 3px 0 #817661,
+      4px 6px 6px rgba(42,24,11,.22)!important;
+  }
+
+  .machine.mail-mode .mailx-nav .mailx-filter:not(.is-active):not(:disabled):hover{
+    transform:translateY(-1px)!important;
+    filter:brightness(1.035)!important;
+    box-shadow:
+      inset 0 2px rgba(255,255,255,.50),
+      0 1px 0 #9e927a,
+      0 3px 0 #776d5a,
+      4px 5px 5px rgba(42,24,11,.18)!important;
+  }
+  .machine.mail-mode .mailx-nav .mailx-filter.is-active:hover{
+    transform:translateY(1px)!important;
+    filter:brightness(1.035)!important;
+  }
+
+  #mailDemoDialog .mailx-row-actions button:not(:disabled):hover,
+  .todo-delete-skeuo:hover,
+  .mailx-load-more:hover{
+    transform:translateY(1px)!important;
+    filter:brightness(1.035);
+  }
+}
+
+/* Every raised control bottoms out at the same pressed plane. */
+.key:active,
+.key.pressed,
+.cool-finish-key:not(.is-pressed):active,
+.skeuo-function-key:active,
+.skeuo-function-close:active,
+.machine.mail-mode :is(
+  .mailx-compose-main,
+  .mailx-top-action,
+  .mailx-icon-button,
+  .mailx-action,
+  .mailx-reply-button,
+  .mailx-send,
+  .mailx-schedule,
+  .mailx-ai-generate,
+  .mailx-format-toolbar button,
+  .mailx-attachment-download,
+  .mailx-sheet button
+):not(:disabled):active,
+.machine.mail-mode .mailx-nav .mailx-filter:not(.is-active):active{
+  transform:translateY(1px)!important;
+  box-shadow:inset 0 2px 3px rgba(72,61,45,.22),0 1px 0 #817661!important;
+}
+
+@media (prefers-reduced-motion:reduce){
+  :where(
+    .key,
+    .cool-finish-key,
+    .skeuo-function-key,
+    .skeuo-function-close,
+    .transfer-action-skeuo,
+    #mailDemoDialog button,
+    #mailDemoDialog .mailx-attachment-download
+  ){
+    transition:none!important;
+  }
+}
+</style>
 </head>
 <body>
 <div class="desk-stage">
