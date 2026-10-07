@@ -4972,11 +4972,11 @@ h1{
 
 <style id="academic-fixed-block-pass">
 /* Academic dates use the same raised beige hardware language as the other console keys,
-   but they are fixed blocks with no hover/press travel. */
+   with their date column aligned exactly to the normal deadline list. */
 .academic-date-block{
   position:relative!important;
   display:grid!important;
-  grid-template-columns:66px minmax(0,1fr)!important;
+  grid-template-columns:48px minmax(0,1fr)!important;
   align-items:stretch!important;
   min-height:58px!important;
   flex:0 0 auto!important;
@@ -5010,50 +5010,46 @@ h1{
     0 4px 0 #777166,
     4px 7px 7px rgba(25,20,15,.24)!important;
 }
-.academic-date-block::before{
-  content:"";
-  position:absolute;
-  left:8px;
-  top:9px;
-  bottom:9px;
-  width:4px;
-  border-radius:2px;
-  background:#74776f;
-  opacity:.52;
-  pointer-events:none;
-}
+.academic-date-block::before{display:none!important}
 .academic-date-inline{
   position:relative;
   z-index:1;
+  min-width:0;
   display:flex;
   flex-direction:column;
   align-items:center;
   justify-content:center;
-  margin:6px 0 6px 12px;
-  padding:4px 6px;
+  margin:0!important;
+  padding:5px 3px 4px!important;
   border-right:1px solid rgba(83,78,69,.28);
   color:#34322c;
-  background:rgba(108,103,92,.07)!important;
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.14),transparent 35%),
+    rgba(108,103,92,.07)!important;
   box-shadow:inset -1px 0 rgba(255,255,255,.20);
   font-family:"Courier New",monospace;
   text-align:center;
 }
 .academic-date-inline span{
-  font:800 6.5px/1 "Courier New",monospace;
-  letter-spacing:.11em;
+  margin-top:5px;
   color:#68645b;
+  font:700 5.5px/1 "Courier New",monospace;
+  letter-spacing:.08em;
 }
 .academic-date-inline strong{
-  margin:3px 0 2px;
-  font:900 22px/.9 "Arial Narrow",Arial,sans-serif;
-  letter-spacing:-.035em;
+  display:block;
+  margin-top:2px;
   color:#302e29;
+  font:800 15px/.95 "Courier New",monospace;
+  letter-spacing:-.06em;
   text-shadow:0 1px rgba(255,255,255,.42);
 }
 .academic-date-inline small{
-  font:700 5.8px/1 "Courier New",monospace;
-  letter-spacing:.08em;
+  display:block;
+  margin-top:4px;
   color:#777268;
+  font:700 5.3px/1 "Courier New",monospace;
+  letter-spacing:0;
 }
 .academic-block-copy{
   position:relative;
@@ -5062,7 +5058,7 @@ h1{
   flex-direction:column;
   justify-content:center;
   min-width:0;
-  padding:10px 13px 9px 13px;
+  padding:10px 13px 9px 14px;
 }
 .academic-block-copy strong{
   display:block;
@@ -5086,17 +5082,16 @@ h1{
 }
 @media(max-width:859px){
   .academic-date-block{
-    grid-template-columns:60px minmax(0,1fr)!important;
+    grid-template-columns:44px minmax(0,1fr)!important;
     min-height:58px!important;
   }
   .academic-date-inline{
-    margin-left:11px;
-    padding-left:4px;
-    padding-right:5px;
+    padding:5px 3px 4px!important;
   }
-  .academic-date-inline strong{font-size:21px}
+  .academic-date-inline strong{font-size:14px}
+  .academic-date-inline small{font-size:5px}
   .academic-block-copy{
-    padding-left:11px;
+    padding-left:12px;
     padding-right:10px;
   }
   .academic-block-copy strong{font-size:9.8px}
