@@ -4868,6 +4868,122 @@ h1{
   <div class="skeuo-function-body"><p id="transferSaveMeta" class="skeuo-function-meta"></p><p id="transferSaveHint" class="skeuo-function-meta"></p><button id="transferNativeSaveButton" class="skeuo-function-key" type="button">SAVE TO FILES</button></div>
 </dialog>
 <!-- SKEUO_FUNCTIONAL_DIALOGS_END -->
+<script id="desk-clutter-randomizer">
+(function(){
+  const layer=document.querySelector('.desk-props');
+  if(!layer || !window.matchMedia('(min-width:860px)').matches) return;
+
+  const papers=[
+    layer.querySelector('.paper-statics'),
+    layer.querySelector('.paper-math'),
+    layer.querySelector('.paper-mech')
+  ].filter(Boolean);
+
+  if(!papers.length) return;
+
+  const now=new Date();
+  let seed=(now.getFullYear()*10000)+((now.getMonth()+1)*100)+now.getDate();
+
+  function rand(){
+    seed|=0;
+    seed=seed+0x6D2B79F5|0;
+    let t=seed;
+    t=Math.imul(t^t>>>15,t|1);
+    t^=t+Math.imul(t^t>>>7,t|61);
+    return ((t^t>>>14)>>>0)/4294967296;
+  }
+  function pick(arr){return arr[Math.floor(rand()*arr.length)]}
+  function between(a,b){return a+(b-a)*rand()}
+  function px(n){return Math.round(n)+'px'}
+
+  const zones=[
+    {
+      name:'left',
+      apply(p){
+        const w=between(250,335), h=w*between(.58,.69);
+        p.style.width=px(w);
+        p.style.height=px(h);
+        p.style.left=px(between(-150,-72));
+        p.style.right='auto';
+        p.style.top=pick(['43%','48%','53%','58%','63%']);
+        p.style.bottom='auto';
+        p.style.transform='translateY(-50%) rotate('+between(-8.5,-3.5).toFixed(1)+'deg)';
+        p.style.opacity=between(.34,.56).toFixed(2);
+      }
+    },
+    {
+      name:'right',
+      apply(p){
+        const w=between(255,345), h=w*between(.57,.68);
+        p.style.width=px(w);
+        p.style.height=px(h);
+        p.style.right=px(between(-155,-78));
+        p.style.left='auto';
+        p.style.top=pick(['41%','47%','52%','57%','62%']);
+        p.style.bottom='auto';
+        p.style.transform='translateY(-50%) rotate('+between(3.2,8.0).toFixed(1)+'deg)';
+        p.style.opacity=between(.32,.53).toFixed(2);
+      }
+    },
+    {
+      name:'bottom',
+      apply(p){
+        const w=between(180,255), h=w*between(.48,.60);
+        p.style.width=px(w);
+        p.style.height=px(h);
+        p.style.left=between(19,55).toFixed(1)+'%';
+        p.style.right='auto';
+        p.style.top='auto';
+        p.style.bottom=px(between(-86,-42));
+        p.style.transform='rotate('+between(-3.0,4.0).toFixed(1)+'deg)';
+        p.style.opacity=between(.24,.42).toFixed(2);
+      }
+    }
+  ];
+
+  // Fisher-Yates so each visible paper gets a different edge.
+  for(let i=zones.length-1;i>0;i--){
+    const j=Math.floor(rand()*(i+1));
+    [zones[i],zones[j]]=[zones[j],zones[i]];
+  }
+
+  papers.forEach((paper,i)=>{
+    paper.style.display='block';
+    zones[i%zones.length].apply(paper);
+    paper.style.filter='saturate('+(between(.78,.92).toFixed(2))+')';
+  });
+
+  // About one third of days use only two sheets.
+  if(rand()<.34 && papers.length>2){
+    papers[2].style.display='none';
+  }
+
+  // Randomize ambient coffee marks independently so they do not mirror the papers.
+  const leftRing=layer.querySelector('.ring-left');
+  const rightRing=layer.querySelector('.ring-right');
+  const smear=layer.querySelector('.coffee-smear');
+
+  if(leftRing){
+    leftRing.style.left=between(1.5,10).toFixed(1)+'%';
+    leftRing.style.bottom=between(5,17).toFixed(1)+'%';
+    leftRing.style.transform='rotate('+between(-18,11).toFixed(1)+'deg) scaleX('+between(.88,1.04).toFixed(2)+')';
+    leftRing.style.opacity=between(.10,.20).toFixed(2);
+  }
+  if(rightRing){
+    rightRing.style.right=between(1.5,9).toFixed(1)+'%';
+    rightRing.style.bottom=between(7,19).toFixed(1)+'%';
+    rightRing.style.transform='rotate('+between(-10,17).toFixed(1)+'deg) scaleY('+between(.88,1.03).toFixed(2)+')';
+    rightRing.style.opacity=between(.07,.16).toFixed(2);
+  }
+  if(smear){
+    smear.style.left=between(12,45).toFixed(1)+'%';
+    smear.style.bottom=between(-1,5).toFixed(1)+'%';
+    smear.style.transform='rotate('+between(-15,10).toFixed(1)+'deg)';
+    smear.style.opacity=between(.04,.09).toFixed(2);
+  }
+})();
+</script>
+
 <script src="./vendor/ffmpeg/ffmpeg.js?v=1"></script>
 <script src="./skeuo-runtime.js?v=9"></script>
 <script src="./mail-demo.js?v=18"></script>
