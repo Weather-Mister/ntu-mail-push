@@ -619,7 +619,7 @@
       dialog.close=()=>{try{keepDraft();}catch{}dialog.querySelector('#mailxCompose')?.classList.remove('is-open');dialog.querySelector('#mailxSheet')?.remove();setEmbeddedMode(false);};
       dialog.querySelector('#mailxListResizer')?.setAttribute('data-mailx-resizer','list');
     }
-    shell=$('#mailxShell');listEl=$('#mailxList');readerEl=$('#mailxReader');searchEl=$('#mailxSearch');accountEls=$('[data-mailx-account-filter]');if(!accountEls.length&&$('#mailxAccount'))accountEls=[$('#mailxAccount')];initMailWorkspaceInteractions();
+    shell=$('#mailxShell');listEl=$('#mailxList');readerEl=$('#mailxReader');searchEl=$('#mailxSearch');accountEls=[...dialog.querySelectorAll('[data-mailx-account-filter]')];if(!accountEls.length&&$('#mailxAccount'))accountEls=[$('#mailxAccount')];initMailWorkspaceInteractions();
     if($('#mailxClose'))$('#mailxClose').onclick=()=>{keepDraft();dialog.close();};$('#mailxSettings').onclick=guarded(settings);
     $('#mailxComposeMain').onclick=guarded(()=>openComposer());$('#mailxComposeMobile').onclick=guarded(()=>openComposer());$('#mailxComposeClose').onclick=closeComposer;
     $('#mailxGenerate').onclick=runAi;$('#mailxUndo').onclick=undoAi;$('#mailxRedo').onclick=redoAi;$('#mailxSchedule').onclick=scheduleSend;$('#mailxSend').onclick=()=>send();$('#mailxSaveDraft').onclick=guarded(()=>saveDraft());
