@@ -2885,6 +2885,158 @@ h1{
 .date-reminder-skeuo{position:absolute;right:2px;top:0;max-width:42%;padding:3px 6px;border:1px solid #716b5e;border-radius:3px;background:#928773;color:#efe8d7;font:700 6px/1.2 "Courier New",monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;z-index:4}
 @media(max-width:859px){.skeuo-function-grid{grid-template-columns:1fr}}
 </style>
+
+<style id="schedule-polish-pass">
+/* PC transfer: preserve card size and scroll the buffer instead of squeezing entries. */
+.transfer{
+  min-height:0!important;
+}
+.inbox{
+  min-height:0!important;
+  max-height:100%!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  padding-right:3px!important;
+  scrollbar-width:thin;
+  scrollbar-color:#6f7069 transparent;
+}
+.inbox::-webkit-scrollbar{width:5px}
+.inbox::-webkit-scrollbar-track{background:transparent}
+.inbox::-webkit-scrollbar-thumb{
+  background:#6f7069;
+  border:1px solid #595b55;
+  border-radius:4px;
+}
+.transferitem{
+  flex:0 0 auto!important;
+}
+
+/* Lesson bank: slightly taller cards and less dead space between them. */
+.lessons{
+  gap:5px!important;
+}
+.lesson{
+  min-height:0!important;
+}
+.lessoncard{
+  min-height:0!important;
+}
+
+/* Time column: a little larger, with period restored as a third line. */
+.time{
+  font-size:10px!important;
+  line-height:1.05!important;
+  gap:0!important;
+}
+.time small{
+  margin-top:4px!important;
+  font-size:9px!important;
+  line-height:1!important;
+}
+.time-period{
+  display:block;
+  margin-top:5px;
+  color:#aaa99f;
+  font:700 6.5px/1 "Courier New",monospace;
+  letter-spacing:.04em;
+}
+
+/* Thursday had inherited the deliberately damaged 4th-key styling. Reset just that key. */
+.days .day:nth-child(4){
+  filter:none!important;
+  background:
+    radial-gradient(circle at 82% 18%,rgba(72,47,25,.11),transparent 16%),
+    linear-gradient(145deg,rgba(255,255,255,.20),transparent 32%),
+    linear-gradient(180deg,var(--key-hi),var(--key-top) 66%,#bdb6a5)!important;
+}
+.days .day:nth-child(4)::after{
+  content:""!important;
+  position:absolute!important;
+  right:-1px!important;
+  bottom:5px!important;
+  width:9px!important;
+  height:5px!important;
+  background:#7d776b!important;
+  clip-path:polygon(45% 0,100% 20%,73% 100%,0 80%)!important;
+  opacity:.62!important;
+}
+
+/* Happening Now CRT: finer scanlines and better text fit. */
+.display{
+  position:relative!important;
+  overflow:hidden!important;
+}
+.display::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  z-index:2;
+  opacity:.20;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgba(255,255,255,.028) 0,
+      rgba(255,255,255,.028) 1px,
+      rgba(0,0,0,.055) 1px,
+      rgba(0,0,0,.055) 2px,
+      transparent 2px,
+      transparent 4px
+    );
+  mix-blend-mode:soft-light;
+}
+#nextClass{
+  position:relative;
+  z-index:3;
+  min-width:0;
+  align-self:start;
+  padding-top:0;
+}
+#nextClass .eyebrow{
+  display:block;
+  margin:0 0 4px!important;
+  font-size:7px!important;
+  line-height:1!important;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+#nextClass strong{
+  display:block;
+  margin:0!important;
+  max-width:100%;
+  font-size:17px!important;
+  line-height:1.02!important;
+  letter-spacing:-.025em;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+#nextClass p{
+  margin:5px 0 0!important;
+  max-width:100%;
+  font-size:7.5px!important;
+  line-height:1.15!important;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.display-right{
+  position:relative;
+  z-index:3;
+}
+
+/* On shorter desktop screens, keep the added period without crowding. */
+@media(min-width:860px) and (max-height:760px){
+  .lessons{gap:4px!important}
+  .time{font-size:9.5px!important}
+  .time small{font-size:8.5px!important;margin-top:3px!important}
+  .time-period{font-size:6px!important;margin-top:3px!important}
+  #nextClass strong{font-size:16px!important}
+  #nextClass p{font-size:7px!important}
+}
+</style>
+
 </head>
 <body>
 <div class="desk-stage">
@@ -3422,7 +3574,7 @@ h1{
 </dialog>
 <!-- SKEUO_FUNCTIONAL_DIALOGS_END -->
 <script src="./vendor/ffmpeg/ffmpeg.js?v=1"></script>
-<script src="./skeuo-runtime.js?v=3"></script>
+<script src="./skeuo-runtime.js?v=4"></script>
 
 </body>
 </html>
