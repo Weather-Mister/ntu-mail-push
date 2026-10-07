@@ -1874,7 +1874,7 @@ function refreshScheduleScopeMeta(){
 function drawScheduleScope(timestamp=0){
   if (!scheduleScopeTrace) return;
 
-  const width = 160;
+  const width = 200;
   const mid = 21;
   const minutes = Math.max(0, scheduleScopeState.minutes || 0);
   const boundedMinutes = Math.min(360, minutes);
