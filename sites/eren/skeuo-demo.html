@@ -169,6 +169,8 @@ h1{margin:0;font-size:26px;line-height:1;letter-spacing:-.045em;color:#20221e}
 .key:active,.key.pressed{transform:translateY(1px);box-shadow:inset 0 1px 2px rgba(48,46,41,.18),0 1px 0 var(--key-side),2px 3px 3px rgba(25,20,15,.18)}
 .keylegend{position:absolute;left:6px;top:5px;font-size:6.5px;font-weight:700;color:#777267;letter-spacing:.04em}
 .topkey{height:31px;min-width:35px;padding:8px 10px 3px;font:800 9px/1 Arial,sans-serif}.topkey.wide{min-width:76px}.topkey .keylegend{font-size:6px}
+.view-switch-key{width:35px;min-width:35px;padding:9px 7px 3px;display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
+.view-switch-key svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 
 .statusrow{display:grid;grid-template-columns:minmax(0,3fr) minmax(300px,1fr);gap:12px;margin-bottom:12px}
 .panel{
@@ -5175,7 +5177,7 @@ h1{
         </div>
       </div>
       <div class="topkeys">
-        <a class="key topkey wide" href="./index.html" aria-label="Open modern schedule" title="Modern version" style="display:inline-flex;align-items:center;justify-content:center;text-decoration:none"><span class="keylegend">VIEW</span>MODERN</a>
+        <a class="key topkey view-switch-key" href="./index.html" aria-label="Open modern schedule" title="Modern version"><span class="keylegend">VIEW</span><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="M4 9h16"/><path d="M8 12h3M13 12h3M8 15h8"/></svg></a>
         <button class="key topkey" id="pageRefreshButton" aria-label="Refresh"><span class="keylegend">RFRSH</span>↻</button>
         <button class="key topkey wide" id="placesButton"><span class="keylegend">LOC</span>⌖ &nbsp;PLACES</button>
         <button class="key topkey" id="mailDashboardButton" aria-label="Open Mail" title="Open Mail"><span class="keylegend" id="mailKeyLegend">MAIL</span><span id="mailKeyGlyph">✉</span></button>
