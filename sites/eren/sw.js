@@ -49,18 +49,17 @@ self.addEventListener('fetch', event => {
 
   if (request.mode === 'navigate'){
     const canonical = url.pathname.endsWith('/skeuo-demo.html') ? asset('skeuo-demo.html') : asset('index.html');
-    const network = fetch(request, { cache:'no-store' }).then(response => {
+    const network = fetch(request, { cache:'no-store' }).then(async response => {
       if (response.ok){
-        const copy = response.clone();
-        event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.put(canonical, copy)));
+        const cache = await caches.open(CACHE_NAME);
+        await cache.put(canonical, response.clone());
       }
       return response;
     });
+    event.waitUntil(network.then(() => {}).catch(() => {}));
     event.respondWith(
-      caches.match(canonical).then(cached => {
-        if (cached){ event.waitUntil(network.catch(() => {})); return cached; }
-        return network.catch(() => caches.match(asset('index.html')).then(fallback => fallback || caches.match(ROOT)));
-      })
+      caches.match(canonical).then(cached => cached || network)
+        .catch(() => caches.match(asset('index.html')).then(fallback => fallback || caches.match(ROOT)))
     );
     return;
   }
