@@ -3109,6 +3109,37 @@ h1{
 }
 </style>
 
+
+<style id="crt-scanline-visibility-fix">
+/* Make the CRT scanlines unmistakable instead of relying on a soft blend. */
+.display{
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgba(255,255,255,.018) 0,
+      rgba(255,255,255,.018) 1px,
+      rgba(0,0,0,.115) 1px,
+      rgba(0,0,0,.115) 2px,
+      transparent 2px,
+      transparent 4px
+    ),
+    radial-gradient(ellipse at 50% 45%,rgba(86,102,86,.05),transparent 72%),
+    #1d211e!important;
+}
+.display::after{
+  content:""!important;
+  position:absolute!important;
+  inset:0!important;
+  pointer-events:none!important;
+  z-index:2!important;
+  opacity:.16!important;
+  background:
+    linear-gradient(90deg,rgba(255,255,255,.025),transparent 14%,transparent 86%,rgba(0,0,0,.10)),
+    repeating-linear-gradient(90deg,rgba(255,255,255,.008) 0 1px,transparent 1px 3px)!important;
+  mix-blend-mode:normal!important;
+}
+</style>
+
 </head>
 <body>
 <div class="desk-stage">
