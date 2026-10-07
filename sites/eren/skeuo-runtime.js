@@ -1023,41 +1023,46 @@ function renderCoolDeadlineDots(){
 function renderCoolDeadlines(){
   if (!coolDeadlinesEl) return;
 
-  const now = Date.now();
-  const upcoming = coolEvents
-    .filter(event => new Date(event.dueAt).getTime() >= now - 60000)
-    .slice(0, 4);
+  const events = [...coolEvents]
+    .filter(event => event && event.dueAt)
+    .sort((a,b) => new Date(a.dueAt).getTime() - new Date(b.dueAt).getTime());
 
-  if (!upcoming.length){
-    coolDeadlinesEl.innerHTML = '<div class="deadline"><strong>No upcoming COOL deadlines</strong><small>SYNCED · CLEAR</small><div class="bar"><i style="--p:10%"></i></div></div>';
+  if (!events.length){
+    coolDeadlinesEl.innerHTML = '<div class="cool-empty-key"><strong>NO COOL ENTRIES</strong><small>SYNCED · CLEAR</small></div>';
     renderCoolDeadlineDots();
     return;
   }
 
-  coolDeadlinesEl.innerHTML = upcoming.map(event => {
+  coolDeadlinesEl.innerHTML = events.map(event => {
     const due = new Date(event.dueAt);
     const done = coolDone.has(event.id);
-    const hours = Math.max(0, (due.getTime() - now) / 3600000);
-    const urgency = hours <= 12 ? 'urgent' : (hours <= 72 ? 'soon' : '');
-    const progress = Math.round(Math.max(12, Math.min(92, 92 - (hours / 168) * 70)));
     const dueLabel = coolDueLabel(event).toUpperCase();
+    const course = String(event.course || 'NTU COOL').toUpperCase();
+
     return `
-      <div class="deadline ${urgency} ${done ? 'done' : ''}">
-        <button class="deadline-dot-action" type="button" data-event-id="${escapeHtml(event.id)}" aria-pressed="${done}" aria-label="${done ? 'Mark as not done' : 'Mark as done'}"></button>
-        <a class="deadline-link" href="${escapeHtml(event.url)}" target="_blank" rel="noopener noreferrer external">
-          <strong>${escapeHtml(event.title)}</strong>
-          <small>${escapeHtml(event.course.toUpperCase())} · ${escapeHtml(done ? 'DONE' : dueLabel)}</small>
-          <div class="bar"><i style="--p:${progress}%"></i></div>
+      <article class="cool-key-row ${done ? 'is-finished' : ''}" data-event-id="${escapeHtml(event.id)}">
+        <a class="cool-entry-key" href="${escapeHtml(event.url)}" target="_blank" rel="noopener noreferrer external">
+          <span class="cool-entry-title">${escapeHtml(event.title)}</span>
+          <span class="cool-entry-meta">${escapeHtml(course)} · ${escapeHtml(done ? 'FINISHED' : dueLabel)}</span>
         </a>
-      </div>`;
+        <button
+          class="cool-finish-key ${done ? 'is-pressed' : ''}"
+          type="button"
+          data-event-id="${escapeHtml(event.id)}"
+          aria-pressed="${done}"
+          aria-label="${done ? 'Finished' : 'Mark as finished'}"
+          ${done ? 'disabled' : ''}>
+          <span class="keylegend">DONE</span>
+          <span class="cool-finish-label">${done ? '✓' : 'FINISH'}</span>
+        </button>
+      </article>`;
   }).join('');
 
-  coolDeadlinesEl.querySelectorAll('.deadline-dot-action').forEach(button => {
+  coolDeadlinesEl.querySelectorAll('.cool-finish-key:not(.is-pressed)').forEach(button => {
     button.addEventListener('click', () => {
       const id = button.dataset.eventId;
-      if (!id) return;
-      if (coolDone.has(id)) coolDone.delete(id);
-      else coolDone.add(id);
+      if (!id || coolDone.has(id)) return;
+      coolDone.add(id);
       saveCoolDone();
       renderCoolDeadlines();
     });
