@@ -1166,7 +1166,7 @@ function renderDay(){
       <div class="lesson ${live ? 'live' : ''} ${completed ? 'completed' : ''} ${inactive ? 'inactive' : ''}"
            data-index="${index}" role="${inactive ? 'presentation' : 'button'}" ${inactive ? 'aria-disabled="true"' : 'tabindex="0"'}
            style="--course:${course.color}">
-        <div class="time">${lesson.start}<small>${lesson.end}</small></div>
+        <div class="time">${lesson.start}<small>${lesson.end}</small>${lesson.period ? `<span class="time-period">${escapeHtml(lesson.period)}</span>` : ""}</div>
         <div class="lessoncard">
           <strong>${escapeHtml(course.name)}</strong>
           <small>${escapeHtml(meta)}</small>
@@ -1177,7 +1177,7 @@ function renderDay(){
 
   const emptyHtml = Array.from({ length:openSlots }, (_,slot) => `
     <div class="lesson open-slot">
-      <div class="time">—<small>OPEN</small></div>
+      <div class="time">—<small>OPEN</small><span class="time-period">—</span></div>
       <div class="lessoncard" style="opacity:.52;--course:#6d7069">
         <strong>${lessons.length || slot ? 'Open schedule slot' : 'No classes'}</strong>
         <small>SCHEDULE SLOT AVAILABLE</small>
