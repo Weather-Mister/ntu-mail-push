@@ -1126,13 +1126,12 @@ async function loadCoolDeadlines(force = false){
 
   if (!force){
     const cached = loadCachedCoolEvents();
-    if (cached.length){
-      coolEvents = cached;
-      renderCoolDeadlines();
-    }
-  } else {
-    coolDeadlinesEl.innerHTML = `<div class="cool-status">Refreshing deadlines…</div>`;
+    if (cached.length) coolEvents = cached;
   }
+
+  // Course exam/quiz dates are local schedule data, so show them immediately
+  // even when the private NTU COOL feed is unavailable or still syncing.
+  renderCoolDeadlines();
 
   if (coolRefreshButton) coolRefreshButton.disabled = true;
 
@@ -1142,12 +1141,10 @@ async function loadCoolDeadlines(force = false){
     const data = await response.json();
     coolEvents = Array.isArray(data.events) ? data.events : [];
     saveCachedCoolEvents();
-    renderCoolDeadlines();
   } catch (error) {
-    if (!coolEvents.length){
-      coolDeadlinesEl.innerHTML = `<div class="cool-status">Couldn’t sync NTU COOL right now.</div>`;
-    }
+    // Keep the academic dates (and any cached COOL entries) visible.
   } finally {
+    renderCoolDeadlines();
     if (coolRefreshButton) coolRefreshButton.disabled = false;
   }
 }
