@@ -25,26 +25,31 @@
     if (!active) return;
     const height = bottom - top;
     const compact = el.matches(".rail");
-    /* Match the compact, slightly waisted reference fader. */
-    const knob = Math.min(height, compact ? 28 : (innerWidth < 860 ? 30 : 32));
+    s.track.classList.toggle("is-compact", compact);
+
+    /* Read the actual CSS dimensions so Claude's knob can be resized in CSS
+       without the scroll math drifting out of sync. */
+    const knob = Math.min(height, s.thumb.offsetHeight || 49);
+    const railWidth = s.track.offsetWidth || 33;
     const travel = Math.max(0, height - knob);
     const pos = travel * el.scrollTop / max;
     Object.assign(s, { top, max, travel, pos, knob });
-    const thumbWidth = compact ? 20 : (innerWidth < 860 ? 22 : 24);
-    const railWidth = compact ? 20 : (innerWidth < 860 ? 22 : 24);
-    const railLeft = r.right - 3 - thumbWidth;
-    s.track.classList.toggle("is-compact", compact);
+    const railLeft = r.right - 3 - railWidth;
     s.track.style.cssText = "top:" + top + "px;left:" + Math.max(0,Math.min(innerWidth-railWidth,railLeft)) + "px;height:" + height + "px";
-    s.thumb.style.cssText = "top:" + pos + "px;height:" + knob + "px";
+    s.thumb.style.top = pos + "px";
   }
   function attach(el, resize) {
     const track = document.createElement("div");
     track.className = "skeuo-slider";
     track.hidden = true;
-    const thumb = document.createElement("div");
-    thumb.className = "skeuo-slider-thumb";
 
-    track.appendChild(thumb);
+    const slot = document.createElement("div");
+    slot.className = "slider-track";
+
+    const thumb = document.createElement("div");
+    thumb.className = "skeuo-slider-thumb slider-knob";
+
+    track.append(slot, thumb);
     layer.appendChild(track);
     el.classList.add("skeuo-scroll-host");
     const s = {el, track, thumb, dragging:false};
