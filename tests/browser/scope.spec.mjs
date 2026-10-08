@@ -17,6 +17,13 @@ async function mount(page, reducedMotion = false, firefox = false) {
   await page.evaluate(isFirefox => {
     if (isFirefox) {
       Object.defineProperty(navigator, 'userAgent', { configurable: true, value: 'Mozilla/5.0 Firefox/145.0' });
+      const saved = new Map();
+      Object.defineProperty(window, 'localStorage', {
+        configurable: true,
+        value: { getItem: key => saved.get(key) ?? null, setItem: (key, val) => saved.set(key, String(val)) }
+      });
+      window.testAudioLevels = [0, 0];
+      window.testAnalyserCount = 0;
     }
     window.inputCalls = [];
     window.getNextClass = () => ({ state: 'Next', startAt: new Date(Date.now() + 1800000) });
@@ -29,6 +36,18 @@ async function mount(page, reducedMotion = false, firefox = false) {
         return super.createMediaStreamSource(stream);
       }
     };
+    if (isFirefox) {
+      const originalAnalyser = window.AudioContext.prototype.createAnalyser;
+      window.AudioContext.prototype.createAnalyser = function() {
+        const analyser = originalAnalyser.call(this);
+        const index = window.testAnalyserCount++;
+        analyser.getByteTimeDomainData = data => {
+          const amplitude = window.testAudioLevels[index] || 0;
+          for (let i = 0; i < data.length; i++) data[i] = 128 + Math.round(amplitude * (i % 2 ? 1 : -1));
+        };
+        return analyser;
+      };
+    }
     window.captureCalls = 0;
     Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: {
       getUserMedia: constraints => {
@@ -50,7 +69,8 @@ async function mount(page, reducedMotion = false, firefox = false) {
         });
       }
     } });
-    window.provideInput = async () => {
+    window.inputTracks = [];
+    window.provideInput = async (name = 'Input') => {
       const producer = new NativeContext();
       const oscillator = producer.createOscillator();
       const destination = producer.createMediaStreamDestination();
@@ -59,6 +79,9 @@ async function mount(page, reducedMotion = false, firefox = false) {
       await producer.resume();
       window.producer = producer;
       window.pickedTracks = destination.stream.getAudioTracks();
+      const track = window.pickedTracks[0];
+      Object.defineProperty(track, 'label', { configurable: true, value: name });
+      window.inputTracks.push(track);
       window.resolveInput(new MediaStream(window.pickedTracks));
     };
     window.provideCapture = async (includeAudio = true) => {
@@ -149,25 +172,62 @@ test('Firefox uses an audio input without display sharing', async ({ page }) => 
   expect(errors).toEqual([]);
 });
 
-test('Firefox source menu switches to a specific loopback device', async ({ page }) => {
+test('Firefox multi-input selector remembers selections and switches to the active signal', async ({ page }) => {
   const errors = await mount(page, false, true);
   const scope = page.locator('#scheduleScope');
   await scope.click();
-  await page.evaluate(() => window.provideInput());
+  await page.evaluate(() => window.provideInput('Microphone'));
   await expect(scope).toHaveClass(/pc-audio-active/);
   await scope.click({ button: 'right' });
-  const selector = page.getByRole('combobox', { name: 'Audio input source' });
-  await expect(selector).toBeVisible();
-  await selector.selectOption('loopback');
-  await expect(page.locator('#scheduleScopeMode')).toHaveText('CHOOSE INPUT');
-  const constraints = await page.evaluate(() => window.inputCalls.at(-1));
-  expect(constraints.audio.deviceId).toEqual({ exact: 'loopback' });
-  await page.evaluate(() => window.provideInput());
+  const menu = page.getByRole('group', { name: 'Oscilloscope audio inputs' });
+  await expect(menu).toBeVisible();
+  await menu.getByRole('checkbox', { name: 'Microphone' }).check();
+  await menu.getByRole('checkbox', { name: 'Stereo Mix (Loopback)' }).check();
+  await menu.getByRole('button', { name: 'Apply' }).click();
+
+  const selected = await page.evaluate(() => JSON.parse(localStorage.getItem('ntu-scope-firefox-inputs')));
+  expect(selected).toEqual(['microphone', 'loopback']);
+  await expect.poll(() => page.evaluate(() => window.inputCalls.length)).toBe(2);
+  expect((await page.evaluate(() => window.inputCalls[1])).audio.deviceId).toEqual({ exact: 'microphone' });
+  await page.evaluate(() => window.provideInput('Loopback A'));
+  await expect.poll(() => page.evaluate(() => window.inputCalls.length)).toBe(3);
+  expect((await page.evaluate(() => window.inputCalls[2])).audio.deviceId).toEqual({ exact: 'loopback' });
+  await page.evaluate(() => window.provideInput('Loopback B'));
   await expect(scope).toHaveClass(/pc-audio-active/);
+  await expect(page.locator('#scheduleScopeLabel')).toHaveText('AUDIO / AUTO');
+  await expect(page.locator('#scheduleScopeValue')).toHaveText('2 IN');
+
+  await page.evaluate(() => { window.testAudioLevels = [100, 0]; });
+  await expect(page.locator('#scheduleScopeMode')).toHaveText('AUTO: LOOPBACK A');
+  await page.evaluate(() => { window.testAudioLevels = [0, 120]; });
+  await expect(page.locator('#scheduleScopeMode')).toHaveText('AUTO: LOOPBACK B', { timeout: 4000 });
+
   await scope.press('Shift+Enter');
-  await expect(selector).toBeVisible();
+  await expect(menu).toBeVisible();
   await page.keyboard.press('Escape');
-  await expect(selector).toHaveCount(0);
+  await expect(menu).toHaveCount(0);
+  await scope.click();
+  await expect(scope).not.toHaveClass(/pc-audio-active/);
+  expect(await page.evaluate(() => window.inputTracks.every(t => t.readyState === 'ended'))).toBe(true);
+  expect(errors).toEqual([]);
+});
+
+test('Firefox auto-input survives a disconnected source and retains remaining signal', async ({ page }) => {
+  const errors = await mount(page, false, true);
+  await page.evaluate(() => localStorage.setItem('ntu-scope-firefox-inputs', JSON.stringify(['microphone', 'loopback'])));
+  const scope = page.locator('#scheduleScope');
+  await scope.click();
+  await page.evaluate(() => window.provideInput('Loopback A'));
+  await expect.poll(() => page.evaluate(() => window.inputCalls.length)).toBe(2);
+  await page.evaluate(() => window.provideInput('Loopback B'));
+  await expect(page.locator('#scheduleScopeValue')).toHaveText('2 IN');
+  await page.evaluate(() => {
+    inputTracks[0].stop();
+    inputTracks[0].dispatchEvent(new Event('ended'));
+  });
+  await expect(page.locator('#scheduleScopeValue')).toHaveText('LIVE');
+  await expect(scope).toHaveClass(/pc-audio-active/);
+  await scope.click();
   expect(errors).toEqual([]);
 });
 
