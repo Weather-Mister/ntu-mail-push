@@ -5,7 +5,7 @@ const runtime = readFileSync(new URL('../../sites/eren/skeuo-runtime.js', import
 const schedule = runtime.slice(runtime.indexOf('/* Schedule interval oscilloscope.'), runtime.lastIndexOf("if ('serviceWorker' in navigator)"));
 const audio = readFileSync(new URL('../../sites/eren/pc-audio-scope.js', import.meta.url), 'utf8');
 
-async function mount(page, reducedMotion = false) {
+async function mount(page, reducedMotion = false, firefox = false) {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.emulateMedia({ reducedMotion: reducedMotion ? 'reduce' : 'no-preference' });
@@ -14,7 +14,11 @@ async function mount(page, reducedMotion = false) {
     <svg><path id="scheduleScopeTrace" d="M0 21H200"/></svg>
     <span id="scheduleScopeMode">NEXT START</span><span id="scheduleScopeHint">λ ∝ ΔT</span>
   </div>`);
-  await page.evaluate(() => {
+  await page.evaluate(isFirefox => {
+    if (isFirefox) {
+      Object.defineProperty(navigator, 'userAgent', { configurable: true, value: 'Mozilla/5.0 Firefox/145.0' });
+    }
+    window.inputCalls = [];
     window.getNextClass = () => ({ state: 'Next', startAt: new Date(Date.now() + 1800000) });
     const NativeContext = window.AudioContext;
     window.contexts = [];
@@ -27,6 +31,17 @@ async function mount(page, reducedMotion = false) {
     };
     window.captureCalls = 0;
     Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: {
+      getUserMedia: constraints => {
+        window.inputCalls.push(constraints);
+        return new Promise((resolve, reject) => {
+          window.resolveInput = resolve;
+          window.rejectInput = reject;
+        });
+      },
+      enumerateDevices: async () => [
+        { kind: 'audioinput', deviceId: 'microphone', label: 'Microphone' },
+        { kind: 'audioinput', deviceId: 'loopback', label: 'Stereo Mix (Loopback)' }
+      ],
       getDisplayMedia: () => {
         window.captureCalls++;
         return new Promise((resolve, reject) => {
@@ -35,6 +50,17 @@ async function mount(page, reducedMotion = false) {
         });
       }
     } });
+    window.provideInput = async () => {
+      const producer = new NativeContext();
+      const oscillator = producer.createOscillator();
+      const destination = producer.createMediaStreamDestination();
+      oscillator.connect(destination);
+      oscillator.start();
+      await producer.resume();
+      window.producer = producer;
+      window.pickedTracks = destination.stream.getAudioTracks();
+      window.resolveInput(new MediaStream(window.pickedTracks));
+    };
     window.provideCapture = async (includeAudio = true) => {
       // Synthetic audio stays in memory; no speaker or system capture is used.
       const producer = new NativeContext();
@@ -51,7 +77,7 @@ async function mount(page, reducedMotion = false) {
       window.pickedTracks = tracks;
       window.resolveCapture(new MediaStream(tracks));
     };
-  });
+  }, firefox);
   await page.addScriptTag({ content: schedule });
   await page.addScriptTag({ content: audio });
   return errors;
@@ -101,6 +127,59 @@ test('no-audio and cancelled capture remain visible and allow retry', async ({ p
   await expect(page.locator('#scheduleScopeMode')).toHaveText('CANCELLED');
   await scope.click();
   await page.evaluate(() => window.provideCapture());
+  await expect(scope).toHaveClass(/pc-audio-active/);
+  expect(errors).toEqual([]);
+});
+
+test('Firefox uses an audio input without display sharing', async ({ page }) => {
+  const errors = await mount(page, false, true);
+  const scope = page.locator('#scheduleScope');
+  await scope.click();
+  await expect(page.locator('#scheduleScopeMode')).toHaveText('CHOOSE INPUT');
+  expect(await page.evaluate(() => window.captureCalls)).toBe(0);
+  expect(await page.evaluate(() => window.inputCalls[0])).toMatchObject({
+    video: false, audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+  });
+  await page.evaluate(() => window.provideInput());
+  await expect(scope).toHaveClass(/pc-audio-active/);
+  await expect(page.locator('#scheduleScopeMode')).toHaveText('AUDIO INPUT');
+  await scope.click();
+  await expect(scope).not.toHaveClass(/pc-audio-active/);
+  expect(await page.evaluate(() => pickedTracks.every(t => t.readyState === 'ended'))).toBe(true);
+  expect(errors).toEqual([]);
+});
+
+test('Firefox source menu switches to a specific loopback device', async ({ page }) => {
+  const errors = await mount(page, false, true);
+  const scope = page.locator('#scheduleScope');
+  await scope.click();
+  await page.evaluate(() => window.provideInput());
+  await expect(scope).toHaveClass(/pc-audio-active/);
+  await scope.click({ button: 'right' });
+  const selector = page.getByRole('combobox', { name: 'Audio input source' });
+  await expect(selector).toBeVisible();
+  await selector.selectOption('loopback');
+  await expect(page.locator('#scheduleScopeMode')).toHaveText('CHOOSE INPUT');
+  const constraints = await page.evaluate(() => window.inputCalls.at(-1));
+  expect(constraints.audio.deviceId).toEqual({ exact: 'loopback' });
+  await page.evaluate(() => window.provideInput());
+  await expect(scope).toHaveClass(/pc-audio-active/);
+  await scope.press('Shift+Enter');
+  await expect(selector).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(selector).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
+
+test('Firefox rejected permission leaves an informative retry state', async ({ page }) => {
+  const errors = await mount(page, false, true);
+  const scope = page.locator('#scheduleScope');
+  await scope.click();
+  await page.evaluate(() => rejectInput(new DOMException('Blocked', 'NotAllowedError')));
+  await expect(page.locator('#scheduleScopeMode')).toHaveText('INPUT BLOCKED');
+  await expect(scope).not.toHaveClass(/pc-audio-active/);
+  await scope.click();
+  await page.evaluate(() => window.provideInput());
   await expect(scope).toHaveClass(/pc-audio-active/);
   expect(errors).toEqual([]);
 });
