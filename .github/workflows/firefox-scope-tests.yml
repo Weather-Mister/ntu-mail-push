@@ -1,0 +1,30 @@
+name: Firefox oscilloscope tests
+on:
+  pull_request:
+    paths:
+      - 'sites/eren/pc-audio-scope.js'
+      - 'sites/eren/skeuo-runtime.js'
+      - 'tests/browser/scope.spec.mjs'
+      - 'playwright.firefox.config.mjs'
+      - '.github/workflows/firefox-scope-tests.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'sites/eren/pc-audio-scope.js'
+      - 'sites/eren/skeuo-runtime.js'
+      - 'tests/browser/scope.spec.mjs'
+      - 'playwright.firefox.config.mjs'
+      - '.github/workflows/firefox-scope-tests.yml'
+jobs:
+  scope:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+      - run: npx playwright install --with-deps firefox
+      - run: npx playwright test tests/browser/scope.spec.mjs --config playwright.firefox.config.mjs --grep Firefox --reporter=line

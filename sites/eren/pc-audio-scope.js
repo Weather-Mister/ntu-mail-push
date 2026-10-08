@@ -36,6 +36,8 @@
   const inputStreams = [];
   let currentInput = null;
   let lastAutoSwitch = 0;
+  let pendingFirefoxStream = null;
+  let pickerGeneration = 0;
 
   const multiPreferenceKey = 'ntu-scope-firefox-inputs';
   function readPreferences() {
@@ -132,6 +134,8 @@
   }
 
   function closePicker() {
+    // Invalidate any enumerateDevices() that is still resolving.
+    pickerGeneration++;
     inputPicker?.remove();
     inputPicker = null;
     document.removeEventListener('pointerdown', dismissPicker);
@@ -141,6 +145,11 @@
   function stop() {
     captureEpoch++;
     closePicker();
+    // A granted input may still be waiting for AudioContext.resume().
+    pendingFirefoxStream?.getTracks().forEach(track => {
+      try { track.stop(); } catch {}
+    });
+    pendingFirefoxStream = null;
     for (const input of inputStreams.splice(0)) {
       try { input.source.disconnect(); } catch {}
       input.stream.getTracks().forEach(track => { try { track.stop(); } catch {} });
@@ -215,6 +224,7 @@
           picked.getTracks().forEach(track => track.stop());
           return;
         }
+        pendingFirefoxStream = picked;
         const track = picked.getAudioTracks()[0];
         if (!track) throw new Error('No audio input track');
         if (!audioContext) {
@@ -222,6 +232,7 @@
           await audioContext.resume();
           if (epoch !== captureEpoch) {
             picked.getTracks().forEach(t => t.stop());
+            pendingFirefoxStream = null;
             return;
           }
         }
@@ -237,6 +248,7 @@
           label: track.label || ''
         };
         inputStreams.push(input);
+        pendingFirefoxStream = null;
         track.addEventListener('ended', () => {
           if (!active) return;
           try { inputSource.disconnect(); } catch {}
@@ -250,6 +262,7 @@
         }, { once: true });
       } catch (error) {
         if (!firstError) firstError = error;
+        if (pendingFirefoxStream === picked) pendingFirefoxStream = null;
         picked?.getTracks().forEach(track => { try { track.stop(); } catch {} });
         // A rejection is not permission to try other new devices.
         if (error?.name === 'NotAllowedError') break;
@@ -393,11 +406,13 @@
   async function showInputPicker() {
     if (!isFirefox || !navigator.mediaDevices?.enumerateDevices) return;
     closePicker();
+    const generation = pickerGeneration;
     let devices;
     try {
       devices = (await navigator.mediaDevices.enumerateDevices())
         .filter(d => d.kind === 'audioinput' && d.deviceId && d.deviceId !== 'default');
     } catch { return; }
+    if (generation !== pickerGeneration) return;
 
     const picker = document.createElement('div');
     picker.setAttribute('role', 'group');
@@ -467,6 +482,8 @@
   }
 
   function toggle() {
+    // A second click cancels a pending Firefox permission/device request.
+    if (isFirefox && connecting) { stop(); return; }
     if (active) stop();
     else {
       scope.classList.remove('pc-audio-error');
