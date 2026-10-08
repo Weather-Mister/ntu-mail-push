@@ -1,0 +1,88 @@
+/* Custom desk-console scrollbar hardware. Native scrolling remains untouched. */
+.skeuo-scroll-host{
+  scrollbar-width:none!important;
+  -ms-overflow-style:none!important;
+}
+.skeuo-scroll-host::-webkit-scrollbar{
+  display:none!important;
+  width:0!important;
+  height:0!important;
+}
+:is(#todoList,#coolDeadlines,.inbox).skeuo-scroll-host.skeuo-can-scroll{
+  padding-right:19px!important;
+}
+#skeuo-slider-layer{
+  position:fixed;
+  inset:0;
+  z-index:60;
+  pointer-events:none;
+}
+.skeuo-slider{
+  position:absolute;
+  width:14px;
+  border:1px solid #877960;
+  border-radius:10px;
+  background:linear-gradient(90deg,#86775f 0%,#635641 38%,#75664e 67%,#ab9a7c 100%);
+  box-shadow:
+    inset 2px 1px 3px rgba(42,30,17,.58),
+    inset -1px 0 1px rgba(255,246,218,.22),
+    0 1px 0 rgba(250,239,209,.35);
+  pointer-events:auto;
+  touch-action:none;
+  cursor:pointer;
+}
+.skeuo-slider[hidden]{display:none!important}
+.skeuo-slider-thumb{
+  position:absolute;
+  left:1px;
+  right:1px;
+  min-height:0;
+  border:1px solid #7d705b;
+  border-radius:9px;
+  background:
+    linear-gradient(90deg,rgba(255,255,255,.35),transparent 36%,rgba(60,44,25,.12) 85%),
+    linear-gradient(180deg,#f1e6ce,#d9c8a8 44%,#ac9978 100%);
+  box-shadow:
+    inset 1px 1px 0 rgba(255,255,255,.65),
+    inset -1px -1px 1px rgba(69,49,29,.26),
+    1px 2px 2px rgba(30,22,13,.33);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:grab;
+  transition:filter .12s ease;
+}
+.skeuo-slider:hover .skeuo-slider-thumb{filter:brightness(1.055)}
+.skeuo-slider.is-dragging .skeuo-slider-thumb{
+  cursor:grabbing;
+  background:linear-gradient(180deg,#d2bfa0,#bcaa8b 55%,#a08d70);
+  box-shadow:inset 1px 2px 3px rgba(66,46,28,.32),0 1px 1px rgba(30,22,13,.22);
+}
+/* Three convex, gently arched physical grip nubs rather than flat stripes. */
+.skeuo-slider-grips{
+  width:9px;
+  height:22px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:space-between;
+  pointer-events:none;
+}
+.skeuo-slider-grips i{
+  display:block;
+  width:8px;
+  height:5px;
+  border:1px solid rgba(98,78,52,.52);
+  border-radius:50% 50% 40% 40% / 85% 85% 52% 52%;
+  background:linear-gradient(180deg,#f9f1df 5%,#d9c8aa 55%,#a89474);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.85),0 1px 1px rgba(65,48,28,.25);
+}
+@media(max-width:859px){
+  :is(#todoList,#coolDeadlines,.inbox).skeuo-scroll-host.skeuo-can-scroll{padding-right:15px!important}
+  .skeuo-slider{width:11px}
+  .skeuo-slider-grips{width:7px}
+  .skeuo-slider-grips i{width:6px}
+}
+@media(prefers-reduced-motion:reduce){
+  .skeuo-slider-thumb{transition:none}
+}
