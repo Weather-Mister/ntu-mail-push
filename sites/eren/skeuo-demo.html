@@ -4910,6 +4910,7 @@ h1{
 .schedule-scope{
   position:relative;
   align-self:center;
+  cursor:pointer;
   min-width:0;
   height:60px;
   min-height:60px;
@@ -4979,6 +4980,14 @@ h1{
   opacity:.78;
 }
 .scope-foot span:last-child{display:none}
+.schedule-scope:focus-visible{
+  outline:1px solid rgba(174,209,170,.72);
+  outline-offset:2px;
+}
+.schedule-scope.is-audio .scope-trace{
+  stroke:#b0d7ac;
+  filter:drop-shadow(0 0 2.4px rgba(137,205,130,.58));
+}
 @media (min-width:860px) and (max-width:1120px){
   .display{
     grid-template-columns:minmax(0,1fr) 135px auto!important;
@@ -5206,13 +5215,13 @@ h1{
     <section class="statusrow">
       <div class="panel display">
         <div id="nextClass"><span class="eyebrow">HAPPENING NOW / CHANNEL 01</span><strong>Engineering Mathematics</strong><p>ROOM 114 · END 16:10 · 42 MIN REMAINING</p></div>
-        <div class="schedule-scope" id="scheduleScope" role="img" aria-label="Schedule interval monitor">
-          <div class="scope-head"><span>ΔT / SCHED</span><b id="scheduleScopeValue">--</b></div>
+        <div class="schedule-scope" id="scheduleScope" role="button" tabindex="0" aria-pressed="false" aria-label="Schedule interval monitor. Activate to monitor PC audio." title="Click to monitor PC audio">
+          <div class="scope-head"><span id="scheduleScopeLabel">ΔT / SCHED</span><b id="scheduleScopeValue">--</b></div>
           <svg class="scope-wave" viewBox="0 0 200 42" preserveAspectRatio="none" aria-hidden="true">
             <path class="scope-gridline" d="M0 7H200 M0 21H200 M0 35H200 M25 0V42 M75 0V42 M125 0V42 M175 0V42"></path>
             <path class="scope-trace" id="scheduleScopeTrace" d="M0 21H200"></path>
           </svg>
-          <div class="scope-foot"><span id="scheduleScopeMode">NEXT START</span><span>λ ∝ ΔT</span></div>
+          <div class="scope-foot"><span id="scheduleScopeMode">NEXT START</span><span id="scheduleScopeHint">λ ∝ ΔT</span></div>
         </div>
         <div class="display-right"><div class="indicator"><i class="led" id="skeuoLiveLed"></i><span id="skeuoLiveState">LIVE</span></div><div class="indicator"><i class="led off"></i>ALRM</div></div>
       </div>
@@ -5519,7 +5528,7 @@ h1{
 
 
 <script src="./vendor/ffmpeg/ffmpeg.js?v=1"></script>
-<script src="./skeuo-runtime.js?v=22"></script>
+<script src="./skeuo-runtime.js?v=23"></script>\n<script src="./pc-audio-scope.js?v=1"></script>
 <script src="./mail-demo.js?v=22"></script>
 <script src="./skeuo-scrollbars.js?v=14"></script>
 
