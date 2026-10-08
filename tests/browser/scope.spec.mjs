@@ -253,6 +253,27 @@ test('Firefox rejected permission leaves an informative retry state', async ({ p
 });
 
 
+test('Firefox primes Web Audio during the click before requesting device permission', async ({ page }) => {
+  const errors = await mount(page, false, true);
+  await page.evaluate(() => {
+    const nativeResume = window.AudioContext.prototype.resume;
+    window.AudioContext.prototype.resume = function() {
+      window.scopeResumeStarted = true;
+      return nativeResume.call(this);
+    };
+    const originalRequest = navigator.mediaDevices.getUserMedia;
+    navigator.mediaDevices.getUserMedia = constraints => {
+      window.resumeWasBeforePermission = window.scopeResumeStarted === true;
+      return originalRequest(constraints);
+    };
+  });
+  await page.locator('#scheduleScope').click();
+  expect(await page.evaluate(() => window.resumeWasBeforePermission)).toBe(true);
+  await page.evaluate(() => window.provideInput('Mic'));
+  await expect(page.locator('#scheduleScope')).toHaveClass(/pc-audio-active/);
+  expect(errors).toEqual([]);
+});
+
 test('Firefox input permission begins only on activation, then can be cancelled', async ({ page }) => {
   const errors = await mount(page, false, true);
   const scope = page.locator('#scheduleScope');
