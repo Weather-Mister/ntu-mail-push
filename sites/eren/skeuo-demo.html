@@ -9,7 +9,7 @@
 <link rel="icon" href="./favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="./mail-demo.css?v=10">
 <link rel="stylesheet" href="./mail-modern.css?v=4">
-<link rel="stylesheet" href="./skeuo-scrollbars.css?v=1">
+
 <style>
 :root{
   --wood-1:#4a2817;--wood-2:#60361f;--wood-3:#754329;--wood-4:#351b0f;
@@ -5139,87 +5139,7 @@ h1{
   .academic-block-copy strong{font-size:9.8px}
 }
 </style>
-<style id="tactile-scrollbar-pass">
-/* Shared hardware slider treatment for all scrollable console banks.
-   Keep native scrollbar input/keyboard/track behavior intact. */
-.machine :is(
-  #todoList, #coolDeadlines, .inbox, .rail,
-  .mailx-list, .mailx-reader, .mailx-reader-scroll,
-  .mailx-email-body, .mailx-attachment-list
-){
-  /* auto allows the detailed WebKit appearance to render on Chromium. */
-  scrollbar-width:auto;
-  scrollbar-color:auto;
-}
-.machine :is(
-  #todoList, #coolDeadlines, .inbox, .rail,
-  .mailx-list, .mailx-reader, .mailx-reader-scroll,
-  .mailx-email-body, .mailx-attachment-list
-)::-webkit-scrollbar{
-  width:13px;
-  height:13px;
-}
-.machine :is(
-  #todoList, #coolDeadlines, .inbox, .rail,
-  .mailx-list, .mailx-reader, .mailx-reader-scroll,
-  .mailx-email-body, .mailx-attachment-list
-)::-webkit-scrollbar-track{
-  border:2px solid #b9ad96;
-  border-radius:8px;
-  background:linear-gradient(90deg,#766c5b,#8c806b 30%,#a49780 53%,#776e5e);
-  box-shadow:inset 1px 1px 4px rgba(45,34,22,.57),inset -1px 0 rgba(255,250,231,.2);
-}
-.machine :is(
-  #todoList, #coolDeadlines, .inbox, .rail,
-  .mailx-list, .mailx-reader, .mailx-reader-scroll,
-  .mailx-email-body, .mailx-attachment-list
-)::-webkit-scrollbar-thumb{
-  min-height:36px;
-  border:2px solid #847863;
-  border-radius:7px;
-  background:
-    repeating-linear-gradient(0deg,transparent 0 6px,rgba(68,54,36,.17) 6px 7px,rgba(255,255,255,.3) 7px 8px,transparent 8px 13px),
-    linear-gradient(90deg,#a89a80,#e9dfc7 35%,#d3c5a8 68%,#a3967f);
-  box-shadow:inset 1px 1px rgba(255,255,255,.52),inset -1px -1px rgba(58,45,30,.25),0 1px 2px rgba(35,26,15,.25);
-}
-.machine :is(
-  #todoList, #coolDeadlines, .inbox, .rail,
-  .mailx-list, .mailx-reader, .mailx-reader-scroll,
-  .mailx-email-body, .mailx-attachment-list
-)::-webkit-scrollbar-thumb:hover{
-  border-color:#6b6252;
-  filter:brightness(1.09);
-}
-.machine :is(
-  #todoList, #coolDeadlines, .inbox, .rail,
-  .mailx-list, .mailx-reader, .mailx-reader-scroll,
-  .mailx-email-body, .mailx-attachment-list
-)::-webkit-scrollbar-thumb:active{
-  border-color:#625846;
-  background:linear-gradient(90deg,#9b8e76,#c6b79b 50%,#978a73);
-  box-shadow:inset 1px 2px 3px rgba(54,40,25,.38);
-}
-.machine :is(
-  #todoList, #coolDeadlines, .inbox, .rail,
-  .mailx-list, .mailx-reader, .mailx-reader-scroll,
-  .mailx-email-body, .mailx-attachment-list
-)::-webkit-scrollbar-corner{background:#9e9179}
-@media(max-width:859px){
-  .machine :is(
-    #todoList, #coolDeadlines, .inbox, .rail,
-    .mailx-list, .mailx-reader, .mailx-reader-scroll,
-    .mailx-email-body, .mailx-attachment-list
-  )::-webkit-scrollbar{width:10px;height:10px}
-}
-/* Firefox only exposes track/thumb colors and scrollbar thickness. */
-@supports (-moz-appearance:none){
-  .machine :is(
-    #todoList, #coolDeadlines, .inbox, .rail,
-    .mailx-list, .mailx-reader, .mailx-reader-scroll,
-    .mailx-email-body, .mailx-attachment-list
-  ){scrollbar-width:thin!important;scrollbar-color:#d6c7ab #817661!important}
-}
-</style>
+<link rel="stylesheet" href="./skeuo-scrollbars.css?v=2">
 </head>
 <body>
 <div class="desk-stage">
@@ -5601,7 +5521,7 @@ h1{
 <script src="./vendor/ffmpeg/ffmpeg.js?v=1"></script>
 <script src="./skeuo-runtime.js?v=22"></script>
 <script src="./mail-demo.js?v=22"></script>
-<script src="./skeuo-scrollbars.js?v=1"></script>
+<script src="./skeuo-scrollbars.js?v=2"></script>
 
 </body>
 </html>
