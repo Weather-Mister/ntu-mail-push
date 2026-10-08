@@ -42,15 +42,27 @@
 
 .skeuo-slider[hidden]{display:none!important}
 
-/* Claude's track is a dedicated child so the large knob remains the hit target. */
-.skeuo-slider .slider-track{
-  --u:var(--knob-u);
+/* Keep the original narrow recessed scroll slot, while using Claude's knob. */
+.skeuo-slider::before{
+  content:"";
   position:absolute;
   top:2px;
   bottom:2px;
   left:50%;
-  height:auto;
+  width:4px;
   transform:translateX(-50%);
+  border-radius:3px;
+  background:
+    linear-gradient(90deg,
+      #8c7c66 0%,
+      #564a3b 18%,
+      #2e261f 48%,
+      #3b3128 70%,
+      #8f7f68 100%);
+  box-shadow:
+    inset 1px 0 1px rgba(26,18,10,.46),
+    inset -1px 0 1px rgba(20,14,8,.25),
+    1px 0 rgba(255,245,223,.30);
   pointer-events:none;
   z-index:0;
 }
