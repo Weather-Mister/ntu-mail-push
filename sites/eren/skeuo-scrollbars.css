@@ -1,82 +1,73 @@
-/* Physical vertical mixer faders. The underlying list uses native scrolling,
-   but its OS scrollbar is fully suppressed in favor of this custom control. */
-.skeuo-scroll-host {
+/* Small physical mixer-fader controls. The content still scrolls natively. */
+.skeuo-scroll-host{
   scrollbar-width:none!important;
   -ms-overflow-style:none!important;
 }
 .skeuo-scroll-host::-webkit-scrollbar,
 .skeuo-scroll-host::-webkit-scrollbar-thumb,
 .skeuo-scroll-host::-webkit-scrollbar-track,
-.skeuo-scroll-host::-webkit-scrollbar-corner {
+.skeuo-scroll-host::-webkit-scrollbar-corner{
   display:none!important;
   width:0!important;
   height:0!important;
   background:transparent!important;
 }
-:is(#todoList,#coolDeadlines,.inbox,.mailx-list,.mailx-reader,.mailx-reader-scroll,.mailx-email-body).skeuo-scroll-host.skeuo-can-scroll {
-  padding-right:50px!important;
+:is(#todoList,#coolDeadlines,.inbox,.mailx-list,.mailx-reader,.mailx-reader-scroll,.mailx-email-body).skeuo-scroll-host.skeuo-can-scroll{
+  padding-right:29px!important;
 }
-.rail.skeuo-scroll-host.skeuo-can-scroll {padding-right:28px!important}
-#skeuo-slider-layer {
-  position:fixed;
-  inset:0;
-  z-index:60;
-  pointer-events:none;
+.rail.skeuo-scroll-host.skeuo-can-scroll{padding-right:18px!important}
+#skeuo-slider-layer{
+  position:fixed;inset:0;z-index:60;pointer-events:none;
 }
-/* The underlying 5px slot stays behind the crossing fader cap. */
-.skeuo-slider {
+.skeuo-slider{
   position:absolute;
-  width:28px;
+  width:18px;
   border:0;
-  background:none;
+  background:transparent;
   box-shadow:none;
   pointer-events:auto;
-  touch-action:none;
   cursor:pointer;
+  touch-action:none;
 }
-.skeuo-slider::before {
+/* Narrow recessed slot behind the moving cap, not a second scrollbar. */
+.skeuo-slider::before{
   content:"";
   position:absolute;
-  top:0;
-  bottom:0;
-  left:12px;
-  width:5px;
-  border:1px solid #665842;
-  border-radius:4px;
-  background:linear-gradient(90deg,#7e6d54,#211c16 26%,#15120e 60%,#67573f);
-  box-shadow:inset 1px 0 2px #14100b,1px 0 rgba(255,247,222,.46);
+  top:2px;bottom:2px;left:8px;width:3px;
+  border-radius:3px;
+  background:linear-gradient(90deg,#564a3c,#29241d 55%,#685944);
+  box-shadow:inset 1px 0 1px rgba(14,12,10,.55),1px 0 rgba(255,245,218,.33);
   pointer-events:none;
 }
-.skeuo-slider[hidden] {display:none!important}
-/* This image is rendered in its actual fitted orientation: tall cap, horizontal
-   index mark and ribs, just like a vertical mixing-console fader. */
-.skeuo-slider-thumb {
+.skeuo-slider[hidden]{display:none!important}
+.skeuo-slider-thumb{
   position:absolute;
-  top:0;
-  left:-8px;
-  width:44px;
-  height:64px;
+  left:-3px;
+  width:25px;
+  height:36px;
   border:0;
-  background:transparent url("./skeuo-fader-cap.svg?v=1") center/100% 100% no-repeat;
-  filter:drop-shadow(1px 3px 2px rgba(38,26,14,.38));
+  background:transparent url("./skeuo-fader-cap.svg?v=2") center/100% 100% no-repeat;
+  filter:drop-shadow(1px 2px 1px rgba(52,35,18,.24));
   cursor:grab;
-  transition:filter .13s ease;
   touch-action:none;
+  transition:filter .14s ease;
 }
-.skeuo-slider:hover .skeuo-slider-thumb {
-  filter:brightness(1.055) drop-shadow(1px 3px 2px rgba(38,26,14,.38));
+.skeuo-slider:hover .skeuo-slider-thumb{
+  filter:brightness(1.045) drop-shadow(1px 2px 1px rgba(52,35,18,.26));
 }
-.skeuo-slider.is-dragging .skeuo-slider-thumb {
+.skeuo-slider.is-dragging .skeuo-slider-thumb{
   cursor:grabbing;
-  filter:brightness(.94) drop-shadow(1px 1px 1px rgba(38,26,14,.35));
+  filter:brightness(.96) drop-shadow(0 1px 1px rgba(52,35,18,.22));
 }
-.skeuo-slider.is-compact{width:21px}
-.skeuo-slider.is-compact::before{left:9px;width:4px}
-.skeuo-slider.is-compact .skeuo-slider-thumb{width:30px;height:44px;left:-4px}
-@media(max-width:859px) {
-  :is(#todoList,#coolDeadlines,.inbox,.mailx-list,.mailx-reader,.mailx-reader-scroll,.mailx-email-body).skeuo-scroll-host.skeuo-can-scroll{padding-right:42px!important}
-  .skeuo-slider:not(.is-compact){width:24px}
-  .skeuo-slider:not(.is-compact)::before{left:10px;width:4px}
-  .skeuo-slider:not(.is-compact) .skeuo-slider-thumb{width:38px;left:-7px}
+.skeuo-slider.is-compact{width:14px}
+.skeuo-slider.is-compact::before{left:6px;width:3px}
+.skeuo-slider.is-compact .skeuo-slider-thumb{left:-2px;width:19px;height:29px}
+@media(max-width:859px){
+  :is(#todoList,#coolDeadlines,.inbox,.mailx-list,.mailx-reader,.mailx-reader-scroll,.mailx-email-body).skeuo-scroll-host.skeuo-can-scroll{
+    padding-right:25px!important;
+  }
+  .skeuo-slider:not(.is-compact){width:16px}
+  .skeuo-slider:not(.is-compact)::before{left:7px}
+  .skeuo-slider:not(.is-compact) .skeuo-slider-thumb{left:-3px;width:22px;height:33px}
 }
 @media(prefers-reduced-motion:reduce){.skeuo-slider-thumb{transition:none}}
