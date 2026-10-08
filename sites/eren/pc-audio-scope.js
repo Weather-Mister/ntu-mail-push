@@ -81,6 +81,23 @@
   function draw() {
     if (!active) return;
     if (isFirefox) {
+      // Firefox may move a track to "ended" without delivering its event to a
+      // particular MediaStream wrapper. Prune from readyState as well, so
+      // stale sources cannot keep the count wrong or freeze auto-selection.
+      const previousCount = inputStreams.length;
+      for (let i = inputStreams.length - 1; i >= 0; i--) {
+        const input = inputStreams[i];
+        if (input.track.readyState !== 'ended') continue;
+        try { input.source.disconnect(); } catch {}
+        inputStreams.splice(i, 1);
+      }
+      if (inputStreams.length !== previousCount && inputStreams.length) {
+        if (!inputStreams.includes(currentInput)) currentInput = null;
+        if (value) value.textContent = inputStreams.length > 1 ? inputStreams.length + ' IN' : 'LIVE';
+        if (label) label.textContent = inputStreams.length > 1 ? 'AUDIO / AUTO' : 'AUDIO / IN';
+        if (mode) mode.textContent = statusForInput(currentInput || inputStreams[0]);
+      }
+
       // Separate analysers avoid mixing inputs and let us select the strongest
       // *actual* input signal instead of inferring the OS playback device.
       let best = null;
