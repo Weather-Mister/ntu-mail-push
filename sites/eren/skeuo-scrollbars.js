@@ -1,6 +1,6 @@
 /* Overlay sliders preserve native wheel, touch, and keyboard scrolling. */
 (() => {
-  const selectors = "#todoList,#coolDeadlines,.inbox,.rail,.mailx-list,.mailx-reader,.mailx-reader-scroll,.mailx-email-body,.mailx-attachment-list";
+  const selectors = "#todoList,#coolDeadlines,.inbox,.rail";
   const layer = document.createElement("div");
   layer.id = "skeuo-slider-layer";
   layer.setAttribute("aria-hidden", "true");
