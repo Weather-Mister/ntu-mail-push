@@ -171,25 +171,45 @@ test('reduced motion keeps schedule phase still', async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
-test('audio loudness changes height while preserving schedule wave spacing', async ({ page }) => {
+test('incoming audio replaces only the edge while older waves scroll intact', async ({ page }) => {
   const errors = await mount(page, true);
-  const result = await page.evaluate(() => {
-    scheduleScopeState = { active: true, live: false, minutes: 60 };
-    const points = level => {
-      drawScheduleScope(0, level);
-      return Array.from(scheduleScopeTrace.getAttribute('d').matchAll(/[ML]([\d.]+) ([-\d.]+)/g), m => [Number(m[1]), Number(m[2]) - 21]);
+  await page.evaluate(() => {
+    performance.now = () => 1000;
+    window.requestAnimationFrame = callback => {
+      if (callback.name === 'draw') window.audioFrame = callback;
+      return 1;
     };
-    return { schedule: points(null), quiet: points(0), loud: points(1) };
+    const original = AudioContext.prototype.createAnalyser;
+    AudioContext.prototype.createAnalyser = function() {
+      const analyser = original.call(this);
+      analyser.getByteTimeDomainData = data => {
+        for (let i = 0; i < data.length; i++) {
+          data[i] = window.silentSignal ? 128 : 128 + Math.round(70 * Math.sin(i * 0.08));
+        }
+      };
+      return analyser;
+    };
   });
-  expect(result.loud.map(p => p[0])).toEqual(result.schedule.map(p => p[0]));
-  for (let i = 0; i < result.schedule.length; i++) {
-    const [x, deviation] = result.schedule[i];
-    if (Math.abs(deviation) > 0.05) {
-      expect(Math.sign(result.quiet[i][1]), `quiet wave at x=${x}`).toBe(Math.sign(deviation));
-      expect(Math.sign(result.loud[i][1]), `loud wave at x=${x}`).toBe(Math.sign(deviation));
-    }
+  await page.locator('#scheduleScope').click();
+  await page.evaluate(() => window.provideCapture());
+  await expect(page.locator('#scheduleScope')).toHaveClass(/pc-audio-active/);
+  const result = await page.evaluate(() => {
+    const points = () => Array.from(document.getElementById('scheduleScopeTrace').getAttribute('d').matchAll(/[ML]([-\d.]+) ([-\d.]+)/g), m => [Number(m[1]), Number(m[2])]);
+    const before = points();
+    window.silentSignal = true;
+    window.audioFrame(1030);
+    const after = points();
+    window.audioFrame(1090);
+    return { before, after, later: points() };
+  });
+  expect(result.before.some(p => Math.abs(p[1] - 21) > 5)).toBe(true);
+  expect(result.after.length).toBe(result.before.length);
+  for (let i = 0; i < result.after.length - 1; i++) {
+    expect(result.after[i][1]).toBe(result.before[i + 1][1]);
+    expect(result.after[i][0]).toBeCloseTo(result.before[i][0] - 0.1, 2);
   }
-  const peak = points => Math.max(...points.map(p => Math.abs(p[1])));
-  expect(peak(result.loud)).toBeGreaterThan(peak(result.quiet) * 7);
+  expect(result.after.at(-1)[1]).toBe(21);
+  expect(result.later.slice(-3).every(p => p[1] === 21)).toBe(true);
+  expect(result.later.slice(0, -3).map(p => p[1])).toEqual(result.before.slice(3).map(p => p[1]));
   expect(errors).toEqual([]);
 });
