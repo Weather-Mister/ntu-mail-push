@@ -25,7 +25,7 @@
   /* Layered underside shadow: a tight contact shadow plus a softer
      cast shadow so the cap feels physically lifted off the recessed slot. */
   filter:
-    saturate(.78)
+    saturate(.56)
     brightness(1.01)
     drop-shadow(0 calc(4 * var(--u)) calc(1.8 * var(--u)) rgba(25, 14, 0, .69))
     drop-shadow(calc(1 * var(--u)) calc(5.5 * var(--u)) calc(3.6 * var(--u)) rgba(40, 23, 4, .31))
