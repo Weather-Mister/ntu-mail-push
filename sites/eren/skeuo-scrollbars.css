@@ -1,5 +1,5 @@
-/* Scroll hardware uses the same ivory keycap materials and shadows as .key
-   in skeuo-demo.html. Keep native scrolling, conceal only native UI chrome. */
+/* Overlay scroll hardware: native wheel/touch/keyboard scrolling stays intact,
+   while the visible control reads like an old-school mixer fader. */
 .skeuo-scroll-host{
   scrollbar-width:none!important;
   -ms-overflow-style:none!important;
@@ -14,13 +14,14 @@
   background:transparent!important;
 }
 :is(#todoList,#coolDeadlines,.inbox).skeuo-scroll-host.skeuo-can-scroll{
-  padding-right:22px!important;
+  padding-right:34px!important;
 }
-.rail.skeuo-scroll-host.skeuo-can-scroll{padding-right:15px!important}
+.rail.skeuo-scroll-host.skeuo-can-scroll{padding-right:28px!important}
+
 #skeuo-slider-layer{position:fixed;inset:0;z-index:60;pointer-events:none}
 .skeuo-slider{
   position:absolute;
-  width:14px;
+  width:30px;
   border:0;
   background:transparent;
   box-shadow:none;
@@ -28,97 +29,80 @@
   touch-action:none;
   cursor:pointer;
 }
-/* Small recessed guide channel, without a second visible scrollbar. */
+
+/* Narrow recessed guide slot behind the physical fader cap. */
 .skeuo-slider::before{
   content:"";
   position:absolute;
   top:2px;
   bottom:2px;
-  left:5px;
-  width:3px;
-  border-radius:3px;
-  background:linear-gradient(90deg,#746954,#3c352a 57%,#8b7c64);
-  box-shadow:inset 1px 0 1px rgba(27,21,15,.4),1px 0 rgba(255,245,221,.28);
+  left:50%;
+  width:5px;
+  transform:translateX(-50%);
+  border-radius:4px;
+  background:
+    linear-gradient(90deg,
+      #8e806a 0%,
+      #5b5041 20%,
+      #302920 48%,
+      #3a3127 68%,
+      #8f8068 100%);
+  box-shadow:
+    inset 1px 0 2px rgba(28,20,12,.55),
+    inset -1px 0 1px rgba(25,18,11,.32),
+    1px 0 rgba(255,245,220,.34);
   pointer-events:none;
 }
 .skeuo-slider[hidden]{display:none!important}
-/* One actual little raised cylinder: two round layers, not a domed sphere.
-   The lower layer peeks out 3-4px below the upper ivory disk. */
+
+/* Warm, slightly orange ivory cap: larger, raised, gently waisted, with
+   three moulded grip ribs. The shape itself lives in the tiny SVG asset. */
 .skeuo-slider-thumb{
-  --nub-size:16px;
-  --nub-rise:4px;
   position:absolute;
-  left:-1px;
-  width:var(--nub-size);
-  height:calc(var(--nub-size) + var(--nub-rise));
+  left:1px;
+  width:28px;
   box-sizing:border-box;
   border:0;
   border-radius:0;
-  background:none;
+  background:url("./skeuo-fader-cap.svg?v=2") center/100% 100% no-repeat;
   box-shadow:none;
-  filter:drop-shadow(2px 3px 1.5px rgba(39,22,10,.3));
+  filter:
+    drop-shadow(0 1px 0 rgba(255,248,230,.24))
+    drop-shadow(2px 5px 2px rgba(47,29,15,.34));
   cursor:grab;
   touch-action:none;
-  transition:filter .12s ease;
-}
-.skeuo-slider-thumb::before{
-  content:"";
-  position:absolute;
-  left:0;
-  top:var(--nub-rise);
-  width:var(--nub-size);
-  height:var(--nub-size);
-  box-sizing:border-box;
-  border:1px solid #796f5e;
-  border-radius:50%;
-  background:linear-gradient(180deg,#c9bda6 0%,#9f927d 46%,#817664 100%);
-  box-shadow:0 1px 0 #726d62;
-  pointer-events:none;
-}
-.skeuo-slider-thumb::after{
-  content:"";
-  position:absolute;
-  left:0;
-  top:0;
-  width:var(--nub-size);
-  height:var(--nub-size);
-  box-sizing:border-box;
-  border:1px solid #8c806a;
-  border-radius:50%;
-  background:
-    linear-gradient(145deg,rgba(255,255,255,.31),transparent 36%),
-    linear-gradient(180deg,#f1ead8 0%,#e3dac4 64%,#c5b9a0 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.72),
-    inset -1px -1px 0 rgba(80,67,48,.13),
-    0 1px 0 #b8aa92;
-  pointer-events:none;
+  transition:filter .10s ease,transform .08s ease;
 }
 .skeuo-slider:hover .skeuo-slider-thumb{
-  filter:brightness(1.055) drop-shadow(2px 3px 1.5px rgba(39,22,10,.3));
+  filter:
+    brightness(1.035)
+    drop-shadow(0 1px 0 rgba(255,248,230,.26))
+    drop-shadow(2px 5px 2px rgba(47,29,15,.34));
 }
 .skeuo-slider.is-dragging .skeuo-slider-thumb{
   cursor:grabbing;
-  filter:brightness(.97) drop-shadow(1px 1px 1px rgba(39,22,10,.23));
+  transform:translateY(1px);
+  filter:
+    brightness(.975)
+    drop-shadow(0 1px 0 rgba(255,248,230,.18))
+    drop-shadow(1px 3px 1px rgba(47,29,15,.28));
 }
-.skeuo-slider.is-dragging .skeuo-slider-thumb::before{
-  background:linear-gradient(180deg,#b9ad99,#847967);
-}
-.skeuo-slider.is-compact{width:11px}
-.skeuo-slider.is-compact::before{left:4px;width:3px}
+
+.skeuo-slider.is-compact{width:24px}
 .skeuo-slider.is-compact .skeuo-slider-thumb{
-  --nub-size:12px;
-  --nub-rise:3px;
+  left:1px;
+  width:22px;
 }
+.skeuo-slider.is-compact::before{width:4px}
+
 @media(max-width:859px){
   :is(#todoList,#coolDeadlines,.inbox).skeuo-scroll-host.skeuo-can-scroll{
-    padding-right:20px!important;
+    padding-right:31px!important;
   }
-  .skeuo-slider:not(.is-compact){width:13px}
-  .skeuo-slider:not(.is-compact)::before{left:5px}
+  .skeuo-slider:not(.is-compact){width:27px}
   .skeuo-slider:not(.is-compact) .skeuo-slider-thumb{
-    --nub-size:15px;
-    --nub-rise:4px;
+    left:1px;
+    width:25px;
   }
 }
 @media(prefers-reduced-motion:reduce){.skeuo-slider-thumb{transition:none}}
