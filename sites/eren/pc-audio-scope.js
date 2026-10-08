@@ -17,7 +17,11 @@
   let stream = null;
   let active = false;
   let connecting = false;
-  let level = 0;
+  let gain = 1;
+  const history = [];
+  const incoming = [];
+  let scrollOffset = 0;
+  let lastDraw = 0;
   let raf = 0;
 
   function setUi(on, status='SYSTEM OUT') {
@@ -34,7 +38,7 @@
     }
   }
 
-  function draw() {
+  function draw(timestamp=performance.now()) {
     if (!active || !analyser || !data) return;
     analyser.getByteTimeDomainData(data);
 
@@ -44,10 +48,39 @@
       energy += v * v;
     }
     const rms = Math.sqrt(energy / data.length);
-    // Follow loudness while preserving the schedule trace's wavelength and motion.
-    const desired = Math.min(1, rms * 3);
-    level += (desired - level) * (desired > level ? 0.3 : 0.12);
-    drawScheduleScope(performance.now(), level);
+    const desired = rms > 0.004 ? Math.min(5.5, Math.max(1, 0.24 / rms)) : 1;
+    gain += (desired - gain) * 0.12;
+
+    const width = 200;
+    const step = 2;
+    const sampleStride = (data.length - 1) / (width / step);
+    const sampleY = i => {
+      const sample = ((data[Math.min(data.length - 1, Math.floor(i))] - 128) / 128) * gain;
+      return Math.max(2.5, Math.min(39.5, 21 + sample * 17.5));
+    };
+
+    if (!history.length) {
+      for (let i = 0; i <= width / step + 1; i++) history.push(sampleY(i * sampleStride));
+    } else {
+      // Move old points intact; never rescale or redraw their shape from new audio.
+      const dt = Math.max(0, Math.min(100, timestamp - lastDraw));
+      scrollOffset += dt * 0.07;
+      while (scrollOffset >= step) {
+        scrollOffset -= step;
+        if (!incoming.length) {
+          // Small captured slices retain the raw audio's irregular peaks and spacing.
+          for (let i = 0; i < 8; i++) incoming.push(sampleY(i * sampleStride));
+        }
+        history.shift();
+        history.push(incoming.shift());
+      }
+    }
+    lastDraw = timestamp;
+    let d = '';
+    for (let i = 0; i < history.length; i++) {
+      d += `${i === 0 ? 'M' : 'L'}${(i * step - scrollOffset).toFixed(2)} ${history[i].toFixed(2)} `;
+    }
+    trace.setAttribute('d', d.trim());
     raf = requestAnimationFrame(draw);
   }
 
@@ -67,7 +100,11 @@
       try { audioContext.close().catch(() => {}); } catch {}
     }
     audioContext = null;
-    level = 0;
+    gain = 1;
+    history.length = 0;
+    incoming.length = 0;
+    scrollOffset = 0;
+    lastDraw = 0;
     scope.classList.remove('pc-audio-active', 'pc-audio-pending', 'pc-audio-error', 'is-audio');
     scope.setAttribute('aria-pressed', 'false');
     scope.title = 'Click to monitor PC audio';

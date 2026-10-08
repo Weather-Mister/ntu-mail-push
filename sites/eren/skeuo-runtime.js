@@ -1925,8 +1925,8 @@ function refreshScheduleScopeMeta(){
   scheduleScope.setAttribute('aria-label', scheduleScopeState.aria);
 }
 
-function drawScheduleScope(timestamp=0, audioLevel=null){
-  if (!scheduleScopeTrace || (audioLevel === null && scheduleScope?.matches('.pc-audio-active,.pc-audio-pending,.pc-audio-error'))) return;
+function drawScheduleScope(timestamp=0){
+  if (!scheduleScopeTrace || scheduleScope?.matches('.pc-audio-active,.pc-audio-pending,.pc-audio-error')) return;
 
   const width = 200;
   const mid = 21;
@@ -1936,9 +1936,7 @@ function drawScheduleScope(timestamp=0, audioLevel=null){
     ? 12 + Math.sqrt(boundedMinutes / 360) * 42
     : 80;
   const urgency = scheduleScopeState.active ? 1 - Math.min(1, minutes / 180) : 0;
-  const amplitude = audioLevel === null
-    ? (scheduleScopeState.active ? (scheduleScopeState.live ? 10.2 : 8.4) : 1.3)
-    : 1.3 + Math.max(0, Math.min(1, audioLevel)) * 8.9;
+  const amplitude = scheduleScopeState.active ? (scheduleScopeState.live ? 10.2 : 8.4) : 1.3;
   /* Integrate speed over time. The old `timestamp * speed` re-multiplied the whole uptime
      whenever speed changed, so the trace snapped every second and ran faster the longer the tab stayed open. */
   const dt = scheduleScopeLastTs && timestamp > scheduleScopeLastTs ? Math.min(100, timestamp - scheduleScopeLastTs) : 0;
