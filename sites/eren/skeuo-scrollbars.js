@@ -25,14 +25,14 @@
     if (!active) return;
     const height = bottom - top;
     const compact = el.matches(".rail");
-    const knob = Math.min(height, compact ? 15 : (innerWidth < 860 ? 19 : 20));
-    const travel = height - knob;
+    /* Match the physical fader-cap proportions in skeuo-scrollbars.css. */
+    const knob = Math.min(height, compact ? 30 : (innerWidth < 860 ? 34 : 38));
+    const travel = Math.max(0, height - knob);
     const pos = travel * el.scrollTop / max;
     Object.assign(s, { top, max, travel, pos, knob });
-    const thumbWidth = compact ? 12 : (innerWidth < 860 ? 15 : 16);
-    const thumbLeft = -1;
-    const railWidth = compact ? 11 : (innerWidth < 860 ? 13 : 14);
-    const railLeft = r.right - 3 - thumbWidth - thumbLeft;
+    const thumbWidth = compact ? 22 : (innerWidth < 860 ? 25 : 28);
+    const railWidth = compact ? 24 : (innerWidth < 860 ? 27 : 30);
+    const railLeft = r.right - 3 - thumbWidth;
     s.track.classList.toggle("is-compact", compact);
     s.track.style.cssText = "top:" + top + "px;left:" + Math.max(0,Math.min(innerWidth-railWidth,railLeft)) + "px;height:" + height + "px";
     s.thumb.style.cssText = "top:" + pos + "px;height:" + knob + "px";
