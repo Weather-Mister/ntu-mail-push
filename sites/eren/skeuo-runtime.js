@@ -1916,7 +1916,7 @@ function readScheduleScope(){
 }
 
 function refreshScheduleScopeMeta(){
-  if (!scheduleScope) return;
+  if (!scheduleScope || scheduleScope.classList.contains('pc-audio-active')) return;
   scheduleScopeState = readScheduleScope();
   if (scheduleScopeValue) scheduleScopeValue.textContent = scheduleScopeState.active ? scheduleScopeState.value : '--';
   if (scheduleScopeMode) scheduleScopeMode.textContent = scheduleScopeState.mode;
@@ -1924,7 +1924,7 @@ function refreshScheduleScopeMeta(){
 }
 
 function drawScheduleScope(timestamp=0){
-  if (!scheduleScopeTrace) return;
+  if (!scheduleScopeTrace || scheduleScope?.classList.contains('pc-audio-active')) return;
 
   const width = 200;
   const mid = 21;
