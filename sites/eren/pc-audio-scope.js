@@ -61,7 +61,7 @@
     raf = requestAnimationFrame(draw);
   }
 
-  async function stop() {
+  function stop() {
     active = false;
     connecting = false;
     cancelAnimationFrame(raf);
@@ -74,13 +74,18 @@
     });
     stream = null;
     if (audioContext) {
-      try { await audioContext.close(); } catch {}
+      try { audioContext.close().catch(() => {}); } catch {}
     }
     audioContext = null;
     gain = 1;
     scope.classList.remove('pc-audio-active', 'pc-audio-pending', 'pc-audio-error', 'is-audio');
     scope.setAttribute('aria-pressed', 'false');
     scope.title = 'Click to monitor PC audio';
+    if (label) label.textContent = 'ΔT / SCHED';
+    if (value) value.textContent = '--';
+    if (mode) mode.textContent = 'SCHEDULE';
+    if (hint) hint.textContent = 'λ ∝ ΔT';
+    scope.setAttribute('aria-label', 'Schedule interval monitor. Activate to monitor PC audio.');
     window.dispatchEvent(new Event('resize'));
   }
 
@@ -152,12 +157,14 @@
       setUi(true, sourceLabel);
       draw();
     } catch (error) {
+      stop();
       picked?.getTracks().forEach(track => {
         try { track.stop(); } catch {}
       });
       connecting = false;
       scope.classList.remove('pc-audio-pending', 'pc-audio-active', 'is-audio');
       scope.classList.add('pc-audio-error');
+      if (label) label.textContent = 'AUDIO / PC';
       const noAudio = error?.code === 'NO_AUDIO_TRACK';
       if (value) value.textContent = '--';
       if (mode) mode.textContent = error?.name === 'NotAllowedError'
