@@ -25,7 +25,7 @@
     if (!active) return;
     const height = bottom - top;
     const compact = el.matches(".rail");
-    const knob = Math.min(height, compact ? 12 : (innerWidth < 860 ? 15 : 16));
+    const knob = Math.min(height, compact ? 15 : (innerWidth < 860 ? 19 : 20));
     const travel = height - knob;
     const pos = travel * el.scrollTop / max;
     Object.assign(s, { top, max, travel, pos, knob });
