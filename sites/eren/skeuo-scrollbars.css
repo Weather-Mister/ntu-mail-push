@@ -78,6 +78,13 @@
 
 .skeuo-slider.is-dragging .slider-knob{cursor:grabbing}
 
+/* Keep the grabby-hand cursor visible even when the pointer leaves the knob
+   while pointer capture is active. */
+html.skeuo-slider-dragging,
+html.skeuo-slider-dragging *{
+  cursor:grabbing!important;
+}
+
 .skeuo-slider.is-compact{
   --knob-u:.276px;
 }
