@@ -78,7 +78,7 @@
     }
     audioContext = null;
     gain = 1;
-    scope.classList.remove('pc-audio-active', 'is-audio');
+    scope.classList.remove('pc-audio-active', 'pc-audio-pending', 'pc-audio-error', 'is-audio');
     scope.setAttribute('aria-pressed', 'false');
     scope.title = 'Click to monitor PC audio';
     window.dispatchEvent(new Event('resize'));
@@ -88,6 +88,7 @@
     if (active || connecting) return;
     const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
     if (!navigator.mediaDevices?.getDisplayMedia || !AudioContextCtor) {
+      scope.classList.add('pc-audio-error');
       if (label) label.textContent = 'AUDIO / PC';
       if (value) value.textContent = 'N/A';
       if (mode) mode.textContent = 'UNSUPPORTED';
@@ -95,6 +96,8 @@
       return;
     }
 
+    scope.classList.remove('pc-audio-error');
+    scope.classList.add('pc-audio-pending');
     connecting = true;
     if (label) label.textContent = 'AUDIO / PC';
     if (value) value.textContent = '…';
@@ -104,15 +107,27 @@
     let picked = null;
     try {
       picked = await navigator.mediaDevices.getDisplayMedia({
-        video: true,
-        audio: true,
+        video: { displaySurface: 'monitor' },
+        audio: {
+          suppressLocalAudioPlayback: false,
+          restrictOwnAudio: false
+        },
         systemAudio: 'include',
+        windowAudio: 'system',
+        monitorTypeSurfaces: 'include',
         selfBrowserSurface: 'exclude',
-        surfaceSwitching: 'include'
+        surfaceSwitching: 'exclude'
       });
 
       const audioTrack = picked.getAudioTracks()[0];
-      if (!audioTrack) throw new Error('No audio track shared');
+      const videoTrack = picked.getVideoTracks()[0];
+      const displaySurface = videoTrack?.getSettings?.().displaySurface || 'shared';
+      if (!audioTrack) {
+        const error = new Error('No audio track shared');
+        error.code = 'NO_AUDIO_TRACK';
+        error.displaySurface = displaySurface;
+        throw error;
+      }
 
       /* Keep the browser's video capture track alive even though we never
          render or store it. Some browsers tie the shared audio track to the
@@ -130,25 +145,40 @@
 
       active = true;
       connecting = false;
+      scope.classList.remove('pc-audio-pending', 'pc-audio-error');
       audioTrack.addEventListener('ended', () => { if (active) stop(); }, { once: true });
-      picked.getVideoTracks()[0]?.addEventListener('ended', () => { if (active) stop(); }, { once: true });
-      setUi(true);
+      videoTrack?.addEventListener('ended', () => { if (active) stop(); }, { once: true });
+      const sourceLabel = displaySurface === 'monitor' ? 'SYSTEM OUT' : displaySurface.toUpperCase();
+      setUi(true, sourceLabel);
       draw();
     } catch (error) {
       picked?.getTracks().forEach(track => {
         try { track.stop(); } catch {}
       });
       connecting = false;
+      scope.classList.remove('pc-audio-pending', 'pc-audio-active', 'is-audio');
+      scope.classList.add('pc-audio-error');
+      const noAudio = error?.code === 'NO_AUDIO_TRACK';
       if (value) value.textContent = '--';
-      if (mode) mode.textContent = error?.name === 'NotAllowedError' ? 'CANCELLED' : 'NO AUDIO';
-      if (hint) hint.textContent = 'CLICK RETRY';
-      scope.setAttribute('aria-label', 'PC audio monitor is off. Activate to try again.');
+      if (mode) mode.textContent = error?.name === 'NotAllowedError'
+        ? 'CANCELLED'
+        : (noAudio ? 'NO AUDIO TRACK' : 'CAPTURE ERROR');
+      if (hint) hint.textContent = noAudio ? 'SCREEN + SHARE AUDIO' : 'CLICK RETRY';
+      scope.setAttribute(
+        'aria-label',
+        noAudio
+          ? 'The selected source did not provide audio. Choose Entire Screen or a browser tab and enable Share audio.'
+          : 'PC audio monitor is off. Activate to try again.'
+      );
     }
   }
 
   function toggle() {
     if (active) stop();
-    else start();
+    else {
+      scope.classList.remove('pc-audio-error');
+      start();
+    }
   }
 
   scope.addEventListener('click', toggle);
