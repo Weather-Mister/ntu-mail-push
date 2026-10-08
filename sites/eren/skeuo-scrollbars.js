@@ -25,13 +25,13 @@
     if (!active) return;
     const height = bottom - top;
     const compact = el.matches(".rail");
-    const knob = Math.min(height, compact ? 29 : (innerWidth < 860 ? 33 : 36));
+    const knob = Math.min(height, compact ? 25 : (innerWidth < 860 ? 29 : 31));
     const travel = height - knob;
     const pos = travel * el.scrollTop / max;
     Object.assign(s, { top, max, travel, pos, knob });
-    const thumbWidth = compact ? 19 : (innerWidth < 860 ? 22 : 25);
+    const thumbWidth = compact ? 17 : (innerWidth < 860 ? 21 : 23);
     const thumbLeft = compact ? -2 : -3;
-    const railWidth = compact ? 14 : (innerWidth < 860 ? 16 : 18);
+    const railWidth = compact ? 13 : (innerWidth < 860 ? 15 : 17);
     const railLeft = r.right - 4 - thumbWidth - thumbLeft;
     s.track.classList.toggle("is-compact", compact);
     s.track.style.cssText = "top:" + top + "px;left:" + Math.max(0,Math.min(innerWidth-railWidth,railLeft)) + "px;height:" + height + "px";
