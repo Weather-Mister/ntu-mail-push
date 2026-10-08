@@ -62,12 +62,17 @@
       s.grab = onKnob ? e.clientY-s.top-s.pos : s.knob/2;
       s.dragging = true;
       track.classList.add("is-dragging");
+      document.documentElement.classList.add("skeuo-slider-dragging");
       track.setPointerCapture(e.pointerId);
       if (!onKnob) move(e.clientY);
       e.preventDefault();
     });
     track.addEventListener("pointermove", e => { if (s.dragging) move(e.clientY); });
-    function stop() { s.dragging = false; track.classList.remove("is-dragging"); }
+    function stop() {
+      s.dragging = false;
+      track.classList.remove("is-dragging");
+      document.documentElement.classList.remove("skeuo-slider-dragging");
+    }
     ["pointerup","pointercancel","lostpointercapture"].forEach(k=>track.addEventListener(k,stop));
     track.addEventListener("wheel", e => {
       el.scrollTop += e.deltaY * (e.deltaMode===1?16:e.deltaMode===2?el.clientHeight:1);
