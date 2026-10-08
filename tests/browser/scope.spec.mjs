@@ -197,9 +197,9 @@ test('Firefox multi-input selector remembers selections and switches to the acti
   await expect(page.locator('#scheduleScopeLabel')).toHaveText('AUDIO / AUTO');
   await expect(page.locator('#scheduleScopeValue')).toHaveText('2 IN');
 
-  await page.evaluate(() => { window.testAudioLevels = [100, 0]; });
+  await page.evaluate(() => { window.testAudioLevels = [0, 100, 0]; });
   await expect(page.locator('#scheduleScopeMode')).toHaveText('AUTO: LOOPBACK A');
-  await page.evaluate(() => { window.testAudioLevels = [0, 120]; });
+  await page.evaluate(() => { window.testAudioLevels = [0, 0, 120]; });
   await expect(page.locator('#scheduleScopeMode')).toHaveText('AUTO: LOOPBACK B', { timeout: 4000 });
 
   await scope.press('Shift+Enter');
