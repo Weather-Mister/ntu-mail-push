@@ -1,5 +1,5 @@
-/* Overlay scroll hardware: native wheel/touch/keyboard scrolling stays intact,
-   while the visible control reads like a compact old-school mixer fader. */
+/* Integration layer for Claude's measured slider-knob.css.
+   Native scrolling remains intact; only browser scrollbar chrome is replaced. */
 .skeuo-scroll-host{
   scrollbar-width:none!important;
   -ms-overflow-style:none!important;
@@ -13,15 +13,25 @@
   height:0!important;
   background:transparent!important;
 }
-:is(#todoList,#coolDeadlines,.inbox).skeuo-scroll-host.skeuo-can-scroll{
-  padding-right:28px!important;
-}
-.rail.skeuo-scroll-host.skeuo-can-scroll{padding-right:23px!important}
 
-#skeuo-slider-layer{position:fixed;inset:0;z-index:60;pointer-events:none}
+:is(#todoList,#coolDeadlines,.inbox).skeuo-scroll-host.skeuo-can-scroll{
+  padding-right:38px!important;
+}
+.rail.skeuo-scroll-host.skeuo-can-scroll{
+  padding-right:32px!important;
+}
+
+#skeuo-slider-layer{
+  position:fixed;
+  inset:0;
+  z-index:60;
+  pointer-events:none;
+}
+
 .skeuo-slider{
+  --knob-u:.35px;
   position:absolute;
-  width:24px;
+  width:calc(93 * var(--knob-u));
   border:0;
   background:transparent;
   box-shadow:none;
@@ -30,72 +40,51 @@
   cursor:pointer;
 }
 
-.skeuo-slider::before{
-  content:"";
+.skeuo-slider[hidden]{display:none!important}
+
+/* Claude's track is a dedicated child so the large knob remains the hit target. */
+.skeuo-slider .slider-track{
+  --u:var(--knob-u);
   position:absolute;
   top:2px;
   bottom:2px;
   left:50%;
+  height:auto;
   transform:translateX(-50%);
-  width:4px;
-  border-radius:3px;
-  background:
-    linear-gradient(90deg,
-      #8c7c66 0%,
-      #564a3b 18%,
-      #2e261f 48%,
-      #3b3128 70%,
-      #8f7f68 100%);
-  box-shadow:
-    inset 1px 0 1px rgba(26,18,10,.46),
-    inset -1px 0 1px rgba(20,14,8,.25),
-    1px 0 rgba(255,245,223,.30);
   pointer-events:none;
+  z-index:0;
 }
-.skeuo-slider[hidden]{display:none!important}
 
-.skeuo-slider-thumb{
+/* Keep Claude's knob art untouched; only position and scale it here. */
+.skeuo-slider .skeuo-slider-thumb.slider-knob{
+  --u:var(--knob-u);
   position:absolute;
   left:0;
-  width:24px;
-  box-sizing:border-box;
-  border:0;
-  border-radius:0;
-  background:url("./skeuo-fader-cap.svg?v=4") center/100% 100% no-repeat;
-  box-shadow:none;
-  filter:
-    drop-shadow(0 1px 0 rgba(255,248,230,.18))
-    drop-shadow(1.5px 3px 1.8px rgba(45,28,14,.28));
-  cursor:grab;
-  touch-action:none;
-  transition:filter .1s ease,transform .08s ease;
-}
-.skeuo-slider:hover .skeuo-slider-thumb{
-  filter:
-    brightness(1.02)
-    drop-shadow(0 1px 0 rgba(255,248,230,.18))
-    drop-shadow(1.5px 3px 1.8px rgba(45,28,14,.28));
-}
-.skeuo-slider.is-dragging .skeuo-slider-thumb{
-  cursor:grabbing;
-  transform:translateY(1px);
-  filter:
-    brightness(.985)
-    drop-shadow(0 1px 0 rgba(255,248,230,.14))
-    drop-shadow(1px 2px 1.4px rgba(45,28,14,.24));
+  top:0;
+  z-index:1;
 }
 
-.skeuo-slider.is-compact{width:20px}
-.skeuo-slider.is-compact .skeuo-slider-thumb{width:20px}
+.skeuo-slider.is-dragging .slider-knob{cursor:grabbing}
+
+.skeuo-slider.is-compact{
+  --knob-u:.30px;
+}
 
 @media(max-width:859px){
   :is(#todoList,#coolDeadlines,.inbox).skeuo-scroll-host.skeuo-can-scroll{
-    padding-right:26px!important;
+    padding-right:35px!important;
   }
-  .skeuo-slider:not(.is-compact){width:22px}
-  .skeuo-slider:not(.is-compact) .skeuo-slider-thumb{width:22px}
+  .skeuo-slider:not(.is-compact){
+    --knob-u:.33px;
+  }
+  .skeuo-slider.is-compact{
+    --knob-u:.29px;
+  }
 }
-@media(prefers-reduced-motion:reduce){.skeuo-slider-thumb{transition:none}}
+
+@media(prefers-reduced-motion:reduce){
+  .slider-knob{transition:none!important}
+}
 
 /* Mail deliberately has no scrollbar chrome: no faders, no browser tracks.
    Scrolling itself is untouched (wheel, touch, keyboard and programmatic). */

@@ -1,0 +1,117 @@
+/* Slider knob rebuilt from pixel measurements of the reference photo.
+   Native size is 93 x 140 px (at --u:1px). Scale the whole thing with --u,
+   e.g. .slider-knob { --u: .35px }  ->  a 33 x 49 px knob.
+   Apply the class "slider-knob" to the knob element; it needs no children. */
+
+.slider-knob {
+  --u: 1px;
+
+  /* fitted shape parameters (all in units of --u) */
+  --sil-r: 215;   --sil-bite: 4;   --sil-cy: 51.4;
+  --face-l: 6.25; --face-r: 5.0;       --face-h: 129.0;
+  --face-R: 215; --face-bite: 4; --face-cy: 50.4;
+  --face-rt: 19.5; --face-rb: 15.5;
+  --corner: 20.5;
+
+  position: relative;
+  box-sizing: border-box;
+  width: calc(93 * var(--u));
+  height: calc(140 * var(--u));
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: grab;
+  touch-action: none;
+  filter:
+    drop-shadow(0 calc(3 * var(--u)) calc(4 * var(--u)) rgba(25, 14, 0, .84))
+    drop-shadow(0 calc(1 * var(--u)) calc(9 * var(--u)) rgba(40, 25, 5, .23));
+}
+.slider-knob:active { cursor: grabbing; }
+
+/* ---------- base: dark lip + outer silhouette ---------- */
+.slider-knob::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: calc(var(--corner) * var(--u));
+  background:
+    radial-gradient(ellipse 55% 14% at 50% 97%, rgba(95,70,40,0.5), rgba(95,70,40,0)),
+    /* light lip along the top, fading out */
+    linear-gradient(180deg, rgb(214,190,150) 0, rgba(205,176,132,.9) calc(6 * var(--u)), rgba(160,128,85,0)) 0 0 / 100% calc(24.0 * var(--u)) no-repeat,
+    /* side lip: dark outer edge -> light next to the face, following the curved silhouette */
+    radial-gradient(circle at calc((var(--sil-bite) - var(--sil-r)) * var(--u)) calc(38 * var(--u)), transparent calc(var(--sil-r) * var(--u) - 1px), rgb(130,106,72) calc(var(--sil-r) * var(--u)), rgb(145,115,77) calc(var(--sil-r) * var(--u) + 1 * var(--u)), rgb(156,125,81) calc(var(--sil-r) * var(--u) + 2 * var(--u)), rgb(164,132,87) calc(var(--sil-r) * var(--u) + 3.5 * var(--u)), rgb(173,141,96) calc(var(--sil-r) * var(--u) + 4.5 * var(--u)), rgb(188,156,110) calc(var(--sil-r) * var(--u) + 5.8 * var(--u)), rgba(200,168,122,0) calc(var(--sil-r) * var(--u) + 7.5 * var(--u))) 0 calc(var(--sil-cy) * 1.4 * var(--u) - 38 * var(--u)) / 100% calc(76 * var(--u)) no-repeat,
+    radial-gradient(circle at calc(100% + (var(--sil-r) - var(--sil-bite)) * var(--u)) calc(38 * var(--u)), transparent calc(var(--sil-r) * var(--u) - 1px), rgb(130,106,72) calc(var(--sil-r) * var(--u)), rgb(145,115,77) calc(var(--sil-r) * var(--u) + 1 * var(--u)), rgb(156,125,81) calc(var(--sil-r) * var(--u) + 2 * var(--u)), rgb(164,132,87) calc(var(--sil-r) * var(--u) + 3.5 * var(--u)), rgb(173,141,96) calc(var(--sil-r) * var(--u) + 4.5 * var(--u)), rgb(188,156,110) calc(var(--sil-r) * var(--u) + 5.8 * var(--u)), rgba(200,168,122,0) calc(var(--sil-r) * var(--u) + 7.5 * var(--u))) 0 calc(var(--sil-cy) * 1.4 * var(--u) - 38 * var(--u)) / 100% calc(76 * var(--u)) no-repeat,
+    /* straight sections above and below the waist */
+    linear-gradient(90deg,
+      rgb(138,112,76) 0, rgb(159,127,84) calc(2 * var(--u)), rgb(167,135,91) calc(4 * var(--u)), rgb(178,146,100) calc(6 * var(--u)),
+      rgb(160,128,85) calc(14 * var(--u)), rgb(160,128,85) calc(100% - 14 * var(--u)),
+      rgb(158,125,82) calc(100% - 5 * var(--u)), rgb(148,116,75) calc(100% - 1.5 * var(--u)), rgb(137,110,74) 100%);
+  -webkit-mask:
+    radial-gradient(circle calc(var(--sil-r) * var(--u)) at calc((var(--sil-bite) - var(--sil-r)) * var(--u)) calc(var(--sil-cy) * 1%), #0000 calc(100% - .7px), #000 100%),
+    radial-gradient(circle calc(var(--sil-r) * var(--u)) at calc(100% + (var(--sil-r) - var(--sil-bite)) * var(--u)) calc(var(--sil-cy) * 1%), #0000 calc(100% - .7px), #000 100%);
+  -webkit-mask-composite: source-in;
+  mask:
+    radial-gradient(circle calc(var(--sil-r) * var(--u)) at calc((var(--sil-bite) - var(--sil-r)) * var(--u)) calc(var(--sil-cy) * 1%), #0000 calc(100% - .7px), #000 100%),
+    radial-gradient(circle calc(var(--sil-r) * var(--u)) at calc(100% + (var(--sil-r) - var(--sil-bite)) * var(--u)) calc(var(--sil-cy) * 1%), #0000 calc(100% - .7px), #000 100%);
+  mask-composite: intersect;
+}
+
+/* ---------- face: raised top with gloss, edge highlights and the 3 grooves ---------- */
+.slider-knob::after {
+  content: "";
+  position: absolute;
+  left: calc(var(--face-l) * var(--u));
+  right: calc(var(--face-r) * var(--u));
+  top: 0;
+  height: calc(var(--face-h) * var(--u));
+  border-radius:
+    calc(var(--face-rt) * var(--u)) calc(var(--face-rt) * var(--u))
+    calc(var(--face-rb) * var(--u)) calc(var(--face-rb) * var(--u));
+  background:
+    url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2093%20140%22%20preserveAspectRatio=%22none%22%3E%3Cdefs%3E%3ClinearGradient%20id=%22g0%22%20x1=%220%22%20y1=%220%22%20x2=%220%22%20y2=%221%22%3E%3Cstop%20offset=%220.0%25%22%20stop-color=%22rgb(198,166,120)%22/%3E%3Cstop%20offset=%2212.5%25%22%20stop-color=%22rgb(168,134,88)%22/%3E%3Cstop%20offset=%2225.0%25%22%20stop-color=%22rgb(181,148,102)%22/%3E%3Cstop%20offset=%2237.5%25%22%20stop-color=%22rgb(195,163,118)%22/%3E%3Cstop%20offset=%2250.0%25%22%20stop-color=%22rgb(201,171,126)%22/%3E%3Cstop%20offset=%2262.5%25%22%20stop-color=%22rgb(204,175,131)%22/%3E%3Cstop%20offset=%2275.0%25%22%20stop-color=%22rgb(226,207,174)%22/%3E%3Cstop%20offset=%2287.5%25%22%20stop-color=%22rgb(224,202,167)%22/%3E%3Cstop%20offset=%22100.0%25%22%20stop-color=%22rgb(203,172,125)%22/%3E%3C/linearGradient%3E%3ClinearGradient%20id=%22g1%22%20x1=%220%22%20y1=%220%22%20x2=%220%22%20y2=%221%22%3E%3Cstop%20offset=%220.0%25%22%20stop-color=%22rgb(193,163,121)%22/%3E%3Cstop%20offset=%2212.5%25%22%20stop-color=%22rgb(174,141,96)%22/%3E%3Cstop%20offset=%2225.0%25%22%20stop-color=%22rgb(188,157,112)%22/%3E%3Cstop%20offset=%2237.5%25%22%20stop-color=%22rgb(204,175,130)%22/%3E%3Cstop%20offset=%2250.0%25%22%20stop-color=%22rgb(216,188,145)%22/%3E%3Cstop%20offset=%2262.5%25%22%20stop-color=%22rgb(227,204,166)%22/%3E%3Cstop%20offset=%2275.0%25%22%20stop-color=%22rgb(242,230,205)%22/%3E%3Cstop%20offset=%2287.5%25%22%20stop-color=%22rgb(231,212,179)%22/%3E%3Cstop%20offset=%22100.0%25%22%20stop-color=%22rgb(220,193,150)%22/%3E%3C/linearGradient%3E%3ClinearGradient%20id=%22g2%22%20x1=%220%22%20y1=%220%22%20x2=%220%22%20y2=%221%22%3E%3Cstop%20offset=%220.0%25%22%20stop-color=%22rgb(188,156,110)%22/%3E%3Cstop%20offset=%2212.5%25%22%20stop-color=%22rgb(190,156,110)%22/%3E%3Cstop%20offset=%2225.0%25%22%20stop-color=%22rgb(206,175,131)%22/%3E%3Cstop%20offset=%2237.5%25%22%20stop-color=%22rgb(217,189,146)%22/%3E%3Cstop%20offset=%2250.0%25%22%20stop-color=%22rgb(223,197,156)%22/%3E%3Cstop%20offset=%2262.5%25%22%20stop-color=%22rgb(232,211,178)%22/%3E%3Cstop%20offset=%2275.0%25%22%20stop-color=%22rgb(244,232,211)%22/%3E%3Cstop%20offset=%2287.5%25%22%20stop-color=%22rgb(228,205,168)%22/%3E%3Cstop%20offset=%22100.0%25%22%20stop-color=%22rgb(226,200,160)%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect%20x=%2219.5%22%20y=%2250%22%20width=%2254%22%20height=%228.2%22%20rx=%224.1%22%20fill=%22url(%23g0)%22/%3E%3Crect%20x=%2219.75%22%20y=%2250.25%22%20width=%2253.5%22%20height=%227.7%22%20rx=%223.85%22%20fill=%22none%22%20stroke=%22rgb(150,118,76)%22%20stroke-opacity=%22.35%22%20stroke-width=%22.5%22/%3E%3Crect%20x=%2219.5%22%20y=%2266%22%20width=%2254%22%20height=%228.2%22%20rx=%224.1%22%20fill=%22url(%23g1)%22/%3E%3Crect%20x=%2219.75%22%20y=%2266.25%22%20width=%2253.5%22%20height=%227.7%22%20rx=%223.85%22%20fill=%22none%22%20stroke=%22rgb(150,118,76)%22%20stroke-opacity=%22.35%22%20stroke-width=%22.5%22/%3E%3Crect%20x=%2219.5%22%20y=%2282%22%20width=%2254%22%20height=%228.2%22%20rx=%224.1%22%20fill=%22url(%23g2)%22/%3E%3Crect%20x=%2219.75%22%20y=%2282.25%22%20width=%2253.5%22%20height=%227.7%22%20rx=%223.85%22%20fill=%22none%22%20stroke=%22rgb(150,118,76)%22%20stroke-opacity=%22.35%22%20stroke-width=%22.5%22/%3E%3C/svg%3E") calc(-1 * var(--face-l) * var(--u)) 0 / calc(93 * var(--u)) calc(140 * var(--u)) no-repeat,
+    /* bright bevel on the left / right edges, strength measured down the height */
+    linear-gradient(90deg, rgba(255,250,236,0), rgba(255,250,236,0.23) calc(2.5 * var(--u)), rgba(255,250,236,0) calc(6 * var(--u))) 0 calc(18 * var(--u)) / calc(6 * var(--u)) calc(8.2 * var(--u)) no-repeat,
+    linear-gradient(270deg, rgba(255,250,236,0), rgba(255,250,236,0.05) calc(2.5 * var(--u)), rgba(255,250,236,0) calc(6 * var(--u))) 100% calc(18 * var(--u)) / calc(6 * var(--u)) calc(8.2 * var(--u)) no-repeat,
+    linear-gradient(90deg, rgba(255,250,236,0), rgba(255,250,236,0.13) calc(2.5 * var(--u)), rgba(255,250,236,0) calc(6 * var(--u))) 0 calc(26 * var(--u)) / calc(6 * var(--u)) calc(8.2 * var(--u)) no-repeat,
+    linear-gradient(270deg, rgba(255,250,236,0), rgba(255,250,236,0.02) calc(2.5 * var(--u)), rgba(255,250,236,0) calc(6 * var(--u))) 100% calc(26 * var(--u)) / calc(6 * var(--u)) calc(8.2 * var(--u)) no-repeat,
+    linear-gradient(90deg, rgba(255,250,236,0), rgba(255,250,236,0.18) calc(2.5 * var(--u)), rgba(255,250,236,0) calc(6 * var(--u))) 0 calc(34 * var(--u)) / calc(6 * var(--u)) calc(8.2 * var(--u)) no-repeat,
+    linear-gradient(270deg, rgba(255,250,236,0), rgba(255,250,236,0.02) calc(2.5 * var(--u)), rgba(255,250,236,0) calc(6 * var(--u))) 100% calc(34 * var(--u)) / calc(6 * var(--u)) calc(8.2 * var(--u)) no-repeat,
+    linear-gradient(90deg, rgba(255,250,236,0), rgba(255,250,236,0.19) calc(2.5 * var(--u)), rgba(255,250,236,0) calc(6 * var(--u))) 0 calc(42 * var(--u)) / calc(6 * var(--u)) calc(8.2 * var(--u)) no-repeat,
+    linear-gradient(270deg, rgba(255,250,236,0), rgba(255,250,236,0.04) calc(2.5 * var(--u)), rgba(255,250,236,0) calc(6 * var(--u))) 100% calc(42 * var(--u)) / calc(6 * var(--u)) calc(8.2 * var(--u)) no-repeat,
+    linear-gradient(90deg, rgba(255,250,236,0), rgba(255,250,236,0.22) calc(2.5 * var(--u)), rgba(255,250,236,0) calc(6 * var(--u))) 0 calc(50 * var(--u)) / calc(6 * var(--u)) calc(8.2 * var(--u)) no-repeat,
+    linear-gradient(270deg, rgba(255,250,236,0), rgba(255,250,236,0.03) calc(2.5 * var(--u)), rgba(255,250,236,0) calc(6 * var(--u))) 100% calc(50 * var(--u)) / calc(6 * var(--u)) calc(8.2 * var(--u)) no-repeat,
+    linear-gradient(90deg, rgba(255,250,236,0), rgba(255,250,236,0.18) calc(2.5 * var(--u)), rgba(255,250,236,0) calc(6 * var(--u))) 0 calc(58 * var(--u)) / calc(6 * var(--u)) calc(8.2 * var(--u)) no-repeat,
+    linear-gradient(270deg, rgba(255,250,236,0), rgba(255,250,236,0.03) calc(2.5 * var(--u)), rgba(255,250,236,0) calc(6 * var(--u))) 100% calc(58 * var(--u)) / calc(6 * var(--u)) calc(8.2 * var(--u)) no-repeat,
+    linear-gradient(90deg, rgba(255,250,236,0), rgba(255,250,236,0.32) calc(2.5 * var(--u)), rgba(255,250,236,0) calc(6 * var(--u))) 0 calc(66 * var(--u)) / calc(6 * var(--u)) calc(8.2 * var(--u)) no-repeat,
+    linear-gradient(270deg, rgba(255,250,236,0), rgba(255,250,236,0.07) calc(2.5 * var(--u)), rgba(255,250,236,0) calc(6 * var(--u))) 100% calc(66 * var(--u)) / calc(6 * var(--u)) calc(8.2 * var(--u)) no-repeat,
+    linear-gradient(90deg, rgba(255,250,236,0), rgba(255,250,236,0.25) calc(2.5 * var(--u)), rgba(255,250,236,0) calc(6 * var(--u))) 0 calc(74 * var(--u)) / calc(6 * var(--u)) calc(8.2 * var(--u)) no-repeat,
+    linear-gradient(270deg, rgba(255,250,236,0), rgba(255,250,236,0.07) calc(2.5 * var(--u)), rgba(255,250,236,0) calc(6 * var(--u))) 100% calc(74 * var(--u)) / calc(6 * var(--u)) calc(8.2 * var(--u)) no-repeat,
+    linear-gradient(90deg, rgba(255,250,236,0), rgba(255,250,236,0.45) calc(2.5 * var(--u)), rgba(255,250,236,0) calc(6 * var(--u))) 0 calc(82 * var(--u)) / calc(6 * var(--u)) calc(8.2 * var(--u)) no-repeat,
+    linear-gradient(270deg, rgba(255,250,236,0), rgba(255,250,236,0.10) calc(2.5 * var(--u)), rgba(255,250,236,0) calc(6 * var(--u))) 100% calc(82 * var(--u)) / calc(6 * var(--u)) calc(8.2 * var(--u)) no-repeat,
+    linear-gradient(90deg, rgba(255,250,236,0), rgba(255,250,236,0.61) calc(2.5 * var(--u)), rgba(255,250,236,0) calc(6 * var(--u))) 0 calc(90 * var(--u)) / calc(6 * var(--u)) calc(8.2 * var(--u)) no-repeat,
+    linear-gradient(270deg, rgba(255,250,236,0), rgba(255,250,236,0.14) calc(2.5 * var(--u)), rgba(255,250,236,0) calc(6 * var(--u))) 100% calc(90 * var(--u)) / calc(6 * var(--u)) calc(8.2 * var(--u)) no-repeat,
+    linear-gradient(90deg, rgba(255,250,236,0), rgba(255,250,236,0.67) calc(2.5 * var(--u)), rgba(255,250,236,0) calc(6 * var(--u))) 0 calc(98 * var(--u)) / calc(6 * var(--u)) calc(8.2 * var(--u)) no-repeat,
+    linear-gradient(270deg, rgba(255,250,236,0), rgba(255,250,236,0.10) calc(2.5 * var(--u)), rgba(255,250,236,0) calc(6 * var(--u))) 100% calc(98 * var(--u)) / calc(6 * var(--u)) calc(8.2 * var(--u)) no-repeat,
+    linear-gradient(90deg, rgba(255,250,236,0), rgba(255,250,236,0.46) calc(2.5 * var(--u)), rgba(255,250,236,0) calc(6 * var(--u))) 0 calc(106 * var(--u)) / calc(6 * var(--u)) calc(8.2 * var(--u)) no-repeat,
+    linear-gradient(270deg, rgba(255,250,236,0), rgba(255,250,236,0.09) calc(2.5 * var(--u)), rgba(255,250,236,0) calc(6 * var(--u))) 100% calc(106 * var(--u)) / calc(6 * var(--u)) calc(8.2 * var(--u)) no-repeat,
+    /* vertical colour profile, measured from the photo */
+    linear-gradient(180deg, rgb(219,194,151) calc(1 * var(--u)),rgb(230,209,173) calc(2 * var(--u)),rgb(237,219,186) calc(3 * var(--u)),rgb(243,228,202) calc(4 * var(--u)),rgb(252,248,241) calc(5 * var(--u)),rgb(254,254,253) calc(6 * var(--u)),rgb(252,248,243) calc(8 * var(--u)),rgb(249,237,218) calc(9 * var(--u)),rgb(244,228,201) calc(11 * var(--u)),rgb(239,221,190) calc(13 * var(--u)),rgb(233,213,178) calc(15 * var(--u)),rgb(225,201,162) calc(17 * var(--u)),rgb(217,190,147) calc(19 * var(--u)),rgb(212,182,137) calc(21 * var(--u)),rgb(209,179,134) calc(24 * var(--u)),rgb(210,179,134) calc(34 * var(--u)),rgb(212,181,135) calc(46 * var(--u)),rgb(226,200,160) calc(91 * var(--u)),rgb(227,201,161) calc(94 * var(--u)),rgb(229,204,164) calc(104 * var(--u)),rgb(228,204,164) calc(112 * var(--u)),rgb(227,202,161) calc(115 * var(--u)),rgb(222,195,152) calc(117 * var(--u)),rgb(211,181,136) calc(119 * var(--u)),rgb(196,164,118) calc(121 * var(--u)),rgb(180,146,100) calc(123 * var(--u)),rgb(164,131,87) calc(125 * var(--u)),rgb(151,118,78) calc(127 * var(--u)),rgb(140,109,70) calc(129 * var(--u)),rgb(136,106,69) calc(132 * var(--u)),rgb(133,104,67) calc(135 * var(--u)),rgb(127,99,63) calc(138 * var(--u)));
+  -webkit-mask:
+    radial-gradient(circle calc(var(--face-R) * var(--u)) at calc((var(--face-bite) - var(--face-R)) * var(--u)) calc(var(--face-cy) * 1%), #0000 calc(100% - .7px), #000 100%),
+    radial-gradient(circle calc(var(--face-R) * var(--u)) at calc(100% + (var(--face-R) - var(--face-bite)) * var(--u)) calc(var(--face-cy) * 1%), #0000 calc(100% - .7px), #000 100%);
+  -webkit-mask-composite: source-in;
+  mask:
+    radial-gradient(circle calc(var(--face-R) * var(--u)) at calc((var(--face-bite) - var(--face-R)) * var(--u)) calc(var(--face-cy) * 1%), #0000 calc(100% - .7px), #000 100%),
+    radial-gradient(circle calc(var(--face-R) * var(--u)) at calc(100% + (var(--face-R) - var(--face-bite)) * var(--u)) calc(var(--face-cy) * 1%), #0000 calc(100% - .7px), #000 100%);
+  mask-composite: intersect;
+}
+
+/* ---------- the slot it rides in ---------- */
+.slider-track {
+  width: calc(18 * var(--u, 1px));
+  border-radius: calc(2 * var(--u, 1px));
+  background: linear-gradient(90deg, #4a3d30 0, #362e25 8%, #362e25 90%, #4a3d30 100%);
+  box-shadow:
+    0 0 0 calc(3 * var(--u, 1px)) rgb(205,187,153),
+    0 0 0 calc(5 * var(--u, 1px)) rgb(240,229,207);
+}
