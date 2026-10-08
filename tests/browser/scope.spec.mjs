@@ -230,8 +230,9 @@ test('Firefox auto-input survives a disconnected source and retains remaining si
   await page.evaluate(() => window.provideInput('Loopback B'));
   await expect(page.locator('#scheduleScopeValue')).toHaveText('2 IN');
   await page.evaluate(() => {
+    // A stopped track need not dispatch "ended" (per MediaStreamTrack).
+    // The scope must recover via readyState polling.
     inputTracks[0].stop();
-    inputTracks[0].dispatchEvent(new Event('ended'));
   });
   await expect(page.locator('#scheduleScopeValue')).toHaveText('LIVE');
   await expect(scope).toHaveClass(/pc-audio-active/);
