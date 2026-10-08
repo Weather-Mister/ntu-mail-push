@@ -15,7 +15,7 @@ const APP_SHELL = [
   asset('app.js?v=110'),
   asset('mail-demo.js?v=22'),
   asset('skeuo-demo.html'),
-  asset('skeuo-runtime.js?v=25'),
+  asset('skeuo-runtime.js?v=26'),
   asset('pc-audio-scope.js?v=5'),
   asset('slider-knob.css?v=4'),
   asset('skeuo-scrollbars.css?v=16'),
