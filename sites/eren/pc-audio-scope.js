@@ -49,7 +49,7 @@
 
     const width = 200;
     const mid = 21;
-    const amp = 17.5;
+    const amp = 11.5;
     let d = '';
     for (let x = 0; x <= width; x += 2) {
       const i = Math.min(data.length - 1, Math.floor((x / width) * (data.length - 1)));
