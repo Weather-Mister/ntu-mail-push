@@ -82,7 +82,8 @@ async function mount(page, reducedMotion = false, firefox = false) {
       const destination = producer.createMediaStreamDestination();
       oscillator.connect(destination);
       oscillator.start();
-      await producer.resume();
+      // The synthetic track is live even with a suspended producer context.
+      // Firefox blocks resume() on autoplay grounds outside a direct gesture.
       window.producer = producer;
       window.pickedTracks = destination.stream.getAudioTracks();
       const track = window.pickedTracks[0];
@@ -97,7 +98,8 @@ async function mount(page, reducedMotion = false, firefox = false) {
       const destination = producer.createMediaStreamDestination();
       oscillator.connect(destination);
       oscillator.start();
-      await producer.resume();
+      // The synthetic track is live even with a suspended producer context.
+      // Firefox blocks resume() on autoplay grounds outside a direct gesture.
       window.producer = producer;
       const canvas = document.createElement('canvas');
       canvas.getContext('2d').fillRect(0, 0, 20, 20);
