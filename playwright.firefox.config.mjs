@@ -4,6 +4,7 @@ import base from './playwright.config.mjs';
 // Separate actual Firefox run. Do not affect the established Chromium suite.
 export default defineConfig({
   ...base,
+  timeout: 15000,
   projects: [{
     name: 'firefox-scope',
     use: {
