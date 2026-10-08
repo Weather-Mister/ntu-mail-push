@@ -26,5 +26,5 @@ jobs:
           node-version: '22'
           cache: 'npm'
       - run: npm ci
-      - run: npx playwright install --with-deps firefox
+      - run: npx playwright install firefox
       - run: npx playwright test tests/browser/scope.spec.mjs --config playwright.firefox.config.mjs --grep Firefox --reporter=line
