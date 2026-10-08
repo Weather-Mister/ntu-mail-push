@@ -1886,6 +1886,8 @@ const scheduleScopeReducedMotion = window.matchMedia?.('(prefers-reduced-motion:
 let scheduleScopeState = { active:false, live:false, minutes:0, mode:'CLEAR', aria:'Schedule clear' };
 let scheduleScopeLastMeta = 0;
 let scheduleScopeLastDraw = 0;
+let scheduleScopePhase = 0;      /* accumulated, so changing speed never rewinds or snaps the wave */
+let scheduleScopeLastTs = 0;
 
 function formatScheduleScopeDelta(ms){
   const seconds = Math.max(0, Math.ceil(ms / 1000));
@@ -1916,7 +1918,7 @@ function readScheduleScope(){
 }
 
 function refreshScheduleScopeMeta(){
-  if (!scheduleScope || scheduleScope.classList.matches('.pc-audio-active,.pc-audio-pending,.pc-audio-error')) return;
+  if (!scheduleScope || scheduleScope.matches('.pc-audio-active,.pc-audio-pending,.pc-audio-error')) return;
   scheduleScopeState = readScheduleScope();
   if (scheduleScopeValue) scheduleScopeValue.textContent = scheduleScopeState.active ? scheduleScopeState.value : '--';
   if (scheduleScopeMode) scheduleScopeMode.textContent = scheduleScopeState.mode;
@@ -1924,7 +1926,7 @@ function refreshScheduleScopeMeta(){
 }
 
 function drawScheduleScope(timestamp=0){
-  if (!scheduleScopeTrace || scheduleScope?.classList.matches('.pc-audio-active,.pc-audio-pending,.pc-audio-error')) return;
+  if (!scheduleScopeTrace || scheduleScope?.matches('.pc-audio-active,.pc-audio-pending,.pc-audio-error')) return;
 
   const width = 200;
   const mid = 21;
@@ -1935,11 +1937,20 @@ function drawScheduleScope(timestamp=0){
     : 80;
   const urgency = scheduleScopeState.active ? 1 - Math.min(1, minutes / 180) : 0;
   const amplitude = scheduleScopeState.active ? (scheduleScopeState.live ? 10.2 : 8.4) : 1.3;
-  const phase = scheduleScopeReducedMotion ? 0 : timestamp * (0.00135 + urgency * 0.0036);
+  /* Integrate speed over time. The old `timestamp * speed` re-multiplied the whole uptime
+     whenever speed changed, so the trace snapped every second and ran faster the longer the tab stayed open. */
+  const dt = scheduleScopeLastTs && timestamp > scheduleScopeLastTs ? Math.min(100, timestamp - scheduleScopeLastTs) : 0;
+  scheduleScopeLastTs = timestamp;
+  if (!scheduleScopeReducedMotion) scheduleScopePhase += dt * (0.00135 + urgency * 0.0036);
+  const phase = scheduleScopePhase;
   const tau = Math.PI * 2;
 
   let d = '';
-  for (let x=0; x<=width; x+=2){
+  /* Short wavelengths need finer sampling or the peaks turn polygonal and uneven. */
+  const step = Math.min(2, wavelength / 20);
+  const segments = Math.ceil(width / step);
+  for (let i=0; i<=segments; i++){
+    const x = i * width / segments;
     // Amplitude belongs to the wavelength itself. Once a wave enters the scope,
     // its gain is deterministic and never breathes, jitters or changes while travelling.
     const wavePosition = x / wavelength + phase / tau;
@@ -1949,7 +1960,7 @@ function drawScheduleScope(timestamp=0){
     const cycleGain = scheduleScopeState.active ? 0.42 + unit * 1.12 : 1;
     const effectiveAmplitude = amplitude * cycleGain;
     const y = mid + Math.sin(wavePosition * tau) * effectiveAmplitude;
-    d += `${x === 0 ? 'M' : 'L'}${x} ${y.toFixed(2)} `;
+    d += `${x === 0 ? 'M' : 'L'}${x.toFixed(1)} ${y.toFixed(2)} `;
   }
   scheduleScopeTrace.setAttribute('d', d.trim());
 }
@@ -1986,7 +1997,7 @@ if (scheduleScope && scheduleScopeTrace){
 if ('serviceWorker' in navigator){
   window.addEventListener('load', async () => {
     try {
-      const registration = await navigator.serviceWorker.register('./sw.js?v=93', { updateViaCache:'none' });
+      const registration = await navigator.serviceWorker.register('./sw.js?v=94', { updateViaCache:'none' });
       await registration.update();
     } catch (error) {}
   });
