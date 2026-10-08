@@ -416,6 +416,7 @@ test('Firefox five capture cycles close every audio context and input track', as
     await scope.click();
     await expect(scope).not.toHaveClass(/pc-audio-active|pc-audio-pending/);
   }
+  await expect.poll(() => page.evaluate(() => contexts.every(c => c.state === 'closed'))).toBe(true);
   const outcome = await page.evaluate(() => ({
     tracks: inputTracks.map(t => t.readyState),
     contexts: contexts.map(c => c.state)
