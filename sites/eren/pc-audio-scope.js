@@ -207,6 +207,20 @@
     if (mode) mode.textContent = 'CHOOSE INPUT';
     if (hint) hint.textContent = 'REMEMBER PERMISSION';
 
+    // Unlock Web Audio directly in the initiating click's user activation.
+    // Firefox may otherwise leave resume() pending when first called after the
+    // async device-permission prompt. The analyser connects after capture.
+    try {
+      audioContext = new AudioContextCtor();
+      audioContext.resume().catch(() => {});
+    } catch {
+      stop();
+      scope.classList.add('pc-audio-error');
+      if (mode) mode.textContent = 'AUDIO ERROR';
+      if (hint) hint.textContent = 'CLICK RETRY';
+      return;
+    }
+
     let firstError = null;
     for (const deviceId of choices) {
       let picked = null;
@@ -227,15 +241,8 @@
         pendingFirefoxStream = picked;
         const track = picked.getAudioTracks()[0];
         if (!track) throw new Error('No audio input track');
-        if (!audioContext) {
-          audioContext = new AudioContextCtor();
-          await audioContext.resume();
-          if (epoch !== captureEpoch) {
-            picked.getTracks().forEach(t => t.stop());
-            pendingFirefoxStream = null;
-            return;
-          }
-        }
+        // The audio context has already been resumed under the original
+        // click gesture; never block source setup on a later autoplay prompt.
         const inputSource = audioContext.createMediaStreamSource(new MediaStream([track]));
         const inputAnalyser = audioContext.createAnalyser();
         inputAnalyser.fftSize = 512;
