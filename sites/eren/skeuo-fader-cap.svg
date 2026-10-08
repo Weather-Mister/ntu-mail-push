@@ -1,34 +1,37 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 46" aria-hidden="true">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 40" aria-hidden="true">
   <defs>
-    <linearGradient id="plastic" x1="0" y1="0" x2=".96" y2="1">
-      <stop offset="0" stop-color="#f3e6cf"/>
-      <stop offset=".32" stop-color="#ebd6b4"/>
-      <stop offset=".73" stop-color="#d6ba91"/>
-      <stop offset="1" stop-color="#b29a78"/>
+    <linearGradient id="face" x1="0" y1="0" x2="1" y2=".3">
+      <stop offset="0" stop-color="#f7e6c9"/>
+      <stop offset=".2" stop-color="#e8d3b0"/>
+      <stop offset=".68" stop-color="#dfcbaa"/>
+      <stop offset="1" stop-color="#c9b08b"/>
     </linearGradient>
-    <radialGradient id="warm" cx=".1" cy=".14" r=".9">
-      <stop stop-color="#ffb864" stop-opacity=".40"/>
-      <stop offset=".58" stop-color="#f3b26a" stop-opacity=".12"/>
-      <stop offset="1" stop-color="#f3b26a" stop-opacity="0"/>
-    </radialGradient>
-    <linearGradient id="rim" x1="0" y1="0" x2="1" y2="0">
-      <stop stop-color="#fff8e7" stop-opacity=".65"/>
-      <stop offset=".25" stop-color="#fff8e7" stop-opacity=".1"/>
-      <stop offset=".8" stop-color="#907456" stop-opacity="0"/>
-      <stop offset="1" stop-color="#82694e" stop-opacity=".35"/>
+    <linearGradient id="warm" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffc47b" stop-opacity=".21"/>
+      <stop offset=".55" stop-color="#f6b66f" stop-opacity=".055"/>
+      <stop offset="1" stop-color="#f6b66f" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="leftFacet" x1="0" y1="0" x2="1" y2="0">
+      <stop stop-color="#ad9674"/><stop offset="1" stop-color="#e5d0ae"/>
     </linearGradient>
   </defs>
-  <path d="M8 1.6 Q3 1.6 2.6 7.1 L2.5 38.4 Q2.7 44.4 8 44.4 H24 Q29.3 44.4 29.5 38.4 L29.4 7.1 Q29 1.6 24 1.6 Z" fill="#9f8664" opacity=".85"/>
-  <path d="M8 2.6 Q4.4 2.6 4 7.6 L4 38.2 Q4.4 43.1 8 43.1 H24 Q27.6 43.1 28 38.2 L28 7.6 Q27.6 2.6 24 2.6 Z" fill="url(#plastic)"/>
-  <path d="M8 2.6 Q4.4 2.6 4 7.6 L4 38.2 Q4.4 43.1 8 43.1 H24 Q27.6 43.1 28 38.2 L28 7.6 Q27.6 2.6 24 2.6 Z" fill="url(#warm)"/>
-  <path d="M8 2.8 Q4.4 2.8 4 7.6 L4 38 Q4.3 43 8 43 H24 Q27.7 43 28 38 L28 7.6 Q27.6 2.8 24 2.8 Z" fill="url(#rim)"/>
-  <path d="M7 4 Q16 2.9 25 4" stroke="#fff6e5" stroke-width=".85" opacity=".72" fill="none"/>
-  <path d="M7 41.2 Q16 42.4 25 41.2" stroke="#977b59" stroke-width=".7" opacity=".27" fill="none"/>
-  <!-- Shallow, rounded finger-grip mouldings at the top and bottom only. -->
+  <!-- Rigid moulded plastic body, with almost straight sides and bevelled corners. -->
+  <path d="M7 1.4H23C26.4 1.4 28 3.5 28 6.4V33.6C28 36.5 26.4 38.6 23 38.6H7C3.6 38.6 2 36.5 2 33.6V6.4C2 3.5 3.6 1.4 7 1.4Z"
+    fill="#9b8464" stroke="#8f7959" stroke-width=".8"/>
+  <path d="M7 2.4H23L26.4 5.4V34.7L23 37.7H7L3.6 34.7V5.4Z" fill="url(#face)"/>
+  <!-- Light-catching upper bevel, solid edge facets and a crisp base. -->
+  <path d="M7 2.5H23L25 5.8H5Z" fill="#f8e9cf" opacity=".9"/>
+  <path d="M3.6 5.4L6.3 6.3V33.6L3.6 34.7Z" fill="url(#leftFacet)" opacity=".62"/>
+  <path d="M26.4 5.4L23.8 6.3V33.6L26.4 34.7Z" fill="#a88e6c" opacity=".45"/>
+  <path d="M7 37.7L5 34.2H25L23 37.7Z" fill="#b69c78" opacity=".58"/>
+  <path d="M6.3 6.1H23.8V33.8H6.3Z" fill="url(#warm)"/>
+  <path d="M5.3 5.8H24.6" stroke="#fff8e7" opacity=".62" stroke-width=".7"/>
+  <path d="M5 34.3H25" stroke="#8d7252" opacity=".38" stroke-width=".7"/>
+  <!-- Four short shallow recessed ribs; the centre face stays unmarked. -->
   <g fill="none" stroke-linecap="round">
-    <path d="M8.5 11.6 Q16 13.1 23.5 11.6 M8.3 15 Q16 16.3 23.7 15 M8.3 31 Q16 32.3 23.7 31 M8.5 34.4 Q16 35.9 23.5 34.4"
-      stroke="#a78a65" stroke-width="1.1" opacity=".36"/>
-    <path d="M8.5 10.8 Q16 12.2 23.5 10.8 M8.3 14.2 Q16 15.4 23.7 14.2 M8.3 30.2 Q16 31.4 23.7 30.2 M8.5 33.6 Q16 35 23.5 33.6"
-      stroke="#fff7e5" stroke-width=".75" opacity=".47"/>
+    <path d="M8.2 10.4H21.8 M8.2 13.8H21.8 M8.2 26.2H21.8 M8.2 29.6H21.8"
+      stroke="#947b59" stroke-width=".95" opacity=".50"/>
+    <path d="M8.2 9.65H21.8 M8.2 13.05H21.8 M8.2 25.45H21.8 M8.2 28.85H21.8"
+      stroke="#fff1d7" stroke-width=".7" opacity=".62"/>
   </g>
 </svg>
