@@ -24,11 +24,17 @@
     s.track.hidden = !active;
     if (!active) return;
     const height = bottom - top;
-    const knob = Math.min(height, innerWidth < 860 ? 27 : 30);
+    const compact = el.matches(".rail");
+    const knob = Math.min(height, compact ? 44 : (innerWidth < 860 ? 56 : 64));
     const travel = height - knob;
     const pos = travel * el.scrollTop / max;
     Object.assign(s, { top, max, travel, pos, knob });
-    s.track.style.cssText = "top:" + top + "px;left:" + Math.max(0,Math.min(innerWidth-40,r.right-(innerWidth < 860 ? 32 : 36))) + "px;height:" + height + "px";
+    const thumbWidth = compact ? 30 : (innerWidth < 860 ? 38 : 44);
+    const thumbLeft = compact ? -4 : (innerWidth < 860 ? -7 : -8);
+    const railWidth = compact ? 21 : (innerWidth < 860 ? 24 : 28);
+    const railLeft = r.right - 5 - thumbWidth - thumbLeft;
+    s.track.classList.toggle("is-compact", compact);
+    s.track.style.cssText = "top:" + top + "px;left:" + Math.max(0,Math.min(innerWidth-railWidth,railLeft)) + "px;height:" + height + "px";
     s.thumb.style.cssText = "top:" + pos + "px;height:" + knob + "px";
   }
   function attach(el, resize) {
@@ -37,7 +43,7 @@
     track.hidden = true;
     const thumb = document.createElement("div");
     thumb.className = "skeuo-slider-thumb";
-    thumb.innerHTML = '<span class="skeuo-slider-grips"><i></i><i></i><i></i><i></i><i></i><i></i></span>';
+
     track.appendChild(thumb);
     layer.appendChild(track);
     el.classList.add("skeuo-scroll-host");
