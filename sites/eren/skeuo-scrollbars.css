@@ -1,4 +1,5 @@
-/* Small raised beige scroll nubs, matched to the console's physical keys. */
+/* Scroll hardware uses the same ivory keycap materials and shadows as .key
+   in skeuo-demo.html. Keep native scrolling, conceal only native UI chrome. */
 .skeuo-scroll-host{
   scrollbar-width:none!important;
   -ms-overflow-style:none!important;
@@ -16,12 +17,7 @@
   padding-right:22px!important;
 }
 .rail.skeuo-scroll-host.skeuo-can-scroll{padding-right:15px!important}
-#skeuo-slider-layer{
-  position:fixed;
-  inset:0;
-  z-index:60;
-  pointer-events:none;
-}
+#skeuo-slider-layer{position:fixed;inset:0;z-index:60;pointer-events:none}
 .skeuo-slider{
   position:absolute;
   width:14px;
@@ -32,6 +28,7 @@
   touch-action:none;
   cursor:pointer;
 }
+/* Small recessed guide channel, without a second visible scrollbar. */
 .skeuo-slider::before{
   content:"";
   position:absolute;
@@ -40,49 +37,78 @@
   left:5px;
   width:3px;
   border-radius:3px;
-  background:linear-gradient(90deg,#776955,#332b21 60%,#806e55);
-  box-shadow:inset 1px 0 1px rgba(27,21,15,.45),1px 0 rgba(255,245,221,.32);
+  background:linear-gradient(90deg,#746954,#3c352a 57%,#8b7c64);
+  box-shadow:inset 1px 0 1px rgba(27,21,15,.4),1px 0 rgba(255,245,221,.28);
   pointer-events:none;
 }
 .skeuo-slider[hidden]{display:none!important}
-/* Raised circular ivory control: domed lighting, firm rim, cast shadow. */
+/* One actual little raised cylinder: two round layers, not a domed sphere.
+   The lower layer peeks out 3-4px below the upper ivory disk. */
 .skeuo-slider-thumb{
+  --nub-size:16px;
+  --nub-rise:4px;
   position:absolute;
   left:-1px;
-  width:16px;
-  height:16px;
+  width:var(--nub-size);
+  height:calc(var(--nub-size) + var(--nub-rise));
   box-sizing:border-box;
-  border:1px solid #987f60;
-  border-radius:50%;
-  background:
-    radial-gradient(circle at 31% 22%,rgba(255,255,255,.8) 0%,rgba(255,249,232,.42) 16%,transparent 46%),
-    radial-gradient(circle at 33% 19%,rgba(245,166,79,.20),transparent 70%),
-    radial-gradient(circle at 49% 36%,#f0e2cb 0%,#e4d1b2 52%,#c6a984 77%,#aa8863 100%);
-  box-shadow:
-    inset 0 1px 1px rgba(255,250,235,.85),
-    inset -1px -2px 2px rgba(91,65,40,.24),
-    0 2px 0 rgba(94,70,42,.52),
-    1px 3px 3px rgba(42,29,17,.30);
+  border:0;
+  border-radius:0;
+  background:none;
+  box-shadow:none;
+  filter:drop-shadow(2px 3px 1.5px rgba(39,22,10,.3));
   cursor:grab;
   touch-action:none;
-  transition:filter .12s ease,box-shadow .12s ease;
+  transition:filter .12s ease;
 }
-.skeuo-slider:hover .skeuo-slider-thumb{filter:brightness(1.05)}
+.skeuo-slider-thumb::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:var(--nub-rise);
+  width:var(--nub-size);
+  height:var(--nub-size);
+  box-sizing:border-box;
+  border:1px solid #796f5e;
+  border-radius:50%;
+  background:linear-gradient(180deg,#c9bda6 0%,#9f927d 46%,#817664 100%);
+  box-shadow:0 1px 0 #726d62;
+  pointer-events:none;
+}
+.skeuo-slider-thumb::after{
+  content:"";
+  position:absolute;
+  left:0;
+  top:0;
+  width:var(--nub-size);
+  height:var(--nub-size);
+  box-sizing:border-box;
+  border:1px solid #8c806a;
+  border-radius:50%;
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.31),transparent 36%),
+    linear-gradient(180deg,#f1ead8 0%,#e3dac4 64%,#c5b9a0 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.72),
+    inset -1px -1px 0 rgba(80,67,48,.13),
+    0 1px 0 #b8aa92;
+  pointer-events:none;
+}
+.skeuo-slider:hover .skeuo-slider-thumb{
+  filter:brightness(1.055) drop-shadow(2px 3px 1.5px rgba(39,22,10,.3));
+}
 .skeuo-slider.is-dragging .skeuo-slider-thumb{
   cursor:grabbing;
-  filter:brightness(.98);
-  box-shadow:
-    inset 0 2px 3px rgba(84,67,46,.22),
-    inset 0 1px 0 rgba(255,251,239,.38),
-    0 1px 2px rgba(46,32,19,.22);
+  filter:brightness(.97) drop-shadow(1px 1px 1px rgba(39,22,10,.23));
+}
+.skeuo-slider.is-dragging .skeuo-slider-thumb::before{
+  background:linear-gradient(180deg,#b9ad99,#847967);
 }
 .skeuo-slider.is-compact{width:11px}
 .skeuo-slider.is-compact::before{left:4px;width:3px}
 .skeuo-slider.is-compact .skeuo-slider-thumb{
-  left:-1px;
-  width:12px;
-  height:12px;
-  border-radius:50%;
+  --nub-size:12px;
+  --nub-rise:3px;
 }
 @media(max-width:859px){
   :is(#todoList,#coolDeadlines,.inbox,.mailx-list,.mailx-reader,.mailx-reader-scroll,.mailx-email-body).skeuo-scroll-host.skeuo-can-scroll{
@@ -91,9 +117,8 @@
   .skeuo-slider:not(.is-compact){width:13px}
   .skeuo-slider:not(.is-compact)::before{left:5px}
   .skeuo-slider:not(.is-compact) .skeuo-slider-thumb{
-    width:15px;
-    height:15px;
-    left:-1px;
+    --nub-size:15px;
+    --nub-rise:4px;
   }
 }
 @media(prefers-reduced-motion:reduce){.skeuo-slider-thumb{transition:none}}
