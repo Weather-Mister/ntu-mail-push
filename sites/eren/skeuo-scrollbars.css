@@ -1,135 +1,84 @@
-/* Beige console faders: custom scroll indicator, real scrolling underneath. */
-/* Firefox and Chromium support scrollbar-width. The WebKit rules cover Safari. */
-.skeuo-scroll-host{
+/* Physical vertical mixer faders. The underlying list uses native scrolling,
+   but its OS scrollbar is fully suppressed in favor of this custom control. */
+.skeuo-scroll-host {
   scrollbar-width:none!important;
   -ms-overflow-style:none!important;
 }
 .skeuo-scroll-host::-webkit-scrollbar,
-.skeuo-scroll-host::-webkit-scrollbar-track,
 .skeuo-scroll-host::-webkit-scrollbar-thumb,
-.skeuo-scroll-host::-webkit-scrollbar-corner{
+.skeuo-scroll-host::-webkit-scrollbar-track,
+.skeuo-scroll-host::-webkit-scrollbar-corner {
   display:none!important;
   width:0!important;
   height:0!important;
   background:transparent!important;
 }
-:is(#todoList,#coolDeadlines,.inbox).skeuo-scroll-host.skeuo-can-scroll{
-  padding-right:39px!important;
+:is(#todoList,#coolDeadlines,.inbox,.mailx-list,.mailx-reader,.mailx-reader-scroll,.mailx-email-body)
+.skeuo-scroll-host.skeuo-can-scroll {
+  padding-right:50px!important;
 }
-#skeuo-slider-layer{
+.rail.skeuo-scroll-host.skeuo-can-scroll {padding-right:28px!important}
+#skeuo-slider-layer {
   position:fixed;
   inset:0;
-  pointer-events:none;
   z-index:60;
+  pointer-events:none;
 }
-/* Transparent interaction area, with a narrow, recessed black fader slot. */
-.skeuo-slider{
+/* The underlying 5px slot stays behind the crossing fader cap. */
+.skeuo-slider {
   position:absolute;
-  width:29px;
+  width:28px;
   border:0;
-  background:transparent;
+  background:none;
   box-shadow:none;
   pointer-events:auto;
   touch-action:none;
   cursor:pointer;
 }
-.skeuo-slider::before{
+.skeuo-slider::before {
   content:"";
   position:absolute;
-  left:12px;
   top:0;
   bottom:0;
+  left:12px;
   width:5px;
-  border:1px solid #71634e;
-  border-radius:3px;
-  background:linear-gradient(90deg,#3e352b 0%,#1e1a16 40%,#332b21 75%,#73644d 100%);
-  box-shadow:inset 1px 0 2px #16130f,1px 0 rgba(255,248,225,.36);
+  border:1px solid #665842;
+  border-radius:4px;
+  background:linear-gradient(90deg,#7e6d54,#211c16 26%,#15120e 60%,#67573f);
+  box-shadow:inset 1px 0 2px #14100b,1px 0 rgba(255,247,222,.46);
   pointer-events:none;
 }
-.skeuo-slider[hidden]{display:none!important}
-/* Physical cap crosses the slot horizontally like a mixer fader,
-   never stretches into a long scrollbar pill. */
-.skeuo-slider-thumb{
+.skeuo-slider[hidden] {display:none!important}
+/* This image is rendered in its actual fitted orientation: tall cap, horizontal
+   index mark and ribs, just like a vertical mixing-console fader. */
+.skeuo-slider-thumb {
   position:absolute;
-  box-sizing:border-box;
-  left:-3px;
-  width:35px;
-  height:30px;
-  min-height:0;
-  border:1px solid #93846b;
-  border-radius:9px 9px 5px 5px / 10px 10px 5px 5px;
-  background:
-    radial-gradient(ellipse at 17% 8%,rgba(255,255,255,.61),transparent 51%),
-    radial-gradient(ellipse at 82% 7%,rgba(255,255,255,.37),transparent 48%),
-    linear-gradient(180deg,#ede2cb 0%,#dfd0b2 37%,#c6b392 77%,#ad9978 100%);
-  box-shadow:
-    inset 0 2px 1px rgba(255,255,255,.68),
-    inset 0 -2px 2px rgba(91,70,43,.23),
-    1px 3px 3px rgba(40,28,15,.38);
-  display:flex;
-  align-items:flex-start;
-  justify-content:center;
-  padding-top:5px;
+  top:0;
+  left:-8px;
+  width:44px;
+  height:64px;
+  border:0;
+  background:transparent url("./skeuo-fader-cap.svg?v=1") center/100% 100% no-repeat;
+  filter:drop-shadow(1px 3px 2px rgba(38,26,14,.38));
   cursor:grab;
-  transition:filter .12s ease,box-shadow .12s ease;
+  transition:filter .13s ease;
+  touch-action:none;
 }
-.skeuo-slider-thumb::before{
-  content:"";
-  position:absolute;
-  inset:2px 2px 3px;
-  border-radius:7px 7px 4px 4px;
-  background:
-    linear-gradient(90deg,rgba(255,255,255,.25),transparent 20% 80%,rgba(79,61,36,.12)),
-    linear-gradient(180deg,rgba(255,255,255,.15),transparent 38%);
-  pointer-events:none;
+.skeuo-slider:hover .skeuo-slider-thumb {
+  filter:brightness(1.055) drop-shadow(1px 3px 2px rgba(38,26,14,.38));
 }
-.skeuo-slider-thumb::after{
-  content:"";
-  position:absolute;
-  top:3px;
-  bottom:3px;
-  left:calc(50% - 1.5px);
-  width:3px;
-  border-radius:1px;
-  background:linear-gradient(90deg,#29241e,#54483a 55%,#27231e);
-  box-shadow:1px 0 rgba(255,248,227,.32);
-  pointer-events:none;
-}
-/* Shallow vertical ribs on both curved shoulders of the cap. */
-.skeuo-slider-grips{
-  position:relative;
-  z-index:1;
-  width:26px;
-  height:10px;
-  display:flex;
-  flex-direction:row;
-  justify-content:space-between;
-  pointer-events:none;
-}
-.skeuo-slider-grips i{
-  display:block;
-  width:2px;
-  height:9px;
-  border-radius:2px;
-  background:linear-gradient(90deg,#b09b79,#ddceb0 65%,#ac9876);
-  box-shadow:1px 0 rgba(108,84,52,.23),-1px 0 rgba(255,250,231,.25);
-}
-.skeuo-slider:hover .skeuo-slider-thumb{filter:brightness(1.055)}
-.skeuo-slider.is-dragging .skeuo-slider-thumb{
+.skeuo-slider.is-dragging .skeuo-slider-thumb {
   cursor:grabbing;
-  background:linear-gradient(180deg,#e4d7be,#cbb897 66%,#a99677);
-  box-shadow:inset 0 2px 3px rgba(94,72,45,.22),0 2px 2px rgba(40,28,15,.28);
+  filter:brightness(.94) drop-shadow(1px 1px 1px rgba(38,26,14,.35));
 }
-@media(max-width:859px){
-  :is(#todoList,#coolDeadlines,.inbox).skeuo-scroll-host.skeuo-can-scroll{
-    padding-right:34px!important;
-  }
-  .skeuo-slider{width:25px}
-  .skeuo-slider::before{left:10px}
-  .skeuo-slider-thumb{width:31px;left:-3px;height:27px}
-  .skeuo-slider-grips{width:23px}
-  .skeuo-slider-grips i{height:8px}
+.skeuo-slider.is-compact{width:21px}
+.skeuo-slider.is-compact::before{left:9px;width:4px}
+.skeuo-slider.is-compact .skeuo-slider-thumb{width:30px;height:44px;left:-4px}
+@media(max-width:859px) {
+  :is(#todoList,#coolDeadlines,.inbox,.mailx-list,.mailx-reader,.mailx-reader-scroll,.mailx-email-body)
+  .skeuo-scroll-host.skeuo-can-scroll{padding-right:42px!important}
+  .skeuo-slider:not(.is-compact){width:24px}
+  .skeuo-slider:not(.is-compact)::before{left:10px;width:4px}
+  .skeuo-slider:not(.is-compact) .skeuo-slider-thumb{width:38px;left:-7px}
 }
-@media(prefers-reduced-motion:reduce){
-  .skeuo-slider-thumb{transition:none}
-}
+@media(prefers-reduced-motion:reduce){.skeuo-slider-thumb{transition:none}}
