@@ -46,7 +46,7 @@
   width:23px;
   height:31px;
   border:0;
-  background:transparent url("./skeuo-fader-cap.svg?v=3") center/100% 100% no-repeat;
+  background:transparent url("./skeuo-fader-cap.svg?v=4") center/100% 100% no-repeat;
   filter:drop-shadow(1px 1px .6px rgba(52,35,18,.27));
   cursor:grab;
   touch-action:none;
