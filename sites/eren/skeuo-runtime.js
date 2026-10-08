@@ -1999,7 +1999,7 @@ if (scheduleScope && scheduleScopeTrace){
 if ('serviceWorker' in navigator){
   window.addEventListener('load', async () => {
     try {
-      const registration = await navigator.serviceWorker.register('./sw.js?v=94', { updateViaCache:'none' });
+      const registration = await navigator.serviceWorker.register('./sw.js?v=95', { updateViaCache:'none' });
       await registration.update();
     } catch (error) {}
   });
