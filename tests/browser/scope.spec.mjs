@@ -82,7 +82,8 @@ async function mount(page, reducedMotion = false, firefox = false) {
       const destination = producer.createMediaStreamDestination();
       oscillator.connect(destination);
       oscillator.start();
-      await producer.resume();
+      // The synthetic track is live even with a suspended producer context.
+      // Firefox blocks resume() on autoplay grounds outside a direct gesture.
       window.producer = producer;
       window.pickedTracks = destination.stream.getAudioTracks();
       const track = window.pickedTracks[0];
@@ -97,7 +98,8 @@ async function mount(page, reducedMotion = false, firefox = false) {
       const destination = producer.createMediaStreamDestination();
       oscillator.connect(destination);
       oscillator.start();
-      await producer.resume();
+      // The synthetic track is live even with a suspended producer context.
+      // Firefox blocks resume() on autoplay grounds outside a direct gesture.
       window.producer = producer;
       const canvas = document.createElement('canvas');
       canvas.getContext('2d').fillRect(0, 0, 20, 20);
@@ -228,8 +230,9 @@ test('Firefox auto-input survives a disconnected source and retains remaining si
   await page.evaluate(() => window.provideInput('Loopback B'));
   await expect(page.locator('#scheduleScopeValue')).toHaveText('2 IN');
   await page.evaluate(() => {
+    // A stopped track need not dispatch "ended" (per MediaStreamTrack).
+    // The scope must recover via readyState polling.
     inputTracks[0].stop();
-    inputTracks[0].dispatchEvent(new Event('ended'));
   });
   await expect(page.locator('#scheduleScopeValue')).toHaveText('LIVE');
   await expect(scope).toHaveClass(/pc-audio-active/);
@@ -250,6 +253,27 @@ test('Firefox rejected permission leaves an informative retry state', async ({ p
   expect(errors).toEqual([]);
 });
 
+
+test('Firefox primes Web Audio during the click before requesting device permission', async ({ page }) => {
+  const errors = await mount(page, false, true);
+  await page.evaluate(() => {
+    const nativeResume = window.AudioContext.prototype.resume;
+    window.AudioContext.prototype.resume = function() {
+      window.scopeResumeStarted = true;
+      return nativeResume.call(this);
+    };
+    const originalRequest = navigator.mediaDevices.getUserMedia;
+    navigator.mediaDevices.getUserMedia = constraints => {
+      window.resumeWasBeforePermission = window.scopeResumeStarted === true;
+      return originalRequest(constraints);
+    };
+  });
+  await page.locator('#scheduleScope').click();
+  expect(await page.evaluate(() => window.resumeWasBeforePermission)).toBe(true);
+  await page.evaluate(() => window.provideInput('Mic'));
+  await expect(page.locator('#scheduleScope')).toHaveClass(/pc-audio-active/);
+  expect(errors).toEqual([]);
+});
 
 test('Firefox input permission begins only on activation, then can be cancelled', async ({ page }) => {
   const errors = await mount(page, false, true);

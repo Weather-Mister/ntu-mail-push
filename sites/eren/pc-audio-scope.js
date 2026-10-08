@@ -81,6 +81,23 @@
   function draw() {
     if (!active) return;
     if (isFirefox) {
+      // Firefox may move a track to "ended" without delivering its event to a
+      // particular MediaStream wrapper. Prune from readyState as well, so
+      // stale sources cannot keep the count wrong or freeze auto-selection.
+      const previousCount = inputStreams.length;
+      for (let i = inputStreams.length - 1; i >= 0; i--) {
+        const input = inputStreams[i];
+        if (input.track.readyState !== 'ended') continue;
+        try { input.source.disconnect(); } catch {}
+        inputStreams.splice(i, 1);
+      }
+      if (inputStreams.length !== previousCount && inputStreams.length) {
+        if (!inputStreams.includes(currentInput)) currentInput = null;
+        if (value) value.textContent = inputStreams.length > 1 ? inputStreams.length + ' IN' : 'LIVE';
+        if (label) label.textContent = inputStreams.length > 1 ? 'AUDIO / AUTO' : 'AUDIO / IN';
+        if (mode) mode.textContent = statusForInput(currentInput || inputStreams[0]);
+      }
+
       // Separate analysers avoid mixing inputs and let us select the strongest
       // *actual* input signal instead of inferring the OS playback device.
       let best = null;
@@ -207,6 +224,20 @@
     if (mode) mode.textContent = 'CHOOSE INPUT';
     if (hint) hint.textContent = 'REMEMBER PERMISSION';
 
+    // Unlock Web Audio directly in the initiating click's user activation.
+    // Firefox may otherwise leave resume() pending when first called after the
+    // async device-permission prompt. The analyser connects after capture.
+    try {
+      audioContext = new AudioContextCtor();
+      audioContext.resume().catch(() => {});
+    } catch {
+      stop();
+      scope.classList.add('pc-audio-error');
+      if (mode) mode.textContent = 'AUDIO ERROR';
+      if (hint) hint.textContent = 'CLICK RETRY';
+      return;
+    }
+
     let firstError = null;
     for (const deviceId of choices) {
       let picked = null;
@@ -227,15 +258,8 @@
         pendingFirefoxStream = picked;
         const track = picked.getAudioTracks()[0];
         if (!track) throw new Error('No audio input track');
-        if (!audioContext) {
-          audioContext = new AudioContextCtor();
-          await audioContext.resume();
-          if (epoch !== captureEpoch) {
-            picked.getTracks().forEach(t => t.stop());
-            pendingFirefoxStream = null;
-            return;
-          }
-        }
+        // The audio context has already been resumed under the original
+        // click gesture; never block source setup on a later autoplay prompt.
         const inputSource = audioContext.createMediaStreamSource(new MediaStream([track]));
         const inputAnalyser = audioContext.createAnalyser();
         inputAnalyser.fftSize = 512;
