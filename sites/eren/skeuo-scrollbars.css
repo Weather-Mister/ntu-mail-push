@@ -13,8 +13,7 @@
   height:0!important;
   background:transparent!important;
 }
-:is(#todoList,#coolDeadlines,.inbox,.mailx-list,.mailx-reader,.mailx-reader-scroll,.mailx-email-body)
-.skeuo-scroll-host.skeuo-can-scroll {
+:is(#todoList,#coolDeadlines,.inbox,.mailx-list,.mailx-reader,.mailx-reader-scroll,.mailx-email-body).skeuo-scroll-host.skeuo-can-scroll {
   padding-right:50px!important;
 }
 .rail.skeuo-scroll-host.skeuo-can-scroll {padding-right:28px!important}
@@ -75,8 +74,7 @@
 .skeuo-slider.is-compact::before{left:9px;width:4px}
 .skeuo-slider.is-compact .skeuo-slider-thumb{width:30px;height:44px;left:-4px}
 @media(max-width:859px) {
-  :is(#todoList,#coolDeadlines,.inbox,.mailx-list,.mailx-reader,.mailx-reader-scroll,.mailx-email-body)
-  .skeuo-scroll-host.skeuo-can-scroll{padding-right:42px!important}
+  :is(#todoList,#coolDeadlines,.inbox,.mailx-list,.mailx-reader,.mailx-reader-scroll,.mailx-email-body).skeuo-scroll-host.skeuo-can-scroll{padding-right:42px!important}
   .skeuo-slider:not(.is-compact){width:24px}
   .skeuo-slider:not(.is-compact)::before{left:10px;width:4px}
   .skeuo-slider:not(.is-compact) .skeuo-slider-thumb{width:38px;left:-7px}
