@@ -170,3 +170,26 @@ test('reduced motion keeps schedule phase still', async ({ page }) => {
   expect(phases).toEqual([0, 0]);
   expect(errors).toEqual([]);
 });
+
+test('audio loudness changes height while preserving schedule wave spacing', async ({ page }) => {
+  const errors = await mount(page, true);
+  const result = await page.evaluate(() => {
+    scheduleScopeState = { active: true, live: false, minutes: 60 };
+    const points = level => {
+      drawScheduleScope(0, level);
+      return Array.from(scheduleScopeTrace.getAttribute('d').matchAll(/[ML]([\d.]+) ([-\d.]+)/g), m => [Number(m[1]), Number(m[2]) - 21]);
+    };
+    return { schedule: points(null), quiet: points(0), loud: points(1) };
+  });
+  expect(result.loud.map(p => p[0])).toEqual(result.schedule.map(p => p[0]));
+  for (let i = 0; i < result.schedule.length; i++) {
+    const [x, deviation] = result.schedule[i];
+    if (Math.abs(deviation) > 0.05) {
+      expect(Math.sign(result.quiet[i][1]), `quiet wave at x=${x}`).toBe(Math.sign(deviation));
+      expect(Math.sign(result.loud[i][1]), `loud wave at x=${x}`).toBe(Math.sign(deviation));
+    }
+  }
+  const peak = points => Math.max(...points.map(p => Math.abs(p[1])));
+  expect(peak(result.loud)).toBeGreaterThan(peak(result.quiet) * 7);
+  expect(errors).toEqual([]);
+});

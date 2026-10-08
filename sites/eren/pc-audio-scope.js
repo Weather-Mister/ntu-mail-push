@@ -17,7 +17,7 @@
   let stream = null;
   let active = false;
   let connecting = false;
-  let gain = 1;
+  let level = 0;
   let raf = 0;
 
   function setUi(on, status='SYSTEM OUT') {
@@ -44,20 +44,10 @@
       energy += v * v;
     }
     const rms = Math.sqrt(energy / data.length);
-    const desired = rms > 0.004 ? Math.min(5.5, Math.max(1, 0.24 / rms)) : 1;
-    gain += (desired - gain) * 0.12;
-
-    const width = 200;
-    const mid = 21;
-    const amp = 17.5;
-    let d = '';
-    for (let x = 0; x <= width; x += 2) {
-      const i = Math.min(data.length - 1, Math.floor((x / width) * (data.length - 1)));
-      const sample = ((data[i] - 128) / 128) * gain;
-      const y = Math.max(2.5, Math.min(39.5, mid + sample * amp));
-      d += `${x === 0 ? 'M' : 'L'}${x} ${y.toFixed(2)} `;
-    }
-    trace.setAttribute('d', d.trim());
+    // Follow loudness while preserving the schedule trace's wavelength and motion.
+    const desired = Math.min(1, rms * 3);
+    level += (desired - level) * (desired > level ? 0.3 : 0.12);
+    drawScheduleScope(performance.now(), level);
     raf = requestAnimationFrame(draw);
   }
 
@@ -77,7 +67,7 @@
       try { audioContext.close().catch(() => {}); } catch {}
     }
     audioContext = null;
-    gain = 1;
+    level = 0;
     scope.classList.remove('pc-audio-active', 'pc-audio-pending', 'pc-audio-error', 'is-audio');
     scope.setAttribute('aria-pressed', 'false');
     scope.title = 'Click to monitor PC audio';
