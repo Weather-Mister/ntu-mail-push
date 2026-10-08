@@ -1,5 +1,5 @@
 /* Overlay scroll hardware: native wheel/touch/keyboard scrolling stays intact,
-   while the visible control reads like an old-school mixer fader. */
+   while the visible control reads like a compact old-school mixer fader. */
 .skeuo-scroll-host{
   scrollbar-width:none!important;
   -ms-overflow-style:none!important;
@@ -14,14 +14,14 @@
   background:transparent!important;
 }
 :is(#todoList,#coolDeadlines,.inbox).skeuo-scroll-host.skeuo-can-scroll{
-  padding-right:34px!important;
+  padding-right:28px!important;
 }
-.rail.skeuo-scroll-host.skeuo-can-scroll{padding-right:28px!important}
+.rail.skeuo-scroll-host.skeuo-can-scroll{padding-right:23px!important}
 
 #skeuo-slider-layer{position:fixed;inset:0;z-index:60;pointer-events:none}
 .skeuo-slider{
   position:absolute;
-  width:30px;
+  width:24px;
   border:0;
   background:transparent;
   box-shadow:none;
@@ -30,80 +30,70 @@
   cursor:pointer;
 }
 
-/* Narrow recessed guide slot behind the physical fader cap. */
 .skeuo-slider::before{
   content:"";
   position:absolute;
   top:2px;
   bottom:2px;
   left:50%;
-  width:5px;
   transform:translateX(-50%);
-  border-radius:4px;
+  width:4px;
+  border-radius:3px;
   background:
     linear-gradient(90deg,
-      #8e806a 0%,
-      #5b5041 20%,
-      #302920 48%,
-      #3a3127 68%,
-      #8f8068 100%);
+      #8c7c66 0%,
+      #564a3b 18%,
+      #2e261f 48%,
+      #3b3128 70%,
+      #8f7f68 100%);
   box-shadow:
-    inset 1px 0 2px rgba(28,20,12,.55),
-    inset -1px 0 1px rgba(25,18,11,.32),
-    1px 0 rgba(255,245,220,.34);
+    inset 1px 0 1px rgba(26,18,10,.46),
+    inset -1px 0 1px rgba(20,14,8,.25),
+    1px 0 rgba(255,245,223,.30);
   pointer-events:none;
 }
 .skeuo-slider[hidden]{display:none!important}
 
-/* Warm, slightly orange ivory cap: larger, raised, gently waisted, with
-   three moulded grip ribs. The shape itself lives in the tiny SVG asset. */
 .skeuo-slider-thumb{
   position:absolute;
-  left:1px;
-  width:28px;
+  left:0;
+  width:24px;
   box-sizing:border-box;
   border:0;
   border-radius:0;
-  background:url("./skeuo-fader-cap.svg?v=2") center/100% 100% no-repeat;
+  background:url("./skeuo-fader-cap.svg?v=4") center/100% 100% no-repeat;
   box-shadow:none;
   filter:
-    drop-shadow(0 1px 0 rgba(255,248,230,.24))
-    drop-shadow(2px 5px 2px rgba(47,29,15,.34));
+    drop-shadow(0 1px 0 rgba(255,248,230,.18))
+    drop-shadow(1.5px 3px 1.8px rgba(45,28,14,.28));
   cursor:grab;
   touch-action:none;
-  transition:filter .10s ease,transform .08s ease;
+  transition:filter .1s ease,transform .08s ease;
 }
 .skeuo-slider:hover .skeuo-slider-thumb{
   filter:
-    brightness(1.035)
-    drop-shadow(0 1px 0 rgba(255,248,230,.26))
-    drop-shadow(2px 5px 2px rgba(47,29,15,.34));
+    brightness(1.02)
+    drop-shadow(0 1px 0 rgba(255,248,230,.18))
+    drop-shadow(1.5px 3px 1.8px rgba(45,28,14,.28));
 }
 .skeuo-slider.is-dragging .skeuo-slider-thumb{
   cursor:grabbing;
   transform:translateY(1px);
   filter:
-    brightness(.975)
-    drop-shadow(0 1px 0 rgba(255,248,230,.18))
-    drop-shadow(1px 3px 1px rgba(47,29,15,.28));
+    brightness(.985)
+    drop-shadow(0 1px 0 rgba(255,248,230,.14))
+    drop-shadow(1px 2px 1.4px rgba(45,28,14,.24));
 }
 
-.skeuo-slider.is-compact{width:24px}
-.skeuo-slider.is-compact .skeuo-slider-thumb{
-  left:1px;
-  width:22px;
-}
-.skeuo-slider.is-compact::before{width:4px}
+.skeuo-slider.is-compact{width:20px}
+.skeuo-slider.is-compact .skeuo-slider-thumb{width:20px}
 
 @media(max-width:859px){
   :is(#todoList,#coolDeadlines,.inbox).skeuo-scroll-host.skeuo-can-scroll{
-    padding-right:31px!important;
+    padding-right:26px!important;
   }
-  .skeuo-slider:not(.is-compact){width:27px}
-  .skeuo-slider:not(.is-compact) .skeuo-slider-thumb{
-    left:1px;
-    width:25px;
-  }
+  .skeuo-slider:not(.is-compact){width:22px}
+  .skeuo-slider:not(.is-compact) .skeuo-slider-thumb{width:22px}
 }
 @media(prefers-reduced-motion:reduce){.skeuo-slider-thumb{transition:none}}
 
