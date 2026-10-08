@@ -15,8 +15,14 @@ async function mount(page, reducedMotion = false, firefox = false) {
     <span id="scheduleScopeMode">NEXT START</span><span id="scheduleScopeHint">λ ∝ ΔT</span>
   </div>`);
   await page.evaluate(isFirefox => {
+    // Run the same Chrome-path and Firefox-path cases on both browser engines.
+    // Without this override, the non-Firefox tests inadvertently enter Firefox
+    // mode when the entire suite runs in a real Firefox binary.
+    Object.defineProperty(navigator, 'userAgent', {
+      configurable: true,
+      value: isFirefox ? 'Mozilla/5.0 Firefox/145.0' : 'Mozilla/5.0 Chrome/145.0'
+    });
     if (isFirefox) {
-      Object.defineProperty(navigator, 'userAgent', { configurable: true, value: 'Mozilla/5.0 Firefox/145.0' });
       const saved = new Map();
       Object.defineProperty(window, 'localStorage', {
         configurable: true,
