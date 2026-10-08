@@ -13,15 +13,15 @@
   background:transparent!important;
 }
 :is(#todoList,#coolDeadlines,.inbox,.mailx-list,.mailx-reader,.mailx-reader-scroll,.mailx-email-body).skeuo-scroll-host.skeuo-can-scroll{
-  padding-right:29px!important;
+  padding-right:27px!important;
 }
-.rail.skeuo-scroll-host.skeuo-can-scroll{padding-right:18px!important}
+.rail.skeuo-scroll-host.skeuo-can-scroll{padding-right:17px!important}
 #skeuo-slider-layer{
   position:fixed;inset:0;z-index:60;pointer-events:none;
 }
 .skeuo-slider{
   position:absolute;
-  width:18px;
+  width:17px;
   border:0;
   background:transparent;
   box-shadow:none;
@@ -33,7 +33,7 @@
 .skeuo-slider::before{
   content:"";
   position:absolute;
-  top:2px;bottom:2px;left:8px;width:3px;
+  top:2px;bottom:2px;left:7px;width:3px;
   border-radius:3px;
   background:linear-gradient(90deg,#564a3c,#29241d 55%,#685944);
   box-shadow:inset 1px 0 1px rgba(14,12,10,.55),1px 0 rgba(255,245,218,.33);
@@ -43,31 +43,31 @@
 .skeuo-slider-thumb{
   position:absolute;
   left:-3px;
-  width:25px;
-  height:36px;
+  width:23px;
+  height:31px;
   border:0;
-  background:transparent url("./skeuo-fader-cap.svg?v=2") center/100% 100% no-repeat;
-  filter:drop-shadow(1px 2px 1px rgba(52,35,18,.24));
+  background:transparent url("./skeuo-fader-cap.svg?v=3") center/100% 100% no-repeat;
+  filter:drop-shadow(1px 1px .6px rgba(52,35,18,.27));
   cursor:grab;
   touch-action:none;
   transition:filter .14s ease;
 }
 .skeuo-slider:hover .skeuo-slider-thumb{
-  filter:brightness(1.045) drop-shadow(1px 2px 1px rgba(52,35,18,.26));
+  filter:brightness(1.045) drop-shadow(1px 1px .6px rgba(52,35,18,.29));
 }
 .skeuo-slider.is-dragging .skeuo-slider-thumb{
   cursor:grabbing;
   filter:brightness(.96) drop-shadow(0 1px 1px rgba(52,35,18,.22));
 }
-.skeuo-slider.is-compact{width:14px}
-.skeuo-slider.is-compact::before{left:6px;width:3px}
-.skeuo-slider.is-compact .skeuo-slider-thumb{left:-2px;width:19px;height:29px}
+.skeuo-slider.is-compact{width:13px}
+.skeuo-slider.is-compact::before{left:5px;width:3px}
+.skeuo-slider.is-compact .skeuo-slider-thumb{left:-2px;width:17px;height:25px}
 @media(max-width:859px){
   :is(#todoList,#coolDeadlines,.inbox,.mailx-list,.mailx-reader,.mailx-reader-scroll,.mailx-email-body).skeuo-scroll-host.skeuo-can-scroll{
-    padding-right:25px!important;
+    padding-right:24px!important;
   }
-  .skeuo-slider:not(.is-compact){width:16px}
-  .skeuo-slider:not(.is-compact)::before{left:7px}
-  .skeuo-slider:not(.is-compact) .skeuo-slider-thumb{left:-3px;width:22px;height:33px}
+  .skeuo-slider:not(.is-compact){width:15px}
+  .skeuo-slider:not(.is-compact)::before{left:6px}
+  .skeuo-slider:not(.is-compact) .skeuo-slider-thumb{left:-3px;width:21px;height:29px}
 }
 @media(prefers-reduced-motion:reduce){.skeuo-slider-thumb{transition:none}}
