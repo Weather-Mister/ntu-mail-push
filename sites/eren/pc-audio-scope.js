@@ -114,14 +114,14 @@
       const audioTrack = picked.getAudioTracks()[0];
       if (!audioTrack) throw new Error('No audio track shared');
 
-      picked.getVideoTracks().forEach(track => {
-        try { track.stop(); } catch {}
-      });
-
-      stream = new MediaStream([audioTrack]);
+      /* Keep the browser's video capture track alive even though we never
+         render or store it. Some browsers tie the shared audio track to the
+         lifetime of the display-capture source; stopping video here can end
+         the audio immediately and make the scope fall back to schedule mode. */
+      stream = picked;
       audioContext = new AudioContextCtor();
       await audioContext.resume();
-      source = audioContext.createMediaStreamSource(stream);
+      source = audioContext.createMediaStreamSource(new MediaStream([audioTrack]));
       analyser = audioContext.createAnalyser();
       analyser.fftSize = 512;
       analyser.smoothingTimeConstant = 0.28;
@@ -131,6 +131,7 @@
       active = true;
       connecting = false;
       audioTrack.addEventListener('ended', () => { if (active) stop(); }, { once: true });
+      picked.getVideoTracks()[0]?.addEventListener('ended', () => { if (active) stop(); }, { once: true });
       setUi(true);
       draw();
     } catch (error) {
