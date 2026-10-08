@@ -1,82 +1,110 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 40" aria-hidden="true">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 76" aria-hidden="true">
   <defs>
-    <linearGradient id="body" x1="0" y1="0" x2=".92" y2="1">
-      <stop offset="0" stop-color="#f2dfbc"/>
-      <stop offset=".18" stop-color="#ead3aa"/>
-      <stop offset=".56" stop-color="#dfbd8d"/>
-      <stop offset=".82" stop-color="#d2ad7d"/>
-      <stop offset="1" stop-color="#bd9467"/>
+    <linearGradient id="outer" x1="0" y1="0" x2=".92" y2="1">
+      <stop offset="0" stop-color="#f3dfbb"/>
+      <stop offset=".22" stop-color="#ebd1a5"/>
+      <stop offset=".62" stop-color="#ddb884"/>
+      <stop offset="1" stop-color="#cfa16e"/>
     </linearGradient>
-    <linearGradient id="face" x1="0" y1="0" x2="1" y2=".9">
-      <stop offset="0" stop-color="#f6e6c8"/>
-      <stop offset=".25" stop-color="#e9cf9f"/>
-      <stop offset=".68" stop-color="#dcb782"/>
-      <stop offset="1" stop-color="#c79c69"/>
+
+    <linearGradient id="face" x1="0" y1="0" x2=".95" y2="1">
+      <stop offset="0" stop-color="#f7e6c8"/>
+      <stop offset=".18" stop-color="#efd7ae"/>
+      <stop offset=".68" stop-color="#e1be8b"/>
+      <stop offset="1" stop-color="#d2a673"/>
     </linearGradient>
-    <linearGradient id="edge" x1="0" y1="0" x2="1" y2="0">
-      <stop stop-color="#fff6df" stop-opacity=".48"/>
-      <stop offset=".16" stop-color="#fff6df" stop-opacity="0"/>
-      <stop offset=".78" stop-color="#7e5d38" stop-opacity="0"/>
-      <stop offset="1" stop-color="#7e5d38" stop-opacity=".30"/>
+
+    <linearGradient id="leftGlow" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#fff4db" stop-opacity=".62"/>
+      <stop offset=".26" stop-color="#fff4db" stop-opacity="0"/>
+      <stop offset="1" stop-color="#fff4db" stop-opacity="0"/>
     </linearGradient>
-    <radialGradient id="warm" cx=".18" cy=".12" r=".95">
-      <stop stop-color="#ef9c48" stop-opacity=".13"/>
-      <stop offset=".58" stop-color="#ef9c48" stop-opacity=".035"/>
-      <stop offset="1" stop-color="#ef9c48" stop-opacity="0"/>
-    </radialGradient>
+
+    <linearGradient id="rightShade" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#9a7348" stop-opacity="0"/>
+      <stop offset=".78" stop-color="#9a7348" stop-opacity="0"/>
+      <stop offset="1" stop-color="#9a7348" stop-opacity=".16"/>
+    </linearGradient>
+
+    <linearGradient id="groove" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f7ecd4"/>
+      <stop offset="1" stop-color="#c79d69"/>
+    </linearGradient>
+
     <clipPath id="clip">
-      <path d="M7 2.4 H23
-        C26.3 2.4 27.1 4.4 27.1 7.1
-        C27.1 11.1 26.1 15.2 25.6 18.1
-        C25.4 19.4 25.4 20.6 25.6 21.9
-        C26.1 24.8 27.1 28.9 27.1 32.9
-        C27.1 35.6 26.3 37.6 23 37.6
-        H7
-        C3.7 37.6 2.9 35.6 2.9 32.9
-        C2.9 28.9 3.9 24.8 4.4 21.9
-        C4.6 20.6 4.6 19.4 4.4 18.1
-        C3.9 15.2 2.9 11.1 2.9 7.1
-        C2.9 4.4 3.7 2.4 7 2.4 Z"/>
+      <path d="
+        M16 4.5
+        H40
+        C47.2 4.5 50.2 8.1 50.2 14.8
+        C50.2 20.6 48.8 26.4 48 31.1
+        C47.55 33.55 47.55 42.45 48 44.9
+        C48.8 49.6 50.2 55.4 50.2 61.2
+        C50.2 67.9 47.2 71.5 40 71.5
+        H16
+        C8.8 71.5 5.8 67.9 5.8 61.2
+        C5.8 55.4 7.2 49.6 8 44.9
+        C8.45 42.45 8.45 33.55 8 31.1
+        C7.2 26.4 5.8 20.6 5.8 14.8
+        C5.8 8.1 8.8 4.5 16 4.5
+        Z"/>
     </clipPath>
   </defs>
 
-  <!-- Slightly raised moulded shell; the waist is intentionally very mild. -->
-  <path d="M7 1.5 H23
-    C27 1.5 28 3.9 28 7
-    C28 11.2 27 15.2 26.5 18.2
-    C26.25 19.5 26.25 20.5 26.5 21.8
-    C27 24.8 28 28.8 28 33
-    C28 36.1 27 38.5 23 38.5
-    H7
-    C3 38.5 2 36.1 2 33
-    C2 28.8 3 24.8 3.5 21.8
-    C3.75 20.5 3.75 19.5 3.5 18.2
-    C3 15.2 2 11.2 2 7
-    C2 3.9 3 1.5 7 1.5 Z"
-    fill="#9f7b55" stroke="#76583a" stroke-width=".75"/>
+  <path d="
+    M16 4.5
+    H40
+    C47.2 4.5 50.2 8.1 50.2 14.8
+    C50.2 20.6 48.8 26.4 48 31.1
+    C47.55 33.55 47.55 42.45 48 44.9
+    C48.8 49.6 50.2 55.4 50.2 61.2
+    C50.2 67.9 47.2 71.5 40 71.5
+    H16
+    C8.8 71.5 5.8 67.9 5.8 61.2
+    C5.8 55.4 7.2 49.6 8 44.9
+    C8.45 42.45 8.45 33.55 8 31.1
+    C7.2 26.4 5.8 20.6 5.8 14.8
+    C5.8 8.1 8.8 4.5 16 4.5
+    Z"
+    fill="url(#outer)"/>
 
   <g clip-path="url(#clip)">
-    <path d="M0 0H30V40H0Z" fill="url(#body)"/>
-    <path d="M4.2 4.1 H25.8 V35.8 H4.2 Z" rx="5" fill="url(#face)" opacity=".92"/>
-    <path d="M3 2.5H27V38H3Z" fill="url(#edge)"/>
-    <path d="M3 2.5H27V38H3Z" fill="url(#warm)"/>
+    <path d="
+      M17.7 7.2
+      H38.3
+      C44.2 7.2 46.6 10 46.6 15.5
+      C46.6 20.8 45.3 26 44.55 30.65
+      C44.15 33.05 44.15 42.95 44.55 45.35
+      C45.3 50 46.6 55.2 46.6 60.5
+      C46.6 66 44.2 68.8 38.3 68.8
+      H17.7
+      C11.8 68.8 9.4 66 9.4 60.5
+      C9.4 55.2 10.7 50 11.45 45.35
+      C11.85 42.95 11.85 33.05 11.45 30.65
+      C10.7 26 9.4 20.8 9.4 15.5
+      C9.4 10 11.8 7.2 17.7 7.2
+      Z"
+      fill="url(#face)"/>
 
-    <!-- Top mould highlight and lower edge shading create the raised plastic feel. -->
-    <path d="M7.3 3.35 H22.7" stroke="#fff8e8" stroke-width="1.05" stroke-linecap="round" stroke-opacity=".78"/>
-    <path d="M6.9 36.65 H23.1" stroke="#8f6c47" stroke-width=".85" stroke-linecap="round" stroke-opacity=".42"/>
+    <path d="M9.4 7.2H46.6V68.8H9.4Z" fill="url(#leftGlow)"/>
+    <path d="M9.4 7.2H46.6V68.8H9.4Z" fill="url(#rightShade)"/>
 
-    <!-- Three simple recessed grip lines, centered like a vintage volume fader. -->
-    <g fill="none" stroke-linecap="round">
-      <path d="M8.2 16.5 H21.8 M8.2 20 H21.8 M8.2 23.5 H21.8"
-        stroke="#9f774e" stroke-width="1.15" stroke-opacity=".72"/>
-      <path d="M8.2 15.85 H21.8 M8.2 19.35 H21.8 M8.2 22.85 H21.8"
-        stroke="#fff0cf" stroke-width=".65" stroke-opacity=".72"/>
+    <rect x="14.6" y="10.2" width="26.8" height="3.1" rx="1.55" fill="#fff4dd" fill-opacity=".86"/>
+
+    <path d="M13.3 14.2 C13 24.8 12.5 31.2 12.5 38 C12.5 44.8 13 51.2 13.3 61.8"
+      stroke="#fff1d8" stroke-opacity=".33" stroke-width="1.55" stroke-linecap="round" fill="none"/>
+    <path d="M42.7 14.7 C43 24.8 43.5 31.2 43.5 38 C43.5 44.8 43 51.2 42.7 61.3"
+      stroke="#a37b4d" stroke-opacity=".12" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+
+    <g>
+      <rect x="18.2" y="30.2" width="19.6" height="3.15" rx="1.575" fill="url(#groove)"/>
+      <rect x="18.2" y="39.0" width="19.6" height="3.15" rx="1.575" fill="url(#groove)"/>
+      <rect x="18.2" y="47.8" width="19.6" height="3.15" rx="1.575" fill="url(#groove)"/>
+
+      <rect x="18.2" y="29.4" width="19.6" height="1.0" rx=".5" fill="#fff2d8" fill-opacity=".66"/>
+      <rect x="18.2" y="38.2" width="19.6" height="1.0" rx=".5" fill="#fff2d8" fill-opacity=".66"/>
+      <rect x="18.2" y="47.0" width="19.6" height="1.0" rx=".5" fill="#fff2d8" fill-opacity=".66"/>
     </g>
 
-    <!-- Very light side bevels; no extra decorative geometry. -->
-    <path d="M4.3 5.1 C4.9 12.6 5.2 16.2 5.2 20 C5.2 23.8 4.9 27.4 4.3 34.9"
-      stroke="#fff1d1" stroke-opacity=".28" stroke-width=".8" fill="none"/>
-    <path d="M25.7 5.1 C25.1 12.6 24.8 16.2 24.8 20 C24.8 23.8 25.1 27.4 25.7 34.9"
-      stroke="#7f5f3d" stroke-opacity=".22" stroke-width=".75" fill="none"/>
+    <rect x="14.6" y="61.4" width="26.8" height="2.5" rx="1.25" fill="#b78958" fill-opacity=".18"/>
   </g>
 </svg>
