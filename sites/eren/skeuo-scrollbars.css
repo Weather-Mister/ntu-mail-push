@@ -13,7 +13,7 @@
   height:0!important;
   background:transparent!important;
 }
-:is(#todoList,#coolDeadlines,.inbox,.mailx-list,.mailx-reader,.mailx-reader-scroll,.mailx-email-body).skeuo-scroll-host.skeuo-can-scroll{
+:is(#todoList,#coolDeadlines,.inbox).skeuo-scroll-host.skeuo-can-scroll{
   padding-right:22px!important;
 }
 .rail.skeuo-scroll-host.skeuo-can-scroll{padding-right:15px!important}
@@ -111,7 +111,7 @@
   --nub-rise:3px;
 }
 @media(max-width:859px){
-  :is(#todoList,#coolDeadlines,.inbox,.mailx-list,.mailx-reader,.mailx-reader-scroll,.mailx-email-body).skeuo-scroll-host.skeuo-can-scroll{
+  :is(#todoList,#coolDeadlines,.inbox).skeuo-scroll-host.skeuo-can-scroll{
     padding-right:20px!important;
   }
   .skeuo-slider:not(.is-compact){width:13px}
@@ -122,3 +122,18 @@
   }
 }
 @media(prefers-reduced-motion:reduce){.skeuo-slider-thumb{transition:none}}
+
+/* Mail deliberately has no scrollbar chrome: no faders, no browser tracks.
+   Scrolling itself is untouched (wheel, touch, keyboard and programmatic). */
+#mailDemoDialog,
+#mailDemoDialog *{
+  scrollbar-width:none!important;
+  -ms-overflow-style:none!important;
+}
+#mailDemoDialog::-webkit-scrollbar,
+#mailDemoDialog *::-webkit-scrollbar{
+  display:none!important;
+  width:0!important;
+  height:0!important;
+  background:transparent!important;
+}
