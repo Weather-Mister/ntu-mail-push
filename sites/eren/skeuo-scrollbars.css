@@ -29,7 +29,7 @@
 }
 
 .skeuo-slider{
-  --knob-u:.35px;
+  --knob-u:.322px;
   position:absolute;
   width:calc(93 * var(--knob-u));
   border:0;
@@ -79,7 +79,7 @@
 .skeuo-slider.is-dragging .slider-knob{cursor:grabbing}
 
 .skeuo-slider.is-compact{
-  --knob-u:.30px;
+  --knob-u:.276px;
 }
 
 @media(max-width:859px){
@@ -87,10 +87,10 @@
     padding-right:35px!important;
   }
   .skeuo-slider:not(.is-compact){
-    --knob-u:.33px;
+    --knob-u:.304px;
   }
   .skeuo-slider.is-compact{
-    --knob-u:.29px;
+    --knob-u:.267px;
   }
 }
 
