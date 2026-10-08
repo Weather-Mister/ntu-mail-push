@@ -43,13 +43,10 @@
     track.className = "skeuo-slider";
     track.hidden = true;
 
-    const slot = document.createElement("div");
-    slot.className = "slider-track";
-
     const thumb = document.createElement("div");
     thumb.className = "skeuo-slider-thumb slider-knob";
 
-    track.append(slot, thumb);
+    track.appendChild(thumb);
     layer.appendChild(track);
     el.classList.add("skeuo-scroll-host");
     const s = {el, track, thumb, dragging:false};
