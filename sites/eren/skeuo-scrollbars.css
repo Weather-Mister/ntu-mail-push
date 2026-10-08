@@ -45,23 +45,24 @@
   pointer-events:none;
 }
 .skeuo-slider[hidden]{display:none!important}
-/* Just a small raised moulded plastic nub, not a mixer fader. */
+/* Raised circular ivory control: domed lighting, firm rim, cast shadow. */
 .skeuo-slider-thumb{
   position:absolute;
   left:-1px;
   width:16px;
-  height:18px;
-  border:1px solid #9d8a6e;
-  border-radius:6px;
+  height:16px;
+  box-sizing:border-box;
+  border:1px solid #987f60;
+  border-radius:50%;
   background:
-    radial-gradient(ellipse at 28% 13%,rgba(255,188,105,.17),transparent 66%),
-    linear-gradient(180deg,#f1e6d2 0%,#e4d5bb 52%,#cbb898 100%);
+    radial-gradient(circle at 31% 22%,rgba(255,255,255,.8) 0%,rgba(255,249,232,.42) 16%,transparent 46%),
+    radial-gradient(circle at 33% 19%,rgba(245,166,79,.20),transparent 70%),
+    radial-gradient(circle at 49% 36%,#f0e2cb 0%,#e4d1b2 52%,#c6a984 77%,#aa8863 100%);
   box-shadow:
-    inset 0 1px 0 rgba(255,251,239,.76),
-    inset 1px 0 0 rgba(255,255,255,.22),
-    inset 0 -1px 1px rgba(103,83,58,.19),
-    0 2px 0 rgba(117,96,68,.36),
-    1px 3px 3px rgba(46,32,19,.24);
+    inset 0 1px 1px rgba(255,250,235,.85),
+    inset -1px -2px 2px rgba(91,65,40,.24),
+    0 2px 0 rgba(94,70,42,.52),
+    1px 3px 3px rgba(42,29,17,.30);
   cursor:grab;
   touch-action:none;
   transition:filter .12s ease,box-shadow .12s ease;
@@ -71,17 +72,17 @@
   cursor:grabbing;
   filter:brightness(.98);
   box-shadow:
-    inset 0 2px 3px rgba(84,67,46,.17),
-    inset 0 1px 0 rgba(255,251,239,.36),
-    0 1px 1px rgba(46,32,19,.24);
+    inset 0 2px 3px rgba(84,67,46,.22),
+    inset 0 1px 0 rgba(255,251,239,.38),
+    0 1px 2px rgba(46,32,19,.22);
 }
 .skeuo-slider.is-compact{width:11px}
 .skeuo-slider.is-compact::before{left:4px;width:3px}
 .skeuo-slider.is-compact .skeuo-slider-thumb{
   left:-1px;
-  width:13px;
-  height:15px;
-  border-radius:5px;
+  width:12px;
+  height:12px;
+  border-radius:50%;
 }
 @media(max-width:859px){
   :is(#todoList,#coolDeadlines,.inbox,.mailx-list,.mailx-reader,.mailx-reader-scroll,.mailx-email-body).skeuo-scroll-host.skeuo-can-scroll{
@@ -91,7 +92,7 @@
   .skeuo-slider:not(.is-compact)::before{left:5px}
   .skeuo-slider:not(.is-compact) .skeuo-slider-thumb{
     width:15px;
-    height:17px;
+    height:15px;
     left:-1px;
   }
 }
