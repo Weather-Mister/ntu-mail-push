@@ -367,6 +367,64 @@ test('Firefox saved selection restarts with the same two specific inputs', async
   expect(errors).toEqual([]);
 });
 
+
+test('Firefox stop during delayed AudioContext resume releases capture', async ({ page }) => {
+  const errors = await mount(page, false, true);
+  await page.evaluate(() => {
+    window.AudioContext.prototype.resume = function() {
+      return new Promise(resolve => { window.finishScopeResume = resolve; });
+    };
+  });
+  const scope = page.locator('#scheduleScope');
+  await scope.click();
+  await page.evaluate(() => window.provideInput('Delayed resume'));
+  await expect.poll(() => page.evaluate(() => typeof finishScopeResume)).toBe('function');
+  await scope.click();
+  await expect.poll(() => page.evaluate(() => inputTracks[0].readyState)).toBe('ended');
+  await page.evaluate(() => finishScopeResume());
+  await expect(scope).not.toHaveClass(/pc-audio-active|pc-audio-pending/);
+  expect(errors).toEqual([]);
+});
+
+test('Firefox out-of-order picker enumeration leaves at most one menu', async ({ page }) => {
+  const errors = await mount(page, false, true);
+  const scope = page.locator('#scheduleScope');
+  await scope.click();
+  await page.evaluate(() => window.provideInput('Mic'));
+  await expect(scope).toHaveClass(/pc-audio-active/);
+  await page.evaluate(() => {
+    window.enumResolves = [];
+    navigator.mediaDevices.enumerateDevices = () => new Promise(resolve => window.enumResolves.push(resolve));
+  });
+  await scope.click({ button: 'right' });
+  await scope.click({ button: 'right' });
+  await expect.poll(() => page.evaluate(() => enumResolves.length)).toBe(2);
+  await page.evaluate(() => enumResolves[1]([{kind:'audioinput',deviceId:'microphone',label:'Microphone'}]));
+  await expect(page.getByRole('group', { name: 'Oscilloscope audio inputs' })).toHaveCount(1);
+  await page.evaluate(() => enumResolves[0]([{kind:'audioinput',deviceId:'loopback',label:'Old result'}]));
+  await expect(page.getByRole('group', { name: 'Oscilloscope audio inputs' })).toHaveCount(1);
+  expect(errors).toEqual([]);
+});
+
+test('Firefox five capture cycles close every audio context and input track', async ({ page }) => {
+  const errors = await mount(page, false, true);
+  const scope = page.locator('#scheduleScope');
+  for (let i = 0; i < 5; i++) {
+    await scope.click();
+    await page.evaluate(() => window.provideInput('Repeat'));
+    await expect(scope).toHaveClass(/pc-audio-active/);
+    await scope.click();
+    await expect(scope).not.toHaveClass(/pc-audio-active|pc-audio-pending/);
+  }
+  const outcome = await page.evaluate(() => ({
+    tracks: inputTracks.map(t => t.readyState),
+    contexts: contexts.map(c => c.state)
+  }));
+  expect(outcome.tracks).toEqual(Array(5).fill('ended'));
+  expect(outcome.contexts).toEqual(Array(5).fill('closed'));
+  expect(errors).toEqual([]);
+});
+
 for (const kind of ['audio', 'video']) {
   test(`${kind} track ending restores schedule mode`, async ({ page }) => {
     const errors = await mount(page);
