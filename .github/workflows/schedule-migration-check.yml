@@ -30,10 +30,11 @@ jobs:
           node --check sites/eren/todo-realtime.js
           node --check sites/eren/sw.js
           node --check sites/begum/app.js
+          node --check sites/begum/todo-realtime.js
           node --check sites/begum/sw.js
 
       - name: Validate realtime task sync
-        run: node --test tests/schedule-todos-realtime.test.mjs
+        run: node --test tests/schedule-todos-realtime.test.mjs tests/begum-todos-realtime.test.mjs
 
       - name: Validate manifests
         run: |
