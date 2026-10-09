@@ -66,7 +66,7 @@ test('Begüm schedule works at all target widths without device-transfer tools',
     expect(Math.abs(schedule.y - deadlines.y)).toBeLessThan(3);
     expect(Math.abs(schedule.y - shortcuts.y)).toBeLessThan(3);
     expect(Math.abs(schedule.y + schedule.height - tasks.y - tasks.height)).toBeLessThan(3);
-    expect(schedule.height).toBeGreaterThan(450);
+    expect(schedule.height).toBeGreaterThan(testInfo.project.use.viewport.height * .58);
     expect(schedule.width).toBeGreaterThan(330);
     expect(tasks.width).toBeGreaterThan(240);
     expect(tasks.height).toBeGreaterThan(230);
