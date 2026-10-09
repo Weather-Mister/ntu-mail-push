@@ -176,11 +176,17 @@ const unscheduledNote = document.querySelector('.unscheduled-note');
 
 function positionHubs(){
   const desktop = desktopLayoutQuery.matches;
-  const studyTarget = desktop ? utilityColumn : quickAccessRow;
-  const ntuTarget = desktop ? desktopDayRail : quickAccessRow;
   const noteTarget = desktop ? desktopDayRail : document.querySelector('.app-shell');
-  if (studyHubSection && studyTarget && studyHubSection.parentElement !== studyTarget) studyTarget.appendChild(studyHubSection);
-  if (ntuHubSection && ntuTarget && ntuHubSection.parentElement !== ntuTarget) ntuTarget.appendChild(ntuHubSection);
+  if (desktop){
+    // Keep the only day navigation in the left rail alongside NTU and Study Hub links.
+    if (ntuHubSection && desktopDayRail && ntuHubSection.parentElement !== desktopDayRail) desktopDayRail.appendChild(ntuHubSection);
+    if (studyHubSection && desktopDayRail && studyHubSection.parentElement !== desktopDayRail) desktopDayRail.appendChild(studyHubSection);
+  } else {
+    // Retain the original mobile quick-access order.
+    if (studyHubSection && quickAccessRow && studyHubSection.parentElement !== quickAccessRow) quickAccessRow.insertBefore(studyHubSection, quickAccessRow.firstChild);
+    if (ntuHubSection && quickAccessRow && ntuHubSection.parentElement !== quickAccessRow) quickAccessRow.appendChild(ntuHubSection);
+    if (studyHubSection && ntuHubSection && quickAccessRow && studyHubSection.nextElementSibling !== ntuHubSection) quickAccessRow.insertBefore(studyHubSection, ntuHubSection);
+  }
   if (unscheduledNote && noteTarget && unscheduledNote.parentElement !== noteTarget) noteTarget.appendChild(unscheduledNote);
 }
 positionHubs();
@@ -636,31 +642,6 @@ function isLessonCompleted(day, lesson, date = dateForDay(day)){
   return nowMin > minutes(lesson.end);
 }
 
-const weekOverviewEl = document.getElementById('weekOverview');
-
-function renderWeekOverview(){
-  if (!weekOverviewEl) return;
-  weekOverviewEl.innerHTML = [1,2,3,4,5,6].map(day => {
-    const date = dateForDay(day);
-    const lessons = lessonsForDate(date,day);
-    const dots = lessons.slice(0,4).map(lesson => '<i style="background:'+courses[lesson.course].color+'"></i>').join('');
-    const firstTime = lessons.length ? displayTime(lessons[0].start) : 'Free day';
-    return '<button type="button" class="week-preview'+(day===selectedDay?' is-selected':'')+'" data-week-day="'+day+'" aria-pressed="'+(day===selectedDay)+'">'+
-      '<span class="week-preview-top"><b>'+dayNames[day].slice(0,3)+'</b><small>'+date.getDate()+'</small></span>'+
-      '<span class="week-preview-dots">'+(dots || '<i class="is-empty"></i>')+'</span>'+
-      '<span class="week-preview-meta">'+(lessons.length?lessons.length+' '+(lessons.length===1?'class':'classes'):'No classes')+'</span>'+
-      '<span class="week-preview-time">'+firstTime+'</span></button>';
-  }).join('');
-}
-if (weekOverviewEl){
-  weekOverviewEl.addEventListener('click', event => {
-    const target = event.target.closest('[data-week-day]');
-    if (!target) return;
-    selectedDay = Number(target.dataset.weekDay);
-    renderDay();
-  });
-}
-
 function renderDay(){
   const date = dateForDay(selectedDay);
   const lessons = lessonsForDate(date, selectedDay);
@@ -676,7 +657,6 @@ function renderDay(){
     btn.setAttribute('aria-pressed', day === selectedDay ? 'true' : 'false');
   });
 
-  renderWeekOverview();
   const reminder = dateReminders[dateKey(date)];
   const reminderHtml = reminder ? `
     <div class="date-reminder" style="--reminder-color:${reminder.color}">
@@ -1087,7 +1067,7 @@ if (launchParams.get('open') === 'ntu-mail'){
 if ('serviceWorker' in navigator){
   window.addEventListener('load', async () => {
     try {
-      const registration = await navigator.serviceWorker.register('./sw.js?v=3', { updateViaCache:'none' });
+      const registration = await navigator.serviceWorker.register('./sw.js?v=4', { updateViaCache:'none' });
       await registration.update();
     } catch (error) {}
   });
