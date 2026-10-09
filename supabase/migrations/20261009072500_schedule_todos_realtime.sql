@@ -3,7 +3,8 @@
 create or replace function public.schedule_task_ping()
 returns trigger
 language plpgsql
-as $$
+set search_path = ''
+as $
 declare ws text;
 begin
   if TG_OP = 'DELETE' then ws := old.workspace_hash;
@@ -14,6 +15,6 @@ begin
 end
 $$;
 
-create trigger schedule_task_realtime_changed
+create or replace trigger schedule_task_realtime_changed
 after insert or update or delete on public.schedule_manual_tasks
 for each row execute function public.schedule_task_ping();
