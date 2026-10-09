@@ -684,12 +684,13 @@ function renderDay(){
   classCountEl.textContent = `${lessons.length} ${lessons.length === 1 ? 'class' : 'classes'}`;
   const weekRangeEl = document.getElementById('weekRange');
   if (weekRangeEl) weekRangeEl.textContent = weekLabel();
+  const weekDateJump = document.getElementById('weekDateJump');
+  if (weekDateJump) weekDateJump.value = dateKey(date);
 
   dayButtons.forEach(btn => {
     const day = Number(btn.dataset.day);
     btn.classList.toggle('active', day === selectedDay);
     btn.classList.toggle('today', dateKey(dateForDay(day)) === dateKey(new Date()));
-    btn.classList.toggle('has-chatterbox', (specialSchedule[dateKey(dateForDay(day))] || []).some(event => event.course === 'chatterbox'));
     btn.querySelector('small').textContent = dateForDay(day).getDate();
     btn.setAttribute('aria-pressed', day === selectedDay ? 'true' : 'false');
   });
@@ -977,6 +978,16 @@ document.querySelectorAll('[data-copy-target]').forEach(button => {
 
 document.getElementById('previousWeek')?.addEventListener('click', () => shiftWeek(-1));
 document.getElementById('nextWeek')?.addEventListener('click', () => shiftWeek(1));
+document.getElementById('weekDateJump')?.addEventListener('change', event => {
+  const value = event.target.value;
+  if (!/^2026-(0[9]|1[0-2])-\d{2}$/.test(value)) return;
+  const date = new Date(`${value}T12:00:00`);
+  if (Number.isNaN(date.getTime())) return;
+  setWeekTo(date);
+  selectedDay = normalizeDay(date.getDay());
+  renderDay();
+  renderCoolDeadlineDots();
+});
 
 dayButtons.forEach(btn => btn.addEventListener('click', () => {
   selectedDay = Number(btn.dataset.day);
