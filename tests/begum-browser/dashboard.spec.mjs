@@ -80,3 +80,24 @@ test('Begüm schedule works at all target widths without device-transfer tools',
   expect(hasHorizontalOverflow).toBe(false);
   expect(errors).toEqual([]);
 });
+
+test('TOC is listed on both days with $800 in place of a location', async ({ page }) => {
+  const errors=[];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/?pair=begum');
+
+  for (const [day, start, end] of [['4', '18:30', '19:20'], ['5', '10:20', '12:10']]){
+    await page.locator('[data-day="' + day + '"]').click();
+    const toc = page.locator('.lesson').filter({has:page.locator('.lesson-title', {hasText:'TOC'})});
+    await expect(toc).toHaveCount(1);
+    await expect(toc.locator('.time-start')).toHaveText(start);
+    await expect(toc.locator('.time-end')).toHaveText(end);
+    await expect(toc.locator('.lesson-meta')).toHaveText('$800');
+    await toc.click();
+    await expect(page.locator('#dialogLocationLabel')).toHaveText('Fee');
+    await expect(page.locator('#dialogLocation')).toHaveText('$800');
+    await expect(page.locator('#mapButton')).toBeHidden();
+    await page.locator('#closeDialog').click();
+  }
+  expect(errors).toEqual([]);
+});
