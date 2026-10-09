@@ -30,12 +30,22 @@ test('Begüm removes transfer and Hanzi UI, code and heavy FFmpeg preloading', (
 });
 
 test('Begüm PWA assets remain scoped and version matched', () => {
-  for (const asset of ['app.js?v=108','desktop-renewal.css?v=2']) {
+  for (const asset of ['app.js?v=109','desktop-renewal.css?v=2']) {
     assert.ok(html.includes(asset), 'HTML references ' + asset);
     assert.ok(sw.includes(asset), 'cache includes ' + asset);
   }
   assert.match(sw, /const ROOT = new URL\(self.registration.scope\)\.pathname/);
-  assert.match(app, /serviceWorker\.register\('\.\/sw\.js\?v=2'/);
+  assert.match(app, /serviceWorker\.register\('\.\/sw\.js\?v=3'/);
   assert.match(app, /begum-ntu-manual-todos-v1/);
   assert.match(app, /ntu-schedule-begum-pairing-key-v1/);
+});
+
+test('TOC meets Thursday evening and Friday morning and shows a fee, not a location', () => {
+  assert.match(app, /toc:\s*\{\s*name: 'TOC',[^\n]*price: '\$800'/);
+  assert.match(app, /4:\s*\[[\s\S]*?\{ course:'toc', start:'18:30', end:'19:20' \}/);
+  assert.match(app, /5:\s*\[\s*\{ course:'toc', start:'10:20', end:'12:10' \}/);
+  assert.match(app, /course\.price \|\| course\.location/);
+  assert.ok(html.includes('id="dialogLocationLabel"'));
+  assert.ok(html.includes('id="dialogDetailIcon"'));
+  assert.match(app, /mapButton\.hidden = Boolean\(course\.price\)/);
 });
