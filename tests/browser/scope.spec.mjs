@@ -2,524 +2,121 @@ import { test, expect } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 
 const runtime = readFileSync(new URL('../../sites/eren/skeuo-runtime.js', import.meta.url), 'utf8');
-const schedule = runtime.slice(runtime.indexOf('/* Schedule interval oscilloscope.'), runtime.lastIndexOf("if ('serviceWorker' in navigator)"));
-const audio = readFileSync(new URL('../../sites/eren/pc-audio-scope.js', import.meta.url), 'utf8');
+const schedule = runtime.slice(
+  runtime.indexOf('/* Schedule interval oscilloscope.'),
+  runtime.lastIndexOf("if ('serviceWorker' in navigator)")
+);
+const html = readFileSync(new URL('../../sites/eren/skeuo-demo.html', import.meta.url), 'utf8');
+const sw = readFileSync(new URL('../../sites/eren/sw.js', import.meta.url), 'utf8');
 
-async function mount(page, reducedMotion = false, firefox = false) {
+async function mount(page, reducedMotion = false) {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.emulateMedia({ reducedMotion: reducedMotion ? 'reduce' : 'no-preference' });
-  await page.setContent(`<div id="scheduleScope" role="button" tabindex="0">
-    <span id="scheduleScopeLabel">ΔT / SCHED</span><b id="scheduleScopeValue">--</b>
-    <svg><path id="scheduleScopeTrace" d="M0 21H200"/></svg>
-    <span id="scheduleScopeMode">NEXT START</span><span id="scheduleScopeHint">λ ∝ ΔT</span>
+  await page.setContent(`<div class="schedule-scope" id="scheduleScope" role="img" aria-label="Schedule interval monitor">
+    <span id="scheduleScopeLabel">ΔT / SCHED</span>
+    <b id="scheduleScopeValue">--</b>
+    <svg viewBox="0 0 200 42"><path id="scheduleScopeTrace" d="M0 21H200"/></svg>
+    <span id="scheduleScopeMode">NEXT START</span>
+    <span id="scheduleScopeHint">λ ∝ ΔT</span>
   </div>`);
-  await page.evaluate(isFirefox => {
-    // Run the same Chrome-path and Firefox-path cases on both browser engines.
-    // Without this override, the non-Firefox tests inadvertently enter Firefox
-    // mode when the entire suite runs in a real Firefox binary.
-    Object.defineProperty(navigator, 'userAgent', {
-      configurable: true,
-      value: isFirefox ? 'Mozilla/5.0 Firefox/145.0' : 'Mozilla/5.0 Chrome/145.0'
-    });
-    if (isFirefox) {
-      const saved = new Map();
-      Object.defineProperty(window, 'localStorage', {
-        configurable: true,
-        value: { getItem: key => saved.get(key) ?? null, setItem: (key, val) => saved.set(key, String(val)) }
-      });
-      window.testAudioLevels = [0, 0];
-      window.testAnalyserCount = 0;
-    }
-    window.inputCalls = [];
-    window.getNextClass = () => ({ state: 'Next', startAt: new Date(Date.now() + 1800000) });
-    const NativeContext = window.AudioContext;
-    window.contexts = [];
-    window.AudioContext = class extends NativeContext {
-      constructor() { super(); window.contexts.push(this); }
-      createMediaStreamSource(stream) {
-        if (window.failSetup) throw new Error('Test setup failure');
-        return super.createMediaStreamSource(stream);
-      }
-    };
-    if (isFirefox) {
-      const originalAnalyser = window.AudioContext.prototype.createAnalyser;
-      window.AudioContext.prototype.createAnalyser = function() {
-        const analyser = originalAnalyser.call(this);
-        const index = window.testAnalyserCount++;
-        analyser.getByteTimeDomainData = data => {
-          const amplitude = window.testAudioLevels[index] || 0;
-          for (let i = 0; i < data.length; i++) data[i] = 128 + Math.round(amplitude * (i % 2 ? 1 : -1));
-        };
-        return analyser;
-      };
-    }
+  await page.evaluate(() => {
+    window.nextScheduleClass = { state: 'Next', startAt: new Date(Date.now() + 30 * 60000) };
+    window.getNextClass = () => window.nextScheduleClass;
     window.captureCalls = 0;
-    Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: {
-      getUserMedia: constraints => {
-        window.inputCalls.push(constraints);
-        return new Promise((resolve, reject) => {
-          window.resolveInput = resolve;
-          window.rejectInput = reject;
-        });
-      },
-      enumerateDevices: async () => [
-        { kind: 'audioinput', deviceId: 'physicalMic', label: 'Physical microphone' },
-        { kind: 'audioinput', deviceId: 'systemA', label: 'Stereo Mix A' },
-        { kind: 'audioinput', deviceId: 'systemB', label: 'Loopback B' }
-      ],
-      getDisplayMedia: () => {
-        window.captureCalls++;
-        return new Promise((resolve, reject) => {
-          window.resolveCapture = resolve;
-          window.rejectCapture = reject;
-        });
+    Object.defineProperty(navigator, 'mediaDevices', {
+      configurable: true,
+      value: {
+        getDisplayMedia: () => { window.captureCalls++; throw Error('Unexpected display capture'); },
+        getUserMedia: () => { window.captureCalls++; throw Error('Unexpected microphone capture'); }
       }
-    } });
-    window.inputTracks = [];
-    window.provideInput = async (name = 'Stereo Mix A') => {
-      const producer = new NativeContext();
-      const oscillator = producer.createOscillator();
-      const destination = producer.createMediaStreamDestination();
-      oscillator.connect(destination);
-      oscillator.start();
-      // The synthetic track is live even with a suspended producer context.
-      // Firefox blocks resume() on autoplay grounds outside a direct gesture.
-      window.producer = producer;
-      window.pickedTracks = destination.stream.getAudioTracks();
-      const track = window.pickedTracks[0];
-      Object.defineProperty(track, 'label', { configurable: true, value: name });
-      window.inputTracks.push(track);
-      window.resolveInput(new MediaStream(window.pickedTracks));
-    };
-    window.provideCapture = async (includeAudio = true) => {
-      // Synthetic audio stays in memory; no speaker or system capture is used.
-      const producer = new NativeContext();
-      const oscillator = producer.createOscillator();
-      const destination = producer.createMediaStreamDestination();
-      oscillator.connect(destination);
-      oscillator.start();
-      // The synthetic track is live even with a suspended producer context.
-      // Firefox blocks resume() on autoplay grounds outside a direct gesture.
-      window.producer = producer;
-      const canvas = document.createElement('canvas');
-      canvas.getContext('2d').fillRect(0, 0, 20, 20);
-      const video = canvas.captureStream(1).getVideoTracks()[0];
-      const tracks = includeAudio ? [...destination.stream.getAudioTracks(), video] : [video];
-      window.pickedTracks = tracks;
-      window.resolveCapture(new MediaStream(tracks));
-    };
-  }, firefox);
+    });
+  });
   await page.addScriptTag({ content: schedule });
-  await page.addScriptTag({ content: audio });
   return errors;
 }
 
-test('schedule initializes without a DOM API error', async ({ page }) => {
+test('schedule oscilloscope initializes with next-class countdown', async ({ page }) => {
   const errors = await mount(page);
-  await expect(page.locator('#scheduleScopeMode')).toHaveText('NEXT START');
   await expect(page.locator('#scheduleScopeValue')).toHaveText('30m');
-  expect(errors).toEqual([]);
-});
-
-test('pending and live capture keep control of the scope until stopped', async ({ page }) => {
-  const errors = await mount(page);
-  const scope = page.locator('#scheduleScope');
-  await scope.click();
-  await scope.click();
-  await page.evaluate(() => { refreshScheduleScopeMeta(); drawScheduleScope(2000); });
-  expect(await page.evaluate(() => window.captureCalls)).toBe(1);
-  await expect(page.locator('#scheduleScopeMode')).toHaveText('CHOOSE OUTPUT');
-  await page.evaluate(() => window.provideCapture());
-  await expect(scope).toHaveClass(/pc-audio-active/);
-  const path = await page.locator('#scheduleScopeTrace').getAttribute('d');
-  await expect.poll(() => page.locator('#scheduleScopeTrace').getAttribute('d')).not.toBe(path);
-  await page.evaluate(() => { refreshScheduleScopeMeta(); drawScheduleScope(3000); });
-  await expect(page.locator('#scheduleScopeValue')).toHaveText('LIVE');
-  expect(await page.evaluate(() => pickedTracks.every(t => t.readyState === 'live'))).toBe(true);
-  await scope.click();
-  await expect(scope).not.toHaveClass(/pc-audio-active/);
-  await expect(page.locator('#scheduleScopeLabel')).toHaveText('ΔT / SCHED');
   await expect(page.locator('#scheduleScopeMode')).toHaveText('NEXT START');
-  expect(await page.evaluate(() => pickedTracks.every(t => t.readyState === 'ended'))).toBe(true);
+  await expect(page.locator('#scheduleScopeLabel')).toHaveText('ΔT / SCHED');
+  await expect(page.locator('#scheduleScopeHint')).toHaveText('λ ∝ ΔT');
   expect(errors).toEqual([]);
 });
 
-test('no-audio and cancelled capture remain visible and allow retry', async ({ page }) => {
+test('schedule oscilloscope is display-only, not an audio-capture control', async ({ page }) => {
   const errors = await mount(page);
   const scope = page.locator('#scheduleScope');
+  await expect(scope).toHaveAttribute('role', 'img');
+  await expect(scope).not.toHaveAttribute('tabindex');
+  await expect(scope).not.toHaveAttribute('aria-pressed');
   await scope.click();
-  await page.evaluate(() => window.provideCapture(false));
-  await expect(page.locator('#scheduleScopeMode')).toHaveText('NO AUDIO TRACK');
-  await page.evaluate(() => { refreshScheduleScopeMeta(); drawScheduleScope(2000); });
-  await expect(page.locator('#scheduleScopeMode')).toHaveText('NO AUDIO TRACK');
-  expect(await page.evaluate(() => pickedTracks.every(t => t.readyState === 'ended'))).toBe(true);
-  await scope.press('Enter');
-  await page.evaluate(() => rejectCapture(new DOMException('Cancelled', 'NotAllowedError')));
-  await expect(page.locator('#scheduleScopeMode')).toHaveText('CANCELLED');
-  await scope.click();
-  await page.evaluate(() => window.provideCapture());
-  await expect(scope).toHaveClass(/pc-audio-active/);
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('Space');
+  expect(await page.evaluate(() => captureCalls)).toBe(0);
+  await expect(scope).not.toHaveClass(/pc-audio|is-audio/);
+  await expect(page.locator('#scheduleScopeMode')).toHaveText('NEXT START');
   expect(errors).toEqual([]);
 });
 
-test('Firefox uses an audio input without display sharing', async ({ page }) => {
-  const errors = await mount(page, false, true);
-  const scope = page.locator('#scheduleScope');
-  await scope.click();
-  await expect(page.locator('#scheduleScopeMode')).toHaveText('SELECT LOOPBACK');
-  expect(await page.evaluate(() => window.captureCalls)).toBe(0);
-  expect(await page.evaluate(() => window.inputCalls[0])).toMatchObject({
-    video: false, audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
-  });
-  await page.evaluate(() => window.provideInput());
-  await expect(scope).toHaveClass(/pc-audio-active/);
-  await expect(page.locator('#scheduleScopeMode')).toHaveText('SYSTEM AUDIO');
-  await scope.click();
-  await expect(scope).not.toHaveClass(/pc-audio-active/);
-  expect(await page.evaluate(() => pickedTracks.every(t => t.readyState === 'ended'))).toBe(true);
-  expect(errors).toEqual([]);
-});
-
-test('Firefox rejects a physical microphone instead of treating it as system playback', async ({ page }) => {
-  const errors = await mount(page, false, true);
-  const scope = page.locator('#scheduleScope');
-  await scope.click();
-  await page.evaluate(() => window.provideInput('Microphone (Built-in)'));
-  await expect(page.locator('#scheduleScopeMode')).toHaveText('MIC NOT SYSTEM');
-  await expect(scope).not.toHaveClass(/pc-audio-active|pc-audio-pending/);
-  expect(await page.evaluate(() => inputTracks.every(t => t.readyState === 'ended'))).toBe(true);
-  expect(await page.evaluate(() => testAnalyserCount)).toBe(0);
-  expect(errors).toEqual([]);
-});
-
-test('Firefox does not reuse legacy saved microphone IDs', async ({ page }) => {
-  const errors = await mount(page, false, true);
-  await page.evaluate(() => localStorage.setItem('ntu-scope-firefox-inputs', JSON.stringify(['old-mic'])));
-  await page.locator('#scheduleScope').click();
-  const args = await page.evaluate(() => inputCalls[0]);
-  expect(args.audio.deviceId).toBeUndefined();
-  await page.evaluate(() => window.provideInput('Loopback B'));
-  await expect(page.locator('#scheduleScopeMode')).toHaveText('SYSTEM AUDIO');
-  expect(errors).toEqual([]);
-});
-
-test('Firefox picker never includes physical microphones', async ({ page }) => {
-  const errors = await mount(page, false, true);
-  await page.locator('#scheduleScope').click();
-  await page.evaluate(() => window.provideInput('Stereo Mix A'));
-  await expect(page.locator('#scheduleScope')).toHaveClass(/pc-audio-active/);
-  await page.locator('#scheduleScope').click({ button: 'right' });
-  const picker = page.getByRole('group', { name: 'Oscilloscope system audio sources' });
-  await expect(picker.getByRole('checkbox', { name: 'Stereo Mix A' })).toBeVisible();
-  await expect(picker.getByRole('checkbox', { name: 'Loopback B' })).toBeVisible();
-  await expect(picker.getByRole('checkbox', { name: 'Physical microphone' })).toHaveCount(0);
-  expect(errors).toEqual([]);
-});
-
-test('Firefox multi-input selector remembers selections and switches to the active signal', async ({ page }) => {
-  const errors = await mount(page, false, true);
-  const scope = page.locator('#scheduleScope');
-  await scope.click();
-  await page.evaluate(() => window.provideInput('Stereo Mix A'));
-  await expect(scope).toHaveClass(/pc-audio-active/);
-  await scope.click({ button: 'right' });
-  const menu = page.getByRole('group', { name: 'Oscilloscope system audio sources' });
-  await expect(menu).toBeVisible();
-  await menu.getByRole('checkbox', { name: 'Stereo Mix A' }).check();
-  await menu.getByRole('checkbox', { name: 'Loopback B' }).check();
-  await menu.getByRole('button', { name: 'Apply' }).click();
-
-  const selected = await page.evaluate(() => JSON.parse(localStorage.getItem('ntu-scope-firefox-loopbacks-v1')));
-  expect(selected).toEqual(['systemA', 'systemB']);
-  await expect.poll(() => page.evaluate(() => window.inputCalls.length)).toBe(2);
-  expect((await page.evaluate(() => window.inputCalls[1])).audio.deviceId).toEqual({ exact: 'systemA' });
-  await page.evaluate(() => window.provideInput('Loopback A'));
-  await expect.poll(() => page.evaluate(() => window.inputCalls.length)).toBe(3);
-  expect((await page.evaluate(() => window.inputCalls[2])).audio.deviceId).toEqual({ exact: 'systemB' });
-  await page.evaluate(() => window.provideInput('Loopback B'));
-  await expect(scope).toHaveClass(/pc-audio-active/);
-  await expect(page.locator('#scheduleScopeLabel')).toHaveText('AUDIO / AUTO');
-  await expect(page.locator('#scheduleScopeValue')).toHaveText('2 IN');
-
-  await page.evaluate(() => { window.testAudioLevels = [0, 100, 0]; });
-  await expect(page.locator('#scheduleScopeMode')).toHaveText('AUTO: LOOPBACK A');
-  await page.evaluate(() => { window.testAudioLevels = [0, 0, 120]; });
-  await expect(page.locator('#scheduleScopeMode')).toHaveText('AUTO: LOOPBACK B', { timeout: 4000 });
-
-  await scope.press('Shift+Enter');
-  await expect(menu).toBeVisible();
-  await page.keyboard.press('Escape');
-  await expect(menu).toHaveCount(0);
-  await scope.click();
-  await expect(scope).not.toHaveClass(/pc-audio-active/);
-  expect(await page.evaluate(() => window.inputTracks.every(t => t.readyState === 'ended'))).toBe(true);
-  expect(errors).toEqual([]);
-});
-
-test('Firefox auto-input survives a disconnected source and retains remaining signal', async ({ page }) => {
-  const errors = await mount(page, false, true);
-  await page.evaluate(() => localStorage.setItem('ntu-scope-firefox-loopbacks-v1', JSON.stringify(['systemA', 'systemB'])));
-  const scope = page.locator('#scheduleScope');
-  await scope.click();
-  await page.evaluate(() => window.provideInput('Loopback A'));
-  await expect.poll(() => page.evaluate(() => window.inputCalls.length)).toBe(2);
-  await page.evaluate(() => window.provideInput('Loopback B'));
-  await expect(page.locator('#scheduleScopeValue')).toHaveText('2 IN');
-  await page.evaluate(() => {
-    // A stopped track need not dispatch "ended" (per MediaStreamTrack).
-    // The scope must recover via readyState polling.
-    inputTracks[0].stop();
-  });
-  await expect(page.locator('#scheduleScopeValue')).toHaveText('LIVE');
-  await expect(scope).toHaveClass(/pc-audio-active/);
-  await scope.click();
-  expect(errors).toEqual([]);
-});
-
-test('Firefox rejected permission leaves an informative retry state', async ({ page }) => {
-  const errors = await mount(page, false, true);
-  const scope = page.locator('#scheduleScope');
-  await scope.click();
-  await page.evaluate(() => rejectInput(new DOMException('Blocked', 'NotAllowedError')));
-  await expect(page.locator('#scheduleScopeMode')).toHaveText('INPUT BLOCKED');
-  await expect(scope).not.toHaveClass(/pc-audio-active/);
-  await scope.click();
-  await page.evaluate(() => window.provideInput());
-  await expect(scope).toHaveClass(/pc-audio-active/);
-  expect(errors).toEqual([]);
-});
-
-
-test('Firefox primes Web Audio during the click before requesting device permission', async ({ page }) => {
-  const errors = await mount(page, false, true);
-  await page.evaluate(() => {
-    const nativeResume = window.AudioContext.prototype.resume;
-    window.AudioContext.prototype.resume = function() {
-      window.scopeResumeStarted = true;
-      return nativeResume.call(this);
-    };
-    const originalRequest = navigator.mediaDevices.getUserMedia;
-    navigator.mediaDevices.getUserMedia = constraints => {
-      window.resumeWasBeforePermission = window.scopeResumeStarted === true;
-      return originalRequest(constraints);
-    };
-  });
-  await page.locator('#scheduleScope').click();
-  expect(await page.evaluate(() => window.resumeWasBeforePermission)).toBe(true);
-  await page.evaluate(() => window.provideInput('Stereo Mix A'));
-  await expect(page.locator('#scheduleScope')).toHaveClass(/pc-audio-active/);
-  expect(errors).toEqual([]);
-});
-
-test('Firefox input permission begins only on activation, then can be cancelled', async ({ page }) => {
-  const errors = await mount(page, false, true);
-  const scope = page.locator('#scheduleScope');
-  expect(await page.evaluate(() => inputCalls.length)).toBe(0);
-  await scope.click();
-  await expect(page.locator('#scheduleScopeMode')).toHaveText('SELECT LOOPBACK');
-  await scope.click();
-  await expect(scope).not.toHaveClass(/pc-audio-pending|pc-audio-active/);
-  await page.evaluate(() => window.provideInput('Late device'));
-  await expect.poll(() => page.evaluate(() => inputTracks[0]?.readyState)).toBe('ended');
-  await expect(scope).not.toHaveClass(/pc-audio-active/);
-  expect(await page.evaluate(() => inputCalls.length)).toBe(1);
-  expect(errors).toEqual([]);
-});
-
-test('Firefox stop while second input permission is pending releases both tracks', async ({ page }) => {
-  const errors = await mount(page, false, true);
-  await page.evaluate(() => localStorage.setItem('ntu-scope-firefox-loopbacks-v1', JSON.stringify(['systemA', 'systemB'])));
-  const scope = page.locator('#scheduleScope');
-  await scope.click();
-  await page.evaluate(() => window.provideInput('Stereo Mix A'));
-  await expect.poll(() => page.evaluate(() => inputCalls.length)).toBe(2);
-  await scope.click();
-  await page.evaluate(() => window.provideInput('Late B'));
-  await expect.poll(() => page.evaluate(() => inputTracks.every(t => t.readyState === 'ended'))).toBe(true);
-  await expect(scope).not.toHaveClass(/pc-audio-active|pc-audio-pending/);
-  expect(errors).toEqual([]);
-});
-
-test('Firefox missing first input falls through to next previously selected device', async ({ page }) => {
-  const errors = await mount(page, false, true);
-  await page.evaluate(() => localStorage.setItem('ntu-scope-firefox-loopbacks-v1', JSON.stringify(['gone', 'systemB'])));
-  await page.locator('#scheduleScope').click();
-  await page.evaluate(() => rejectInput(new DOMException('Missing input', 'NotFoundError')));
-  await expect.poll(() => page.evaluate(() => inputCalls.length)).toBe(2);
-  expect((await page.evaluate(() => inputCalls[1])).audio.deviceId).toEqual({ exact: 'systemB' });
-  await page.evaluate(() => window.provideInput('Loopback B'));
-  await expect(page.locator('#scheduleScope')).toHaveClass(/pc-audio-active/);
-  await expect(page.locator('#scheduleScopeValue')).toHaveText('LIVE');
-  expect(errors).toEqual([]);
-});
-
-test('Firefox denial stops probing the remaining inputs', async ({ page }) => {
-  const errors = await mount(page, false, true);
-  await page.evaluate(() => localStorage.setItem('ntu-scope-firefox-loopbacks-v1', JSON.stringify(['systemA', 'systemB'])));
-  await page.locator('#scheduleScope').click();
-  await page.evaluate(() => rejectInput(new DOMException('Permission denied', 'NotAllowedError')));
-  await expect(page.locator('#scheduleScopeMode')).toHaveText('INPUT BLOCKED');
-  expect(await page.evaluate(() => inputCalls.length)).toBe(1);
-  await expect(page.locator('#scheduleScope')).not.toHaveClass(/pc-audio-active/);
-  expect(errors).toEqual([]);
-});
-
-test('Firefox second-source denial preserves the first live capture', async ({ page }) => {
-  const errors = await mount(page, false, true);
-  await page.evaluate(() => localStorage.setItem('ntu-scope-firefox-loopbacks-v1', JSON.stringify(['systemA', 'systemB'])));
-  await page.locator('#scheduleScope').click();
-  await page.evaluate(() => window.provideInput('Stereo Mix A'));
-  await expect.poll(() => page.evaluate(() => inputCalls.length)).toBe(2);
-  await page.evaluate(() => rejectInput(new DOMException('Denied second', 'NotAllowedError')));
-  await expect(page.locator('#scheduleScope')).toHaveClass(/pc-audio-active/);
-  await expect(page.locator('#scheduleScopeValue')).toHaveText('LIVE');
-  expect(await page.evaluate(() => inputTracks[0].readyState)).toBe('live');
-  expect(errors).toEqual([]);
-});
-
-test('Firefox all unavailable devices restore safe retry state', async ({ page }) => {
-  const errors = await mount(page, false, true);
-  await page.evaluate(() => localStorage.setItem('ntu-scope-firefox-loopbacks-v1', JSON.stringify(['gone1','gone2'])));
-  await page.locator('#scheduleScope').click();
-  await page.evaluate(() => rejectInput(new DOMException('Missing', 'NotFoundError')));
-  await expect.poll(() => page.evaluate(() => inputCalls.length)).toBe(2);
-  await page.evaluate(() => rejectInput(new DOMException('Missing', 'NotFoundError')));
-  await expect(page.locator('#scheduleScopeMode')).toHaveText('NO LOOPBACK');
-  await expect(page.locator('#scheduleScope')).not.toHaveClass(/pc-audio-active|pc-audio-pending/);
-  expect(errors).toEqual([]);
-});
-
-test('Firefox stale device enumeration cannot reopen picker after stopping', async ({ page }) => {
-  const errors = await mount(page, false, true);
-  const scope = page.locator('#scheduleScope');
-  await scope.click();
-  await page.evaluate(() => window.provideInput('Stereo Mix A'));
-  await expect(scope).toHaveClass(/pc-audio-active/);
-  await page.evaluate(() => {
-    navigator.mediaDevices.enumerateDevices = () => new Promise(resolve => { window.finishEnumeration = resolve; });
-  });
-  await scope.click({ button: 'right' });
-  await scope.click();
-  await page.evaluate(() => finishEnumeration([{kind:'audioinput',deviceId:'systemA',label:'Stereo Mix A'}]));
-  await expect(page.getByRole('group', { name: 'Oscilloscope system audio sources' })).toHaveCount(0);
-  await expect(scope).not.toHaveClass(/pc-audio-active/);
-  expect(errors).toEqual([]);
-});
-
-test('Firefox saved selection restarts with the same two specific inputs', async ({ page }) => {
-  const errors = await mount(page, false, true);
-  await page.evaluate(() => localStorage.setItem('ntu-scope-firefox-loopbacks-v1', JSON.stringify(['systemA', 'systemB'])));
-  const scope = page.locator('#scheduleScope');
-  await scope.click();
-  await page.evaluate(() => window.provideInput('Stereo Mix A'));
-  await expect.poll(() => page.evaluate(() => inputCalls.length)).toBe(2);
-  await page.evaluate(() => window.provideInput('Loopback'));
-  await expect(scope).toHaveClass(/pc-audio-active/);
-  await scope.click();
-  await scope.click();
-  await expect.poll(() => page.evaluate(() => inputCalls.length)).toBe(3);
-  expect((await page.evaluate(() => inputCalls[2])).audio.deviceId).toEqual({ exact: 'systemA' });
-  await page.evaluate(() => window.provideInput('Stereo Mix A'));
-  await expect.poll(() => page.evaluate(() => inputCalls.length)).toBe(4);
-  expect((await page.evaluate(() => inputCalls[3])).audio.deviceId).toEqual({ exact: 'systemB' });
-  await page.evaluate(() => window.provideInput('Loopback'));
-  await expect(page.locator('#scheduleScopeValue')).toHaveText('2 IN');
-  expect(errors).toEqual([]);
-});
-
-
-test('Firefox stop while AudioContext resume is pending releases loopback', async ({ page }) => {
-  const errors = await mount(page, false, true);
-  await page.evaluate(() => {
-    window.AudioContext.prototype.resume = function() {
-      return new Promise(resolve => { window.finishScopeResume = resolve; });
-    };
-  });
-  const scope = page.locator('#scheduleScope');
-  await scope.click();
-  await page.evaluate(() => window.provideInput('Stereo Mix A'));
-  await expect.poll(() => page.evaluate(() => typeof finishScopeResume)).toBe('function');
-  await scope.click();
-  await expect.poll(() => page.evaluate(() => inputTracks[0].readyState)).toBe('ended');
-  await page.evaluate(() => finishScopeResume());
-  await expect(scope).not.toHaveClass(/pc-audio-active|pc-audio-pending/);
-  expect(errors).toEqual([]);
-});
-
-test('Firefox out-of-order picker enumeration leaves at most one menu', async ({ page }) => {
-  const errors = await mount(page, false, true);
-  const scope = page.locator('#scheduleScope');
-  await scope.click();
-  await page.evaluate(() => window.provideInput('Stereo Mix A'));
-  await expect(scope).toHaveClass(/pc-audio-active/);
-  await page.evaluate(() => {
-    window.enumResolves = [];
-    navigator.mediaDevices.enumerateDevices = () => new Promise(resolve => window.enumResolves.push(resolve));
-  });
-  await scope.click({ button: 'right' });
-  await scope.click({ button: 'right' });
-  await expect.poll(() => page.evaluate(() => enumResolves.length)).toBe(2);
-  await page.evaluate(() => enumResolves[1]([{kind:'audioinput',deviceId:'systemA',label:'Stereo Mix A'}]));
-  await expect(page.getByRole('group', { name: 'Oscilloscope system audio sources' })).toHaveCount(1);
-  await page.evaluate(() => enumResolves[0]([{kind:'audioinput',deviceId:'systemB',label:'Old result'}]));
-  await expect(page.getByRole('group', { name: 'Oscilloscope system audio sources' })).toHaveCount(1);
-  expect(errors).toEqual([]);
-});
-
-test('Firefox five capture cycles close every audio context and input track', async ({ page }) => {
-  const errors = await mount(page, false, true);
-  const scope = page.locator('#scheduleScope');
-  for (let i = 0; i < 5; i++) {
-    await scope.click();
-    await page.evaluate(() => window.provideInput('Stereo Mix A'));
-    await expect(scope).toHaveClass(/pc-audio-active/);
-    await scope.click();
-    await expect(scope).not.toHaveClass(/pc-audio-active|pc-audio-pending/);
-  }
-  await expect.poll(() => page.evaluate(() => contexts.every(c => c.state === 'closed'))).toBe(true);
-  const outcome = await page.evaluate(() => ({
-    tracks: inputTracks.map(t => t.readyState),
-    contexts: contexts.map(c => c.state)
-  }));
-  expect(outcome.tracks).toEqual(Array(5).fill('ended'));
-  expect(outcome.contexts).toEqual(Array(5).fill('closed'));
-  expect(errors).toEqual([]);
-});
-
-for (const kind of ['audio', 'video']) {
-  test(`${kind} track ending restores schedule mode`, async ({ page }) => {
-    const errors = await mount(page);
-    await page.locator('#scheduleScope').click();
-    await page.evaluate(() => window.provideCapture());
-    await expect(page.locator('#scheduleScope')).toHaveClass(/pc-audio-active/);
-    await page.evaluate(kind => {
-      const track = pickedTracks.find(t => t.kind === kind);
-      track.stop();
-      track.dispatchEvent(new Event('ended'));
-    }, kind);
-    await expect(page.locator('#scheduleScopeLabel')).toHaveText('ΔT / SCHED');
-    await expect(page.locator('#scheduleScopeMode')).toHaveText('NEXT START');
-    expect(errors).toEqual([]);
-  });
-}
-
-test('setup failures release resources and retry successfully', async ({ page }) => {
+test('live class shows real time until the class ends', async ({ page }) => {
   const errors = await mount(page);
-  await page.evaluate(() => { window.failSetup = true; });
-  await page.locator('#scheduleScope').click();
-  await page.evaluate(() => window.provideCapture());
-  await expect(page.locator('#scheduleScopeMode')).toHaveText('CAPTURE ERROR');
-  await expect.poll(() => page.evaluate(() => contexts[0].state)).toBe('closed');
-  expect(await page.evaluate(() => pickedTracks.every(t => t.readyState === 'ended'))).toBe(true);
-  await page.evaluate(() => { window.failSetup = false; });
-  await page.locator('#scheduleScope').click();
-  await page.evaluate(() => window.provideCapture());
-  await expect(page.locator('#scheduleScope')).toHaveClass(/pc-audio-active/);
+  await page.evaluate(() => {
+    window.nextScheduleClass = { state: 'Now', endAt: new Date(Date.now() + 12 * 60000) };
+    refreshScheduleScopeMeta();
+  });
+  await expect(page.locator('#scheduleScopeMode')).toHaveText('LIVE END');
+  await expect(page.locator('#scheduleScopeValue')).toHaveText('12m');
+  await expect(page.locator('#scheduleScope')).toHaveAttribute('aria-label', /until the current class ends/);
   expect(errors).toEqual([]);
 });
 
-test('phase stays continuous as urgency changes and trace reaches its edge', async ({ page }) => {
+test('schedule with no upcoming class falls back to CLEAR', async ({ page }) => {
+  const errors = await mount(page);
+  await page.evaluate(() => {
+    window.nextScheduleClass = null;
+    refreshScheduleScopeMeta();
+    drawScheduleScope(1000);
+  });
+  await expect(page.locator('#scheduleScopeMode')).toHaveText('CLEAR');
+  await expect(page.locator('#scheduleScopeValue')).toHaveText('--');
+  await expect(page.locator('#scheduleScope')).toHaveAttribute('aria-label', /no upcoming classes/);
+  expect(errors).toEqual([]);
+});
+
+test('wave animates over time and remains a valid SVG path', async ({ page }) => {
+  const errors = await mount(page);
+  const trace = page.locator('#scheduleScopeTrace');
+  const before = await trace.getAttribute('d');
+  await expect.poll(() => trace.getAttribute('d'), { timeout: 5000 }).not.toBe(before);
+  const after = await trace.getAttribute('d');
+  expect(after).toMatch(/^M0\.0 [-\d.]+ L/);
+  expect(after).toMatch(/L200\.0 [-\d.]+$/);
+  expect(after).not.toMatch(/NaN|Infinity/);
+  expect(errors).toEqual([]);
+});
+
+test('wave shortens as a schedule boundary gets closer', async ({ page }) => {
+  const errors = await mount(page, true);
+  const crossings = await page.evaluate(() => {
+    const calculate = minutes => {
+      scheduleScopeState = { active: true, live: false, minutes };
+      drawScheduleScope(0);
+      const ys = Array.from(scheduleScopeTrace.getAttribute('d').matchAll(/[ML][\d.]+ ([-\d.]+)/g), m => Number(m[1]) - 21);
+      let count = 0;
+      for (let i = 1; i < ys.length; i++) {
+        if (ys[i - 1] * ys[i] < 0) count++;
+      }
+      return count;
+    };
+    return { far: calculate(360), soon: calculate(1) };
+  });
+  expect(crossings.soon).toBeGreaterThan(crossings.far * 2);
+  expect(errors).toEqual([]);
+});
+
+test('the wave stays continuous while urgency changes', async ({ page }) => {
   const errors = await mount(page);
   const result = await page.evaluate(() => {
     scheduleScopeState = { active: true, live: false, minutes: 60 };
@@ -531,8 +128,11 @@ test('phase stays continuous as urgency changes and trace reaches its edge', asy
     drawScheduleScope(10000120);
     const after = scheduleScopePhase;
     drawScheduleScope(20000120);
-    return { delta: after - before, resumeDelta: scheduleScopePhase - after,
-      path: scheduleScopeTrace.getAttribute('d') };
+    return {
+      delta: after - before,
+      resumeDelta: scheduleScopePhase - after,
+      path: scheduleScopeTrace.getAttribute('d')
+    };
   });
   expect(result.delta).toBeCloseTo(0.297, 8);
   expect(result.resumeDelta).toBeCloseTo(0.495, 8);
@@ -541,37 +141,38 @@ test('phase stays continuous as urgency changes and trace reaches its edge', asy
   expect(errors).toEqual([]);
 });
 
-test('reduced motion keeps schedule phase still', async ({ page }) => {
+test('reduced motion does not advance waveform phase', async ({ page }) => {
   const errors = await mount(page, true);
-  const phases = await page.evaluate(() => {
+  const result = await page.evaluate(() => {
     const before = scheduleScopePhase;
     drawScheduleScope(1000);
     drawScheduleScope(1060);
     return [before, scheduleScopePhase];
   });
-  expect(phases).toEqual([0, 0]);
+  expect(result).toEqual([0, 0]);
   expect(errors).toEqual([]);
 });
 
-test('audio loudness changes height while preserving schedule wave spacing', async ({ page }) => {
+test('waveform height depends on schedule state alone', async ({ page }) => {
   const errors = await mount(page, true);
-  const result = await page.evaluate(() => {
-    scheduleScopeState = { active: true, live: false, minutes: 60 };
-    const points = level => {
-      drawScheduleScope(0, level);
-      return Array.from(scheduleScopeTrace.getAttribute('d').matchAll(/[ML]([\d.]+) ([-\d.]+)/g), m => [Number(m[1]), Number(m[2]) - 21]);
+  const peaks = await page.evaluate(() => {
+    const peak = (active, live) => {
+      scheduleScopeState = { active, live, minutes: 60 };
+      drawScheduleScope(0);
+      const ys = Array.from(scheduleScopeTrace.getAttribute('d').matchAll(/[ML][\d.]+ ([-\d.]+)/g), m => Number(m[1]) - 21);
+      return Math.max(...ys.map(Math.abs));
     };
-    return { schedule: points(null), quiet: points(0), loud: points(1) };
+    return { clear: peak(false, false), waiting: peak(true, false), live: peak(true, true) };
   });
-  expect(result.loud.map(p => p[0])).toEqual(result.schedule.map(p => p[0]));
-  for (let i = 0; i < result.schedule.length; i++) {
-    const [x, deviation] = result.schedule[i];
-    if (Math.abs(deviation) > 0.05) {
-      expect(Math.sign(result.quiet[i][1]), `quiet wave at x=${x}`).toBe(Math.sign(deviation));
-      expect(Math.sign(result.loud[i][1]), `loud wave at x=${x}`).toBe(Math.sign(deviation));
-    }
-  }
-  const peak = points => Math.max(...points.map(p => Math.abs(p[1])));
-  expect(peak(result.loud)).toBeGreaterThan(peak(result.quiet) * 7);
+  expect(peaks.waiting).toBeGreaterThan(peaks.clear * 3);
+  expect(peaks.live).toBeGreaterThan(peaks.waiting);
   expect(errors).toEqual([]);
+});
+
+test('oscilloscope uses no browser audio APIs or audio-only PWA assets', async () => {
+  expect(schedule).not.toMatch(/getDisplayMedia|getUserMedia|AudioContext|audioLevel|pc-audio/);
+  expect(html).not.toContain('pc-audio-scope.js');
+  expect(html).not.toMatch(/id="scheduleScope"[^>]*role="button"/);
+  expect(html).not.toMatch(/\.schedule-scope\.is-audio|\.schedule-scope:focus-visible/);
+  expect(sw).not.toContain('pc-audio-scope.js');
 });
