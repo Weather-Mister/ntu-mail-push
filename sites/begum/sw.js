@@ -1,4 +1,4 @@
-const CACHE_NAME = 'begum-schedule-github-v3';
+const CACHE_NAME = 'begum-schedule-github-v4';
 const NTU_MAIL_URL = 'https://wmail1.cc.ntu.edu.tw/rc/index.php';
 const ROOT = new URL(self.registration.scope).pathname;
 const asset = path => ROOT + (path.startsWith('/') ? path.slice(1) : path);
@@ -7,8 +7,8 @@ const APP_SHELL = [
   ROOT,
   asset('index.html'),
   asset('styles.css?v=110'),
-  asset('desktop-renewal.css?v=2'),
-  asset('app.js?v=109'),
+  asset('desktop-renewal.css?v=3'),
+  asset('app.js?v=110'),
   asset('manifest.webmanifest?v=1'),
   asset('favicon.svg'),
   asset('apple-touch-icon.png'),
