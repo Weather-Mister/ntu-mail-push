@@ -64,8 +64,9 @@ async function mount(page, reducedMotion = false, firefox = false) {
         });
       },
       enumerateDevices: async () => [
-        { kind: 'audioinput', deviceId: 'microphone', label: 'Microphone' },
-        { kind: 'audioinput', deviceId: 'loopback', label: 'Stereo Mix (Loopback)' }
+        { kind: 'audioinput', deviceId: 'physicalMic', label: 'Physical microphone' },
+        { kind: 'audioinput', deviceId: 'systemA', label: 'Stereo Mix A' },
+        { kind: 'audioinput', deviceId: 'systemB', label: 'Loopback B' }
       ],
       getDisplayMedia: () => {
         window.captureCalls++;
@@ -76,7 +77,7 @@ async function mount(page, reducedMotion = false, firefox = false) {
       }
     } });
     window.inputTracks = [];
-    window.provideInput = async (name = 'Input') => {
+    window.provideInput = async (name = 'Stereo Mix A') => {
       const producer = new NativeContext();
       const oscillator = producer.createOscillator();
       const destination = producer.createMediaStreamDestination();
@@ -166,17 +167,53 @@ test('Firefox uses an audio input without display sharing', async ({ page }) => 
   const errors = await mount(page, false, true);
   const scope = page.locator('#scheduleScope');
   await scope.click();
-  await expect(page.locator('#scheduleScopeMode')).toHaveText('CHOOSE INPUT');
+  await expect(page.locator('#scheduleScopeMode')).toHaveText('SELECT LOOPBACK');
   expect(await page.evaluate(() => window.captureCalls)).toBe(0);
   expect(await page.evaluate(() => window.inputCalls[0])).toMatchObject({
     video: false, audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
   });
   await page.evaluate(() => window.provideInput());
   await expect(scope).toHaveClass(/pc-audio-active/);
-  await expect(page.locator('#scheduleScopeMode')).toHaveText('AUDIO INPUT');
+  await expect(page.locator('#scheduleScopeMode')).toHaveText('SYSTEM AUDIO');
   await scope.click();
   await expect(scope).not.toHaveClass(/pc-audio-active/);
   expect(await page.evaluate(() => pickedTracks.every(t => t.readyState === 'ended'))).toBe(true);
+  expect(errors).toEqual([]);
+});
+
+test('Firefox rejects a physical microphone instead of treating it as system playback', async ({ page }) => {
+  const errors = await mount(page, false, true);
+  const scope = page.locator('#scheduleScope');
+  await scope.click();
+  await page.evaluate(() => window.provideInput('Microphone (Built-in)'));
+  await expect(page.locator('#scheduleScopeMode')).toHaveText('MIC NOT SYSTEM');
+  await expect(scope).not.toHaveClass(/pc-audio-active|pc-audio-pending/);
+  expect(await page.evaluate(() => inputTracks.every(t => t.readyState === 'ended'))).toBe(true);
+  expect(await page.evaluate(() => testAnalyserCount)).toBe(0);
+  expect(errors).toEqual([]);
+});
+
+test('Firefox does not reuse legacy saved microphone IDs', async ({ page }) => {
+  const errors = await mount(page, false, true);
+  await page.evaluate(() => localStorage.setItem('ntu-scope-firefox-inputs', JSON.stringify(['old-mic'])));
+  await page.locator('#scheduleScope').click();
+  const args = await page.evaluate(() => inputCalls[0]);
+  expect(args.audio.deviceId).toBeUndefined();
+  await page.evaluate(() => window.provideInput('Loopback B'));
+  await expect(page.locator('#scheduleScopeMode')).toHaveText('SYSTEM AUDIO');
+  expect(errors).toEqual([]);
+});
+
+test('Firefox picker never includes physical microphones', async ({ page }) => {
+  const errors = await mount(page, false, true);
+  await page.locator('#scheduleScope').click();
+  await page.evaluate(() => window.provideInput('Stereo Mix A'));
+  await expect(page.locator('#scheduleScope')).toHaveClass(/pc-audio-active/);
+  await page.locator('#scheduleScope').click({ button: 'right' });
+  const picker = page.getByRole('group', { name: 'Oscilloscope system audio sources' });
+  await expect(picker.getByRole('checkbox', { name: 'Stereo Mix A' })).toBeVisible();
+  await expect(picker.getByRole('checkbox', { name: 'Loopback B' })).toBeVisible();
+  await expect(picker.getByRole('checkbox', { name: 'Physical microphone' })).toHaveCount(0);
   expect(errors).toEqual([]);
 });
 
@@ -184,22 +221,22 @@ test('Firefox multi-input selector remembers selections and switches to the acti
   const errors = await mount(page, false, true);
   const scope = page.locator('#scheduleScope');
   await scope.click();
-  await page.evaluate(() => window.provideInput('Microphone'));
+  await page.evaluate(() => window.provideInput('Stereo Mix A'));
   await expect(scope).toHaveClass(/pc-audio-active/);
   await scope.click({ button: 'right' });
-  const menu = page.getByRole('group', { name: 'Oscilloscope audio inputs' });
+  const menu = page.getByRole('group', { name: 'Oscilloscope system audio sources' });
   await expect(menu).toBeVisible();
-  await menu.getByRole('checkbox', { name: 'Microphone' }).check();
-  await menu.getByRole('checkbox', { name: 'Stereo Mix (Loopback)' }).check();
+  await menu.getByRole('checkbox', { name: 'Stereo Mix A' }).check();
+  await menu.getByRole('checkbox', { name: 'Loopback B' }).check();
   await menu.getByRole('button', { name: 'Apply' }).click();
 
-  const selected = await page.evaluate(() => JSON.parse(localStorage.getItem('ntu-scope-firefox-inputs')));
-  expect(selected).toEqual(['microphone', 'loopback']);
+  const selected = await page.evaluate(() => JSON.parse(localStorage.getItem('ntu-scope-firefox-loopbacks-v1')));
+  expect(selected).toEqual(['systemA', 'systemB']);
   await expect.poll(() => page.evaluate(() => window.inputCalls.length)).toBe(2);
-  expect((await page.evaluate(() => window.inputCalls[1])).audio.deviceId).toEqual({ exact: 'microphone' });
+  expect((await page.evaluate(() => window.inputCalls[1])).audio.deviceId).toEqual({ exact: 'systemA' });
   await page.evaluate(() => window.provideInput('Loopback A'));
   await expect.poll(() => page.evaluate(() => window.inputCalls.length)).toBe(3);
-  expect((await page.evaluate(() => window.inputCalls[2])).audio.deviceId).toEqual({ exact: 'loopback' });
+  expect((await page.evaluate(() => window.inputCalls[2])).audio.deviceId).toEqual({ exact: 'systemB' });
   await page.evaluate(() => window.provideInput('Loopback B'));
   await expect(scope).toHaveClass(/pc-audio-active/);
   await expect(page.locator('#scheduleScopeLabel')).toHaveText('AUDIO / AUTO');
@@ -222,7 +259,7 @@ test('Firefox multi-input selector remembers selections and switches to the acti
 
 test('Firefox auto-input survives a disconnected source and retains remaining signal', async ({ page }) => {
   const errors = await mount(page, false, true);
-  await page.evaluate(() => localStorage.setItem('ntu-scope-firefox-inputs', JSON.stringify(['microphone', 'loopback'])));
+  await page.evaluate(() => localStorage.setItem('ntu-scope-firefox-loopbacks-v1', JSON.stringify(['systemA', 'systemB'])));
   const scope = page.locator('#scheduleScope');
   await scope.click();
   await page.evaluate(() => window.provideInput('Loopback A'));
@@ -270,7 +307,7 @@ test('Firefox primes Web Audio during the click before requesting device permiss
   });
   await page.locator('#scheduleScope').click();
   expect(await page.evaluate(() => window.resumeWasBeforePermission)).toBe(true);
-  await page.evaluate(() => window.provideInput('Mic'));
+  await page.evaluate(() => window.provideInput('Stereo Mix A'));
   await expect(page.locator('#scheduleScope')).toHaveClass(/pc-audio-active/);
   expect(errors).toEqual([]);
 });
@@ -280,7 +317,7 @@ test('Firefox input permission begins only on activation, then can be cancelled'
   const scope = page.locator('#scheduleScope');
   expect(await page.evaluate(() => inputCalls.length)).toBe(0);
   await scope.click();
-  await expect(page.locator('#scheduleScopeMode')).toHaveText('CHOOSE INPUT');
+  await expect(page.locator('#scheduleScopeMode')).toHaveText('SELECT LOOPBACK');
   await scope.click();
   await expect(scope).not.toHaveClass(/pc-audio-pending|pc-audio-active/);
   await page.evaluate(() => window.provideInput('Late device'));
@@ -292,10 +329,10 @@ test('Firefox input permission begins only on activation, then can be cancelled'
 
 test('Firefox stop while second input permission is pending releases both tracks', async ({ page }) => {
   const errors = await mount(page, false, true);
-  await page.evaluate(() => localStorage.setItem('ntu-scope-firefox-inputs', JSON.stringify(['microphone', 'loopback'])));
+  await page.evaluate(() => localStorage.setItem('ntu-scope-firefox-loopbacks-v1', JSON.stringify(['systemA', 'systemB'])));
   const scope = page.locator('#scheduleScope');
   await scope.click();
-  await page.evaluate(() => window.provideInput('Device A'));
+  await page.evaluate(() => window.provideInput('Stereo Mix A'));
   await expect.poll(() => page.evaluate(() => inputCalls.length)).toBe(2);
   await scope.click();
   await page.evaluate(() => window.provideInput('Late B'));
@@ -306,11 +343,11 @@ test('Firefox stop while second input permission is pending releases both tracks
 
 test('Firefox missing first input falls through to next previously selected device', async ({ page }) => {
   const errors = await mount(page, false, true);
-  await page.evaluate(() => localStorage.setItem('ntu-scope-firefox-inputs', JSON.stringify(['gone', 'loopback'])));
+  await page.evaluate(() => localStorage.setItem('ntu-scope-firefox-loopbacks-v1', JSON.stringify(['gone', 'systemB'])));
   await page.locator('#scheduleScope').click();
   await page.evaluate(() => rejectInput(new DOMException('Missing input', 'NotFoundError')));
   await expect.poll(() => page.evaluate(() => inputCalls.length)).toBe(2);
-  expect((await page.evaluate(() => inputCalls[1])).audio.deviceId).toEqual({ exact: 'loopback' });
+  expect((await page.evaluate(() => inputCalls[1])).audio.deviceId).toEqual({ exact: 'systemB' });
   await page.evaluate(() => window.provideInput('Loopback B'));
   await expect(page.locator('#scheduleScope')).toHaveClass(/pc-audio-active/);
   await expect(page.locator('#scheduleScopeValue')).toHaveText('LIVE');
@@ -319,7 +356,7 @@ test('Firefox missing first input falls through to next previously selected devi
 
 test('Firefox denial stops probing the remaining inputs', async ({ page }) => {
   const errors = await mount(page, false, true);
-  await page.evaluate(() => localStorage.setItem('ntu-scope-firefox-inputs', JSON.stringify(['microphone', 'loopback'])));
+  await page.evaluate(() => localStorage.setItem('ntu-scope-firefox-loopbacks-v1', JSON.stringify(['systemA', 'systemB'])));
   await page.locator('#scheduleScope').click();
   await page.evaluate(() => rejectInput(new DOMException('Permission denied', 'NotAllowedError')));
   await expect(page.locator('#scheduleScopeMode')).toHaveText('INPUT BLOCKED');
@@ -330,9 +367,9 @@ test('Firefox denial stops probing the remaining inputs', async ({ page }) => {
 
 test('Firefox second-source denial preserves the first live capture', async ({ page }) => {
   const errors = await mount(page, false, true);
-  await page.evaluate(() => localStorage.setItem('ntu-scope-firefox-inputs', JSON.stringify(['microphone', 'loopback'])));
+  await page.evaluate(() => localStorage.setItem('ntu-scope-firefox-loopbacks-v1', JSON.stringify(['systemA', 'systemB'])));
   await page.locator('#scheduleScope').click();
-  await page.evaluate(() => window.provideInput('Microphone'));
+  await page.evaluate(() => window.provideInput('Stereo Mix A'));
   await expect.poll(() => page.evaluate(() => inputCalls.length)).toBe(2);
   await page.evaluate(() => rejectInput(new DOMException('Denied second', 'NotAllowedError')));
   await expect(page.locator('#scheduleScope')).toHaveClass(/pc-audio-active/);
@@ -343,12 +380,12 @@ test('Firefox second-source denial preserves the first live capture', async ({ p
 
 test('Firefox all unavailable devices restore safe retry state', async ({ page }) => {
   const errors = await mount(page, false, true);
-  await page.evaluate(() => localStorage.setItem('ntu-scope-firefox-inputs', JSON.stringify(['gone1','gone2'])));
+  await page.evaluate(() => localStorage.setItem('ntu-scope-firefox-loopbacks-v1', JSON.stringify(['gone1','gone2'])));
   await page.locator('#scheduleScope').click();
   await page.evaluate(() => rejectInput(new DOMException('Missing', 'NotFoundError')));
   await expect.poll(() => page.evaluate(() => inputCalls.length)).toBe(2);
   await page.evaluate(() => rejectInput(new DOMException('Missing', 'NotFoundError')));
-  await expect(page.locator('#scheduleScopeMode')).toHaveText('NO AUDIO INPUT');
+  await expect(page.locator('#scheduleScopeMode')).toHaveText('NO LOOPBACK');
   await expect(page.locator('#scheduleScope')).not.toHaveClass(/pc-audio-active|pc-audio-pending/);
   expect(errors).toEqual([]);
 });
@@ -357,42 +394,42 @@ test('Firefox stale device enumeration cannot reopen picker after stopping', asy
   const errors = await mount(page, false, true);
   const scope = page.locator('#scheduleScope');
   await scope.click();
-  await page.evaluate(() => window.provideInput('Mic'));
+  await page.evaluate(() => window.provideInput('Stereo Mix A'));
   await expect(scope).toHaveClass(/pc-audio-active/);
   await page.evaluate(() => {
     navigator.mediaDevices.enumerateDevices = () => new Promise(resolve => { window.finishEnumeration = resolve; });
   });
   await scope.click({ button: 'right' });
   await scope.click();
-  await page.evaluate(() => finishEnumeration([{kind:'audioinput',deviceId:'microphone',label:'Microphone'}]));
-  await expect(page.getByRole('group', { name: 'Oscilloscope audio inputs' })).toHaveCount(0);
+  await page.evaluate(() => finishEnumeration([{kind:'audioinput',deviceId:'systemA',label:'Stereo Mix A'}]));
+  await expect(page.getByRole('group', { name: 'Oscilloscope system audio sources' })).toHaveCount(0);
   await expect(scope).not.toHaveClass(/pc-audio-active/);
   expect(errors).toEqual([]);
 });
 
 test('Firefox saved selection restarts with the same two specific inputs', async ({ page }) => {
   const errors = await mount(page, false, true);
-  await page.evaluate(() => localStorage.setItem('ntu-scope-firefox-inputs', JSON.stringify(['microphone', 'loopback'])));
+  await page.evaluate(() => localStorage.setItem('ntu-scope-firefox-loopbacks-v1', JSON.stringify(['systemA', 'systemB'])));
   const scope = page.locator('#scheduleScope');
   await scope.click();
-  await page.evaluate(() => window.provideInput('Mic'));
+  await page.evaluate(() => window.provideInput('Stereo Mix A'));
   await expect.poll(() => page.evaluate(() => inputCalls.length)).toBe(2);
   await page.evaluate(() => window.provideInput('Loopback'));
   await expect(scope).toHaveClass(/pc-audio-active/);
   await scope.click();
   await scope.click();
   await expect.poll(() => page.evaluate(() => inputCalls.length)).toBe(3);
-  expect((await page.evaluate(() => inputCalls[2])).audio.deviceId).toEqual({ exact: 'microphone' });
-  await page.evaluate(() => window.provideInput('Mic'));
+  expect((await page.evaluate(() => inputCalls[2])).audio.deviceId).toEqual({ exact: 'systemA' });
+  await page.evaluate(() => window.provideInput('Stereo Mix A'));
   await expect.poll(() => page.evaluate(() => inputCalls.length)).toBe(4);
-  expect((await page.evaluate(() => inputCalls[3])).audio.deviceId).toEqual({ exact: 'loopback' });
+  expect((await page.evaluate(() => inputCalls[3])).audio.deviceId).toEqual({ exact: 'systemB' });
   await page.evaluate(() => window.provideInput('Loopback'));
   await expect(page.locator('#scheduleScopeValue')).toHaveText('2 IN');
   expect(errors).toEqual([]);
 });
 
 
-test('Firefox stop during delayed AudioContext resume releases capture', async ({ page }) => {
+test('Firefox stop while AudioContext resume is pending releases loopback', async ({ page }) => {
   const errors = await mount(page, false, true);
   await page.evaluate(() => {
     window.AudioContext.prototype.resume = function() {
@@ -401,7 +438,7 @@ test('Firefox stop during delayed AudioContext resume releases capture', async (
   });
   const scope = page.locator('#scheduleScope');
   await scope.click();
-  await page.evaluate(() => window.provideInput('Delayed resume'));
+  await page.evaluate(() => window.provideInput('Stereo Mix A'));
   await expect.poll(() => page.evaluate(() => typeof finishScopeResume)).toBe('function');
   await scope.click();
   await expect.poll(() => page.evaluate(() => inputTracks[0].readyState)).toBe('ended');
@@ -414,7 +451,7 @@ test('Firefox out-of-order picker enumeration leaves at most one menu', async ({
   const errors = await mount(page, false, true);
   const scope = page.locator('#scheduleScope');
   await scope.click();
-  await page.evaluate(() => window.provideInput('Mic'));
+  await page.evaluate(() => window.provideInput('Stereo Mix A'));
   await expect(scope).toHaveClass(/pc-audio-active/);
   await page.evaluate(() => {
     window.enumResolves = [];
@@ -423,10 +460,10 @@ test('Firefox out-of-order picker enumeration leaves at most one menu', async ({
   await scope.click({ button: 'right' });
   await scope.click({ button: 'right' });
   await expect.poll(() => page.evaluate(() => enumResolves.length)).toBe(2);
-  await page.evaluate(() => enumResolves[1]([{kind:'audioinput',deviceId:'microphone',label:'Microphone'}]));
-  await expect(page.getByRole('group', { name: 'Oscilloscope audio inputs' })).toHaveCount(1);
-  await page.evaluate(() => enumResolves[0]([{kind:'audioinput',deviceId:'loopback',label:'Old result'}]));
-  await expect(page.getByRole('group', { name: 'Oscilloscope audio inputs' })).toHaveCount(1);
+  await page.evaluate(() => enumResolves[1]([{kind:'audioinput',deviceId:'systemA',label:'Stereo Mix A'}]));
+  await expect(page.getByRole('group', { name: 'Oscilloscope system audio sources' })).toHaveCount(1);
+  await page.evaluate(() => enumResolves[0]([{kind:'audioinput',deviceId:'systemB',label:'Old result'}]));
+  await expect(page.getByRole('group', { name: 'Oscilloscope system audio sources' })).toHaveCount(1);
   expect(errors).toEqual([]);
 });
 
@@ -435,7 +472,7 @@ test('Firefox five capture cycles close every audio context and input track', as
   const scope = page.locator('#scheduleScope');
   for (let i = 0; i < 5; i++) {
     await scope.click();
-    await page.evaluate(() => window.provideInput('Repeat'));
+    await page.evaluate(() => window.provideInput('Stereo Mix A'));
     await expect(scope).toHaveClass(/pc-audio-active/);
     await scope.click();
     await expect(scope).not.toHaveClass(/pc-audio-active|pc-audio-pending/);
