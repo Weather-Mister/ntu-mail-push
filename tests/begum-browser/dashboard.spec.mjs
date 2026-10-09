@@ -110,3 +110,51 @@ test('TOC is listed on both days with $800 in place of a location', async ({ pag
   }
   expect(errors).toEqual([]);
 });
+
+
+test('checked Chatterbox dates appear only in their exact weeks without yellow highlighting', async ({ page }) => {
+  const errors=[];
+  page.on('pageerror', error=>errors.push(error.message));
+  await page.goto('/?pair=begum');
+
+  const sessions=[
+    ['2026-09-29','12:20','13:10'],
+    ['2026-10-07','12:20','13:10'],
+    ['2026-10-14','18:30','19:30'],
+    ['2026-10-15','12:20','13:10'],
+    ['2026-11-06','12:20','13:10'],
+    ['2026-11-13','12:20','13:10'],
+    ['2026-11-17','12:20','13:10'],
+    ['2026-11-26','12:20','13:10'],
+    ['2026-12-02','12:20','13:10'],
+    ['2026-12-11','12:20','13:10']
+  ];
+  for(const [date,start,end] of sessions){
+    await page.locator('#weekDateJump').fill(date);
+    await expect(page.locator('#weekDateJump')).toHaveValue(date);
+    const chatterbox=page.locator('.lesson').filter({has:page.locator('.lesson-title', {hasText:'Chatterbox Coffee'})});
+    await expect(chatterbox).toHaveCount(1);
+    await expect(chatterbox.locator('.time-start')).toHaveText(start);
+    await expect(chatterbox.locator('.time-end')).toHaveText(end);
+    await expect(chatterbox).not.toHaveClass(/chatterbox-highlight/);
+    if(date==='2026-10-14'){
+      await chatterbox.click();
+      await expect(page.locator('#dialogTitle')).toHaveText('Chatterbox Coffee');
+      await expect(page.locator('#dialogLocationLabel')).toHaveText('Session date');
+      await expect(page.locator('#mapButton')).toBeHidden();
+      await page.locator('#closeDialog').click();
+    }
+  }
+  for(const date of ['2026-09-21','2026-10-19','2026-11-09','2026-12-07']){
+    await page.locator('#weekDateJump').fill(date);
+    await expect(page.locator('.lesson-title', {hasText:'Chatterbox Coffee'})).toHaveCount(0);
+  }
+
+  await page.locator('#weekDateJump').fill('2026-10-14');
+  await expect(page.locator('#selectedDate')).toContainText('Oct 14, 2026');
+  await page.locator('#previousWeek').click();
+  await expect(page.locator('#selectedDate')).toContainText('Oct 7, 2026');
+  await page.locator('#nextWeek').click();
+  await expect(page.locator('#selectedDate')).toContainText('Oct 14, 2026');
+  expect(errors).toEqual([]);
+});
