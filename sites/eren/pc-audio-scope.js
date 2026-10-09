@@ -13,14 +13,9 @@
   // Firefox lacks getDisplayMedia audio capture. A permitted audio input
   // (e.g. Stereo Mix / BlackHole / PipeWire monitor) is the fallback.
   const isFirefox = /Firefox\/\d+/.test(navigator.userAgent);
-  const preferenceKey = 'ntu-scope-firefox-input';
-  const loopbackName = /loopback|stereo mix|blackhole|monitor of|vb-audio|cable output|virtual audio/i;
-  const readPreference = () => {
-    try { return localStorage.getItem(preferenceKey) || ''; } catch { return ''; }
-  };
-  const savePreference = id => {
-    if (id) try { localStorage.setItem(preferenceKey, id); } catch {}
-  };
+  // getUserMedia exposes audio INPUTS, not playback. Only a verified OS
+  // loopback is permitted to feed the waveform; never use the microphone.
+  const loopbackName = /loopback|stereo\s*mix|what\s*u\s*hear|wave\s*out\s*mix|blackhole|soundflower|monitor\s+of|monitor\s*\(|pulse\s*audio\s*monitor|pipewire\s*monitor|vb[- ]?audio|cable\s+(?:output|out)|voicemeeter\s+(?:output|out)|virtual\s*audio/i;
 
   let audioContext = null;
   let source = null;
@@ -39,14 +34,14 @@
   let pendingFirefoxStream = null;
   let pickerGeneration = 0;
 
-  const multiPreferenceKey = 'ntu-scope-firefox-inputs';
+  // Do not migrate old preferences: they may reference a real microphone.
+  const multiPreferenceKey = 'ntu-scope-firefox-loopbacks-v1';
   function readPreferences() {
     try {
       const stored = JSON.parse(localStorage.getItem(multiPreferenceKey));
       if (Array.isArray(stored)) return [...new Set(stored.filter(id => typeof id === 'string' && id))].slice(0, 12);
     } catch {}
-    const prior = readPreference();
-    return prior ? [prior] : [];
+    return [];
   }
   function savePreferences(ids) {
     try { localStorage.setItem(multiPreferenceKey, JSON.stringify([...new Set(ids)].slice(0, 12))); } catch {}
@@ -55,7 +50,7 @@
     if (!input) return 'AUDIO INPUT';
     const name = input.track.label || input.label || 'INPUT';
     return inputStreams.length > 1 ? 'AUTO: ' + name.slice(0, 12).toUpperCase()
-      : (loopbackName.test(name) ? 'LOOPBACK IN' : 'AUDIO INPUT');
+      : 'SYSTEM AUDIO';
   }
 
 
@@ -65,15 +60,15 @@
     scope.setAttribute('aria-pressed', on ? 'true' : 'false');
     scope.title = isFirefox
       ? (on ? 'Click to stop. Right-click or Shift+Enter to change input.'
-            : 'Click to monitor an audio input. Select a loopback input for system sound.')
+            : 'Click to monitor system audio through a playback loopback.')
       : (on ? 'Click to stop monitoring PC audio' : 'Click to monitor PC audio');
     if (on) {
-      if (label) label.textContent = isFirefox ? 'AUDIO / IN' : 'AUDIO / PC';
+      if (label) label.textContent = isFirefox ? 'AUDIO / PC' : 'AUDIO / PC';
       if (value) value.textContent = 'LIVE';
       if (mode) mode.textContent = status;
-      if (hint) hint.textContent = isFirefox ? 'CHANGE INPUT: RIGHT-CLICK' : 'CLICK STOP';
+      if (hint) hint.textContent = isFirefox ? 'CHANGE LOOPBACK: RIGHT-CLICK' : 'CLICK STOP';
       scope.setAttribute('aria-label', isFirefox
-        ? 'Live audio input oscilloscope. Activate to stop. Right-click or Shift+Enter to change input.'
+        ? 'Live system audio oscilloscope. Activate to stop. Right-click or Shift+Enter to change input.'
         : 'Live PC audio oscilloscope. Activate to stop monitoring.');
     }
   }
@@ -94,7 +89,7 @@
       if (inputStreams.length !== previousCount && inputStreams.length) {
         if (!inputStreams.includes(currentInput)) currentInput = null;
         if (value) value.textContent = inputStreams.length > 1 ? inputStreams.length + ' IN' : 'LIVE';
-        if (label) label.textContent = inputStreams.length > 1 ? 'AUDIO / AUTO' : 'AUDIO / IN';
+        if (label) label.textContent = inputStreams.length > 1 ? 'AUDIO / AUTO' : 'AUDIO / PC';
         if (mode) mode.textContent = statusForInput(currentInput || inputStreams[0]);
       }
 
@@ -192,14 +187,14 @@
     scope.classList.remove('pc-audio-active', 'pc-audio-pending', 'pc-audio-error', 'is-audio');
     scope.setAttribute('aria-pressed', 'false');
     scope.title = isFirefox
-      ? 'Click to monitor an audio input. Select a loopback input for system sound.'
+      ? 'Click to monitor system audio through a playback loopback.'
       : 'Click to monitor PC audio';
     if (label) label.textContent = 'ΔT / SCHED';
     if (value) value.textContent = '--';
     if (mode) mode.textContent = 'SCHEDULE';
     if (hint) hint.textContent = 'λ ∝ ΔT';
     scope.setAttribute('aria-label', isFirefox
-      ? 'Schedule interval monitor. Activate to monitor an audio input in Firefox.'
+      ? 'Schedule interval monitor. Activate to monitor system audio through a loopback in Firefox.'
       : 'Schedule interval monitor. Activate to monitor PC audio.');
     window.dispatchEvent(new Event('resize'));
   }
@@ -219,10 +214,10 @@
     connecting = true;
     scope.classList.remove('pc-audio-error');
     scope.classList.add('pc-audio-pending');
-    if (label) label.textContent = 'AUDIO / IN';
+    if (label) label.textContent = 'AUDIO / PC';
     if (value) value.textContent = '…';
-    if (mode) mode.textContent = 'CHOOSE INPUT';
-    if (hint) hint.textContent = 'REMEMBER PERMISSION';
+    if (mode) mode.textContent = 'SELECT LOOPBACK';
+    if (hint) hint.textContent = 'SYSTEM AUDIO ONLY';
 
     // Unlock Web Audio directly in the initiating click's user activation.
     // Firefox may otherwise leave resume() pending when first called after the
@@ -258,6 +253,13 @@
         pendingFirefoxStream = picked;
         const track = picked.getAudioTracks()[0];
         if (!track) throw new Error('No audio input track');
+        // User/browser has now granted a selected device, revealing its label.
+        // Reject a physical mic before connecting anything to Web Audio.
+        if (!loopbackName.test(track.label || '')) {
+          const mismatch = new Error('Selected source is not a playback loopback');
+          mismatch.code = 'NOT_LOOPBACK';
+          throw mismatch;
+        }
         // The audio context has already been resumed under the original
         // click gesture; never block source setup on a later autoplay prompt.
         const inputSource = audioContext.createMediaStreamSource(new MediaStream([track]));
@@ -297,11 +299,12 @@
     if (!inputStreams.length) {
       stop();
       scope.classList.add('pc-audio-error');
-      if (label) label.textContent = 'AUDIO / IN';
+      if (label) label.textContent = 'AUDIO / PC';
       if (value) value.textContent = '--';
       if (mode) mode.textContent = firstError?.name === 'NotAllowedError'
-        ? 'INPUT BLOCKED' : 'NO AUDIO INPUT';
-      if (hint) hint.textContent = 'CHECK INPUT / PERMISSION';
+        ? 'INPUT BLOCKED' : (firstError?.code === 'NOT_LOOPBACK' ? 'MIC NOT SYSTEM' : 'NO LOOPBACK');
+      if (hint) hint.textContent = 'NEEDS LOOPBACK';
+      scope.setAttribute('aria-label', 'No system audio. Firefox needs a loopback device, such as Stereo Mix, BlackHole, or a PipeWire monitor. An ordinary microphone is not accepted.');
       return;
     }
     if (!requested.length) {
@@ -312,7 +315,7 @@
     scope.classList.remove('pc-audio-pending', 'pc-audio-error');
     currentInput = inputStreams[0];
     setUi(true, statusForInput(currentInput));
-    if (label) label.textContent = inputStreams.length > 1 ? 'AUDIO / AUTO' : 'AUDIO / IN';
+    if (label) label.textContent = inputStreams.length > 1 ? 'AUDIO / AUTO' : 'AUDIO / PC';
     if (value) value.textContent = inputStreams.length > 1 ? inputStreams.length + ' IN' : 'LIVE';
     draw();
   }
@@ -324,7 +327,7 @@
     const media = navigator.mediaDevices;
     if (!(isFirefox ? media?.getUserMedia : media?.getDisplayMedia) || !AudioContextCtor) {
       scope.classList.add('pc-audio-error');
-      if (label) label.textContent = isFirefox ? 'AUDIO / IN' : 'AUDIO / PC';
+      if (label) label.textContent = isFirefox ? 'AUDIO / PC' : 'AUDIO / PC';
       if (value) value.textContent = 'N/A';
       if (mode) mode.textContent = 'UNSUPPORTED';
       if (hint) hint.textContent = 'BROWSER';
@@ -334,7 +337,7 @@
     scope.classList.remove('pc-audio-error');
     scope.classList.add('pc-audio-pending');
     connecting = true;
-    if (label) label.textContent = isFirefox ? 'AUDIO / IN' : 'AUDIO / PC';
+    if (label) label.textContent = isFirefox ? 'AUDIO / PC' : 'AUDIO / PC';
     if (value) value.textContent = '…';
     if (mode) mode.textContent = isFirefox ? 'CHOOSE INPUT' : 'CHOOSE OUTPUT';
     if (hint) hint.textContent = isFirefox ? 'REMEMBER PERMISSION' : 'SHARE AUDIO';
@@ -407,7 +410,7 @@
       connecting = false;
       scope.classList.remove('pc-audio-pending', 'pc-audio-active', 'is-audio');
       scope.classList.add('pc-audio-error');
-      if (label) label.textContent = isFirefox ? 'AUDIO / IN' : 'AUDIO / PC';
+      if (label) label.textContent = isFirefox ? 'AUDIO / PC' : 'AUDIO / PC';
       const noAudio = error?.code === 'NO_AUDIO_TRACK';
       if (value) value.textContent = '--';
       if (mode) mode.textContent = error?.name === 'NotAllowedError'
@@ -440,21 +443,23 @@
 
     const picker = document.createElement('div');
     picker.setAttribute('role', 'group');
-    picker.setAttribute('aria-label', 'Oscilloscope audio inputs');
+    picker.setAttribute('aria-label', 'Oscilloscope system audio sources');
     picker.style.cssText = 'position:fixed;z-index:10000;width:255px;padding:12px;box-sizing:border-box;border:1px solid #777568;border-radius:5px;background:#d8d3c5;box-shadow:0 5px 17px #0005;color:#32342f;font:12px system-ui,sans-serif';
     const rect = scope.getBoundingClientRect();
     picker.style.left = `${Math.max(8, Math.min(innerWidth - 263, rect.left))}px`;
     picker.style.top = `${Math.max(8, Math.min(innerHeight - 160, rect.bottom + 6))}px`;
 
     const caption = document.createElement('strong');
-    caption.textContent = 'AUDIO INPUTS / AUTO';
+    caption.textContent = 'SYSTEM AUDIO / LOOPBACK';
     caption.style.cssText = 'display:block;font-size:11px;letter-spacing:.05em;margin-bottom:8px';
     const list = document.createElement('div');
     list.style.cssText = 'max-height:180px;overflow:auto;display:grid;gap:7px';
+    // Show only real playback-monitor candidates. Other inputs are microphones.
+    const loopbackDevices = devices.filter(d => loopbackName.test(d.label || ''));
     const chosen = new Set(readPreferences());
     if (!chosen.size) inputStreams.forEach(input => { if (input.id) chosen.add(input.id); });
     const checkboxes = [];
-    devices.forEach((device, i) => {
+    loopbackDevices.forEach((device, i) => {
       const row = document.createElement('label');
       row.style.cssText = 'display:flex;align-items:center;gap:7px;cursor:pointer;line-height:1.25';
       const checkbox = document.createElement('input');
@@ -469,9 +474,9 @@
       checkboxes.push(checkbox);
     });
     const note = document.createElement('p');
-    note.textContent = devices.length
-      ? 'Select inputs once. The strongest active signal appears automatically. PC sound requires loopback inputs.'
-      : 'No selectable inputs listed. Click the oscilloscope to grant audio permission first.';
+    note.textContent = loopbackDevices.length
+      ? 'Select system playback loopbacks. The strongest active source is followed automatically.'
+      : 'No playback loopback found. Configure Stereo Mix (Windows), BlackHole (macOS), or a PipeWire/PulseAudio monitor (Linux). Firefox may hide device labels until input permission is granted. The microphone will not be used.';
     note.style.cssText = 'font-size:10px;line-height:1.4;margin:8px 0;color:#55584c';
     const buttons = document.createElement('div');
     buttons.style.cssText = 'display:flex;justify-content:flex-end;gap:7px';
@@ -516,8 +521,8 @@
   }
 
   if (isFirefox) {
-    scope.title = 'Click to monitor an audio input. Select a loopback input for system sound.';
-    scope.setAttribute('aria-label', 'Schedule interval monitor. Activate to monitor an audio input in Firefox.');
+    scope.title = 'Click to monitor system audio through a playback loopback.';
+    scope.setAttribute('aria-label', 'Schedule interval monitor. Activate to monitor system audio through a loopback in Firefox.');
     scope.addEventListener('contextmenu', event => {
       event.preventDefault();
       showInputPicker();
