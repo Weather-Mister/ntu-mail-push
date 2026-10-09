@@ -6,7 +6,8 @@ const courses = {
   period: { name: 'Period: Theory, Thoughts and Actions', color: '#7a629e', location: 'Boya Building · Room 102' },
   resources: { name: 'Exploring Taiwan: Natural Resources Conservation and Management', color: '#537a49', location: 'Boya Building · Room 202' },
   micro: { name: 'Microeconomics (1)', color: '#b55d50', location: 'Social Sciences Building · Room 507' },
-  toc: { name: 'TOC', color: '#6a7c94', price: '$800' }
+  toc: { name: 'TOC', color: '#6a7c94', price: '$800' },
+  chatterbox: { name: 'Chatterbox Coffee', color: '#98715a', oneOff:true }
 };
 
 const mapLinks = {
@@ -104,7 +105,20 @@ const schedule = {
   6: []
 };
 
-const specialSchedule = {};
+// Only dates checked for Begüm in the supplied Chatterbox Coffee sign-up sheet.
+// 10/14 is the single yellow-highlighted row; 6:30–7:30 is treated as evening.
+const specialSchedule = {
+  '2026-09-29': [{ course:'chatterbox', start:'12:20', end:'13:10' }],
+  '2026-10-07': [{ course:'chatterbox', start:'12:20', end:'13:10' }],
+  '2026-10-14': [{ course:'chatterbox', start:'18:30', end:'19:30' }],
+  '2026-10-15': [{ course:'chatterbox', start:'12:20', end:'13:10' }],
+  '2026-11-06': [{ course:'chatterbox', start:'12:20', end:'13:10' }],
+  '2026-11-13': [{ course:'chatterbox', start:'12:20', end:'13:10' }],
+  '2026-11-17': [{ course:'chatterbox', start:'12:20', end:'13:10' }],
+  '2026-11-26': [{ course:'chatterbox', start:'12:20', end:'13:10' }],
+  '2026-12-02': [{ course:'chatterbox', start:'12:20', end:'13:10' }],
+  '2026-12-11': [{ course:'chatterbox', start:'12:20', end:'13:10' }]
+};
 const dateReminders = {};
 
 const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
@@ -241,6 +255,26 @@ function countdownText(startAt){
   const hours = Math.floor(diffMinutes / 60);
   const mins = diffMinutes % 60;
   return mins ? `in ${hours} hr ${mins} min` : `in ${hours} hr`;
+}
+
+function setWeekTo(date){
+  const weekdayOffset = (date.getDay() + 6) % 7;
+  baseWeekMonday.setFullYear(date.getFullYear(), date.getMonth(), date.getDate() - weekdayOffset);
+  baseWeekMonday.setHours(12, 0, 0, 0);
+}
+
+function shiftWeek(weeks){
+  baseWeekMonday.setDate(baseWeekMonday.getDate() + 7 * weeks);
+  renderDay();
+  renderCoolDeadlineDots();
+}
+
+function weekLabel(){
+  const saturday = dateForDay(6);
+  if (baseWeekMonday.getMonth() === saturday.getMonth()){
+    return `${shortMonths[baseWeekMonday.getMonth()]} ${baseWeekMonday.getDate()}–${saturday.getDate()}`;
+  }
+  return `${shortMonths[baseWeekMonday.getMonth()]} ${baseWeekMonday.getDate()} – ${shortMonths[saturday.getMonth()]} ${saturday.getDate()}`;
 }
 
 function dateForDay(day){
@@ -624,7 +658,7 @@ function isLessonInactive(){
 
 function isCurrentLesson(day, lesson){
   const now = new Date();
-  if (now.getDay() !== day || isLessonInactive(day, lesson, now)) return false;
+  if (now.getDay() !== day || dateKey(dateForDay(day)) !== dateKey(now) || isLessonInactive(day, lesson, now)) return false;
   const nowMin = now.getHours()*60 + now.getMinutes();
   return nowMin >= minutes(lesson.start) && nowMin <= minutes(lesson.end);
 }
@@ -648,11 +682,15 @@ function renderDay(){
   selectedDayEl.textContent = dayNames[selectedDay];
   selectedDateEl.textContent = `${shortMonths[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
   classCountEl.textContent = `${lessons.length} ${lessons.length === 1 ? 'class' : 'classes'}`;
+  const weekRangeEl = document.getElementById('weekRange');
+  if (weekRangeEl) weekRangeEl.textContent = weekLabel();
+  const weekDateJump = document.getElementById('weekDateJump');
+  if (weekDateJump) weekDateJump.value = dateKey(date);
 
   dayButtons.forEach(btn => {
     const day = Number(btn.dataset.day);
     btn.classList.toggle('active', day === selectedDay);
-    btn.classList.toggle('today', day === new Date().getDay());
+    btn.classList.toggle('today', dateKey(dateForDay(day)) === dateKey(new Date()));
     btn.querySelector('small').textContent = dateForDay(day).getDate();
     btn.setAttribute('aria-pressed', day === selectedDay ? 'true' : 'false');
   });
@@ -684,7 +722,7 @@ function renderDay(){
         <span class="lesson-card">
           <span class="lesson-title">${course.name}</span>
           <span class="lesson-meta">
-            ${inactive ? '<span class="no-lecture">No lecture</span>' : `${live ? '<span class="live-pill">Happening now</span>' : ''}${lesson.optional ? '<span class="optional-pill">Optional</span>' : ''}<span>${course.price || course.location}</span>`}
+            ${inactive ? '<span class="no-lecture">No lecture</span>' : `${live ? '<span class="live-pill">Happening now</span>' : ''}${lesson.optional ? '<span class="optional-pill">Optional</span>' : ''}<span>${course.price || course.location || 'One-time session'}</span>`}
           </span>
           ${inactive ? '' : '<span class="lesson-arrow">›</span>'}
         </span>
@@ -757,10 +795,14 @@ function openLesson(lesson, day){
   document.getElementById('dialogTime').textContent = `${displayTime(lesson.start)} – ${displayTime(lesson.end)}${lesson.period ? ` · Period ${lesson.period}` : ''}${lesson.optional ? ' · Optional attendance' : ''}`;
   const url = mapLinks[lesson.course];
   const meetingUrl = meetingLinks[lesson.course];
-  document.getElementById('dialogLocation').textContent = course.price || course.location;
-  document.getElementById('dialogLocationLabel').textContent = course.price ? 'Fee' : 'Class location';
-  document.getElementById('dialogDetailIcon').textContent = course.price ? '$' : '⌖';
-  mapButton.hidden = Boolean(course.price);
+  const oneOff = Boolean(course.oneOff);
+  const date = dateForDay(day);
+  document.getElementById('dialogLocation').textContent = oneOff
+    ? `${dayNames[day]}, ${shortMonths[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`
+    : (course.price || course.location);
+  document.getElementById('dialogLocationLabel').textContent = oneOff ? 'Session date' : (course.price ? 'Fee' : 'Class location');
+  document.getElementById('dialogDetailIcon').textContent = oneOff ? '☕' : (course.price ? '$' : '⌖');
+  mapButton.hidden = oneOff || Boolean(course.price);
   mapButton.disabled = !url;
   mapButton.textContent = url ? 'Open in Google Maps' : 'Map link coming soon';
   meetingButton.hidden = lesson.course !== 'icl';
@@ -934,6 +976,19 @@ document.querySelectorAll('[data-copy-target]').forEach(button => {
   });
 });
 
+document.getElementById('previousWeek')?.addEventListener('click', () => shiftWeek(-1));
+document.getElementById('nextWeek')?.addEventListener('click', () => shiftWeek(1));
+document.getElementById('weekDateJump')?.addEventListener('change', event => {
+  const value = event.target.value;
+  if (!/^2026-(0[9]|1[0-2])-\d{2}$/.test(value)) return;
+  const date = new Date(`${value}T12:00:00`);
+  if (Number.isNaN(date.getTime())) return;
+  setWeekTo(date);
+  selectedDay = normalizeDay(date.getDay());
+  renderDay();
+  renderCoolDeadlineDots();
+});
+
 dayButtons.forEach(btn => btn.addEventListener('click', () => {
   selectedDay = Number(btn.dataset.day);
   renderDay();
@@ -941,6 +996,7 @@ dayButtons.forEach(btn => btn.addEventListener('click', () => {
 
 const jumpTodayButton = document.getElementById('jumpTodayButton');
 if (jumpTodayButton) jumpTodayButton.addEventListener('click', () => {
+  setWeekTo(new Date());
   selectedDay = normalizeDay(new Date().getDay());
   renderDay();
 });
@@ -952,7 +1008,7 @@ document.addEventListener('keydown', event => {
   if (/^[1-6]$/.test(event.key)) next = Number(event.key);
   else if (event.key === 'ArrowLeft') next = Math.max(1, selectedDay - 1);
   else if (event.key === 'ArrowRight') next = Math.min(6, selectedDay + 1);
-  else if (event.key.toLowerCase() === 't') next = normalizeDay(new Date().getDay());
+  else if (event.key.toLowerCase() === 't') { setWeekTo(new Date()); next = normalizeDay(new Date().getDay()); }
   else return;
   event.preventDefault();
   selectedDay = next;
@@ -1067,7 +1123,7 @@ if (launchParams.get('open') === 'ntu-mail'){
 if ('serviceWorker' in navigator){
   window.addEventListener('load', async () => {
     try {
-      const registration = await navigator.serviceWorker.register('./sw.js?v=4', { updateViaCache:'none' });
+      const registration = await navigator.serviceWorker.register('./sw.js?v=5', { updateViaCache:'none' });
       await registration.update();
     } catch (error) {}
   });
