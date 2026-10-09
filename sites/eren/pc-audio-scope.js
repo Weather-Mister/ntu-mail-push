@@ -47,7 +47,7 @@
     try { localStorage.setItem(multiPreferenceKey, JSON.stringify([...new Set(ids)].slice(0, 12))); } catch {}
   }
   function statusForInput(input) {
-    if (!input) return 'AUDIO INPUT';
+    if (!input) return 'SYSTEM AUDIO';
     const name = input.track.label || input.label || 'INPUT';
     return inputStreams.length > 1 ? 'AUTO: ' + name.slice(0, 12).toUpperCase()
       : 'SYSTEM AUDIO';
@@ -325,7 +325,7 @@
     if (isFirefox) return startFirefox(deviceId ? [deviceId] : null);
     const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
     const media = navigator.mediaDevices;
-    if (!(isFirefox ? media?.getUserMedia : media?.getDisplayMedia) || !AudioContextCtor) {
+    if (!media?.getDisplayMedia || !AudioContextCtor) {
       scope.classList.add('pc-audio-error');
       if (label) label.textContent = isFirefox ? 'AUDIO / PC' : 'AUDIO / PC';
       if (value) value.textContent = 'N/A';
@@ -344,17 +344,7 @@
 
     let picked = null;
     try {
-      picked = isFirefox
-        ? await media.getUserMedia({
-            audio: {
-              echoCancellation: false, noiseSuppression: false, autoGainControl: false,
-              ...((deviceId || readPreference())
-                ? { deviceId: exact ? { exact: deviceId } : { ideal: deviceId || readPreference() } }
-                : {})
-            },
-            video: false
-          })
-        : await media.getDisplayMedia({
+      picked = await media.getDisplayMedia({
         video: { displaySurface: 'monitor' },
         audio: {
           suppressLocalAudioPlayback: false,
@@ -382,7 +372,6 @@
          lifetime of the display-capture source; stopping video here can end
          the audio immediately and make the scope fall back to schedule mode. */
       stream = picked;
-      if (isFirefox) savePreference(audioTrack.getSettings?.().deviceId || deviceId);
       audioContext = new AudioContextCtor();
       await audioContext.resume();
       source = audioContext.createMediaStreamSource(new MediaStream([audioTrack]));
@@ -397,9 +386,7 @@
       scope.classList.remove('pc-audio-pending', 'pc-audio-error');
       audioTrack.addEventListener('ended', () => { if (active) stop(); }, { once: true });
       videoTrack?.addEventListener('ended', () => { if (active) stop(); }, { once: true });
-      const sourceLabel = isFirefox
-        ? (loopbackName.test(audioTrack.label || '') ? 'LOOPBACK IN' : 'AUDIO INPUT')
-        : (displaySurface === 'monitor' ? 'SYSTEM OUT' : displaySurface.toUpperCase());
+      const sourceLabel = displaySurface === 'monitor' ? 'SYSTEM OUT' : displaySurface.toUpperCase();
       setUi(true, sourceLabel);
       draw();
     } catch (error) {
