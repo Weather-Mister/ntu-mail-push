@@ -117,7 +117,6 @@ const selectedDayEl = document.getElementById('selectedDay');
 const selectedDateEl = document.getElementById('selectedDate');
 const classCountEl = document.getElementById('classCount');
 const nextClassEl = document.getElementById('nextClass');
-const hanziWidgetSlot = document.getElementById('hanziWidgetSlot');
 const dayButtons = [...document.querySelectorAll('[data-day]')];
 const dialog = document.getElementById('lessonDialog');
 const closeDialog = document.getElementById('closeDialog');
@@ -130,27 +129,6 @@ const todoInput = document.getElementById('todoInput');
 const todoList = document.getElementById('todoList');
 const todoCount = document.getElementById('todoCount');
 const todoMoreButton = document.getElementById('todoMoreButton');
-const transferForm = document.getElementById('transferForm');
-const transferText = document.getElementById('transferText');
-const transferFileInput = document.getElementById('transferFileInput');
-const transferFileLabel = document.getElementById('transferFileLabel');
-const transferSendButton = document.getElementById('transferSendButton');
-const transferStatus = document.getElementById('transferStatus');
-const transferStatusDot = document.getElementById('transferStatusDot');
-const transferList = document.getElementById('transferList');
-const transferRefresh = document.getElementById('transferRefresh');
-const transferMoreButton = document.getElementById('transferMoreButton');
-const transferSection = document.querySelector('.transfer-section');
-const transferHomeAnchor = document.getElementById('transferHomeAnchor');
-const utilityColumn = document.querySelector('.utility-column');
-const quickAccessRow = document.getElementById('quickAccessRow');
-const ntuHubSection = document.getElementById('ntuHubSection');
-const transferSaveDialog = document.getElementById('transferSaveDialog');
-const closeTransferSaveDialog = document.getElementById('closeTransferSaveDialog');
-const transferSaveName = document.getElementById('transferSaveName');
-const transferSaveMeta = document.getElementById('transferSaveMeta');
-const transferSaveHint = document.getElementById('transferSaveHint');
-const transferNativeSaveButton = document.getElementById('transferNativeSaveButton');
 const pageRefreshButton = document.getElementById('pageRefreshButton');
 const placesButton = document.getElementById('placesButton');
 const placesDialog = document.getElementById('placesDialog');
@@ -181,57 +159,41 @@ const TODO_MIGRATED_KEY = 'begum-ntu-manual-todos-synced-v1';
 const TODO_PENDING_KEY = 'begum-ntu-manual-todos-pending-v1';
 let coolDone = loadCoolDone();
 let todos = loadTodos();
-let transferItems = [];
 let todoExpanded = false;
-let transferExpanded = false;
-const preparedTransferFiles = new Map();
-let activePreparedTransferId = null;
-let hanziWidgetData = null;
-let hanziWidgetLoading = false;
-let hanziWidgetError = false;
 
-function isIOSDevice(){
-  return /iPad|iPhone|iPod/.test(navigator.userAgent)
-    || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+// Keep the two schedule PWAs and their storage independent. This only moves
+// Begüm's existing shortcuts to convenient places on larger screens.
+const desktopLayoutQuery = window.matchMedia('(min-width: 860px)');
+const utilityColumn = document.querySelector('.utility-column');
+const quickAccessRow = document.getElementById('quickAccessRow');
+const desktopDayRail = document.querySelector('.desktop-day-rail');
+const ntuHubSection = document.getElementById('ntuHubSection');
+const studyHubSection = document.querySelector('.study-hub:not(.ntu-hub)');
+const unscheduledNote = document.querySelector('.unscheduled-note');
+
+function positionHubs(){
+  const desktop = desktopLayoutQuery.matches;
+  const studyTarget = desktop ? utilityColumn : quickAccessRow;
+  const ntuTarget = desktop ? desktopDayRail : quickAccessRow;
+  const noteTarget = desktop ? desktopDayRail : document.querySelector('.app-shell');
+  if (studyHubSection && studyTarget && studyHubSection.parentElement !== studyTarget) studyTarget.appendChild(studyHubSection);
+  if (ntuHubSection && ntuTarget && ntuHubSection.parentElement !== ntuTarget) ntuTarget.appendChild(ntuHubSection);
+  if (unscheduledNote && noteTarget && unscheduledNote.parentElement !== noteTarget) noteTarget.appendChild(unscheduledNote);
 }
-
-function updateTransferStatusDot(){
-  if (!transferStatusDot || !transferStatus) return;
-  const text = String(transferStatus.textContent || '').toLowerCase();
-  const isError = /could not|failed|error/.test(text);
-  transferStatusDot.classList.toggle('is-error', isError);
-  transferStatusDot.classList.toggle('is-ok', !isError);
-}
-
-updateTransferStatusDot();
-if (transferStatus){
-  new MutationObserver(updateTransferStatusDot).observe(transferStatus, { childList:true, characterData:true, subtree:true });
-}
-
-const desktopTransferQuery = window.matchMedia('(min-width: 860px)');
-
-function placeTransferForViewport(){
-  const ntuHub = document.getElementById('ntuHubSection');
-  const dayRail = document.querySelector('.desktop-day-rail');
-  const quickAccess = document.getElementById('quickAccessRow');
-  const hubParent = desktopTransferQuery.matches ? dayRail : quickAccess;
-  if (ntuHub && hubParent && ntuHub.parentElement !== hubParent) hubParent.appendChild(ntuHub);
-  if (!transferSection || !transferHomeAnchor) return;
-
-  if (desktopTransferQuery.matches && utilityColumn){
-    if (transferSection.parentElement !== utilityColumn){
-      utilityColumn.appendChild(transferSection);
-    }
-  } else if (transferSection.previousElementSibling !== transferHomeAnchor){
-    transferHomeAnchor.after(transferSection);
-  }
-}
-
-placeTransferForViewport();
-desktopTransferQuery.addEventListener?.('change', () => {
-  placeTransferForViewport();
+positionHubs();
+desktopLayoutQuery.addEventListener?.('change', () => {
+  positionHubs();
   renderCoolDeadlines();
 });
+
+function updateDesktopClock(){
+  const target = document.getElementById('desktopClock');
+  if (!target) return;
+  const date = new Date();
+  const dateLabel = new Intl.DateTimeFormat('en-US', { timeZone:'Asia/Taipei', weekday:'short', month:'short', day:'numeric' }).format(date);
+  const timeLabel = new Intl.DateTimeFormat('en-GB', { timeZone:'Asia/Taipei', hour:'2-digit', minute:'2-digit', hour12:false }).format(date);
+  target.innerHTML = '<span>' + escapeHtml(dateLabel) + '</span><strong>' + escapeHtml(timeLabel) + '</strong><small>TPE</small>';
+}
 
 function normalizeDay(day){
   if (day === 0) return 1;
@@ -504,449 +466,6 @@ async function removeTodo(id){
   }
 }
 
-function transferTime(value){
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
-  const today = new Date();
-  const sameDay = date.toDateString() === today.toDateString();
-  return sameDay
-    ? date.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' })
-    : date.toLocaleDateString([], { month:'short', day:'numeric' });
-}
-
-function transferSize(bytes){
-  const value = Number(bytes || 0);
-  if (value < 1024) return `${value} B`;
-  if (value < 1024 * 1024) return `${Math.round(value / 1024)} KB`;
-  return `${(value / (1024 * 1024)).toFixed(value >= 10 * 1024 * 1024 ? 0 : 1)} MB`;
-}
-
-function renderTransfers(){
-  if (!transferList) return;
-  transferList.classList.toggle('is-expanded', transferExpanded);
-  if (transferMoreButton){
-    transferMoreButton.hidden = transferItems.length <= 2;
-    transferMoreButton.textContent = transferExpanded ? 'Show less' : `Show more (${Math.max(0, transferItems.length - 2)})`;
-  }
-  if (!transferItems.length){
-    transferList.innerHTML = '<div class="transfer-empty">Nothing here yet. Send something from your phone or PC.</div>';
-    return;
-  }
-
-  transferList.innerHTML = transferItems.map(item => {
-    const isFile = item.kind === 'file';
-    const isLink = item.kind === 'link';
-    const title = isFile ? (item.filename || 'File') : (item.content || '');
-    const meta = isFile
-      ? `${transferSize(item.bytes)} · ${transferTime(item.createdAt)}`
-      : `${isLink ? 'Link' : 'Text'} · ${transferTime(item.createdAt)}`;
-    const icon = isFile ? '↓' : (isLink ? '↗' : 'T');
-    const hasDirectFile = isFile && Boolean(item.url);
-    const hasChunks = isFile && Number(item.chunkCount || 0) > 0;
-    const openAction = hasDirectFile
-      ? `<a class="transfer-action" href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer external">Open ↗</a><a class="transfer-action" href="${escapeHtml(item.downloadUrl || item.url)}" target="_blank" rel="noopener noreferrer external">Download</a>`
-      : hasChunks
-        ? `<button class="transfer-action" type="button" data-transfer-action="download" data-id="${escapeHtml(item.id)}">${isIOSDevice() ? (preparedTransferFiles.has(item.id) ? 'Save' : 'Prepare') : 'Download'}</button>`
-        : isLink
-          ? `<a class="transfer-action" href="${escapeHtml(item.content)}" target="_blank" rel="noopener noreferrer external">Open ↗</a>`
-          : '';
-    const copyAction = !isFile
-      ? `<button class="transfer-action" type="button" data-transfer-action="copy" data-id="${escapeHtml(item.id)}">Copy</button>`
-      : '';
-
-    return `
-      <article class="transfer-item">
-        <div class="transfer-kind ${isFile ? 'transfer-kind-file' : ''}" aria-hidden="true">${icon}</div>
-        <div class="transfer-copy">
-          <div class="transfer-title" title="${escapeHtml(title)}">${escapeHtml(title)}</div>
-          <div class="transfer-meta">${escapeHtml(meta)}</div>
-        </div>
-        <div class="transfer-actions">
-          ${openAction}
-          ${copyAction}
-          <button class="transfer-action transfer-delete" type="button" data-transfer-action="delete" data-id="${escapeHtml(item.id)}" aria-label="Delete transfer">×</button>
-        </div>
-      </article>`;
-  }).join('');
-}
-
-async function loadTransfers(silent = false){
-  if (!transferList) return;
-  if (!silent) {
-    if (transferRefresh) transferRefresh.disabled = true;
-    if (transferStatus) transferStatus.textContent = 'Syncing transfer inbox…';
-  }
-  try {
-    const response = await fetch('/api/transfer/list', { cache:'no-store' });
-    if (!response.ok) throw new Error('Could not sync');
-    const data = await response.json();
-    transferItems = Array.isArray(data.items) ? data.items : [];
-    renderTransfers();
-    if (transferStatus && (!silent || transferStatusDot?.classList.contains('is-error'))) transferStatus.textContent = 'Synced';
-  } catch (error) {
-    if (!silent && transferStatus) transferStatus.textContent = 'Could not sync transfers right now.';
-  } finally {
-    if (transferRefresh) transferRefresh.disabled = false;
-  }
-}
-
-async function sendTransferText(content){
-  const response = await fetch('/api/transfer/text', {
-    method:'POST',
-    headers:{ 'Content-Type':'application/json' },
-    body:JSON.stringify({ content })
-  });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.error || 'Could not send text');
-}
-
-let ffmpegConverter = null;
-let ffmpegConverterLoading = null;
-let ffmpegCoreBlobUrls = null;
-
-function isMovFile(file){
-  return /\.mov$/i.test(file?.name || '') || String(file?.type || '').toLowerCase() === 'video/quicktime';
-}
-
-async function remoteBlobUrl(url, mimeType){
-  const response = await fetch(url, { cache:'force-cache' });
-  if (!response.ok) throw new Error('Could not load the video converter.');
-  const blob = await response.blob();
-  return URL.createObjectURL(new Blob([blob], { type:mimeType }));
-}
-
-async function getFfmpegConverter(){
-  if (ffmpegConverter?.loaded) return ffmpegConverter;
-  if (ffmpegConverterLoading) return ffmpegConverterLoading;
-
-  ffmpegConverterLoading = (async () => {
-    if (!globalThis.FFmpegWASM?.FFmpeg) throw new Error('Video converter did not load.');
-
-    if (transferStatus) transferStatus.textContent = 'Preparing MOV → MP4 converter…';
-    if (!ffmpegCoreBlobUrls){
-      const base = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd';
-      const [coreURL, wasmURL] = await Promise.all([
-        remoteBlobUrl(`${base}/ffmpeg-core.js`, 'text/javascript'),
-        remoteBlobUrl(`${base}/ffmpeg-core.wasm`, 'application/wasm')
-      ]);
-      ffmpegCoreBlobUrls = { coreURL, wasmURL };
-    }
-
-    const ffmpeg = new globalThis.FFmpegWASM.FFmpeg();
-    await ffmpeg.load(ffmpegCoreBlobUrls);
-    ffmpegConverter = ffmpeg;
-    return ffmpeg;
-  })();
-
-  try {
-    return await ffmpegConverterLoading;
-  } catch (error) {
-    ffmpegConverterLoading = null;
-    throw error;
-  }
-}
-
-async function convertMovToMp4(file){
-  const ffmpeg = await getFfmpegConverter();
-  const token = globalThis.crypto?.randomUUID
-    ? crypto.randomUUID().replace(/-/g, '')
-    : `${Date.now()}${Math.random().toString(36).slice(2)}`;
-  const inputDir = `/mov-${token}`;
-  const inputPath = `${inputDir}/${file.name}`;
-  const outputPath = `converted-${token}.mp4`;
-  const outputName = file.name.replace(/\.mov$/i, '') + '.mp4';
-  let mounted = false;
-
-  try {
-    if (transferStatus) transferStatus.textContent = `Converting ${file.name} to MP4…`;
-    await ffmpeg.createDir(inputDir);
-
-    try {
-      await ffmpeg.mount(globalThis.FFmpegWASM.FFFSType.WORKERFS, { files:[file] }, inputDir);
-      mounted = true;
-    } catch (error) {
-      await ffmpeg.writeFile(inputPath, new Uint8Array(await file.arrayBuffer()));
-    }
-
-    let result = await ffmpeg.exec([
-      '-i', inputPath,
-      '-map', '0:v:0?',
-      '-map', '0:a:0?',
-      '-c', 'copy',
-      '-movflags', '+faststart',
-      outputPath
-    ]);
-
-    if (result !== 0){
-      try { await ffmpeg.deleteFile(outputPath); } catch (error) {}
-      if (transferStatus) transferStatus.textContent = `Re-encoding ${file.name} for MP4 compatibility…`;
-      result = await ffmpeg.exec([
-        '-i', inputPath,
-        '-map', '0:v:0?',
-        '-map', '0:a:0?',
-        '-c:v', 'libx264',
-        '-preset', 'ultrafast',
-        '-crf', '23',
-        '-pix_fmt', 'yuv420p',
-        '-c:a', 'aac',
-        '-b:a', '160k',
-        '-movflags', '+faststart',
-        outputPath
-      ]);
-    }
-
-    if (result !== 0) throw new Error(`Could not convert ${file.name} to MP4.`);
-    const data = await ffmpeg.readFile(outputPath);
-    return new File([data], outputName, { type:'video/mp4', lastModified:Date.now() });
-  } finally {
-    try { await ffmpeg.deleteFile(outputPath); } catch (error) {}
-    if (mounted){
-      try { await ffmpeg.unmount(inputDir); } catch (error) {}
-    } else {
-      try { await ffmpeg.deleteFile(inputPath); } catch (error) {}
-    }
-    try { await ffmpeg.deleteDir(inputDir); } catch (error) {}
-  }
-}
-
-async function sendTransferFile(file, onProgress){
-  const CHUNK_SIZE = 4 * 1024 * 1024;
-
-  if (file.size <= CHUNK_SIZE){
-    const form = new FormData();
-    form.append('file', file, file.name);
-    const response = await fetch('/api/transfer/upload', { method:'POST', body:form });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.error || `Could not send ${file.name}`);
-    onProgress?.(1, 1);
-    return;
-  }
-
-  const uploadId = globalThis.crypto?.randomUUID
-    ? crypto.randomUUID()
-    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-  const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
-
-  for (let index = 0; index < totalChunks; index += 1){
-    const start = index * CHUNK_SIZE;
-    const chunk = file.slice(start, Math.min(start + CHUNK_SIZE, file.size));
-    const form = new FormData();
-    form.append('chunk', chunk, `${file.name}.part${index}`);
-    form.append('uploadId', uploadId);
-    form.append('index', String(index));
-    form.append('totalChunks', String(totalChunks));
-    form.append('totalBytes', String(file.size));
-
-    const response = await fetch('/api/transfer/upload-chunk', { method:'POST', body:form });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.error || `Could not send ${file.name}`);
-    onProgress?.(index + 1, totalChunks);
-  }
-
-  const response = await fetch('/api/transfer/finalize', {
-    method:'POST',
-    headers:{ 'Content-Type':'application/json' },
-    body:JSON.stringify({
-      uploadId,
-      totalChunks,
-      totalBytes:file.size,
-      filename:file.name,
-      contentType:file.type || 'application/octet-stream'
-    })
-  });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.error || `Could not finish ${file.name}`);
-}
-
-async function prepareTransferFile(item, button){
-  const count = Number(item?.chunkCount || 0);
-  const oldText = button?.textContent || (isIOSDevice() ? 'Save' : 'Download');
-  if (button){
-    button.disabled = true;
-    button.textContent = '0%';
-  }
-
-  try {
-    const chunks = [];
-    let received = 0;
-
-    if (count > 0){
-      for (let index = 0; index < count; index += 1){
-        const response = await fetch(`/api/transfer/chunk?id=${encodeURIComponent(item.id)}&index=${index}`, { cache:'no-store' });
-        if (!response.ok) throw new Error('Could not download file');
-        const blob = await response.blob();
-        chunks.push(blob);
-        received += Number(blob.size || 0);
-
-        if (button){
-          const expected = Number(item.bytes || 0);
-          const pct = expected
-            ? Math.min(100, Math.round((received / expected) * 100))
-            : Math.round(((index + 1) / count) * 100);
-          button.textContent = `${pct}%`;
-        }
-      }
-    } else {
-      const response = await fetch(`/api/transfer/file?id=${encodeURIComponent(item.id)}`, { cache:'no-store' });
-      if (!response.ok) throw new Error('Could not download file');
-      const blob = await response.blob();
-      chunks.push(blob);
-      received = Number(blob.size || 0);
-      if (button) button.textContent = '100%';
-    }
-
-    const expected = Number(item.bytes || 0);
-    if (expected && received !== expected) throw new Error('Downloaded file was incomplete. Please try again.');
-
-    return new File(
-      chunks,
-      item.filename || 'file',
-      { type:item.contentType || chunks[0]?.type || 'application/octet-stream', lastModified:Date.now() }
-    );
-  } finally {
-    if (button){
-      button.disabled = false;
-      button.textContent = oldText;
-    }
-  }
-}
-
-function isPdfTransferFile(file){
-  return String(file?.type || '').toLowerCase() === 'application/pdf'
-    || /\.pdf$/i.test(String(file?.name || ''));
-}
-
-function openPreparedTransferFile(file){
-  const objectUrl = URL.createObjectURL(file);
-  const anchor = document.createElement('a');
-  anchor.href = objectUrl;
-  anchor.target = '_blank';
-  anchor.rel = 'noopener';
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-  setTimeout(() => URL.revokeObjectURL(objectUrl), 300000);
-}
-
-function showPreparedTransferDialog(item, file){
-  activePreparedTransferId = item.id;
-  const isPdf = isPdfTransferFile(file);
-  if (transferSaveName) transferSaveName.textContent = file.name;
-  if (transferSaveMeta) transferSaveMeta.textContent = transferSize(file.size);
-  if (transferSaveHint){
-    transferSaveHint.textContent = isPdf
-      ? 'Tap “Open PDF”, then use the Share button in the PDF viewer to save it to Files.'
-      : 'Tap “Save to Files”, then choose “Save to Files” in the iOS share sheet.';
-  }
-  if (transferNativeSaveButton){
-    transferNativeSaveButton.disabled = false;
-    transferNativeSaveButton.textContent = isPdf ? 'Open PDF' : 'Save to Files';
-  }
-
-  if (transferSaveDialog){
-    if (typeof transferSaveDialog.showModal === 'function') transferSaveDialog.showModal();
-    else transferSaveDialog.setAttribute('open','');
-  }
-}
-
-async function downloadTransferFile(item, button){
-  if (isIOSDevice()){
-    let prepared = preparedTransferFiles.get(item.id);
-
-    if (!prepared){
-      prepared = await prepareTransferFile(item, button);
-      preparedTransferFiles.set(item.id, prepared);
-      renderTransfers();
-    }
-
-    showPreparedTransferDialog(item, prepared);
-    if (transferStatus) transferStatus.textContent = `${prepared.name} is ready to save.`;
-    return;
-  }
-
-  const file = await prepareTransferFile(item, button);
-  const objectUrl = URL.createObjectURL(file);
-  const anchor = document.createElement('a');
-  anchor.href = objectUrl;
-  anchor.download = file.name;
-  anchor.rel = 'noopener';
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-  setTimeout(() => URL.revokeObjectURL(objectUrl), 60000);
-  if (transferStatus) transferStatus.textContent = `${file.name} downloaded.`;
-}
-
-async function submitTransfers(event){
-  event?.preventDefault();
-  if (!transferForm || !transferSendButton) return;
-
-  const text = String(transferText?.value || '').trim();
-  const files = [...(transferFileInput?.files || [])];
-  if (!text && !files.length){
-    if (transferStatus) transferStatus.textContent = 'Paste text, a link, or choose a file first.';
-    return;
-  }
-
-  const oversized = files.find(file => file.size > 100 * 1024 * 1024);
-  if (oversized){
-    if (transferStatus) transferStatus.textContent = `${oversized.name} is over the 100 MB limit.`;
-    return;
-  }
-
-  transferSendButton.disabled = true;
-  try {
-    let completed = 0;
-    const total = (text ? 1 : 0) + files.length;
-
-    if (text){
-      if (transferStatus) transferStatus.textContent = `Sending ${completed + 1} of ${total}…`;
-      await sendTransferText(text);
-      completed += 1;
-    }
-
-    for (const file of files){
-      let uploadFile = file;
-
-      if (isMovFile(file)){
-        uploadFile = await convertMovToMp4(file);
-        if (uploadFile.size > 100 * 1024 * 1024){
-          throw new Error(`${uploadFile.name} is over the 100 MB limit after conversion.`);
-        }
-      }
-
-      if (transferStatus) transferStatus.textContent = `Sending ${completed + 1} of ${total}: ${uploadFile.name}`;
-      await sendTransferFile(uploadFile, (done, count) => {
-        if (!transferStatus) return;
-        const pct = Math.round((done / count) * 100);
-        transferStatus.textContent = `Sending ${completed + 1} of ${total}: ${uploadFile.name} · ${pct}%`;
-      });
-      completed += 1;
-    }
-
-    if (transferText) transferText.value = '';
-    if (transferFileInput) transferFileInput.value = '';
-    if (transferFileLabel) transferFileLabel.textContent = 'Add file';
-    await loadTransfers(true);
-    if (transferStatus) transferStatus.textContent = total === 1 ? 'Sent. It is ready on your other device.' : `${total} items sent. They are ready on your other device.`;
-  } catch (error) {
-    if (transferStatus) transferStatus.textContent = error?.message || 'Transfer failed.';
-  } finally {
-    transferSendButton.disabled = false;
-  }
-}
-
-async function deleteTransfer(id){
-  const response = await fetch('/api/transfer/delete', {
-    method:'POST',
-    headers:{ 'Content-Type':'application/json' },
-    body:JSON.stringify({ id })
-  });
-  if (!response.ok) throw new Error('Could not delete');
-  transferItems = transferItems.filter(item => item.id !== id);
-  renderTransfers();
-}
-
 function loadCachedCoolEvents(){
   try {
     const saved = JSON.parse(localStorage.getItem(COOL_CACHE_KEY) || '[]');
@@ -1008,7 +527,7 @@ function renderCoolDeadlines(){
     return;
   }
 
-  const desktopDeadlines = desktopTransferQuery.matches;
+  const desktopDeadlines = desktopLayoutQuery.matches;
   const visible = desktopDeadlines ? upcoming : (coolExpanded ? upcoming : upcoming.slice(0, 3));
   const hiddenCount = Math.max(0, upcoming.length - 3);
 
@@ -1114,6 +633,31 @@ function isLessonCompleted(day, lesson, date = dateForDay(day)){
   return nowMin > minutes(lesson.end);
 }
 
+const weekOverviewEl = document.getElementById('weekOverview');
+
+function renderWeekOverview(){
+  if (!weekOverviewEl) return;
+  weekOverviewEl.innerHTML = [1,2,3,4,5,6].map(day => {
+    const date = dateForDay(day);
+    const lessons = lessonsForDate(date,day);
+    const dots = lessons.slice(0,4).map(lesson => '<i style="background:'+courses[lesson.course].color+'"></i>').join('');
+    const firstTime = lessons.length ? displayTime(lessons[0].start) : 'Free day';
+    return '<button type="button" class="week-preview'+(day===selectedDay?' is-selected':'')+'" data-week-day="'+day+'" aria-pressed="'+(day===selectedDay)+'">'+
+      '<span class="week-preview-top"><b>'+dayNames[day].slice(0,3)+'</b><small>'+date.getDate()+'</small></span>'+
+      '<span class="week-preview-dots">'+(dots || '<i class="is-empty"></i>')+'</span>'+
+      '<span class="week-preview-meta">'+(lessons.length?lessons.length+' '+(lessons.length===1?'class':'classes'):'No classes')+'</span>'+
+      '<span class="week-preview-time">'+firstTime+'</span></button>';
+  }).join('');
+}
+if (weekOverviewEl){
+  weekOverviewEl.addEventListener('click', event => {
+    const target = event.target.closest('[data-week-day]');
+    if (!target) return;
+    selectedDay = Number(target.dataset.weekDay);
+    renderDay();
+  });
+}
+
 function renderDay(){
   const date = dateForDay(selectedDay);
   const lessons = lessonsForDate(date, selectedDay);
@@ -1129,6 +673,7 @@ function renderDay(){
     btn.setAttribute('aria-pressed', day === selectedDay ? 'true' : 'false');
   });
 
+  renderWeekOverview();
   const reminder = dateReminders[dateKey(date)];
   const reminderHtml = reminder ? `
     <div class="date-reminder" style="--reminder-color:${reminder.color}">
@@ -1194,97 +739,6 @@ function getNextClass(){
   return null;
 }
 
-function hanziWidgetStatus(){
-  if (!hanziWidgetData) return hanziWidgetError ? 'OFFLINE' : 'SYNCING';
-  if (hanziWidgetData.practicedToday) return 'STREAK SECURED';
-  const hour = Number(new Intl.DateTimeFormat('en-US', {
-    timeZone:'Asia/Taipei',
-    hour:'2-digit',
-    hour12:false
-  }).format(new Date())) % 24;
-  if (hour >= 23) return 'LAST HOUR';
-  if (hour >= 21) return 'STREAK AT RISK';
-  if (hour >= 18) return 'KEEP IT GOING';
-  return 'TODAY';
-}
-
-function hanziWidgetMarkup(){
-  const href = 'https://weather-mister.github.io/hanzi-steps/';
-  if (!hanziWidgetData){
-    return `
-      <a class="hanzi-bar-widget is-loading" href="${href}" target="_blank" rel="noopener noreferrer external" aria-label="Open Hanzi Steps">
-        <div class="hanzi-loading-copy">
-          <span class="hanzi-loading-mark" lang="zh-Hant-TW">字</span>
-          <span><strong>Hanzi Steps</strong><small>${hanziWidgetError ? 'Live progress unavailable' : 'Syncing live progress…'}</small></span>
-        </div>
-      </a>`;
-  }
-
-  const data = hanziWidgetData;
-  const upcoming = (Array.isArray(data.nextCharacters) && data.nextCharacters.length
-    ? data.nextCharacters
-    : [data.nextCharacter].filter(Boolean)).slice(0, 2);
-  const next = upcoming[0] || {};
-  const goal = Math.max(1, Number(data.todayGoal) || 10);
-  const progress = Math.max(0, Math.min(goal, Number(data.todayProgress) || 0));
-  const degrees = Math.round(progress / goal * 360);
-  const accent = /^#[0-9a-f]{6}$/i.test(data.unitColor || '') ? data.unitColor : '#087f79';
-  const status = hanziWidgetStatus();
-
-  return `
-    <a class="hanzi-bar-widget" style="--hanzi-accent:${accent};--hanzi-progress:${degrees}deg" href="${href}" target="_blank" rel="noopener noreferrer external" aria-label="Open Hanzi Steps. ${escapeHtml(String(data.streak))} day streak, ${progress} of ${goal} practices today.">
-      <div class="hanzi-bar-left">
-        <div class="hanzi-status-row">
-          <span class="hanzi-flame" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12.8 2.2c.5 3.4-1.4 4.8-2.7 6.3-1.2 1.4-1.8 2.8-1 4.7.6-1.6 1.7-2.6 3-3.4-.1 2.5 2.4 3.6 2.4 6 0 1.7-1.1 3.2-2.8 3.7 3.8.1 6.3-2.5 6.3-6 0-4.1-3.4-7.6-5.2-11.3ZM9.3 20c-2.1-.8-3.5-2.8-3.5-5.1 0-2.2 1-4.1 2.5-5.9-.3 2.5.6 4.1 1.8 5.4-1.5 1.4-1.7 3.6-.8 5.6Z"/></svg></span>
-          <span>${escapeHtml(status)}</span>
-        </div>
-        <div class="hanzi-streak-row">
-          <strong>${escapeHtml(String(data.streak))}</strong>
-          <span>DAY</span>
-        </div>
-        <div class="hanzi-practice-row">
-          <span class="hanzi-progress-ring" aria-hidden="true"></span>
-          <span>${progress}/${goal} today</span>
-        </div>
-      </div>
-      <div class="hanzi-up-next">
-        <div class="hanzi-up-next-head">
-          <span>UP NEXT</span>
-          <small>U${escapeHtml(String(next.unit || data.unit || ''))}</small>
-        </div>
-        <div class="hanzi-upcoming-list">
-          ${upcoming.map((item, index) => `
-            <div class="hanzi-upcoming-item hanzi-upcoming-${index + 1}">
-              <strong class="hanzi-next-char" lang="zh-Hant-TW">${escapeHtml(item.character || '字')}</strong>
-              <div class="hanzi-next-meta">
-                <span>${escapeHtml(item.pinyin || '')}</span>
-                <small>${escapeHtml(item.meaning || 'next character')}</small>
-              </div>
-            </div>`).join('')}
-        </div>
-      </div>
-    </a>`;
-}
-
-async function loadHanziWidget(){
-  if (!hanziWidgetSlot) return;
-  if (hanziWidgetLoading) return;
-  hanziWidgetLoading = true;
-  try {
-    const response = await fetch('/api/hanzi-widget', { cache:'no-store' });
-    if (!response.ok) throw new Error('Hanzi widget request failed');
-    const data = await response.json();
-    if (!data || typeof data.streak !== 'number') throw new Error('Invalid Hanzi widget payload');
-    hanziWidgetData = data;
-    hanziWidgetError = false;
-  } catch (error) {
-    hanziWidgetError = true;
-  } finally {
-    hanziWidgetLoading = false;
-    renderNextClass();
-  }
-}
-
 function renderNextClass(){
   const next = getNextClass();
   let classMarkup = `
@@ -1309,7 +763,6 @@ function renderNextClass(){
   }
 
   nextClassEl.innerHTML = classMarkup;
-  if (hanziWidgetSlot) hanziWidgetSlot.innerHTML = hanziWidgetMarkup();
 }
 
 function openLesson(lesson, day){
@@ -1500,6 +953,26 @@ dayButtons.forEach(btn => btn.addEventListener('click', () => {
   renderDay();
 }));
 
+const jumpTodayButton = document.getElementById('jumpTodayButton');
+if (jumpTodayButton) jumpTodayButton.addEventListener('click', () => {
+  selectedDay = normalizeDay(new Date().getDay());
+  renderDay();
+});
+
+document.addEventListener('keydown', event => {
+  if (!desktopLayoutQuery.matches || event.metaKey || event.ctrlKey || event.altKey || event.shiftKey || event.repeat) return;
+  if (document.querySelector('dialog[open]') || event.target.closest('input, textarea, select, [contenteditable="true"]')) return;
+  let next = selectedDay;
+  if (/^[1-6]$/.test(event.key)) next = Number(event.key);
+  else if (event.key === 'ArrowLeft') next = Math.max(1, selectedDay - 1);
+  else if (event.key === 'ArrowRight') next = Math.min(6, selectedDay + 1);
+  else if (event.key.toLowerCase() === 't') next = normalizeDay(new Date().getDay());
+  else return;
+  event.preventDefault();
+  selectedDay = next;
+  renderDay();
+});
+
 if (pageRefreshButton){
   pageRefreshButton.addEventListener('click', () => window.location.reload());
 }
@@ -1548,150 +1021,9 @@ if (todoMoreButton){
   });
 }
 
-if (transferForm){
-  transferForm.addEventListener('submit', event => {
-    event.preventDefault();
-    void submitTransfers(event);
-  });
-}
-if (transferSendButton){
-  transferSendButton.addEventListener('click', event => {
-    event.preventDefault();
-    void submitTransfers(event);
-  });
-}
-if (transferRefresh) transferRefresh.addEventListener('click', () => loadTransfers());
-if (transferMoreButton){
-  transferMoreButton.addEventListener('click', () => {
-    transferExpanded = !transferExpanded;
-    renderTransfers();
-  });
-}
-
-if (closeTransferSaveDialog && transferSaveDialog){
-  closeTransferSaveDialog.addEventListener('click', () => transferSaveDialog.close());
-}
-if (transferSaveDialog){
-  transferSaveDialog.addEventListener('click', event => {
-    if (event.target === transferSaveDialog) transferSaveDialog.close();
-  });
-}
-if (transferNativeSaveButton){
-  transferNativeSaveButton.addEventListener('click', async () => {
-    const file = preparedTransferFiles.get(activePreparedTransferId);
-    if (!file){
-      if (transferSaveHint) transferSaveHint.textContent = 'The prepared file is no longer available. Close this and tap Prepare again.';
-      return;
-    }
-
-    if (isPdfTransferFile(file)){
-      openPreparedTransferFile(file);
-      if (transferStatus) transferStatus.textContent = file.name + ' opened in the PDF viewer.';
-      if (transferSaveDialog?.open) transferSaveDialog.close();
-      return;
-    }
-
-    const shareData = { files:[file] };
-    const canShareFile = Boolean(navigator.share)
-      && (!navigator.canShare || navigator.canShare(shareData));
-
-    if (!canShareFile){
-      openPreparedTransferFile(file);
-      if (transferStatus) transferStatus.textContent = file.name + ' opened for saving.';
-      if (transferSaveDialog?.open) transferSaveDialog.close();
-      return;
-    }
-
-    transferNativeSaveButton.disabled = true;
-    transferNativeSaveButton.textContent = 'Opening…';
-
-    try {
-      await navigator.share(shareData);
-      if (transferStatus) transferStatus.textContent = file.name + ' was handed to iOS.';
-      if (transferSaveDialog?.open) transferSaveDialog.close();
-    } catch (error) {
-      if (error?.name !== 'AbortError' && transferSaveHint){
-        transferSaveHint.textContent = 'iOS could not open the share sheet. Tap Save to Files again, or open the site in Safari.';
-      }
-    } finally {
-      transferNativeSaveButton.disabled = false;
-      transferNativeSaveButton.textContent = 'Save to Files';
-    }
-  });
-}
-
-if (transferFileInput){
-  transferFileInput.addEventListener('change', () => {
-    const files = [...(transferFileInput.files || [])];
-    if (!transferFileLabel) return;
-    transferFileLabel.textContent = files.length === 0
-      ? 'Add file'
-      : files.length === 1
-        ? (isMovFile(files[0]) ? `${files[0].name} → MP4` : files[0].name)
-        : `${files.length} files selected`;
-
-    const movCount = files.filter(isMovFile).length;
-    if (movCount && transferStatus){
-      transferStatus.textContent = movCount === 1
-        ? 'MOV will be converted to MP4 automatically before upload.'
-        : `${movCount} MOV files will be converted to MP4 automatically before upload.`;
-    }
-  });
-}
-if (transferList){
-  transferList.addEventListener('click', async event => {
-    const button = event.target.closest('[data-transfer-action]');
-    if (!button) return;
-    const id = button.dataset.id;
-    const item = transferItems.find(entry => entry.id === id);
-    if (!item) return;
-
-    if (button.dataset.transferAction === 'copy'){
-      try {
-        await navigator.clipboard.writeText(item.content || '');
-        const old = button.textContent;
-        button.textContent = 'Copied';
-        setTimeout(() => { button.textContent = old; }, 1000);
-      } catch (error) {
-        if (transferStatus) transferStatus.textContent = 'Could not copy to clipboard.';
-      }
-    }
-
-    if (button.dataset.transferAction === 'download'){
-      try {
-        await downloadTransferFile(item, button);
-      } catch (error) {
-        if (transferStatus) transferStatus.textContent = isIOSDevice()
-          ? 'Could not save that file on iPhone.'
-          : 'Could not download that file.';
-      }
-    }
-
-    if (button.dataset.transferAction === 'delete'){
-      button.disabled = true;
-      try {
-        await deleteTransfer(id);
-        preparedTransferFiles.delete(id);
-        if (transferStatus) transferStatus.textContent = 'Deleted from the transfer inbox.';
-      } catch (error) {
-        button.disabled = false;
-        if (transferStatus) transferStatus.textContent = 'Could not delete that item.';
-      }
-    }
-  });
-}
-
-window.addEventListener('focus', () => {
-  loadTransfers(true);
-  void syncTodos();
-  void loadHanziWidget();
-});
+window.addEventListener('focus', () => { void syncTodos(); });
 document.addEventListener('visibilitychange', () => {
-  if (!document.hidden){
-    loadTransfers(true);
-    void syncTodos();
-    void loadHanziWidget();
-  }
+  if (!document.hidden) void syncTodos();
 });
 
 if (pairingForm){
@@ -1710,7 +1042,6 @@ if (pairingForm){
       if (pairingDialog?.open) pairingDialog.close();
       if (pairingInput) pairingInput.value = '';
       void syncTodos();
-      loadTransfers(true);
       loadCoolDeadlines(true);
       void refreshPushStatus();
     } catch (error) {
@@ -1736,19 +1067,10 @@ renderDay();
 renderNextClass();
 renderTodos();
 void syncTodos();
-void loadHanziWidget();
 loadCoolDeadlines();
-loadTransfers();
-setInterval(() => { renderNextClass(); renderDay(); }, 30000);
-setInterval(() => {
-  if (!document.hidden) void loadHanziWidget();
-}, 300000);
-setInterval(() => {
-  if (!document.hidden){
-    loadTransfers(true);
-    void syncTodos();
-  }
-}, 8000);
+updateDesktopClock();
+setInterval(() => { renderNextClass(); renderDay(); updateDesktopClock(); }, 30000);
+setInterval(() => { if (!document.hidden) void syncTodos(); }, 60000);
 
 const launchParams = new URLSearchParams(window.location.search);
 if (launchParams.get('open') === 'ntu-mail'){
@@ -1759,7 +1081,7 @@ if (launchParams.get('open') === 'ntu-mail'){
 if ('serviceWorker' in navigator){
   window.addEventListener('load', async () => {
     try {
-      const registration = await navigator.serviceWorker.register('./sw.js?v=1', { updateViaCache:'none' });
+      const registration = await navigator.serviceWorker.register('./sw.js?v=2', { updateViaCache:'none' });
       await registration.update();
     } catch (error) {}
   });

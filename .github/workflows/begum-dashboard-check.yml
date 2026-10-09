@@ -1,0 +1,26 @@
+name: Begüm schedule browser checks
+on:
+  pull_request:
+    paths:
+      - "sites/begum/**"
+      - "tests/begum-browser/**"
+      - "playwright.begum.config.mjs"
+      - ".github/workflows/begum-dashboard-check.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test --config playwright.begum.config.mjs
