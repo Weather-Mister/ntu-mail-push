@@ -64,6 +64,7 @@ async function mount(page, reducedMotion = false, firefox = false) {
         });
       },
       enumerateDevices: async () => [
+        { kind: 'audioinput', deviceId: 'physicalMic', label: 'Physical microphone' },
         { kind: 'audioinput', deviceId: 'systemA', label: 'Stereo Mix A' },
         { kind: 'audioinput', deviceId: 'systemB', label: 'Loopback B' }
       ],
