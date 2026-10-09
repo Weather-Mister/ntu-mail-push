@@ -57,7 +57,7 @@ test('TOC meets Thursday evening and Friday morning and shows a fee, not a locat
   assert.match(app, /course\.price \|\| course\.location/);
   assert.ok(html.includes('id="dialogLocationLabel"'));
   assert.ok(html.includes('id="dialogDetailIcon"'));
-  assert.match(app, /mapButton\.hidden = Boolean\(course\.price\)/);
+  assert.match(app, /mapButton\.hidden = oneOff \|\| Boolean\(course\.price\)/);
 });
 
 
