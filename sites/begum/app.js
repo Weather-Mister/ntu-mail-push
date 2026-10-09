@@ -1063,6 +1063,7 @@ if (todoMoreButton){
   });
 }
 
+window.addEventListener('schedule-todos-changed', () => { void syncTodos(); });
 window.addEventListener('focus', () => { void syncTodos(); });
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden) void syncTodos();
@@ -1084,6 +1085,7 @@ if (pairingForm){
       if (pairingDialog?.open) pairingDialog.close();
       if (pairingInput) pairingInput.value = '';
       void syncTodos();
+      window.dispatchEvent(new Event('schedule-pairing-changed'));
       loadCoolDeadlines(true);
       void refreshPushStatus();
     } catch (error) {
@@ -1112,7 +1114,7 @@ void syncTodos();
 loadCoolDeadlines();
 updateDesktopClock();
 setInterval(() => { renderNextClass(); renderDay(); updateDesktopClock(); }, 30000);
-setInterval(() => { if (!document.hidden) void syncTodos(); }, 60000);
+// Task updates are event-driven; reconnecting reloads the authoritative snapshot.
 
 const launchParams = new URLSearchParams(window.location.search);
 if (launchParams.get('open') === 'ntu-mail'){
@@ -1123,7 +1125,7 @@ if (launchParams.get('open') === 'ntu-mail'){
 if ('serviceWorker' in navigator){
   window.addEventListener('load', async () => {
     try {
-      const registration = await navigator.serviceWorker.register('./sw.js?v=5', { updateViaCache:'none' });
+      const registration = await navigator.serviceWorker.register('./sw.js?v=6', { updateViaCache:'none' });
       await registration.update();
     } catch (error) {}
   });
