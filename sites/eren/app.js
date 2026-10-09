@@ -1575,6 +1575,7 @@ if (pairingForm) pairingForm.addEventListener('submit', async event => {
     pairingDialog?.close();
 
     void syncTodos();
+    window.dispatchEvent(new Event('schedule-pairing-changed'));
     void loadHanziWidget();
     void loadCoolDeadlines(true);
     void loadTransfers();
@@ -1794,6 +1795,7 @@ window.addEventListener('focus', () => {
   void syncTodos();
   void loadHanziWidget();
 });
+window.addEventListener('schedule-todos-changed', () => { void syncTodos(); });
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden){
     loadTransfers(true);
@@ -1816,7 +1818,6 @@ setInterval(() => {
 setInterval(() => {
   if (!document.hidden){
     loadTransfers(true);
-    void syncTodos();
   }
 }, 8000);
 
