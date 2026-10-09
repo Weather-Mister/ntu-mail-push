@@ -53,24 +53,33 @@ test('Begüm schedule works at all target widths without device-transfer tools',
   await page.locator('#closeDialog').click();
 
   if (testInfo.project.name.startsWith('mac')){
-    await expect(page.locator('.week-preview')).toHaveCount(6);
-    await expect(page.locator('.week-overview')).toBeVisible();
+    // The left rail is the sole day selector; the central schedule spans the top row.
+    await expect(page.locator('.week-overview,.week-preview')).toHaveCount(0);
     await expect(page.locator('.desktop-clock')).toBeVisible();
     const rail = await page.locator('.desktop-day-rail').boundingBox();
     const schedule = await page.locator('.schedule-column').boundingBox();
-    const tools = await page.locator('.utility-column').boundingBox();
-    expect(rail && schedule && tools).toBeTruthy();
+    const deadlines = await page.locator('.cool-section').boundingBox();
+    const tasks = await page.locator('.todo-section').boundingBox();
+    expect(rail && schedule && deadlines && tasks).toBeTruthy();
     expect(rail.x).toBeLessThan(schedule.x);
-    expect(schedule.x).toBeLessThan(tools.x);
+    expect(schedule.y).toBeLessThan(deadlines.y);
+    expect(Math.abs(deadlines.y - tasks.y)).toBeLessThan(3);
+    expect(deadlines.x + deadlines.width).toBeLessThanOrEqual(tasks.x + 3);
+    expect(deadlines.width).toBeGreaterThan(240);
+    expect(tasks.width).toBeGreaterThan(240);
+    expect(deadlines.height).toBeGreaterThan(180);
+    expect(tasks.height).toBeGreaterThan(180);
     await page.keyboard.press('5');
     await expect(page.locator('#selectedDay')).toHaveText('Friday');
-    await page.locator('[data-week-day="3"]').click();
+    await page.keyboard.press('3');
     await expect(page.locator('#selectedDay')).toHaveText('Wednesday');
     await expect(page.locator('.desktop-day-rail .ntu-hub')).toBeVisible();
+    await expect(page.locator('.desktop-day-rail .hub-stats')).toBeVisible();
   } else {
-    await expect(page.locator('.week-overview')).toBeHidden();
+    await expect(page.locator('.week-overview,.week-preview')).toHaveCount(0);
     await expect(page.locator('.desktop-today')).toBeHidden();
     await expect(page.locator('#quickAccessRow .ntu-hub')).toBeVisible();
+    await expect(page.locator('#quickAccessRow .hub-stats')).toBeVisible();
   }
 
   await page.locator('#todoInput').fill('Review Mac schedule');
