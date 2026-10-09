@@ -16,7 +16,7 @@
     *{box-sizing:border-box}html,body{background:var(--bg)}body{margin:0;color:var(--text);font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}.app-shell{width:min(760px,100%);margin:0 auto;padding:22px 16px calc(34px + env(safe-area-inset-bottom))}.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}.topbar-actions{display:flex;align-items:center;gap:7px}.refresh-page-button{width:30px;height:30px;border:0;border-radius:9px;background:transparent;color:#8f8b84;padding:0;font-size:17px;line-height:1;display:grid;place-items:center;cursor:pointer}.eyebrow{margin:0 0 4px;font-size:11px;line-height:1.2;font-weight:800;letter-spacing:.14em;color:var(--muted)}h1{font-size:31px;line-height:1.02;letter-spacing:-.04em;margin:0;font-weight:800}.today-button{border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:999px;padding:10px 15px;min-height:42px;font-weight:700}.home-button{display:inline-flex;align-items:center;gap:6px;text-decoration:none;white-space:nowrap;font-size:14px}.next-class{background:#8f4f70;color:white;border-radius:20px;padding:17px 18px;margin-bottom:16px;min-height:88px;display:flex;justify-content:space-between;align-items:center;gap:16px}.day-strip{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;margin-bottom:23px}.day-strip button{border:0;background:transparent;border-radius:16px;min-height:59px;padding:8px 2px}.day-strip button.active{background:var(--accent);color:white}.schedule-list{display:flex;flex-direction:column;gap:10px}
   </style>
   <link rel="stylesheet" href="./styles.css?v=110" />
-  <link rel="stylesheet" href="./desktop-renewal.css?v=2" />
+  <link rel="stylesheet" href="./desktop-renewal.css?v=3" />
 </head>
 <body>
   <main class="app-shell">
@@ -63,10 +63,6 @@
         </section>
 
         <section id="scheduleList" class="schedule-list" aria-live="polite"></section>
-        <section class="week-overview" aria-label="Week at a glance">
-          <div class="week-overview-heading"><span>THIS WEEK</span><small>At a glance</small></div>
-          <div id="weekOverview" class="week-overview-grid"></div>
-        </section>
       </div>
 
       </div>
@@ -234,6 +230,6 @@
     </div>
   </dialog>
 
-  <script src="./app.js?v=109"></script>
+  <script src="./app.js?v=110"></script>
 </body>
 </html>
