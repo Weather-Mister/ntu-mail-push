@@ -429,7 +429,7 @@ test('Firefox saved selection restarts with the same two specific inputs', async
 });
 
 
-test('Firefox stop during delayed AudioContext resume releases capture', async ({ page }) => {
+test('Firefox stop while AudioContext resume is pending releases loopback', async ({ page }) => {
   const errors = await mount(page, false, true);
   await page.evaluate(() => {
     window.AudioContext.prototype.resume = function() {
@@ -438,7 +438,7 @@ test('Firefox stop during delayed AudioContext resume releases capture', async (
   });
   const scope = page.locator('#scheduleScope');
   await scope.click();
-  await page.evaluate(() => window.provideInput('Delayed resume'));
+  await page.evaluate(() => window.provideInput('Stereo Mix A'));
   await expect.poll(() => page.evaluate(() => typeof finishScopeResume)).toBe('function');
   await scope.click();
   await expect.poll(() => page.evaluate(() => inputTracks[0].readyState)).toBe('ended');
