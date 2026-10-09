@@ -18,18 +18,18 @@ test('Begüm desktop redesign retains functional schedule and device pairing', (
   for (const feature of ['function renderDay()', 'function renderNextClass()', 'function syncTodos()', 'function renderCoolDeadlines()', 'function positionHubs()', 'if (pairingForm)']) {
     assert.ok(app.includes(feature), feature + ' remains wired');
   }
-  assert.match(css, /grid-template-areas:"days schedule schedule" "days cool todo"/);
+  assert.match(css, /grid-template-areas:"days schedule tools shortcuts"/);
   assert.match(css, /@media\(max-width:859px\)/);
 });
 
-test('single day navigation and generous side-by-side utility layout', () => {
+test('single day navigation and full-height schedule with adjacent tools and shortcuts', () => {
   assert.doesNotMatch(html, /weekOverview|week-overview/);
   assert.doesNotMatch(app, /weekOverview|renderWeekOverview|week-preview/);
   assert.doesNotMatch(css, /week-preview|week-overview/);
-  assert.match(css, /grid-template-rows:minmax\(0,1\.12fr\) minmax\(0,1fr\)/);
-  assert.match(css, /\.cool-section\{grid-area:cool\}/);
-  assert.match(css, /\.todo-section\{grid-area:todo\}/);
-  assert.match(app, /const studyTarget = desktop \? desktopDayRail|if \(studyHubSection && desktopDayRail/);
+  assert.match(css, /grid-template-areas:"days days days" "schedule tools shortcuts"/);
+  assert.match(css, /\.utility-column\{grid-area:tools;/);
+  assert.match(css, /\.desktop-shortcuts-column\{grid-area:shortcuts;/);
+  assert.match(app, /if \(studyHubSection && desktopShortcutsColumn/);
 });
 
 test('Begüm removes transfer and Hanzi UI, code and heavy FFmpeg preloading', () => {
@@ -40,12 +40,12 @@ test('Begüm removes transfer and Hanzi UI, code and heavy FFmpeg preloading', (
 });
 
 test('Begüm PWA assets remain scoped and version matched', () => {
-  for (const asset of ['app.js?v=112','todo-realtime.js?v=1','desktop-renewal.css?v=4']) {
+  for (const asset of ['app.js?v=113','todo-realtime.js?v=1','desktop-renewal.css?v=5']) {
     assert.ok(html.includes(asset), 'HTML references ' + asset);
     assert.ok(sw.includes(asset), 'cache includes ' + asset);
   }
   assert.match(sw, /const ROOT = new URL\(self.registration.scope\)\.pathname/);
-  assert.match(app, /serviceWorker\.register\('\.\/sw\.js\?v=6'/);
+  assert.match(app, /serviceWorker\.register\('\.\/sw\.js\?v=7'/);
   assert.match(app, /begum-ntu-manual-todos-v1/);
   assert.match(app, /ntu-schedule-begum-pairing-key-v1/);
 });

@@ -183,18 +183,18 @@ let todoExpanded = false;
 const desktopLayoutQuery = window.matchMedia('(min-width: 860px)');
 const utilityColumn = document.querySelector('.utility-column');
 const quickAccessRow = document.getElementById('quickAccessRow');
-const desktopDayRail = document.querySelector('.desktop-day-rail');
+const desktopShortcutsColumn = document.querySelector('.desktop-shortcuts-column');
 const ntuHubSection = document.getElementById('ntuHubSection');
 const studyHubSection = document.querySelector('.study-hub:not(.ntu-hub)');
 const unscheduledNote = document.querySelector('.unscheduled-note');
 
 function positionHubs(){
   const desktop = desktopLayoutQuery.matches;
-  const noteTarget = desktop ? desktopDayRail : document.querySelector('.app-shell');
+  const noteTarget = desktop ? desktopShortcutsColumn : document.querySelector('.app-shell');
   if (desktop){
-    // Keep the only day navigation in the left rail alongside NTU and Study Hub links.
-    if (ntuHubSection && desktopDayRail && ntuHubSection.parentElement !== desktopDayRail) desktopDayRail.appendChild(ntuHubSection);
-    if (studyHubSection && desktopDayRail && studyHubSection.parentElement !== desktopDayRail) desktopDayRail.appendChild(studyHubSection);
+    // Keep campus shortcuts beside the timetable and tasks, with day navigation separate.
+    if (ntuHubSection && desktopShortcutsColumn && ntuHubSection.parentElement !== desktopShortcutsColumn) desktopShortcutsColumn.appendChild(ntuHubSection);
+    if (studyHubSection && desktopShortcutsColumn && studyHubSection.parentElement !== desktopShortcutsColumn) desktopShortcutsColumn.appendChild(studyHubSection);
   } else {
     // Retain the original mobile quick-access order.
     if (studyHubSection && quickAccessRow && studyHubSection.parentElement !== quickAccessRow) quickAccessRow.insertBefore(studyHubSection, quickAccessRow.firstChild);
@@ -1125,7 +1125,7 @@ if (launchParams.get('open') === 'ntu-mail'){
 if ('serviceWorker' in navigator){
   window.addEventListener('load', async () => {
     try {
-      const registration = await navigator.serviceWorker.register('./sw.js?v=6', { updateViaCache:'none' });
+      const registration = await navigator.serviceWorker.register('./sw.js?v=7', { updateViaCache:'none' });
       await registration.update();
     } catch (error) {}
   });
