@@ -110,7 +110,7 @@ const schedule = {
 const specialSchedule = {
   '2026-09-29': [{ course:'chatterbox', start:'12:20', end:'13:10' }],
   '2026-10-07': [{ course:'chatterbox', start:'12:20', end:'13:10' }],
-  '2026-10-14': [{ course:'chatterbox', start:'18:30', end:'19:30', highlight:'yellow' }],
+  '2026-10-14': [{ course:'chatterbox', start:'18:30', end:'19:30' }],
   '2026-10-15': [{ course:'chatterbox', start:'12:20', end:'13:10' }],
   '2026-11-06': [{ course:'chatterbox', start:'12:20', end:'13:10' }],
   '2026-11-13': [{ course:'chatterbox', start:'12:20', end:'13:10' }],
@@ -690,7 +690,6 @@ function renderDay(){
     btn.classList.toggle('active', day === selectedDay);
     btn.classList.toggle('today', dateKey(dateForDay(day)) === dateKey(new Date()));
     btn.classList.toggle('has-chatterbox', (specialSchedule[dateKey(dateForDay(day))] || []).some(event => event.course === 'chatterbox'));
-    btn.classList.toggle('highlight-day', (specialSchedule[dateKey(dateForDay(day))] || []).some(event => event.highlight === 'yellow'));
     btn.querySelector('small').textContent = dateForDay(day).getDate();
     btn.setAttribute('aria-pressed', day === selectedDay ? 'true' : 'false');
   });
@@ -713,7 +712,7 @@ function renderDay(){
     const live = !inactive && isCurrentLesson(selectedDay, lesson);
     const completed = !inactive && isLessonCompleted(selectedDay, lesson, date);
     return `
-      <button class="lesson ${live ? 'live' : ''} ${completed ? 'completed' : ''} ${inactive ? 'inactive' : ''} ${lesson.highlight === 'yellow' ? 'chatterbox-highlight' : ''}" type="button" data-index="${index}" style="--course-color:${course.color}" ${inactive ? 'disabled aria-disabled="true"' : ''}>
+      <button class="lesson ${live ? 'live' : ''} ${completed ? 'completed' : ''} ${inactive ? 'inactive' : ''}" type="button" data-index="${index}" style="--course-color:${course.color}" ${inactive ? 'disabled aria-disabled="true"' : ''}>
         <span class="time-block">
           <span class="time-start">${lesson.start}</span>
           <span class="time-end">${lesson.end}</span>
