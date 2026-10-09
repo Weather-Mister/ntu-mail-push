@@ -5,7 +5,8 @@ const courses = {
   statistics: { name: 'Statistics with Recitation', color: '#4f6f93', location: 'Social Sciences Building · Room 502' },
   period: { name: 'Period: Theory, Thoughts and Actions', color: '#7a629e', location: 'Boya Building · Room 102' },
   resources: { name: 'Exploring Taiwan: Natural Resources Conservation and Management', color: '#537a49', location: 'Boya Building · Room 202' },
-  micro: { name: 'Microeconomics (1)', color: '#b55d50', location: 'Social Sciences Building · Room 507' }
+  micro: { name: 'Microeconomics (1)', color: '#b55d50', location: 'Social Sciences Building · Room 507' },
+  toc: { name: 'TOC', color: '#6a7c94', price: '$800' }
 };
 
 const mapLinks = {
@@ -93,9 +94,11 @@ const schedule = {
   ],
   4: [
     { course:'resources', start:'13:20', end:'15:10', period:'6–7' },
-    { course:'statistics', start:'15:30', end:'17:20', period:'8–9' }
+    { course:'statistics', start:'15:30', end:'17:20', period:'8–9' },
+    { course:'toc', start:'18:30', end:'19:20' }
   ],
   5: [
+    { course:'toc', start:'10:20', end:'12:10' },
     { course:'micro', start:'13:20', end:'16:20', period:'6–8' }
   ],
   6: []
@@ -701,7 +704,7 @@ function renderDay(){
         <span class="lesson-card">
           <span class="lesson-title">${course.name}</span>
           <span class="lesson-meta">
-            ${inactive ? '<span class="no-lecture">No lecture</span>' : `${live ? '<span class="live-pill">Happening now</span>' : ''}${lesson.optional ? '<span class="optional-pill">Optional</span>' : ''}<span>${course.location}</span>`}
+            ${inactive ? '<span class="no-lecture">No lecture</span>' : `${live ? '<span class="live-pill">Happening now</span>' : ''}${lesson.optional ? '<span class="optional-pill">Optional</span>' : ''}<span>${course.price || course.location}</span>`}
           </span>
           ${inactive ? '' : '<span class="lesson-arrow">›</span>'}
         </span>
@@ -774,7 +777,10 @@ function openLesson(lesson, day){
   document.getElementById('dialogTime').textContent = `${displayTime(lesson.start)} – ${displayTime(lesson.end)}${lesson.period ? ` · Period ${lesson.period}` : ''}${lesson.optional ? ' · Optional attendance' : ''}`;
   const url = mapLinks[lesson.course];
   const meetingUrl = meetingLinks[lesson.course];
-  document.getElementById('dialogLocation').textContent = course.location;
+  document.getElementById('dialogLocation').textContent = course.price || course.location;
+  document.getElementById('dialogLocationLabel').textContent = course.price ? 'Fee' : 'Class location';
+  document.getElementById('dialogDetailIcon').textContent = course.price ? '$' : '⌖';
+  mapButton.hidden = Boolean(course.price);
   mapButton.disabled = !url;
   mapButton.textContent = url ? 'Open in Google Maps' : 'Map link coming soon';
   meetingButton.hidden = lesson.course !== 'icl';
@@ -1081,7 +1087,7 @@ if (launchParams.get('open') === 'ntu-mail'){
 if ('serviceWorker' in navigator){
   window.addEventListener('load', async () => {
     try {
-      const registration = await navigator.serviceWorker.register('./sw.js?v=2', { updateViaCache:'none' });
+      const registration = await navigator.serviceWorker.register('./sw.js?v=3', { updateViaCache:'none' });
       await registration.update();
     } catch (error) {}
   });
