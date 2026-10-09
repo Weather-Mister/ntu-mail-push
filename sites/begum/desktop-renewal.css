@@ -1,350 +1,137 @@
-/* Begüm schedule · Mac workspace refresh.
-   An additive layer: course colours, pink identity and mobile UI remain intact. */
-.desktop-subline,.desktop-clock,.desktop-today,.rail-tip{display:none}
+/* Begüm desktop workspace. This layer replaces the inherited Eren desktop grid. */
+.desktop-subline,.desktop-clock,.desktop-today,.rail-tip,.desktop-shortcuts-column{display:none}
 @media (min-width:860px){
-  html,body{height:100%;background:radial-gradient(circle at 8% 8%,#fff9fc 0%,transparent 34%),linear-gradient(150deg,#fcf4f8 0%,#f9eef4 62%,#f6ebf1 100%)}
-  .app-shell{
-    display:flex;flex-direction:column;gap:0;min-width:0;
-    width:min(1760px,100%);max-width:none;height:100dvh;min-height:620px;
-    margin:auto;padding:24px clamp(22px,2.4vw,45px) 26px;overflow:hidden;
-  }
-  .topbar{display:flex;flex:0 0 auto;align-items:center;justify-content:space-between;margin:0 0 17px;min-height:56px;gap:20px}
-  .topbar h1{font-size:clamp(29px,2.65vw,39px);letter-spacing:-.055em;line-height:1.06;font-weight:825}
-  .topbar .eyebrow{font-size:10px;letter-spacing:.19em;margin-bottom:5px;color:#b16d90}
-  .desktop-subline{display:block;font-size:12px;color:var(--muted);margin:6px 0 0;font-weight:550}
-  .topbar-actions{gap:10px;align-items:center}
-  .desktop-clock{display:flex;align-items:baseline;gap:7px;color:#8e7080;font-size:12px;font-weight:700;letter-spacing:-.01em;padding-right:12px;margin-right:2px;border-right:1px solid var(--line);white-space:nowrap}
-  .desktop-clock strong{font-size:21px;color:#593b4c;font-weight:850;letter-spacing:-.045em;font-variant-numeric:tabular-nums}
-  .desktop-clock small{font-size:9px;font-weight:850;letter-spacing:.12em;color:#b0809a}
-  .desktop-today{display:inline-flex;align-items:center;gap:12px;background:#f8e2ed;color:#a54f7e;border:1px solid #eecbdc;box-shadow:none;min-height:37px;font-size:12px;padding:8px 12px;border-radius:12px;cursor:pointer}
-  .keyboard-hint{font-size:10px;padding:2px 5px;border:1px solid #e6bed2;background:#fff8fb;border-radius:5px;color:#af7393}
-  .refresh-page-button{display:grid;place-items:center;width:36px;height:36px;border:1px solid transparent;border-radius:11px;font-size:18px;color:#a7758c}
-  .places-button{min-height:37px;font-size:12px;padding:8px 14px;border-radius:12px;box-shadow:0 3px 9px rgba(159,74,115,.055)}
-  .desktop-status-row{display:block;flex:0 0 auto;min-height:0;margin:0 0 17px}
-  .desktop-status-row>.next-class{
-    display:flex;grid-column:auto;grid-row:auto;position:relative;isolation:isolate;min-height:105px;height:auto;
-    margin:0;padding:19px 26px;border-radius:22px;
-    background:linear-gradient(105deg,#814563 0%,#985b79 58%,#ad7090 100%);
-    box-shadow:0 13px 30px rgba(122,58,91,.17),inset 0 1px 0 rgba(255,255,255,.16);
-    overflow:hidden;gap:15px;align-items:center;justify-content:space-between
-  }
-  .desktop-status-row>.next-class:before{content:"";position:absolute;z-index:-1;width:320px;height:320px;right:8%;top:-210px;background:radial-gradient(circle,rgba(255,255,255,.15),transparent 72%);pointer-events:none}
-  .desktop-status-row>.next-class:after{content:"";position:absolute;z-index:-1;width:240px;height:240px;right:-70px;bottom:-188px;border:1px solid rgba(255,255,255,.16);border-radius:50%;pointer-events:none}
+  html,body{min-height:100%;background:linear-gradient(145deg,#fcf5f9,#f8edf3)}
+  .app-shell{display:flex;flex-direction:column;gap:0;width:min(1760px,100%);max-width:none;height:100dvh;min-height:640px;margin:auto;padding:20px 24px;overflow:hidden}
+  .topbar{grid-area:auto;flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:20px;min-height:56px;margin:0 0 16px}
+  .topbar h1{font-size:34px;font-weight:820;letter-spacing:-.05em;line-height:1.08}
+  .topbar .eyebrow{font-size:10px;letter-spacing:.16em;color:#a86f8b}
+  .desktop-subline{display:block;margin:5px 0 0;color:var(--muted);font-size:12px}
+  .topbar-actions{align-items:center;gap:9px}
+  .desktop-clock{display:flex;align-items:baseline;gap:7px;white-space:nowrap;color:var(--muted);font-size:12px;margin-right:4px;padding-right:14px;border-right:1px solid var(--line)}
+  .desktop-clock strong{font-size:21px;letter-spacing:-.04em;color:#593b4c;font-variant-numeric:tabular-nums}
+  .desktop-clock small{font-size:9px;letter-spacing:.1em}
+  .desktop-today{display:inline-flex;align-items:center;gap:10px;min-height:38px;padding:8px 12px;border-radius:12px;background:#f8e2ed;color:#a54f7e;font-size:12px;cursor:pointer;box-shadow:none}
+  .keyboard-hint{font-size:10px;border:1px solid #e6bed2;border-radius:4px;padding:1px 4px;background:#fff8fb}
+  .places-button{min-height:38px;padding:8px 13px;font-size:12px;border-radius:12px}
+  .refresh-page-button{width:34px;height:34px;flex-basis:34px;color:#a7758c}
+  .desktop-status-row{display:block;grid-area:auto;flex:0 0 auto;min-height:0;margin:0 0 16px}
+  .desktop-status-row > .next-class{display:flex;grid-area:auto;min-height:92px;height:auto;margin:0;padding:17px 23px;gap:18px;border-radius:20px;background:linear-gradient(105deg,#814563,#a36989);box-shadow:0 8px 24px rgba(122,58,91,.13)}
   .desktop-status-row .next-copy{display:block;min-width:0}
-  .desktop-status-row .next-label{font-size:10px;letter-spacing:.16em;margin-bottom:8px;color:#fce4f0;opacity:.8}
-  .desktop-status-row .next-title{font-size:clamp(19px,1.9vw,26px);letter-spacing:-.03em;margin:0 0 7px;line-height:1.17;white-space:normal;overflow:visible}
-  .desktop-status-row .next-meta{font-size:12px;line-height:1.4;margin:0;color:#fff1f8;opacity:.9;white-space:normal;overflow:visible}
-  .desktop-status-row .next-countdown{display:inline-block;font-size:12px;margin:8px 0 0;color:#fff5fa;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.15);border-radius:999px;padding:4px 10px}
-  .desktop-status-row .next-badge{flex:0 0 auto;min-width:95px;border-radius:15px;padding:13px 14px;background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.23)}
-  .desktop-status-row .next-badge strong{font-size:15px}.desktop-status-row .next-badge small{font-size:11px}
-  .desktop-workspace{
-    display:grid!important;flex:1 1 auto;min-width:0;min-height:0;overflow:visible;
-    grid-template-columns:clamp(184px,15.2vw,231px) minmax(0,1.38fr) minmax(0,1fr);
-    grid-template-rows:minmax(0,1fr);
-    grid-template-areas:"days schedule tools";align-items:stretch;gap:16px
-  }
+  .desktop-status-row .next-label{font-size:10px;letter-spacing:.13em;margin-bottom:6px}
+  .desktop-status-row > .next-class .next-title{font-size:22px;line-height:1.2;margin-bottom:6px;white-space:normal;overflow:visible}
+  .desktop-status-row > .next-class .next-meta{font-size:12px;line-height:1.4;white-space:normal;overflow:visible}
+  .desktop-status-row .next-countdown{font-size:12px;margin-top:6px}
+  .desktop-status-row .next-badge{min-width:85px;padding:11px 13px}
+  .desktop-workspace{display:grid;flex:1 1 auto;min-width:0;min-height:0;grid-template-columns:170px minmax(0,1.65fr) minmax(270px,1fr) 150px;grid-template-rows:minmax(0,1fr);grid-template-areas:"days schedule tools shortcuts";gap:16px;align-items:stretch;overflow:visible}
   .planning-column{display:contents}
-  .desktop-day-rail,.schedule-column,.utility-column,.cool-section,.todo-section{grid-column:auto;grid-row:auto;min-width:0;min-height:0;max-height:none}
-  .desktop-day-rail{
-    display:flex;flex-direction:column;align-self:stretch;grid-area:days;
-    padding:18px 13px 14px;border:1px solid #ecd5e1;border-radius:21px;background:rgba(255,251,253,.82);
-    box-shadow:0 6px 25px rgba(134,67,99,.045);overflow:auto;scrollbar-width:thin;scrollbar-color:#e9cfde transparent
-  }
-  .desktop-rail-label{display:block;margin:1px 8px 12px;font-size:10px;font-weight:850;letter-spacing:.16em;color:#a3778e}
-  .desktop-day-rail .day-strip{display:flex;flex-direction:column;gap:5px;margin:0}
-  .desktop-day-rail .day-strip button{min-height:49px;display:flex;width:100%;flex-direction:row;justify-content:space-between;padding:0 13px;border-radius:13px;gap:10px;box-shadow:none}
-  .desktop-day-rail .day-strip button span{font-size:13px;font-weight:780}.desktop-day-rail .day-strip button small{font-size:12px;font-weight:700;opacity:.78}
-  .desktop-day-rail .day-strip button.active{background:#d16f9d;color:#fff;box-shadow:0 5px 13px rgba(189,84,133,.18)}
+  .desktop-day-rail,.schedule-column,.utility-column,.desktop-shortcuts-column,.cool-section,.todo-section{grid-area:auto;min-width:0;min-height:0;max-height:none}
+  .desktop-day-rail,.schedule-column,.cool-section,.todo-section,.desktop-shortcuts-column{border:1px solid #ebd5e0;border-radius:20px;background:rgba(255,252,254,.96);box-shadow:0 5px 22px rgba(150,73,109,.045)}
+  .desktop-day-rail{grid-area:days;display:flex;flex-direction:column;align-self:stretch;height:auto;max-height:none;padding:17px 12px;gap:0;overflow:visible;container-type:normal}
+  .desktop-rail-label{display:block;flex:0 0 auto;margin:0 4px 13px;font-size:10px;letter-spacing:.15em;font-weight:850;color:#a3778e;line-height:1.3}
+  .desktop-day-rail .week-navigation{flex:0 0 auto;margin-bottom:16px;gap:5px}
+  .desktop-day-rail .week-nav-button{flex-basis:27px;width:27px;height:36px;border-radius:9px}
+  .desktop-day-rail .week-jump-control{min-height:36px;font-size:10px}
+  .desktop-day-rail .day-strip{display:grid;flex:0 0 auto;grid-template-columns:minmax(0,1fr);grid-template-rows:repeat(6,58px);gap:7px;margin:0;min-height:0}
+  .desktop-day-rail .day-strip button{display:flex;flex:none;width:100%;height:58px;min-height:58px;max-height:none;flex-direction:row;align-items:center;justify-content:space-between;gap:8px;padding:0 14px;border-radius:13px;box-shadow:none}
+  .desktop-day-rail .day-strip button span{font-size:14px;font-weight:800}
+  .desktop-day-rail .day-strip button small{font-size:13px;font-weight:700;opacity:.8}
+  .desktop-day-rail .day-strip button.active{background:var(--accent);color:white;box-shadow:0 4px 12px rgba(189,84,133,.15)}
   .desktop-day-rail .day-strip button.today:not(.active){background:#fae6ef;color:#af5482}
-  .desktop-day-rail .day-strip button.has-deadline::after{bottom:5px}
-  .rail-tip{display:block;margin:14px 8px 0;color:#a68c9b;font-size:10px;line-height:1.6}
-  .rail-tip kbd{font:inherit;font-weight:850;color:#99607f;border:1px solid #ead4df;background:#fdf3f8;padding:1px 4px;border-radius:4px}
-  .desktop-day-rail .ntu-hub{margin:19px 0 0;padding:17px 3px 0;border-top:1px solid #f0dde6;display:block}
-  .desktop-day-rail .ntu-hub-heading{display:flex;align-items:center;margin:0 5px 10px}
-  .desktop-day-rail .ntu-hub-heading h3{font-size:12px;font-weight:850;letter-spacing:.02em;color:#83566e}
-  .desktop-day-rail .ntu-hub-grid{display:grid;grid-template-columns:1fr;gap:6px;max-width:none}
-  .desktop-day-rail .ntu-hub .hub-app{display:flex;flex-direction:row;justify-content:flex-start;min-height:43px;gap:11px;border:1px solid transparent;background:#fbf0f6;border-radius:12px;padding:7px 9px}
-  .desktop-day-rail .ntu-hub .hub-icon{width:29px;height:29px;flex:0 0 29px;border-radius:9px;box-shadow:none}
-  .desktop-day-rail .ntu-hub .hub-label{font-size:12px;text-align:left;white-space:nowrap;width:auto}
-  .desktop-day-rail .ntu-service-icon svg{width:21px;height:21px}
-  .desktop-day-rail .mail-alert-button{width:25px;height:25px;flex-basis:25px;border:1px solid #f1dce5;border-radius:9px;background:#fff7fb}
-  .desktop-day-rail .unscheduled-note{margin-top:auto;padding:14px 5px 3px;border-top:0;gap:8px}
-  .desktop-day-rail .unscheduled-note strong{font-size:10px}
-  .desktop-day-rail .unscheduled-note p{font-size:10px;line-height:1.4}
-  .desktop-day-rail .note-icon{width:19px;height:19px;flex-basis:19px;font-size:10px}
-  .schedule-column{
-    grid-area:schedule;display:flex;flex-direction:column;min-height:0;padding:23px 22px 20px;
-    border:1px solid #ebd5e0;border-radius:22px;background:rgba(255,252,254,.95);
-    box-shadow:0 8px 28px rgba(150,73,109,.07);overflow:hidden
-  }
-  .day-heading{flex:0 0 auto;padding:0 0 17px;margin:0 0 16px;border-bottom:1px solid #f1e1e9;align-items:end}
-  .day-heading h2{font-size:clamp(26px,2.4vw,36px);font-weight:820;line-height:1.06;letter-spacing:-.05em}
-  .selected-date{font-size:11px;letter-spacing:.075em;font-weight:780;text-transform:uppercase;color:#aa7992;margin-bottom:8px}
-  .class-count{font-size:11px;background:#fae8f1;border:1px solid #f1d5e2;border-radius:999px;color:#a15c7d;padding:6px 9px;white-space:nowrap}
-  .schedule-list{display:flex;flex:1 1 auto;min-height:0;max-height:none;overflow:auto;gap:13px;padding:2px 5px 6px 1px;scrollbar-width:thin;scrollbar-color:#edcfde transparent}
-  .lesson{display:grid;grid-template-columns:70px minmax(0,1fr);gap:13px;flex-shrink:0;align-items:stretch}
-  .time-block{padding:17px 0 0 0;text-align:right}
-  .time-start{font-size:13px;font-weight:830;color:#754e62;font-variant-numeric:tabular-nums}
-  .time-end{font-size:11px;margin-top:4px}.time-period{font-size:10px;margin-top:5px;color:#b496a6}
-  .lesson-card{min-height:104px;padding:21px 35px 17px 21px;border-radius:17px;background:#fff9fc;border:1px solid #efdae5;box-shadow:0 3px 12px rgba(159,77,113,.045)}
-  .lesson-card::before{width:6px}
-  .lesson-title{font-size:clamp(14px,1.22vw,17px);font-weight:820;line-height:1.35;margin-bottom:10px;letter-spacing:-.015em}
-  .lesson-meta{font-size:11px;line-height:1.4;color:#957785;gap:8px;flex-wrap:wrap}
-  .lesson-arrow{font-size:21px;color:#c59aaf;right:15px}
-  .lesson.live .lesson-card{box-shadow:0 5px 16px color-mix(in srgb,var(--course-color) 11%,transparent)}
-  .lesson.completed{opacity:.52}
-  .empty-state{padding:35px 20px;background:#fff9fc;border:1px dashed #e7c8d9}
-  .utility-column{grid-area:tools;display:grid!important;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1.12fr) minmax(0,.9fr) auto;gap:14px;min-height:0;align-self:stretch}
-  .cool-section,.todo-section{
-    display:flex;flex-direction:column;grid-area:auto;margin:0;min-width:0;min-height:0;overflow:hidden;
-    padding:19px;border:1px solid #ebd5e0;border-radius:21px;background:rgba(255,252,254,.94);
-    box-shadow:0 7px 23px rgba(150,73,109,.06)
-  }
-  .cool-heading-row,.todo-heading-row{margin-bottom:15px;padding-bottom:13px;border-bottom:1px solid #f2e3ea}
-  .cool-eyebrow,.todo-eyebrow{font-size:9px;letter-spacing:.15em;color:#b27b99;margin-bottom:5px}
-  .cool-heading-row h3,.todo-heading-row h3{font-size:17px;line-height:1.16;letter-spacing:-.02em}
-  .cool-refresh{font-size:11px;font-weight:760;min-height:31px;padding:6px 12px;border-radius:10px;cursor:pointer}
-  .cool-deadlines,.todo-list{display:flex;flex:1;min-height:0;overflow:auto;max-height:none;gap:8px;padding:1px 3px 3px 0;scrollbar-width:thin;scrollbar-color:#ead0de transparent}
-  .cool-item{grid-template-columns:minmax(0,1fr) 33px;gap:7px;flex:0 0 auto;border-radius:14px;background:#fff9fc;box-shadow:none}
-  .cool-main{grid-template-columns:48px minmax(0,1fr);gap:3px 9px;padding:11px 8px}
-  .cool-date strong{font-size:11px}.cool-date span{font-size:9px}
-  .cool-title{font-size:12px;line-height:1.35;white-space:normal}
+  .rail-tip{display:block;margin:auto 4px 0;padding-top:18px;font-size:11px;line-height:1.7;color:#a68c9b}
+  .rail-tip kbd{font:inherit;font-weight:800;padding:1px 4px;border:1px solid #ead4df;border-radius:4px;background:#fdf3f8;color:#99607f}
+  .schedule-column{grid-area:schedule;display:flex;flex-direction:column;padding:23px 22px 20px;overflow:hidden}
+  .day-heading{flex:0 0 auto;align-items:end;gap:12px;margin:0 0 18px;padding:0 0 17px;border-bottom:1px solid #f1e1e9}
+  .day-heading h2{font-size:32px;font-weight:820;letter-spacing:-.045em;line-height:1.1}
+  .selected-date{font-size:11px;letter-spacing:.04em;margin-bottom:6px;color:#aa7992}
+  .class-count{font-size:11px;white-space:nowrap;background:#fae8f1;color:#a15c7d;padding:6px 9px;border:1px solid #f1d5e2;border-radius:999px}
+  .schedule-column .schedule-list{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;max-height:none;overflow:auto;gap:12px;padding:2px 4px 5px 0;scrollbar-width:thin;scrollbar-color:#edcfde transparent;overscroll-behavior:contain}
+  .schedule-column .lesson{display:grid;grid-template-columns:65px minmax(0,1fr);flex:0 0 clamp(96px,14dvh,128px);min-height:96px;gap:12px;align-items:stretch}
+  .schedule-column .time-block{align-self:center;padding:0;text-align:right}
+  .schedule-column .time-start{font-size:14px;font-weight:830;color:#754e62}
+  .schedule-column .time-end{font-size:12px;margin-top:4px}
+  .schedule-column .time-period{font-size:10px;margin-top:4px;color:#b496a6}
+  .schedule-column .lesson-card{display:flex;flex-direction:column;justify-content:center;min-height:96px;padding:18px 32px 18px 20px;border-radius:17px;background:#fff9fc;border:1px solid #efdae5;box-shadow:0 3px 12px rgba(159,77,113,.04)}
+  .schedule-column .lesson-title{font-size:16px;font-weight:820;line-height:1.35;margin-bottom:9px;letter-spacing:-.015em}
+  .schedule-column .lesson-meta{font-size:12px;line-height:1.4;gap:8px;flex-wrap:wrap;color:#957785}
+  .lesson-card::before{width:6px}.lesson-arrow{right:13px;font-size:21px;color:#c59aaf}
+  .empty-state{padding:32px 20px;background:#fff9fc;border-color:#e7c8d9}
+  .utility-column{grid-area:tools;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,.85fr) minmax(0,1.15fr);gap:16px;align-self:stretch}
+  .cool-section,.todo-section{display:flex;flex-direction:column;grid-area:auto;margin:0;padding:19px 18px;overflow:hidden}
+  .cool-heading-row,.todo-heading-row{flex:0 0 auto;gap:8px;margin:0 0 14px;padding-bottom:13px;border-bottom:1px solid #f2e3ea}
+  .cool-eyebrow,.todo-eyebrow{font-size:9px;letter-spacing:.14em;color:#b27b99;margin-bottom:5px}
+  .cool-heading-row h3,.todo-heading-row h3{font-size:18px;line-height:1.2}
+  .cool-refresh{font-size:11px;min-height:31px;padding:6px 10px;border-radius:10px;cursor:pointer}
+  .cool-deadlines,.todo-list{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;max-height:none;overflow:auto;gap:8px;padding:1px 2px 4px 0;scrollbar-width:thin;scrollbar-color:#ead0de transparent;overscroll-behavior:contain}
+  .cool-item{grid-template-columns:minmax(0,1fr) 30px;flex:0 0 auto;border-radius:13px;background:#fff9fc;box-shadow:none}
+  .cool-main{grid-template-columns:43px minmax(0,1fr);gap:3px 9px;padding:11px 8px}
+  .cool-title{font-size:13px;line-height:1.35;white-space:normal}
   .cool-course{font-size:10px;line-height:1.4;white-space:normal}
-  .cool-due{grid-column:2;justify-self:start;font-size:9px;border-radius:7px;padding:4px 7px}
-  .cool-done-button{width:29px;height:29px}
-  .cool-status,.todo-empty{font-size:12px;line-height:1.5;padding:15px;background:#fff8fb}
-  .todo-form{flex-shrink:0;gap:7px;margin-bottom:12px}
-  .todo-form input,.todo-form button{height:41px;border-radius:11px}
-  .todo-form input{font-size:13px;background:#fffafd}
-  .todo-form button{font-size:12px}
-  .todo-count{font-size:10px;color:#b07f99}
-  .todo-item{flex:0 0 auto;min-height:42px;grid-template-columns:27px minmax(0,1fr) 26px;gap:8px;padding:7px;background:#fff9fc;border-radius:12px;box-shadow:none}
+  .cool-due{grid-column:2;justify-self:start;font-size:10px;padding:3px 6px}
+  .cool-done-button{width:27px;height:27px}
+  .cool-status,.todo-empty{font-size:12px;line-height:1.5;padding:14px;background:#fff8fb}
+  .todo-form{flex:0 0 auto;gap:7px;margin-bottom:12px}
+  .todo-form input,.todo-form button{height:43px;border-radius:11px}
+  .todo-form input{font-size:14px;background:#fffafd}
+  .todo-form button{font-size:12px;padding:0 12px}
+  .todo-count{font-size:11px;color:#b07f99}
+  .todo-list .todo-item{display:grid;flex:0 0 auto;min-height:46px;grid-template-columns:28px minmax(0,1fr) 26px;gap:7px;padding:8px;background:#fff9fc;border-radius:12px;box-shadow:none}
   .todo-check,.todo-delete{width:27px;height:27px}
-  .todo-text{font-size:12px;line-height:1.4}
-  .utility-column>.study-hub{display:block;margin:0;padding:14px 17px;border:1px solid #ebd5e0;border-radius:18px;background:rgba(255,252,254,.91);box-shadow:0 5px 20px rgba(150,73,109,.04)}
-  .utility-column>.study-hub .study-hub-heading{display:flex;margin-bottom:7px;min-height:0}
-  .utility-column>.study-hub .study-hub-eyebrow{display:none}
-  .utility-column>.study-hub h3{display:block;font-size:11px;color:#927084}
-  .utility-column>.study-hub .study-hub-grid{display:grid;grid-template-columns:1fr;gap:0}
-  .utility-column>.study-hub .hub-app{display:flex;flex-direction:row;justify-content:flex-start;min-height:44px;gap:11px;padding:6px 8px;border-radius:11px}
-  .utility-column>.study-hub .hub-icon{width:30px;height:30px;flex:0 0 30px;border-radius:9px}
-  .utility-column>.study-hub .hub-label{width:auto;text-align:left;font-size:12px;white-space:normal}
-  .quick-access-row{display:none!important}
+  .todo-text{font-size:13px;line-height:1.4}
+  .desktop-shortcuts-column{grid-area:shortcuts;display:flex;flex-direction:column;gap:22px;align-self:stretch;padding:19px 13px;overflow:visible}
+  .desktop-shortcuts-column > .study-hub{display:block;flex:0 0 auto;grid-area:auto;margin:0;padding:0;border:0;background:transparent;box-shadow:none}
+  .desktop-shortcuts-column .study-hub-heading{display:flex;align-items:center;min-height:27px;margin:0 0 13px;gap:8px}
+  .desktop-shortcuts-column .study-hub-heading h3{font-size:14px;font-weight:850;color:#83566e}
+  .desktop-shortcuts-column .study-hub-eyebrow{display:none}
+  .desktop-shortcuts-column .study-hub-grid{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:none;max-width:none;gap:9px;height:auto}
+  .desktop-shortcuts-column .hub-app{display:flex;flex-direction:column;justify-content:center;gap:8px;min-height:96px;height:auto;padding:13px 6px;background:#fbf0f6;border:1px solid #f0dce6;border-radius:14px;box-shadow:none}
+  .desktop-shortcuts-column .hub-icon{width:44px;height:44px;flex:0 0 44px;border-radius:13px;box-shadow:0 3px 9px rgba(159,77,113,.08)}
+  .desktop-shortcuts-column .ntu-service-icon svg{width:31px;height:31px}
+  .desktop-shortcuts-column .hub-label{width:100%;font-size:12px;line-height:1.3;white-space:normal;text-align:center}
+  .desktop-shortcuts-column .mail-alert-button{width:27px;height:27px;flex-basis:27px;border-radius:9px;background:#fff7fb;box-shadow:none}
+  .desktop-shortcuts-column > .study-hub:not(.ntu-hub){padding-top:18px;border-top:1px solid #f0dde6}
+  .desktop-shortcuts-column .unscheduled-note{margin-top:auto;padding:0;gap:7px;border:0;font-size:11px}
+  .quick-access-row{display:none}
   button:focus-visible,a:focus-visible{outline:3px solid #d981ac;outline-offset:2px}
-  @media(hover:hover) and (pointer:fine){
-    .desktop-day-rail .day-strip button:not(.active):hover{background:#fcebf3;color:#955575}
-    .desktop-day-rail .ntu-hub .hub-app:hover,.utility-column>.study-hub .hub-app:hover{transform:translateY(-1px);border-color:#eac0d4;background:#fff3f9}
-    .lesson:not(.inactive):hover .lesson-card{transform:translateY(-2px);box-shadow:0 11px 24px rgba(153,73,110,.105)}
-    .todo-delete:hover{color:#a54f7c;background:#f8e6ee}
-  }
 }
-@media(min-width:860px) and (max-width:1150px){
-  .app-shell{padding:17px 17px 20px}
-  .desktop-workspace{grid-template-columns:160px minmax(0,1.1fr) minmax(0,.92fr);gap:11px}
-  .desktop-day-rail{padding:13px 8px}
-  .schedule-column{padding:17px 13px}
-  .lesson{grid-template-columns:59px minmax(0,1fr);gap:9px}
-  .lesson-card{padding:17px 24px 15px 15px}
-  .lesson-title{font-size:14px}
-  .cool-section,.todo-section{padding:14px}
-  .utility-column{gap:10px}
+@media (min-width:860px) and (max-width:1099px){
+  .app-shell{padding:16px;min-height:700px}
+  .desktop-workspace{grid-template-columns:minmax(0,1.5fr) minmax(240px,1fr) 124px;grid-template-rows:auto minmax(0,1fr);grid-template-areas:"days days days" "schedule tools shortcuts";gap:12px}
+  .desktop-day-rail{display:grid;grid-template-columns:154px minmax(0,1fr);grid-template-rows:auto;align-items:center;gap:12px;padding:12px}
+  .desktop-rail-label,.rail-tip{display:none}
+  .desktop-day-rail .week-navigation{margin:0}
+  .desktop-day-rail .day-strip{grid-template-columns:repeat(6,minmax(0,1fr));grid-template-rows:54px;gap:5px}
+  .desktop-day-rail .day-strip button{height:54px;min-height:54px;flex-direction:column;justify-content:center;gap:3px;padding:6px 2px}
+  .schedule-column{padding:18px 15px}
+  .schedule-column .lesson{grid-template-columns:54px minmax(0,1fr);gap:9px}
+  .schedule-column .lesson-title{font-size:14px}
+  .schedule-column .lesson-meta{font-size:11px}
+  .schedule-column .lesson-card{padding-left:16px;padding-right:27px}
+  .cool-section,.todo-section{padding:16px 13px}
+  .cool-heading-row h3,.todo-heading-row h3{font-size:16px}
+  .desktop-shortcuts-column{padding:16px 10px}
   .desktop-clock span{display:none}
 }
-@media(min-width:860px) and (max-height:760px){
-  .app-shell{padding-top:12px;padding-bottom:13px;min-height:570px}
-  .topbar{margin-bottom:10px;min-height:47px}.topbar h1{font-size:28px}
-  .desktop-subline{margin-top:3px}
-  .desktop-status-row{margin-bottom:11px}
-  .desktop-status-row>.next-class{min-height:83px;padding:13px 20px}
-  .desktop-status-row .next-title{font-size:19px;margin-bottom:4px}
-  .desktop-status-row .next-countdown{margin-top:4px}
-  .desktop-day-rail .day-strip button{min-height:40px}
-  .desktop-day-rail .ntu-hub{margin-top:11px;padding-top:10px}
-  .desktop-day-rail .ntu-hub .hub-app{min-height:35px;padding:4px 7px}
-  .rail-tip{margin-top:8px}
-  .desktop-day-rail .unscheduled-note{padding-top:5px}
-  .schedule-column{padding-top:15px;padding-bottom:13px}
-  .day-heading{padding-bottom:10px;margin-bottom:10px}
-  .lesson-card{min-height:77px;padding-top:12px;padding-bottom:11px}
-  .cool-section,.todo-section{padding-top:12px;padding-bottom:12px}
-  .cool-heading-row,.todo-heading-row{margin-bottom:8px;padding-bottom:8px}
-  .utility-column>.study-hub{padding-top:8px;padding-bottom:8px}
+@media (min-width:860px) and (max-height:760px){
+  .app-shell{padding-top:12px;padding-bottom:12px}
+  .topbar{min-height:45px;margin-bottom:12px}.topbar h1{font-size:29px}
+  .desktop-status-row{margin-bottom:12px}
+  .desktop-status-row > .next-class{min-height:80px;padding:13px 20px}
+  .desktop-status-row > .next-class .next-title{font-size:20px}
+  .desktop-day-rail .day-strip{grid-template-rows:repeat(6,50px)}
+  .desktop-day-rail .day-strip button{height:50px;min-height:50px}
+  .desktop-shortcuts-column{gap:16px}
+  .desktop-shortcuts-column .hub-app{min-height:84px;padding:9px 5px}
+  .desktop-shortcuts-column > .study-hub:not(.ntu-hub){padding-top:13px}
+}
+@media (min-width:860px) and (max-width:1099px) and (max-height:760px){
+  .desktop-day-rail .day-strip{grid-template-rows:50px}
 }
 @media(max-width:859px){
-  .desktop-subline,.desktop-clock,.desktop-today,.rail-tip{display:none!important}
+  .desktop-subline,.desktop-clock,.desktop-today,.rail-tip,.desktop-shortcuts-column{display:none}
   .desktop-workspace{grid-template-areas:"days" "schedule" "cool" "todo";grid-template-columns:minmax(0,1fr)}
   .utility-column{display:contents}
   .quick-access-row{display:block}
-  .unscheduled-note{margin-top:20px}
-}
-@media(prefers-reduced-motion:reduce){
-}
-
-
-/* Focused dashboard: one day picker, one spacious timetable,
-   and two equally sized work panels across the bottom. */
-@media (min-width:860px){
-  .desktop-workspace{
-    grid-template-columns:clamp(184px,15.2vw,231px) minmax(0,1fr) minmax(0,1fr);
-    grid-template-rows:minmax(0,1.12fr) minmax(0,1fr);
-    grid-template-areas:"days schedule schedule" "days cool todo";
-    column-gap:16px;
-    row-gap:15px;
-  }
-  .utility-column{
-    display:contents!important;
-  }
-  .schedule-column{
-    grid-area:schedule;
-    padding:22px 25px 20px;
-  }
-  .schedule-list{
-    flex:1 1 auto;
-    min-height:0;
-    overflow:auto;
-    align-content:start;
-    gap:13px;
-  }
-  .cool-section{grid-area:cool}
-  .todo-section{grid-area:todo}
-  .cool-section,.todo-section{
-    min-width:0;
-    min-height:0;
-    max-height:none;
-    margin:0;
-    padding:20px 22px;
-  }
-  .cool-heading-row,.todo-heading-row{
-    flex:0 0 auto;
-    margin-bottom:14px;
-    padding-bottom:12px;
-  }
-  .cool-heading-row h3,.todo-heading-row h3{
-    font-size:19px;
-  }
-  .cool-deadlines,.todo-list{
-    flex:1 1 auto;
-    min-height:0;
-    overflow:auto;
-    overscroll-behavior:contain;
-    gap:9px;
-  }
-  .cool-item,.todo-item{
-    min-height:52px;
-  }
-  .cool-main{
-    grid-template-columns:50px minmax(0,1fr) auto;
-    align-items:center;
-    gap:12px;
-    padding:12px 9px 12px 13px;
-  }
-  .cool-title{font-size:13px;line-height:1.35}
-  .cool-course{font-size:10px}
-  .cool-due{grid-column:auto;justify-self:end}
-  .todo-form{margin-bottom:12px}
-  .todo-form input,.todo-form button{height:44px}
-  .todo-text{font-size:13px}
-  .desktop-day-rail > .study-hub:not(.ntu-hub){
-    display:block;
-    flex:0 0 auto;
-    margin:14px 0 0;
-    padding:15px 3px 4px;
-    border-top:1px solid #f0dde6;
-  }
-  .desktop-day-rail > .study-hub:not(.ntu-hub) .study-hub-heading{
-    display:flex;
-    align-items:center;
-    margin:0 5px 10px;
-  }
-  .desktop-day-rail > .study-hub:not(.ntu-hub) .study-hub-heading h3{
-    font-size:12px;
-    font-weight:850;
-    color:#83566e;
-  }
-  .desktop-day-rail > .study-hub:not(.ntu-hub) .study-hub-grid{
-    display:grid;
-    grid-template-columns:minmax(0,1fr);
-    max-width:none;
-    gap:6px;
-  }
-  .desktop-day-rail > .study-hub:not(.ntu-hub) .hub-app{
-    display:flex;
-    flex-direction:row;
-    justify-content:flex-start;
-    min-height:43px;
-    gap:11px;
-    padding:7px 9px;
-    border:1px solid transparent;
-    border-radius:12px;
-    background:#fbf0f6;
-  }
-  .desktop-day-rail > .study-hub:not(.ntu-hub) .hub-icon{
-    width:29px;
-    height:29px;
-    flex:0 0 29px;
-    border-radius:9px;
-    box-shadow:none;
-  }
-  .desktop-day-rail > .study-hub:not(.ntu-hub) .hub-label{
-    width:auto;
-    font-size:12px;
-    text-align:left;
-    white-space:normal;
-  }
-  @media (hover:hover) and (pointer:fine){
-    .desktop-day-rail > .study-hub:not(.ntu-hub) .hub-app:hover{
-      transform:translateY(-1px);
-      border-color:#eac0d4;
-      background:#fff3f9;
-    }
-  }
-}
-@media (min-width:1100px){
-  .schedule-list{
-    display:grid;
-    grid-template-columns:repeat(2,minmax(0,1fr));
-    grid-auto-rows:min-content;
-    align-content:start;
-    column-gap:21px;
-    row-gap:14px;
-  }
-  .schedule-list > .date-reminder{grid-column:1 / -1}
-  .schedule-list > .lesson{min-width:0}
-  .schedule-list > .empty-state{grid-column:1 / -1}
-  .schedule-list .lesson-card{
-    min-height:99px;
-    padding:18px 35px 17px 19px;
-  }
-  .schedule-list .lesson-title{font-size:15px}
-}
-@media (min-width:860px) and (max-width:1150px){
-  .desktop-workspace{
-    grid-template-columns:160px minmax(0,1fr) minmax(0,1fr);
-    column-gap:11px;
-    row-gap:11px;
-  }
-  .schedule-column{padding:17px 19px}
-  .cool-section,.todo-section{padding:16px}
-  .cool-main{
-    grid-template-columns:45px minmax(0,1fr);
-    gap:4px 8px;
-    padding:9px;
-  }
-  .cool-due{grid-column:2;justify-self:start}
-}
-@media (min-width:860px) and (max-height:760px){
-  .desktop-workspace{grid-template-rows:minmax(0,1.04fr) minmax(0,1fr)}
-  .desktop-day-rail > .study-hub:not(.ntu-hub){
-    margin-top:9px;
-    padding-top:8px;
-  }
-  .desktop-day-rail > .study-hub:not(.ntu-hub) .study-hub-heading{
-    margin-bottom:5px;
-  }
-  .desktop-day-rail > .study-hub:not(.ntu-hub) .hub-app{
-    min-height:35px;
-    padding:4px 7px;
-  }
 }
 
 /* Date navigation lets one-off semester sessions be reached outside this week.
