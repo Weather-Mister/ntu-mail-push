@@ -40,12 +40,12 @@ test('Begüm removes transfer and Hanzi UI, code and heavy FFmpeg preloading', (
 });
 
 test('Begüm PWA assets remain scoped and version matched', () => {
-  for (const asset of ['app.js?v=110','desktop-renewal.css?v=3']) {
+  for (const asset of ['app.js?v=111','desktop-renewal.css?v=4']) {
     assert.ok(html.includes(asset), 'HTML references ' + asset);
     assert.ok(sw.includes(asset), 'cache includes ' + asset);
   }
   assert.match(sw, /const ROOT = new URL\(self.registration.scope\)\.pathname/);
-  assert.match(app, /serviceWorker\.register\('\.\/sw\.js\?v=4'/);
+  assert.match(app, /serviceWorker\.register\('\.\/sw\.js\?v=5'/);
   assert.match(app, /begum-ntu-manual-todos-v1/);
   assert.match(app, /ntu-schedule-begum-pairing-key-v1/);
 });
@@ -58,4 +58,42 @@ test('TOC meets Thursday evening and Friday morning and shows a fee, not a locat
   assert.ok(html.includes('id="dialogLocationLabel"'));
   assert.ok(html.includes('id="dialogDetailIcon"'));
   assert.match(app, /mapButton\.hidden = Boolean\(course\.price\)/);
+});
+
+
+test('only Begüm checked Chatterbox Coffee dates are in the one-time schedule', () => {
+  const checked = [
+    ['2026-09-29','12:20','13:10'],
+    ['2026-10-07','12:20','13:10'],
+    ['2026-10-14','18:30','19:30'],
+    ['2026-10-15','12:20','13:10'],
+    ['2026-11-06','12:20','13:10'],
+    ['2026-11-13','12:20','13:10'],
+    ['2026-11-17','12:20','13:10'],
+    ['2026-11-26','12:20','13:10'],
+    ['2026-12-02','12:20','13:10'],
+    ['2026-12-11','12:20','13:10']
+  ];
+  assert.match(app, /chatterbox:\s*\{\s*name: 'Chatterbox Coffee'/);
+  for(const [date,start,end] of checked){
+    assert.ok(app.includes(
+      "'" + date + "': [{ course:'chatterbox', start:'" + start + "', end:'" + end + "' }]"
+    ), 'expected Chatterbox session ' + date);
+  }
+  for(const date of ['2026-09-21','2026-10-19','2026-11-09','2026-12-07']){
+    assert.doesNotMatch(app, new RegExp("'" + date + "':\\s*\\[\\{ course:'chatterbox'"));
+  }
+  assert.doesNotMatch(app, /chatterbox-highlight|highlight:'yellow'|highlight-day/);
+  assert.doesNotMatch(css, /chatterbox-highlight|highlight-day/);
+  assert.equal((app.match(/course:'chatterbox', start:/g) || []).length, 10);
+});
+
+test('the 2026 date navigation is reachable on desktop and mobile', () => {
+  for(const id of ['previousWeek','nextWeek','weekRange','weekDateJump']){
+    assert.ok(html.includes('id="' + id + '"'), id);
+  }
+  assert.match(app, /function shiftWeek\(weeks\)/);
+  assert.match(app, /function setWeekTo\(date\)/);
+  assert.match(app, /getElementById\('weekDateJump'\)\?\.addEventListener\('change'/);
+  assert.match(app, /setWeekTo\(new Date\(\)\)/);
 });
