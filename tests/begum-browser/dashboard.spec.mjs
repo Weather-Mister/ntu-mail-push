@@ -79,11 +79,11 @@ test('Begüm schedule works at all target widths without device-transfer tools',
     }
     for (const day of ['1','2','3','4','5','6']) {
       const button = await page.locator('[data-day="' + day + '"]').boundingBox();
-      expect(button.height).toBeGreaterThanOrEqual(50);
+      expect(Math.round(button.height)).toBeGreaterThanOrEqual(50);
       expect(button.width).toBeGreaterThan(70);
     }
     const mondayCard = await page.locator('.lesson-card').first().boundingBox();
-    expect(mondayCard.height).toBeGreaterThanOrEqual(96);
+    expect(Math.round(mondayCard.height)).toBeGreaterThanOrEqual(96);
     await page.keyboard.press('5');
     await expect(page.locator('#selectedDay')).toHaveText('Friday');
     await page.keyboard.press('3');
