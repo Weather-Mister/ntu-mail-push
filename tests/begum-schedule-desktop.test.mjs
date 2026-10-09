@@ -12,14 +12,24 @@ const sw = read('sw.js');
 test('Begüm desktop redesign retains functional schedule and device pairing', () => {
   assert.doesNotThrow(() => new Script(app, { filename: 'begum/app.js' }));
   assert.doesNotThrow(() => new Script(sw, { filename: 'begum/sw.js' }));
-  for (const id of ['scheduleList','weekOverview','nextClass','todoForm','coolDeadlines','pairingDialog','placesDialog','ntuHubSection','mailAlertDialog']) {
+  for (const id of ['scheduleList','nextClass','todoForm','coolDeadlines','pairingDialog','placesDialog','ntuHubSection','mailAlertDialog']) {
     assert.ok(html.includes('id="' + id + '"'), id + ' remains available');
   }
-  for (const feature of ['function renderDay()', 'function renderNextClass()', 'function renderWeekOverview()', 'function syncTodos()', 'function renderCoolDeadlines()', 'function positionHubs()', 'if (pairingForm)']) {
+  for (const feature of ['function renderDay()', 'function renderNextClass()', 'function syncTodos()', 'function renderCoolDeadlines()', 'function positionHubs()', 'if (pairingForm)']) {
     assert.ok(app.includes(feature), feature + ' remains wired');
   }
-  assert.match(css, /grid-template-areas:"days schedule tools"/);
+  assert.match(css, /grid-template-areas:"days schedule schedule" "days cool todo"/);
   assert.match(css, /@media\(max-width:859px\)/);
+});
+
+test('single day navigation and generous side-by-side utility layout', () => {
+  assert.doesNotMatch(html, /weekOverview|week-overview/);
+  assert.doesNotMatch(app, /weekOverview|renderWeekOverview|week-preview/);
+  assert.doesNotMatch(css, /week-preview|week-overview/);
+  assert.match(css, /grid-template-rows:minmax\(0,1\.12fr\) minmax\(0,1fr\)/);
+  assert.match(css, /\.cool-section\{grid-area:cool\}/);
+  assert.match(css, /\.todo-section\{grid-area:todo\}/);
+  assert.match(app, /const studyTarget = desktop \? desktopDayRail|if \(studyHubSection && desktopDayRail/);
 });
 
 test('Begüm removes transfer and Hanzi UI, code and heavy FFmpeg preloading', () => {
@@ -30,12 +40,12 @@ test('Begüm removes transfer and Hanzi UI, code and heavy FFmpeg preloading', (
 });
 
 test('Begüm PWA assets remain scoped and version matched', () => {
-  for (const asset of ['app.js?v=109','desktop-renewal.css?v=2']) {
+  for (const asset of ['app.js?v=110','desktop-renewal.css?v=3']) {
     assert.ok(html.includes(asset), 'HTML references ' + asset);
     assert.ok(sw.includes(asset), 'cache includes ' + asset);
   }
   assert.match(sw, /const ROOT = new URL\(self.registration.scope\)\.pathname/);
-  assert.match(app, /serviceWorker\.register\('\.\/sw\.js\?v=3'/);
+  assert.match(app, /serviceWorker\.register\('\.\/sw\.js\?v=4'/);
   assert.match(app, /begum-ntu-manual-todos-v1/);
   assert.match(app, /ntu-schedule-begum-pairing-key-v1/);
 });
