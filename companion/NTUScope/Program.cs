@@ -193,10 +193,10 @@ sealed class LoopbackMeter : IDisposable
                     sample = BitConverter.ToInt16(args.Buffer, offset) / 32768.0;
                 else if (bytes == 3)
                 {
-                    int value = args.Buffer[offset] | (args.Buffer[offset + 1] << 8)
+                    int pcm24 = args.Buffer[offset] | (args.Buffer[offset + 1] << 8)
                         | (args.Buffer[offset + 2] << 16);
-                    if ((value & 0x800000) != 0) value |= unchecked((int)0xFF000000);
-                    sample = value / 8388608.0;
+                    if ((pcm24 & 0x800000) != 0) pcm24 |= unchecked((int)0xFF000000);
+                    sample = pcm24 / 8388608.0;
                 }
                 else
                     sample = BitConverter.ToInt32(args.Buffer, offset) / 2147483648.0;
