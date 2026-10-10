@@ -138,6 +138,253 @@ static std::string PairingKey() {
     return key;
 }
 
+
+static std::wstring CurrentExePath() {
+    std::vector<wchar_t> characters(MAX_PATH);
+    for (;;) {
+        const DWORD count = GetModuleFileNameW(nullptr, characters.data(),
+            static_cast<DWORD>(characters.size()));
+        if (!count) throw std::runtime_error("Cannot locate NTUScope.exe.");
+        if (count < characters.size() - 1)
+            return std::wstring(characters.data(), count);
+        if (characters.size() > 32768)
+            throw std::runtime_error("Executable path is too long.");
+        characters.resize(characters.size() * 2);
+    }
+}
+static std::wstring InstalledExePath() {
+    PWSTR local = nullptr;
+    if (FAILED(SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, nullptr, &local)))
+        throw std::runtime_error("Cannot locate LocalAppData.");
+    const fs::path folder(local);
+    CoTaskMemFree(local);
+    const fs::path appFolder = folder / L"NTUScope";
+    fs::create_directories(appFolder);
+    return (appFolder / L"NTUScope.exe").wstring();
+}
+static bool EnsureInstalled() {
+    gInstalledPath = InstalledExePath();
+    const auto current = CurrentExePath();
+    if (_wcsicmp(current.c_str(), gInstalledPath.c_str()) == 0)
+        return false;
+    // Install into a stable per-user folder. Startup must never point to a
+    // disposable GitHub ZIP extraction or Downloads folder.
+    fs::copy_file(current, gInstalledPath, fs::copy_options::overwrite_existing);
+    const auto launched = reinterpret_cast<INT_PTR>(ShellExecuteW(
+        nullptr, L"open", gInstalledPath.c_str(), nullptr, nullptr, SW_SHOWNORMAL));
+    if (launched <= 32)
+        throw std::runtime_error("Could not launch installed NTUScope.exe.");
+    return true;
+}
+static bool StartupPreference() {
+    DWORD value = 1;
+    DWORD bytes = sizeof(value);
+    const LSTATUS result = RegGetValueW(HKEY_CURRENT_USER, kPreferenceRoot,
+        L"StartWithWindows", RRF_RT_REG_DWORD, nullptr, &value, &bytes);
+    return result == ERROR_SUCCESS ? value != 0 : true;
+}
+static bool SetStartup(bool enabled, bool persistPreference) {
+    HKEY run = nullptr;
+    if (RegCreateKeyExW(HKEY_CURRENT_USER, kStartupRun, 0, nullptr, 0,
+        KEY_SET_VALUE, nullptr, &run, nullptr) != ERROR_SUCCESS)
+        return false;
+    LSTATUS status;
+    if (enabled) {
+        const auto command = L"\"" + gInstalledPath + L"\"";
+        status = RegSetValueExW(run, kStartupValue, 0, REG_SZ,
+            reinterpret_cast<const BYTE*>(command.c_str()),
+            static_cast<DWORD>((command.size() + 1) * sizeof(wchar_t)));
+    } else {
+        status = RegDeleteValueW(run, kStartupValue);
+        if (status == ERROR_FILE_NOT_FOUND) status = ERROR_SUCCESS;
+    }
+    RegCloseKey(run);
+    if (status != ERROR_SUCCESS) return false;
+    if (!persistPreference) return true;
+    HKEY preferences = nullptr;
+    if (RegCreateKeyExW(HKEY_CURRENT_USER, kPreferenceRoot, 0, nullptr, 0,
+        KEY_SET_VALUE, nullptr, &preferences, nullptr) != ERROR_SUCCESS)
+        return false;
+    const DWORD value = enabled ? 1 : 0;
+    status = RegSetValueExW(preferences, L"StartWithWindows", 0, REG_DWORD,
+        reinterpret_cast<const BYTE*>(&value), sizeof(value));
+    RegCloseKey(preferences);
+    return status == ERROR_SUCCESS;
+}
+static bool StartupEntryExists() {
+    wchar_t command[32768] = {};
+    DWORD bytes = sizeof(command);
+    if (RegGetValueW(HKEY_CURRENT_USER, kStartupRun, kStartupValue,
+        RRF_RT_REG_SZ, nullptr, command, &bytes) != ERROR_SUCCESS)
+        return false;
+    return std::wstring(command) == L"\"" + gInstalledPath + L"\"";
+}
+static bool CopyPairingKey(HWND hwnd) {
+    std::wstring text(gPairingKey.begin(), gPairingKey.end());
+    HGLOBAL memory = GlobalAlloc(GMEM_MOVEABLE, (text.size() + 1) * sizeof(wchar_t));
+    if (!memory) return false;
+    void* contents = GlobalLock(memory);
+    if (!contents) {
+        GlobalFree(memory);
+        return false;
+    }
+    std::memcpy(contents, text.c_str(), (text.size() + 1) * sizeof(wchar_t));
+    GlobalUnlock(memory);
+    if (!OpenClipboard(hwnd)) {
+        GlobalFree(memory);
+        return false;
+    }
+    EmptyClipboard();
+    if (!SetClipboardData(CF_UNICODETEXT, memory)) {
+        CloseClipboard();
+        GlobalFree(memory);
+        return false;
+    }
+    CloseClipboard();  // Windows now owns the allocation.
+    return true;
+}
+// Draw a tiny 32px phosphor-wave icon without shipping external art/assets.
+static HICON CreateScopeIcon() {
+    BITMAPV5HEADER header{};
+    header.bV5Size = sizeof(header);
+    header.bV5Width = 32;
+    header.bV5Height = -32;
+    header.bV5Planes = 1;
+    header.bV5BitCount = 32;
+    header.bV5Compression = BI_BITFIELDS;
+    header.bV5RedMask = 0x00ff0000;
+    header.bV5GreenMask = 0x0000ff00;
+    header.bV5BlueMask = 0x000000ff;
+    header.bV5AlphaMask = 0xff000000;
+    void* pixels = nullptr;
+    HDC dc = GetDC(nullptr);
+    HBITMAP color = CreateDIBSection(dc, reinterpret_cast<BITMAPINFO*>(&header),
+        DIB_RGB_COLORS, &pixels, nullptr, 0);
+    ReleaseDC(nullptr, dc);
+    if (!color || !pixels) {
+        if (color) DeleteObject(color);
+        return nullptr;
+    }
+    auto* bitmap = reinterpret_cast<DWORD*>(pixels);
+    for (int y = 0; y < 32; ++y) {
+        for (int x = 0; x < 32; ++x) {
+            const int dx = std::max(0, std::abs(x - 15) - 10);
+            const int dy = std::max(0, std::abs(y - 15) - 10);
+            if (dx * dx + dy * dy > 36) continue;
+            const bool frame = x == 3 || x == 28 || y == 3 || y == 28;
+            bitmap[y * 32 + x] = frame ? 0xff4c926e : 0xff19352d;
+            if (x >= 5 && x <= 26) {
+                const float wave = std::sin((x - 5) * 0.57f);
+                const int target = 16 - static_cast<int>(std::round(wave * 7));
+                if (std::abs(y - target) <= 1)
+                    bitmap[y * 32 + x] = 0xff9fe4a5;
+            }
+        }
+    }
+    HBITMAP mask = CreateBitmap(32, 32, 1, 1, nullptr);
+    ICONINFO info{};
+    info.fIcon = TRUE;
+    info.hbmColor = color;
+    info.hbmMask = mask;
+    HICON icon = CreateIconIndirect(&info);
+    DeleteObject(color);
+    DeleteObject(mask);
+    return icon;
+}
+static void AddOrUpdateTrayIcon(DWORD operation = NIM_ADD) {
+    if (!gWindow) return;
+    NOTIFYICONDATAW data{};
+    data.cbSize = sizeof(data);
+    data.hWnd = gWindow;
+    data.uID = static_cast<UINT>(kTrayId);
+    data.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
+    data.uCallbackMessage = kTrayMessage;
+    data.hIcon = gIcon ? gIcon : LoadIconW(nullptr, IDI_APPLICATION);
+    const wchar_t* status = gConnected.load()
+        ? L"NTU Scope - Firefox connected"
+        : L"NTU Scope - running quietly";
+    wcscpy_s(data.szTip, status);
+    Shell_NotifyIconW(operation, &data);
+}
+static void RemoveTrayIcon() {
+    NOTIFYICONDATAW data{};
+    data.cbSize = sizeof(data);
+    data.hWnd = gWindow;
+    data.uID = static_cast<UINT>(kTrayId);
+    Shell_NotifyIconW(NIM_DELETE, &data);
+}
+static void ShowTrayMenu(HWND hwnd) {
+    HMENU menu = CreatePopupMenu();
+    if (!menu) return;
+    AppendMenuW(menu, MF_STRING | MF_DISABLED, 0,
+        gConnected.load() ? L"Audio visualizer: Connected" : L"Audio visualizer: Ready");
+    AppendMenuW(menu, MF_SEPARATOR, 0, nullptr);
+    AppendMenuW(menu, MF_STRING, kMenuOpen, L"Open NTU Schedule");
+    AppendMenuW(menu, MF_STRING, kMenuCopy, L"Copy pairing key");
+    AppendMenuW(menu, MF_SEPARATOR, 0, nullptr);
+    AppendMenuW(menu, MF_STRING | (StartupEntryExists() ? MF_CHECKED : 0),
+        kMenuStartup, L"Start with Windows");
+    AppendMenuW(menu, MF_STRING, kMenuExit, L"Exit NTU Scope");
+    POINT point{};
+    GetCursorPos(&point);
+    SetForegroundWindow(hwnd);
+    TrackPopupMenu(menu, TPM_RIGHTBUTTON | TPM_BOTTOMALIGN | TPM_LEFTALIGN,
+        point.x, point.y, 0, hwnd, nullptr);
+    PostMessageW(hwnd, WM_NULL, 0, 0);
+    DestroyMenu(menu);
+}
+static LRESULT CALLBACK TrayWindowProc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp) {
+    if (gTaskbarCreated && message == gTaskbarCreated) {
+        AddOrUpdateTrayIcon();
+        return 0;
+    }
+    switch (message) {
+    case kTrayMessage:
+        if (lp == WM_RBUTTONUP || lp == WM_LBUTTONUP ||
+            lp == WM_CONTEXTMENU) ShowTrayMenu(hwnd);
+        return 0;
+    case kNetworkStatusMessage:
+        AddOrUpdateTrayIcon(NIM_MODIFY);
+        return 0;
+    case WM_COMMAND:
+        switch (LOWORD(wp)) {
+        case kMenuOpen:
+            ShellExecuteW(nullptr, L"open", kDemoWide, nullptr, nullptr, SW_SHOWNORMAL);
+            break;
+        case kMenuCopy:
+            if (!CopyPairingKey(hwnd))
+                MessageBoxW(hwnd, L"Unable to copy the pairing key.", L"NTU Scope", MB_ICONERROR);
+            break;
+        case kMenuStartup:
+            if (!SetStartup(!StartupEntryExists(), true))
+                MessageBoxW(hwnd, L"Could not change Windows startup settings.",
+                    L"NTU Scope", MB_ICONERROR);
+            break;
+        case kMenuExit:
+            DestroyWindow(hwnd);
+            break;
+        }
+        return 0;
+    case WM_DESTROY:
+        gRunning.store(false);
+        RemoveTrayIcon();
+        PostQuitMessage(0);
+        return 0;
+    default:
+        return DefWindowProcW(hwnd, message, wp, lp);
+    }
+}
+static HWND MakeTrayWindow(HINSTANCE instance) {
+    WNDCLASSW cls{};
+    cls.lpfnWndProc = TrayWindowProc;
+    cls.hInstance = instance;
+    cls.lpszClassName = L"NTUScopeTrayHidden";
+    if (!RegisterClassW(&cls) && GetLastError() != ERROR_CLASS_ALREADY_EXISTS)
+        return nullptr;
+    return CreateWindowExW(WS_EX_TOOLWINDOW, cls.lpszClassName, L"NTUScope",
+        WS_OVERLAPPED, 0, 0, 0, 0, nullptr, nullptr, instance, nullptr);
+}
+
 class LoopbackMeter {
 public:
     bool Start() {
