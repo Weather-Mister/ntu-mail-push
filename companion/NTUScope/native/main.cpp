@@ -11,6 +11,7 @@
 #include <mmreg.h>
 #include <wrl/client.h>
 #include <shlobj.h>
+#include <shellapi.h>
 #include <bcrypt.h>
 #include <wincrypt.h>
 
@@ -31,6 +32,7 @@
 #include <stdexcept>
 #include <string>
 #include <thread>
+#include <vector>
 #include <utility>
 
 #pragma comment(lib, "ole32.lib")
@@ -47,6 +49,24 @@ constexpr size_t kBins = 64;
 constexpr char kOrigin[] = "https://weather-mister.github.io";
 constexpr char kWsGuid[] = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 constexpr char kDemo[] = "https://weather-mister.github.io/ntu-mail-push/skeuo-demo.html";
+constexpr wchar_t kDemoWide[] = L"https://weather-mister.github.io/ntu-mail-push/skeuo-demo.html";
+constexpr wchar_t kStartupRun[] = L"Software\\Microsoft\\Windows\\CurrentVersion\\Run";
+constexpr wchar_t kPreferenceRoot[] = L"Software\\NTUScope";
+constexpr wchar_t kStartupValue[] = L"NTUScope";
+constexpr UINT kTrayMessage = WM_APP + 21;
+constexpr UINT kNetworkStatusMessage = WM_APP + 22;
+constexpr UINT_PTR kTrayId = 42;
+constexpr UINT kMenuOpen = 101;
+constexpr UINT kMenuCopy = 102;
+constexpr UINT kMenuStartup = 103;
+constexpr UINT kMenuExit = 104;
+static std::atomic<bool> gRunning{true};
+static std::atomic<bool> gConnected{false};
+static HWND gWindow = nullptr;
+static HICON gIcon = nullptr;
+static std::string gPairingKey;
+static std::wstring gInstalledPath;
+static UINT gTaskbarCreated = 0;
 
 struct Frame {
     std::array<float, kBins> bins{};
