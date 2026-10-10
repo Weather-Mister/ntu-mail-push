@@ -49,7 +49,7 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  const freshShell = new Set([asset('styles.css'), asset('desktop-renewal.css'), asset('app.js'), asset('manifest.webmanifest')]);
+  const freshShell = new Set([asset('styles.css'), asset('garden-theme.css'), asset('app.js'), asset('manifest.webmanifest')]);
   if (freshShell.has(url.pathname)){
     event.respondWith(
       fetch(request, { cache:'no-store' })
