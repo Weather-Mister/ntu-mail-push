@@ -12,7 +12,7 @@ const sw = read('sw.js');
 test('Begüm live garden preserves all production integrations', () => {
   assert.doesNotThrow(() => new Script(app, {filename:'begum/app.js'}));
   assert.doesNotThrow(() => new Script(sw, {filename:'begum/sw.js'}));
-  for (const id of ['scheduleList','nextClass','todoForm','coolDeadlines','coolRefresh','pairingDialog','placesDialog','ntuHubSection','mailAlertDialog','todoMoreButton','weekDateJump','mailAlertButton','pageRefreshButton','quickAccessRow']) assert.ok(html.includes('id="'+id+'"'),id);
+  for (const id of ['scheduleList','nextClass','todoForm','coolDeadlines','coolRefresh','pairingDialog','ntuHubSection','mailAlertDialog','todoMoreButton','weekDateJump','mailAlertButton','pageRefreshButton','quickAccessRow']) assert.ok(html.includes('id="'+id+'"'),id);
   for (const feature of ['function renderDay()', 'function renderNextClass()', 'function syncTodos()', 'function renderCoolDeadlines()', 'function positionHubs()', 'if (pairingForm)']) assert.ok(app.includes(feature),feature);
   for (const klass of ['app-shell garden','schedule-split','panel cool-panel cool-section','panel tasks-panel todo-section','panel links-panel']) assert.ok(html.includes('class="'+klass+'"'),klass);
   for (const selector of ['.garden .cool-section','.garden .schedule-list .lesson','.garden .todo-section']) assert.ok(css.includes(selector),selector);
@@ -32,7 +32,7 @@ test('Garden polish keeps demo colors, honey jar, compact controls and live data
   assert.ok(html.includes('class="next-class hero-next-class"'));
   assert.ok(html.includes('class="week-caption week-picker"'));
   assert.ok(html.includes('id="weekDateJump"'));
-  assert.ok(html.includes('id="placesButton"'));
+  assert.doesNotMatch(html,/placesButton|placesDialog|garden-links-footer/);
   assert.doesNotMatch(html,/class="date-jump"/);
   assert.match(app,/gardenCourseColors/);
   assert.match(app,/cool-month/);
@@ -49,12 +49,12 @@ test('Begüm removes transfer and Hanzi UI, code and heavy FFmpeg preloading', (
 });
 
 test('Begüm PWA assets remain scoped and version matched', () => {
-  for (const asset of ['app.js?v=115','todo-realtime.js?v=1','garden-theme.css?v=2']) {
+  for (const asset of ['app.js?v=116','todo-realtime.js?v=1','garden-theme.css?v=3']) {
     assert.ok(html.includes(asset), 'HTML references ' + asset);
     assert.ok(sw.includes(asset), 'cache includes ' + asset);
   }
   assert.match(sw, /const ROOT = new URL\(self.registration.scope\)\.pathname/);
-  assert.match(app, /serviceWorker\.register\('\.\/sw\.js\?v=9'/);
+  assert.match(app, /serviceWorker\.register\('\.\/sw\.js\?v=10'/);
   assert.match(app, /begum-ntu-manual-todos-v1/);
   assert.match(app, /ntu-schedule-begum-pairing-key-v1/);
 });
