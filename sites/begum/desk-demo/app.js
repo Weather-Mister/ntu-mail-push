@@ -41,15 +41,11 @@ const fallbackTasks=[
   {id:"sample-task-2",text:"Review this week's notes",done:false},
   {id:"sample-task-3",text:"Pick up a little treat ♡",done:true}
 ];
-const fallbackNotes=[
-  {id:"sample-note-1",text:"Check the group presentation slides"},
-  {id:"sample-note-2",text:"Remember the library book"}
-];
 function load(key,fallback){
   try{const parsed=JSON.parse(localStorage.getItem(storePrefix+key));if(Array.isArray(parsed))return parsed.filter(x=>x&&typeof x.text==="string"&&typeof x.id==="string").slice(0,100);}catch(e){}
   return structuredClone(fallback);
 }
-let tasks=load("tasks",fallbackTasks),notes=load("notes",fallbackNotes);
+let tasks=load("tasks",fallbackTasks);
 function save(key,data){try{localStorage.setItem(storePrefix+key,JSON.stringify(data));}catch(e){}}
 function safeText(node,value){node.textContent=String(value);}
 function svgSymbol(name){const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");const use=document.createElementNS("http://www.w3.org/2000/svg","use");use.setAttribute("href","#"+name);svg.appendChild(use);return svg;}
@@ -133,24 +129,9 @@ function renderTasks(){
  safeText($("taskCount"),tasks.filter(t=>!t.done).length+" left");
  if(!tasks.length){const li=document.createElement("li");li.className="micro";li.textContent="No tasks here yet. A blank slate.";list.append(li);}
 }
-function renderNotes(){
- const list=$("noteList");list.replaceChildren();
- for(const note of notes){
-   const row=document.createElement("li");row.className="task-row note-row";
-   const span=document.createElement("span");span.className="task-text";span.textContent=note.text;
-   const del=document.createElement("button");del.type="button";del.className="delete";del.setAttribute("aria-label","Delete note: "+note.text);del.append(svgSymbol("trashIcon"));
-   del.addEventListener("click",()=>{notes=notes.filter(x=>x.id!==note.id);save("notes",notes);renderNotes();});
-   row.append(span,del);list.append(row);
- }
- if(!notes.length){const li=document.createElement("li");li.className="micro";li.textContent="Your desk is clear.";list.append(li);}
-}
 $("taskForm").addEventListener("submit",e=>{
  e.preventDefault();const input=$("taskInput"),text=input.value.trim();if(!text)return;
  tasks.unshift({id:uniqueId(),text,done:false});tasks=tasks.slice(0,100);save("tasks",tasks);input.value="";renderTasks();input.focus();
-});
-$("noteForm").addEventListener("submit",e=>{
- e.preventDefault();const input=$("noteInput"),text=input.value.trim();if(!text)return;
- notes.unshift({id:uniqueId(),text});notes=notes.slice(0,100);save("notes",notes);input.value="";renderNotes();input.focus();
 });
 $("prevWeek").addEventListener("click",()=>{weekShift=Math.max(-26,weekShift-1);renderWeek();});
 $("nextWeek").addEventListener("click",()=>{weekShift=Math.min(26,weekShift+1);renderWeek();});
@@ -179,4 +160,4 @@ const keyRows=[['esc','F1','F2','F3','F4','F5','F6','F7','F8','F9','F10','F11','
 $("keyboardKeys").replaceChildren(...keyRows.map(keys=>{const row=document.createElement('div');row.className='key-row';keys.forEach(key=>{const cap=document.createElement('i');cap.textContent=key==='space'?'':key;cap.className=key==='space'?'space':key.length>3?'wide':'';row.append(cap);});return row;}));
 function fitScene(){const stage=$('stage'),scene=$('scene');const size=getComputedStyle(stage);const w=parseFloat(size.width),h=parseFloat(size.height);scene.style.setProperty('--scene-scale',Math.min(scene.clientWidth/(w+(w>1000?80:0)),scene.clientHeight/h));}
 new ResizeObserver(fitScene).observe($('scene'));fitScene();
-renderWeek();renderTasks();renderNotes();clockTick();setInterval(clockTick,60000);
+renderWeek();renderTasks();clockTick();setInterval(clockTick,60000);
