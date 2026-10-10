@@ -12,10 +12,10 @@ import { oauthStart, oauthFinish } from '../supabase/functions/eren-mail/oauth.t
 import { publicIPv4 } from '../supabase/functions/eren-mail/unsubscribe.ts';
 import { decodeBody, b64url } from '../supabase/functions/eren-mail/domain.mjs';
 class MemoryDB {
- tables:any={};secrets:any={};storageObjects=new Map<string,Uint8Array>();
+ tables:any={};secrets:any={};storageObjects=new Map<string,Uint8Array>();downloads=0;
  storage={from:(bucket:string)=>({
   upload:async(path:string,data:any)=>{const bytes=data instanceof Uint8Array?data:new Uint8Array(await data.arrayBuffer());this.storageObjects.set(bucket+'/'+path,new Uint8Array(bytes));return {data:{path},error:null};},
-  download:async(path:string)=>{const bytes=this.storageObjects.get(bucket+'/'+path);if(!bytes)return {data:null,error:{message:'not found'}};const copy=new Uint8Array(bytes.length);copy.set(bytes);return {data:new Blob([copy.buffer]),error:null};},
+  download:async(path:string)=>{this.downloads++;const bytes=this.storageObjects.get(bucket+'/'+path);if(!bytes)return {data:null,error:{message:'not found'}};const copy=new Uint8Array(bytes.length);copy.set(bytes);return {data:new Blob([copy.buffer]),error:null};},
   remove:async(paths:string[])=>{for(const path of paths)this.storageObjects.delete(bucket+'/'+path);return {data:[],error:null};}
  })};
  constructor(){this.tables={eren_mail_accounts:[],eren_mail_outbox:[],eren_mail_messages:[],eren_mail_rules:[],eren_mail_oauth:[],schedule_workspaces:[]};}
@@ -42,6 +42,11 @@ class MemoryDB {
 }
 function setup(){clearMailMemory();const db=new MemoryDB(),a:any={id:'11111111-1111-4111-8111-111111111111',workspace_hash:'workspace',email:'me@example.org',secret_name:'eren-mail:workspace:account:1',status:'active'};db.tables.eren_mail_accounts.push(a);db.secrets[a.secret_name]='refresh-test';db.secrets['eren-mail:workspace:config:GOOGLE_CLIENT_ID']='client';db.secrets['eren-mail:workspace:config:GOOGLE_CLIENT_SECRET']='secret-test';return {db,a};}
 async function fetching(fn:any,run:any){const old=globalThis.fetch;globalThis.fetch=fn;try{await run();}finally{globalThis.fetch=old;}}
+function claim(db:MemoryDB,job:any,attempts=1){
+ const row=db.tables.eren_mail_outbox.find((r:any)=>r.id===job.id);
+ Object.assign(row,{status:'processing',attempts,locked_until:new Date(Date.now()+120000).toISOString()});
+ return structuredClone(row);
+}
 Deno.test('Gmail concurrent clients refresh once and reuse an unexpired server-only token',async()=>{
  const {db,a}=setup();let refreshes=0,gmail=0,clock=Date.now();const now=Date.now;Date.now=()=>clock;
  try{await fetching(async(url:any)=>{if(String(url).includes('oauth2')){refreshes++;return Response.json({access_token:'access-test',expires_in:3600});}gmail++;return Response.json({ok:true});},async()=>{
@@ -113,7 +118,7 @@ Deno.test('real send constructs selected From and Gmail thread; repeated enqueue
   const job=await enqueue(db,a,input);assert.equal(db.tables.eren_mail_outbox.length,1);
   assert.equal((await enqueue(db,a,input)).id,job.id);assert.equal(db.tables.eren_mail_outbox.length,1);
   await assert.rejects(()=>enqueue(db,a,{...input,body:'Changed text'}));
-  db.tables.eren_mail_outbox[0].status='processing';await deliver(db,{...job,attempts:1});
+  await deliver(db,claim(db,job));
   assert.equal(sent.threadId,'t1');const raw=decodeBody(sent.raw);assert.match(raw,/From: me@example.org/);assert.match(raw,/In-Reply-To: <source@example.org>/);assert.equal(db.tables.eren_mail_outbox[0].status,'sent');assert.equal(db.secrets[job.secret_name],undefined);
  });
 });
@@ -124,7 +129,7 @@ Deno.test('queued send resolves durable draft attachments and emits mixed MIME',
  await fetching(async(url:any,init:any)=>{const u=String(url);if(u.includes('oauth2'))return Response.json({access_token:'access-test'});if(u.endsWith('messages/send')){sent=JSON.parse(init.body);return Response.json({id:'sent2',threadId:'new-thread'});}throw new Error(u);},async()=>{
   const input={id:crypto.randomUUID(),draftId,to:'friend@example.org',subject:'Report',body:'See attached.',bodyHtml:'<p>See <strong>attached</strong>.</p>',attachments:[{id:attId,name:'report.txt',type:'text/plain',size:16}]};
   const job=await enqueue(db,a,input);const stored=JSON.parse(db.secrets[job.secret_name]);assert.equal(stored.attachments[0].data,undefined);assert([...db.storageObjects.keys()].some(k=>k.includes('/outbox/'+job.id+'/'+attId)));
-  db.tables.eren_mail_outbox[0].status='processing';await deliver(db,{...job,attempts:1});
+  await deliver(db,claim(db,job));
   const raw=decodeBody(sent.raw);assert.match(raw,/Content-Type: multipart\/mixed/);assert.match(raw,/Content-Disposition: attachment/);assert.match(raw,/report\.txt/);assert.match(raw,/Content-Type: text\/html/);
  });
 });
@@ -139,7 +144,7 @@ Deno.test('legacy Vault draft attachments still migrate into outbox storage',asy
 Deno.test('uncertain sends are not blindly retried and can reconcile by Message-ID',async()=>{
  const {db,a}=setup();let sends=0,found=false;
  await fetching(async(url:any)=>{const u=String(url);if(u.includes('oauth2'))return Response.json({access_token:'access-test'});if(u.endsWith('messages/send')){sends++;throw new TypeError('network lost');}if(u.includes('rfc822msgid'))return Response.json({messages:found?[{id:'actually-sent'}]:[]});throw new Error(u);},async()=>{
-  const j=await enqueue(db,a,{id:crypto.randomUUID(),to:'friend@example.org',subject:'Hi',body:'Body'});db.tables.eren_mail_outbox[0].status='processing';await deliver(db,{...j,attempts:1});const job=db.tables.eren_mail_outbox[0];assert.equal(job.status,'uncertain');
+  const j=await enqueue(db,a,{id:crypto.randomUUID(),to:'friend@example.org',subject:'Hi',body:'Body'});await deliver(db,claim(db,j));const job=db.tables.eren_mail_outbox[0];assert.equal(job.status,'uncertain');
   await deliver(db,{...job,attempts:2});assert.equal(sends,1);
   assert.equal((await reconcile(db,job)).status,'uncertain');found=true;assert.equal((await reconcile(db,job)).status,'sent');assert.equal(sends,1);
  });
@@ -149,6 +154,47 @@ Deno.test('cancelled jobs cannot cross the send boundary',async()=>{
  await fetching(async(url:any)=>{if(String(url).includes('oauth2'))return Response.json({access_token:'access-test'});sends++;return Response.json({id:'bad'});},async()=>{
   const j=await enqueue(db,a,{id:crypto.randomUUID(),to:'friend@example.org',subject:'Hi',body:'Body'});db.tables.eren_mail_outbox[0].status='cancelled';await deliver(db,j);assert.equal(sends,0);
  });
+});
+Deno.test('cancelled, expired and superseded claims do not download attachments or call Gmail',async()=>{
+ const {db,a}=setup(),draftId=crypto.randomUUID(),attId=crypto.randomUUID();
+ db.storageObjects.set('eren-mail-attachments/workspace/draft/'+draftId+'/'+attId,new Uint8Array([42]));
+ const job=await enqueue(db,a,{id:crypto.randomUUID(),draftId,to:'test@example.org',subject:'Test',body:'Test',attachments:[{id:attId,name:'test.bin',type:'application/octet-stream',size:1}]});
+ const first=claim(db,job),downloads=db.downloads;
+ await fetching(()=>{throw new Error('Must not contact Gmail');},async()=>{
+  claim(db,job,2);await deliver(db,first);
+  const expired=claim(db,job,3);db.tables.eren_mail_outbox[0].locked_until=new Date(0).toISOString();await deliver(db,expired);
+  const cancelled=claim(db,job,4);db.tables.eren_mail_outbox[0].status='cancelled';await deliver(db,cancelled);
+ });
+ assert.equal(db.downloads,downloads);
+ assert(db.secrets[job.secret_name]);assert.equal(db.storageObjects.size,2);
+});
+Deno.test('a claim superseded during preparation cannot send or overwrite its successor',async()=>{
+ const {db,a}=setup();const job=await enqueue(db,a,{id:crypto.randomUUID(),to:'test@example.org',subject:'Test',body:'Test'});
+ const first=claim(db,job);let sends=0;
+ await fetching(async(url:any)=>{
+  if(String(url).includes('oauth2')){claim(db,job,2);return Response.json({access_token:'test'});}
+  sends++;return Response.json({id:'must-not-send'});
+ },()=>deliver(db,first));
+ assert.equal(sends,0);assert.equal(db.tables.eren_mail_outbox[0].attempts,2);assert.equal(db.tables.eren_mail_outbox[0].status,'processing');
+ clearMailMemory();
+ const second=structuredClone(db.tables.eren_mail_outbox[0]);
+ await fetching(async()=>{claim(db,job,3);throw new Error('simulated pre-send failure');},()=>deliver(db,second));
+ assert.equal(db.tables.eren_mail_outbox[0].attempts,3);assert.equal(db.tables.eren_mail_outbox[0].status,'processing');
+});
+Deno.test('incident-sized attachment reaches mocked Gmail exactly once with payload preserved',async()=>{
+ const {db,a}=setup(),jobId=crypto.randomUUID(),attId=crypto.randomUUID(),size=9086982;
+ const job={id:jobId,account_id:a.id,workspace_hash:a.workspace_hash,secret_name:'synthetic-payload',rfc_message_id:jobId+'@eren-mail.invalid',send_at:new Date().toISOString()};
+ db.tables.eren_mail_outbox.push(job);
+ db.secrets[job.secret_name]=JSON.stringify({to:'test@example.org',subject:'Synthetic',body:'Synthetic',attachments:[{id:attId,name:'synthetic.bin',type:'application/octet-stream',size}]});
+ db.storageObjects.set('eren-mail-attachments/workspace/outbox/'+jobId+'/'+attId,new Uint8Array(size));
+ let sends=0;
+ await fetching(async(url:any,init:any)=>{
+  if(String(url).includes('oauth2'))return Response.json({access_token:'test'});
+  assert(String(url).endsWith('messages/send'));sends++;
+  assert(JSON.parse(init.body).raw.length>size);
+  return Response.json({id:'synthetic-sent',threadId:'synthetic-thread'});
+ },async()=>{const claimed=claim(db,job);await deliver(db,claimed);await deliver(db,claimed);});
+ assert.equal(sends,1);assert.equal(db.downloads,1);assert.equal(db.tables.eren_mail_outbox[0].status,'sent');
 });
 Deno.test('new-mail history is processed while old mail is still backfilling',async()=>{
  const {db,a}=setup();Object.assign(a,{history_id:'10',backfill_page:'older'});const paths:string[]=[];
