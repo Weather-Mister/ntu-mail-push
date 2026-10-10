@@ -8,6 +8,7 @@ const html = read('index.html');
 const app = read('app.js');
 const css = read('garden-theme.css');
 const sw = read('sw.js');
+const bees = read('garden-bees.js');
 
 test('Begüm live garden preserves all production integrations', () => {
   assert.doesNotThrow(() => new Script(app, {filename:'begum/app.js'}));
@@ -49,7 +50,7 @@ test('Begüm removes transfer and Hanzi UI, code and heavy FFmpeg preloading', (
 });
 
 test('Begüm PWA assets remain scoped and version matched', () => {
-  for (const asset of ['app.js?v=118','todo-realtime.js?v=1','garden-theme.css?v=6']) {
+  for (const asset of ['app.js?v=118','todo-realtime.js?v=1','garden-theme.css?v=7','garden-bees.js?v=1']) {
     assert.ok(html.includes(asset), 'HTML references ' + asset);
     assert.ok(sw.includes(asset), 'cache includes ' + asset);
   }
@@ -105,4 +106,16 @@ test('the 2026 date navigation is reachable on desktop and mobile', () => {
   assert.match(app, /function setWeekTo\(date\)/);
   assert.match(app, /getElementById\('weekDateJump'\)\?\.addEventListener\('change'/);
   assert.match(app, /setWeekTo\(new Date\(\)\)/);
+});
+
+test('Begüm decorative bee script loads and respects motion preferences', () => {
+  assert.doesNotThrow(() => new Script(bees,{filename:'begum/garden-bees.js'}));
+  assert.match(html, /garden-floral-corners/);
+  assert.match(html, /garden-bees\\.js\\?v=1/);
+  assert.match(sw, /garden-bees\\.js\\?v=1/);
+  assert.match(css, /\\.garden-flight-layer/);
+  assert.match(css, /\\.garden-flyer/);
+  assert.match(css, /\\.garden-pollen/);
+  assert.match(bees, /prefers-reduced-motion: reduce/);
+  assert.match(bees, /pointer-events|garden-flight-layer/);
 });
