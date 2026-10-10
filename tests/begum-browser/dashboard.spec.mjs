@@ -256,6 +256,46 @@ test('desktop garden and all class cards fit the viewport',async ({page},testInf
  }
 });
 
+
+test('Up Next reads as inline garden typography with a subtle divider',async ({page},testInfo)=>{
+ const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('/?pair=begum');
+ await expect(page.locator('.hero-info .hero-copy h1')).toContainText('Every day, a little');
+ await expect(page.locator('.hero-info > #nextClass .next-label')).toBeVisible();
+ await expect(page.locator('.hero-info > #nextClass .next-title')).toBeVisible();
+ const state=await page.evaluate(()=>{
+  const box=el=>el.getBoundingClientRect();
+  const hero=box(document.querySelector('.hero'));
+  const heading=box(document.querySelector('.hero-copy'));
+  const nextEl=document.querySelector('.hero-info > #nextClass');
+  const next=box(nextEl);
+  const css=getComputedStyle(nextEl);
+  return {
+    bar:parseFloat(css.borderLeftWidth),
+    translucent:css.backgroundColor==='rgba(0, 0, 0, 0)',
+    noCard:css.boxShadow==='none',
+    contained:next.top>=hero.top-2 && next.bottom<=hero.bottom+2 &&
+              next.left>=hero.left-2 && next.right<=hero.right+2,
+    beside:next.left>=heading.right-2 && Math.abs(next.top-heading.top)<50,
+    below:next.top>=heading.bottom-2,
+    overflow:document.documentElement.scrollWidth>innerWidth+2,
+    pageScroll:document.documentElement.scrollHeight>innerHeight+2
+  };
+ });
+ expect(state.bar).toBeGreaterThanOrEqual(1);
+ expect(state.bar).toBeLessThanOrEqual(3);
+ expect(state.translucent).toBe(true);
+ expect(state.noCard).toBe(true);
+ expect(state.contained).toBe(true);
+ expect(state.overflow).toBe(false);
+ if(testInfo.project.name.startsWith('mac')){
+   expect(state.beside).toBe(true);
+   expect(state.pageScroll).toBe(false);
+ } else {
+   expect(state.below).toBe(true);
+ }
+ expect(errors).toEqual([]);
+});
 test('TOC is listed on both days with $800 in place of a location', async ({ page }) => {
   const errors=[];
   page.on('pageerror', error => errors.push(error.message));
