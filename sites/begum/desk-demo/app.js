@@ -171,11 +171,18 @@ function renderSky(){
  $("scene").classList.toggle("sky-sunset",target==="sunset");
  $("scene").classList.toggle("sky-night",target==="night");
  const labels={auto:"Auto sky",day:"Daytime",sunset:"Sunset",night:"Night"};
- safeText($("skyText"),labels[skyMode]);
- $("skyButton").setAttribute("aria-label","Change sky. Current setting: "+labels[skyMode]);
- $("skyButton").querySelector("use").setAttribute("href",target==="night"?"#moonIcon":"#sunIcon");
+ const win=$("skyWindow");
+ win.setAttribute("aria-label","Taipei skyline. "+labels[skyMode]+". Click to switch between automatic, daytime, sunset and night lighting.");
+ win.setAttribute("title",labels[skyMode]+" · Click to change the time of day");
 }
-$("skyButton").addEventListener("click",()=>{skyMode=skyModes[(skyModes.indexOf(skyMode)+1)%skyModes.length];renderSky();});
+function changeSky(){
+ skyMode=skyModes[(skyModes.indexOf(skyMode)+1)%skyModes.length];
+ renderSky();
+}
+$("skyWindow").addEventListener("click",changeSky);
+$("skyWindow").addEventListener("keydown",e=>{
+ if(e.key==="Enter"||e.key===" "){e.preventDefault();changeSky();}
+});
 function clockTick(){safeText($("clock"),"Taipei · "+clockFmt.format(new Date()));if(skyMode==="auto")renderSky();}
 $("keyboardKeys").replaceChildren(...Array.from({length:45},()=>document.createElement("i")));
 renderWeek();renderTasks();renderNotes();clockTick();setInterval(clockTick,60000);
