@@ -90,5 +90,5 @@
     if (reduceMotion.matches) release();
     else if (!document.hidden) scheduleVisit(5000);
   });
-  if (!reduceMotion.matches) scheduleVisit(5500 + Math.random() * 5500);
+  if (!reduceMotion.matches) scheduleVisit(1800 + Math.random() * 2400);
 })();
