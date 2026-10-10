@@ -169,6 +169,64 @@ test('Thursday courses remain readable, inside their cards, and need no schedule
  expect(layout.grassRemoved).toBe(true);
 });
 
+
+test('COOL deadlines and honey-do tasks scroll independently while class cards stay visible', async ({page})=>{
+ await page.goto('/?pair=begum');
+ await page.locator('[data-day="4"]').click();
+ await expect(page.locator('.lesson')).toHaveCount(3);
+ const result=await page.evaluate(()=>{
+   const deadlines=document.querySelector('#coolDeadlines');
+   const todos=document.querySelector('#todoList');
+   const classes=document.querySelector('#scheduleList');
+   for(let i=0;i<24;i++){
+     const item=document.createElement('article');
+     item.className='cool-item';
+     item.textContent='Test deadline '+i;
+     item.style.minHeight='70px';
+     deadlines.append(item);
+     const task=document.createElement('article');
+     task.className='todo-item';
+     task.textContent='Test task '+i;
+     task.style.minHeight='38px';
+     todos.append(task);
+   }
+   const bounds=element=>element.getBoundingClientRect();
+   const headers={
+     cool:bounds(document.querySelector('.cool-heading-row')).top,
+     todo:bounds(document.querySelector('.todo-heading-row')).top,
+     coolFooter:bounds(document.querySelector('.cool-meta')).bottom,
+     todoForm:bounds(document.querySelector('.todo-form')).bottom
+   };
+   const coolOverflow=getComputedStyle(deadlines).overflowY;
+   const todoOverflow=getComputedStyle(todos).overflowY;
+   deadlines.scrollTop=deadlines.scrollHeight;
+   todos.scrollTop=todos.scrollHeight;
+   const after={
+     cool:bounds(document.querySelector('.cool-heading-row')).top,
+     todo:bounds(document.querySelector('.todo-heading-row')).top,
+     coolFooter:bounds(document.querySelector('.cool-meta')).bottom,
+     todoForm:bounds(document.querySelector('.todo-form')).bottom
+   };
+   return {
+     coolOverflow,todoOverflow,
+     coolScrollable:deadlines.scrollHeight>deadlines.clientHeight+8 && deadlines.scrollTop>0,
+     todoScrollable:todos.scrollHeight>todos.clientHeight+8 && todos.scrollTop>0,
+     pinnedHeaders:Math.abs(headers.cool-after.cool)<2&&Math.abs(headers.todo-after.todo)<2,
+     pinnedFooters:Math.abs(headers.coolFooter-after.coolFooter)<2&&Math.abs(headers.todoForm-after.todoForm)<2,
+     classesOverflow:getComputedStyle(classes).overflowY,
+     classesScrollbar:classes.scrollHeight>classes.clientHeight+3
+   };
+ });
+ expect(result.coolOverflow).toBe('auto');
+ expect(result.todoOverflow).toBe('auto');
+ expect(result.coolScrollable).toBe(true);
+ expect(result.todoScrollable).toBe(true);
+ expect(result.pinnedHeaders).toBe(true);
+ expect(result.pinnedFooters).toBe(true);
+ expect(result.classesOverflow).toBe('visible');
+ expect(result.classesScrollbar).toBe(false);
+});
+
 test('TOC is listed on both days with $800 in place of a location', async ({ page }) => {
   const errors=[];
   page.on('pageerror', error => errors.push(error.message));

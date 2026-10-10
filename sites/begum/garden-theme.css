@@ -609,3 +609,60 @@ body{min-width:320px}
   .garden .schedule-list .lesson .time-block{width:64px!important;max-width:64px}
   .garden .schedule-list .lesson .lesson-title{font-size:13px!important}
 }
+
+/* Independent task scrolling: let the classes expand with their lesson count,
+   but keep both task collections inside their own bounded, usable panels. */
+.garden .cool-section,
+.garden .todo-section{
+  overflow:hidden;
+}
+.garden .cool-section .cool-deadlines,
+.garden .todo-section .todo-list{
+  flex:1 1 0px;
+  min-height:0;
+  max-height:none;
+  overflow-x:hidden!important;
+  overflow-y:auto!important;
+  overscroll-behavior-y:contain;
+  scrollbar-width:thin;
+  scrollbar-gutter:stable;
+  -webkit-overflow-scrolling:touch;
+}
+.garden .cool-section .cool-deadlines{
+  scrollbar-color:#d9cda1 transparent;
+}
+.garden .todo-section .todo-list{
+  scrollbar-color:#cadaae transparent;
+}
+.garden .cool-section .cool-heading-row,
+.garden .cool-section .cool-intro,
+.garden .cool-section .cool-meta,
+.garden .todo-section .todo-heading-row,
+.garden .todo-section .todo-form{
+  flex-shrink:0;
+}
+@media(max-width:900px){
+  .garden .cool-section{
+    height:clamp(330px,53dvh,480px);
+    min-height:330px;
+    max-height:480px;
+    flex:0 1 auto;
+  }
+  .garden .todo-section{
+    height:clamp(330px,53dvh,470px);
+    min-height:330px;
+    max-height:470px;
+    flex:0 1 auto;
+  }
+}
+@media(max-width:610px){
+  .garden .cool-section{
+    height:clamp(330px,55dvh,440px);
+    max-height:440px;
+  }
+  .garden .todo-section{
+    height:clamp(340px,55dvh,440px);
+    min-height:340px;
+    max-height:440px;
+  }
+}
