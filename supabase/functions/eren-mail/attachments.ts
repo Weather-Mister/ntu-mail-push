@@ -1,3 +1,4 @@
+import { Buffer } from 'node:buffer';
 export const ATTACHMENT_BUCKET='eren-mail-attachments';
 
 export const draftAttachmentPath=(workspace:string,draftId:string,attachmentId:string)=>workspace+'/draft/'+draftId+'/'+attachmentId;
@@ -6,13 +7,12 @@ export const outboxAttachmentPath=(workspace:string,jobId:string,attachmentId:st
 export function decodeAttachmentData(data:string){
  const normalized=String(data||'').replace(/\s+/g,'');
  if(!/^[A-Za-z0-9+/]*={0,2}$/.test(normalized))throw new Error('Attachment data is invalid.');
- try{return Uint8Array.from(atob(normalized),c=>c.charCodeAt(0));}catch{throw new Error('Attachment data is invalid.');}
+ // atob retains strict validation; avoid Array.from's per-byte intermediate array.
+ try{return Buffer.from(atob(normalized),'latin1');}catch{throw new Error('Attachment data is invalid.');}
 }
 
 export function encodeAttachmentData(bytes:Uint8Array){
- let binary='';
- for(let i=0;i<bytes.length;i+=0x8000)binary+=String.fromCharCode(...bytes.subarray(i,Math.min(bytes.length,i+0x8000)));
- return btoa(binary);
+ return Buffer.from(bytes.buffer,bytes.byteOffset,bytes.byteLength).toString('base64');
 }
 
 export async function putAttachmentObject(admin:any,path:string,bytes:Uint8Array,type='application/octet-stream'){

@@ -52,6 +52,9 @@ export async function enqueue(admin:any,account:any,input:any) {
 export async function deliver(admin:any,job:any) {
  let started=false;
  try {
+  // Reject stale/cancelled claims before fetching secrets or attachment bytes.
+  const active=check(await admin.from('eren_mail_outbox').select('id').eq('id',job.id).eq('status','processing').eq('attempts',job.attempts).gt('locked_until',new Date().toISOString()).maybeSingle());
+  if(!active)return;
   const account=await ownedAccount(admin,job.workspace_hash,job.account_id),api=await gmailClient(admin,account);
   const stored=await secret(admin,job.secret_name);if(!stored) throw new MailError(400,'Send payload missing. Restore your draft and try again.');
   const payload=JSON.parse(stored),loaded=[];let total=0;
@@ -63,7 +66,7 @@ export async function deliver(admin:any,job:any) {
    loaded.push({...ref,data:encodeAttachmentData(bytes)});
   }
   const raw=buildMime({...payload,attachments:loaded},account.email,job.rfc_message_id,payload.parent);
-  const ready=check(await admin.from('eren_mail_outbox').update({status:'sending',locked_until:new Date(Date.now()+120000).toISOString()}).eq('id',job.id).eq('status','processing').select('id').maybeSingle());
+  const ready=check(await admin.from('eren_mail_outbox').update({status:'sending',locked_until:new Date(Date.now()+120000).toISOString()}).eq('id',job.id).eq('status','processing').eq('attempts',job.attempts).gt('locked_until',new Date().toISOString()).select('id').maybeSingle());
   if(!ready) return;
   started=true;
   const sent=await api('messages/send','POST',{raw,...(payload.threadId?{threadId:payload.threadId}:{})});
@@ -74,7 +77,7 @@ export async function deliver(admin:any,job:any) {
  } catch(e) {
   const definitive=started && e instanceof MailError && e.code==='gmail_error' && [400,401,403,404,413,429].includes(e.status);
   const transient=!started && (!(e instanceof MailError)||e.status>=500||e.status===429) && job.attempts<5;
-  check(await admin.from('eren_mail_outbox').update({status:started&&!definitive?'uncertain':transient?'pending':'failed',send_at:transient?new Date(Date.now()+Math.min(30,2**job.attempts)*60000).toISOString():job.send_at,error:started&&!definitive?'Gmail may have accepted this message. Check status; it will not be resent automatically.':transient?'Temporary service issue; retry scheduled.':'Send failed. Open Outbox to recover the draft.',locked_until:null}).eq('id',job.id).eq('status',started?'sending':'processing'));
+  check(await admin.from('eren_mail_outbox').update({status:started&&!definitive?'uncertain':transient?'pending':'failed',send_at:transient?new Date(Date.now()+Math.min(30,2**job.attempts)*60000).toISOString():job.send_at,error:started&&!definitive?'Gmail may have accepted this message. Check status; it will not be resent automatically.':transient?'Temporary service issue; retry scheduled.':'Send failed. Open Outbox to recover the draft.',locked_until:null}).eq('id',job.id).eq('attempts',job.attempts).eq('status',started?'sending':'processing'));
  }
 }
 export async function reconcile(admin:any,job:any) {
