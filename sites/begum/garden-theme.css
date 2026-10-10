@@ -479,3 +479,133 @@ body{min-width:320px}
  .garden .garden-links-footer{top:8px;right:9px}
  .garden .garden-links-footer #placesButton{font-size:9px}
 }
+
+/* Live Garden: readable lessons, no internal class scrollbar, course-colored COOL.
+   The old pre-garden stylesheet still contains .lesson-card sizing and pseudos;
+   override those directly rather than using the old two-layer card construction. */
+.app-shell.garden{
+  height:auto;
+  min-height:calc(100dvh - 36px);
+  max-height:none;
+  overflow:visible;
+}
+.garden::after{content:none!important;display:none!important}
+.garden .main{overflow:visible;flex:1 0 auto}
+.garden .dashboard{min-height:0;align-items:stretch}
+.garden .schedule-split{min-height:0;align-items:stretch}
+.garden .classes-panel{
+  display:flex;flex-direction:column;overflow:visible;
+  height:auto;min-height:var(--lessons-height, 510px);
+  padding-bottom:0;
+}
+.garden .classes-panel .panel-heading{flex:none}
+.garden .classes-panel .schedule-list{
+  display:flex;flex-direction:column;
+  flex:1 0 auto;
+  height:auto;min-height:0;max-height:none;
+  overflow:visible!important;
+  gap:11px;padding:0 0 14px;
+  scrollbar-width:none;
+}
+.garden .schedule-list .lesson{
+  display:grid!important;
+  grid-template-columns:68px minmax(0,1fr)!important;
+  grid-template-rows:auto;
+  gap:12px!important;align-items:center;justify-content:stretch;
+  flex:none!important;float:none;
+  height:auto!important;min-height:105px;max-height:none;
+  width:100%;min-width:0;
+  padding:15px 14px!important;
+  border-left:5px solid var(--course-color,#8aae94);
+  border-radius:14px;
+  background:linear-gradient(105deg,color-mix(in srgb,var(--course-color) 13%,white),#fffdfb 80%);
+  overflow:hidden;
+  transform:none;
+  box-shadow:none;
+}
+.garden .schedule-list .lesson::before,
+.garden .schedule-list .lesson .lesson-card::before,
+.garden .schedule-list .lesson .lesson-card::after{
+  display:none!important;content:none!important;
+}
+.garden .schedule-list .lesson .time-block{
+  position:static!important;
+  display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;
+  grid-column:1;grid-row:1;
+  width:68px!important;min-width:0;max-width:68px;flex:none!important;
+  height:auto;min-height:58px;align-self:center;
+  margin:0;padding:0 10px 0 0!important;
+  background:transparent;border:0;border-right:1px solid #d7e4d7;border-radius:0;
+  box-shadow:none;transform:none;overflow:visible;
+  text-align:center;line-height:1.2;white-space:nowrap;color:#416b53;
+}
+.garden .schedule-list .lesson .time-start{
+  display:block;line-height:1.2;font-size:13px!important;font-weight:800;
+  margin:0;color:#476950;
+}
+.garden .schedule-list .lesson .time-end,
+.garden .schedule-list .lesson .time-period{
+  display:block;margin:0;font-size:10px!important;line-height:1.2;color:#829785;
+}
+.garden .schedule-list .lesson .lesson-card{
+  display:flex!important;flex-direction:column;justify-content:center;align-items:flex-start;
+  position:static;grid-column:2;grid-row:1;
+  min-height:0!important;max-width:100%;width:auto;
+  margin:0!important;padding:0!important;
+  border:0!important;border-radius:0!important;background:transparent!important;
+  box-shadow:none!important;transform:none!important;
+  overflow:visible!important;
+  color:#34493c;gap:7px;
+}
+.garden .schedule-list .lesson .lesson-title{
+  display:block;
+  width:100%;max-width:100%;
+  margin:0!important;padding:0;
+  color:#365242;
+  font-size:14px!important;font-weight:800;letter-spacing:-.015em;
+  line-height:1.32!important;white-space:normal!important;overflow-wrap:anywhere;
+}
+.garden .schedule-list .lesson .lesson-meta{
+  display:flex;flex-wrap:wrap;min-width:0;width:100%;margin:0;
+  font-size:11px!important;line-height:1.4!important;
+  color:#788e80;gap:5px;
+}
+.garden .schedule-list .lesson.completed{opacity:.82}
+.garden .schedule-list .lesson.inactive{opacity:.56}
+.garden .schedule-list .lesson:hover,
+.garden .schedule-list .lesson:not(.inactive):hover{
+  transform:none!important;
+  background:linear-gradient(105deg,color-mix(in srgb,var(--course-color) 19%,white),#fffdfb 78%);
+  border-color:color-mix(in srgb,var(--course-color) 62%,#dde8cf);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--course-color) 23%,transparent);
+}
+.garden .classes-panel .class-footer{
+  flex:none;position:static;margin-top:auto;min-height:36px;
+}
+.garden .cool-section .cool-deadlines .cool-item{
+  border-left-color:var(--cool-color,#e9b75f);
+  background:linear-gradient(105deg,color-mix(in srgb,var(--cool-color,#e9b75f) 14%,white),#fffef8 85%);
+}
+.garden .cool-section .cool-deadlines .cool-item:hover{
+  border-left-color:var(--cool-color,#e9b75f);
+  background:linear-gradient(105deg,color-mix(in srgb,var(--cool-color,#e9b75f) 22%,white),#fffef8 85%);
+}
+.garden .cool-item .cool-date strong{color:#3c6349}
+.garden .cool-item .cool-due{background:color-mix(in srgb,var(--cool-color,#e9b75f) 18%,white);color:#625d49}
+.garden .garden-links-footer{display:none!important}
+@media(min-width:901px){
+  .app-shell.garden{min-height:max(830px,calc(100dvh - 36px));}
+  .garden .classes-panel{min-height:var(--lessons-height, 510px)}
+}
+@media(max-width:900px){
+  .app-shell.garden{height:auto;min-height:calc(100dvh - 20px)}
+  .garden .classes-panel{min-height:auto;overflow:visible}
+  .garden .classes-panel .schedule-list{overflow:visible!important;flex:none}
+  .garden .classes-panel .class-footer{margin-top:8px}
+  .garden .schedule-list .lesson{min-height:102px;padding:12px!important}
+}
+@media(max-width:610px){
+  .garden .schedule-list .lesson{grid-template-columns:64px minmax(0,1fr)!important;gap:9px!important}
+  .garden .schedule-list .lesson .time-block{width:64px!important;max-width:64px}
+  .garden .schedule-list .lesson .lesson-title{font-size:13px!important}
+}
