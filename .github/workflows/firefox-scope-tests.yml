@@ -4,6 +4,8 @@ on:
     paths:
       - 'sites/eren/skeuo-demo.html'
       - 'sites/eren/skeuo-runtime.js'
+      - 'sites/eren/scope-audio-bridge.js'
+      - 'sites/eren/sw.js'
       - 'tests/browser/scope.spec.mjs'
       - 'playwright.firefox.config.mjs'
       - '.github/workflows/firefox-scope-tests.yml'
@@ -12,6 +14,8 @@ on:
     paths:
       - 'sites/eren/skeuo-demo.html'
       - 'sites/eren/skeuo-runtime.js'
+      - 'sites/eren/scope-audio-bridge.js'
+      - 'sites/eren/sw.js'
       - 'tests/browser/scope.spec.mjs'
       - 'playwright.firefox.config.mjs'
       - '.github/workflows/firefox-scope-tests.yml'
