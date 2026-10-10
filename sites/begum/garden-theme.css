@@ -749,3 +749,16 @@ body{min-width:320px}
   .garden .cool-section .cool-intro{margin-bottom:4px}
   .garden .links-panel{flex-basis:98px}
 }
+
+/* Keep the Up Next card contained when the desktop header is compact. */
+@media(min-width:901px){
+  .garden .hero .hero-next-class{
+    top:18px;min-height:56px;max-height:79px;
+    padding:6px 10px;
+  }
+  .garden .hero .hero-next-class .next-copy{gap:2px}
+  .garden .hero .hero-next-class .next-title{font-size:11px;line-height:1.18}
+}
+@media(min-width:901px) and (max-height:735px){
+  .garden .hero .hero-next-class{top:12px;min-height:51px;max-height:72px}
+}
