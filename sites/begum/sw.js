@@ -1,4 +1,4 @@
-const CACHE_NAME = 'begum-schedule-github-v18';
+const CACHE_NAME = 'begum-schedule-github-v19';
 const NTU_MAIL_URL = 'https://wmail1.cc.ntu.edu.tw/rc/index.php';
 const ROOT = new URL(self.registration.scope).pathname;
 const asset = path => ROOT + (path.startsWith('/') ? path.slice(1) : path);
@@ -7,7 +7,7 @@ const APP_SHELL = [
   ROOT,
   asset('index.html'),
   asset('styles.css?v=110'),
-  asset('garden-theme.css?v=9'),
+  asset('garden-theme.css?v=10'),
   asset('app.js?v=118'),
   asset('todo-realtime.js?v=1'),
   asset('garden-bees.js?v=2'),
