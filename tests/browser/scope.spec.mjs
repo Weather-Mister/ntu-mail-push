@@ -235,8 +235,8 @@ test('restored audio scope plots real signed time-domain samples, not a syntheti
     return {
       first, second, silent,
       gainAfterFirst,
-      firstY: Number(first.match(/^M0 ([-\\d.]+)/)?.[1]),
-      lastY: Number(first.match(/L200 ([-\\d.]+)$/)?.[1]),
+      firstY: Number(first.match(/^M0 ([-0-9.]+)/)?.[1]),
+      lastY: Number(first.match(/L200 ([-0-9.]+)$/)?.[1]),
       label: scheduleScopeLabel.textContent,
       mode: scheduleScopeMode.textContent,
       fallback: scheduleScopeTrace.getAttribute('d')
