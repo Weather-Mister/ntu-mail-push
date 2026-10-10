@@ -1061,3 +1061,75 @@ body{min-width:320px}
     font-size:clamp(16px,4.6vw,18px);
   }
 }
+
+/* Up Next mobile containment: grow the hero around the entire title AND
+   countdown, rather than merely allowing letters to paint outside a box. */
+@media(max-width:900px){
+  .garden .hero{
+    height:auto;
+    max-height:none;
+    padding-bottom:26px;
+  }
+  .garden .hero .hero-info{
+    height:auto;
+    max-height:none;
+    min-height:0;
+    flex:0 0 auto;
+  }
+  .garden .hero .hero-next-class{
+    position:relative;
+    flex:0 0 auto;
+    align-items:flex-start;
+    height:auto;
+    max-height:none;
+    min-height:0;
+    overflow:visible;
+    margin:1px 0 0;
+    padding-bottom:7px;
+  }
+  .garden .hero .hero-next-class .next-copy{
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    flex:0 0 auto;
+    width:100%;
+    max-width:100%;
+    height:auto;
+    max-height:none;
+    overflow:visible;
+    gap:5px;
+  }
+  .garden .hero .hero-next-class .next-title{
+    display:block;
+    height:auto;
+    max-height:none;
+    min-height:0;
+    overflow:visible;
+    white-space:normal;
+    -webkit-line-clamp:unset;
+    line-clamp:unset;
+    text-overflow:clip;
+    overflow-wrap:break-word;
+    line-height:1.38;
+    margin:0;
+    padding:2px 0 3px;
+  }
+  .garden .hero .hero-next-class .next-countdown{
+    display:block;
+    position:static;
+    flex:none;
+    height:auto;
+    min-height:0;
+    line-height:1.45;
+    margin:0;
+    padding:1px 0 3px;
+    overflow:visible;
+  }
+}
+@media(max-width:610px){
+  .garden .hero{
+    height:auto;
+    min-height:253px;
+    padding-bottom:27px;
+  }
+}
