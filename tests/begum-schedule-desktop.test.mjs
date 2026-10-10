@@ -29,7 +29,7 @@ test('production retains the exact demo garden identity and a 50/50 schedule and
 });
 test('Garden polish keeps demo colors, honey jar, compact controls and live data', () => {
   assert.ok(html.includes('class="honey-jar"'));
-  assert.ok(html.includes('class="hero-next-class"'));
+  assert.ok(html.includes('class="next-class hero-next-class"'));
   assert.ok(html.includes('class="week-caption week-picker"'));
   assert.ok(html.includes('id="weekDateJump"'));
   assert.ok(html.includes('id="placesButton"'));
