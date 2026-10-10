@@ -4,8 +4,8 @@
   "scripts": {
     "test": "node --test tests/*.test.mjs",
     "test:ui": "playwright test",
-    "check:mail": "deno check --node-modules-dir=manual --config supabase/functions/eren-mail/deno.json supabase/functions/eren-mail/index.ts",
-    "test:server": "deno test --allow-env --allow-net --node-modules-dir=manual --config supabase/functions/eren-mail/deno.json tests/server_test.ts"
+    "check:mail": "deno check --frozen --node-modules-dir=auto --config supabase/functions/eren-mail/deno.json supabase/functions/eren-mail/index.ts",
+    "test:server": "deno test --frozen --allow-env --allow-net --node-modules-dir=auto --config supabase/functions/eren-mail/deno.json tests/server_test.ts"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.3.14",
