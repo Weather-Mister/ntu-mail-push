@@ -95,10 +95,18 @@
         const data = JSON.parse(event.data);
         if (data?.type !== 'levels' || data?.version !== 1 ||
             !Array.isArray(data.bins) || data.bins.length !== 64) return;
+        // Protocol v1 remains compatible with older envelope-only helpers.
+        // A current helper also sends 128 normalized, signed *time-domain*
+        // samples, reproducing the first real-audio oscilloscope's trace.
+        const hasWave = Object.hasOwn(data, 'wave');
+        if (hasWave && (!Array.isArray(data.wave) || data.wave.length !== 128 ||
+            !data.wave.every(sample => typeof sample === 'number' &&
+              Number.isFinite(sample) && sample >= -1 && sample <= 1))) return;
         frame = {
           rms: safeNumber(data.rms),
           pitch: safeNumber(data.pitch),
-          bins: data.bins.map(safeNumber)
+          bins: data.bins.map(safeNumber),
+          wave: hasWave ? data.wave.slice() : null
         };
         lastFrameAt = performance.now();
       } catch (_) {}
