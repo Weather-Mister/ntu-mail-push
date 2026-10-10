@@ -314,11 +314,19 @@ test('web-only intensity boosts the same real audio and remembers the setting', 
 });
 
 test('scope intensity can be adjusted without the Windows binary or audio capture', async ({ page }) => {
+  const originPage = 'https://weather-mister.github.io/ntu-mail-push/scope-slider-test.html';
+  await page.route(originPage, route => route.fulfill({
+    contentType: 'text/html', body: '<!doctype html><html><body>Test</body></html>'
+  }));
+  await page.goto(originPage);
   const errors = await mount(page, true);
   const slider = page.locator('#scopeAudioSensitivity');
   await expect(slider).toHaveValue('4');
   await expect(page.locator('#scopeAudioSensitivityValue')).toHaveText('WILD');
-  await slider.fill('2');
+  await slider.evaluate(element => {
+    element.value = '2';
+    element.dispatchEvent(new Event('input', { bubbles: true }));
+  });
   await expect(page.locator('#scopeAudioSensitivityValue')).toHaveText('LIVE');
   const persisted = await page.evaluate(() => localStorage.getItem('ntu-scope-visual-intensity-v1'));
   expect(persisted).toBe('2');
