@@ -438,3 +438,46 @@ test('mobile Up Next course titles wrap without clipping', async ({page}) => {
     expect(result.heroNotBehindWeekbar, 'header overlaps week bar at width ' + width).toBe(true);
   }
 });
+
+test('desktop Up Next does not clip long titles or the countdown', async ({page}) => {
+  for (const [width,height] of [[1440,900],[1180,780],[1000,760],[960,680]]) {
+    await page.setViewportSize({width,height});
+    await page.goto('/?pair=begum');
+    const result=await page.evaluate(()=>{
+      const next=document.querySelector('#nextClass');
+      const copy=next.querySelector('.next-copy');
+      const title=next.querySelector('.next-title');
+      title.textContent='Exploring Taiwan: Women and Taiwanese Society';
+      let countdown=next.querySelector('.next-countdown');
+      if(!countdown){
+        countdown=document.createElement('p');
+        countdown.className='next-countdown';
+        copy.append(countdown);
+      }
+      countdown.textContent='in 27 hr 42 min';
+      const rect=e=>e.getBoundingClientRect();
+      const t=rect(title),d=rect(countdown),n=rect(next),h=rect(document.querySelector('.hero'));
+      const titleStyle=getComputedStyle(title),countdownStyle=getComputedStyle(countdown);
+      return {
+        titleDisplay:titleStyle.display,
+        titleOverflow:titleStyle.overflow,
+        titleLineClamp:titleStyle.webkitLineClamp,
+        titleFullyLaidOut:title.scrollHeight<=title.clientHeight+2,
+        titleClearOfCountdown:t.bottom<=d.top+1,
+        countdownWithinNext:d.bottom<=n.bottom+1,
+        countdownWithinHero:d.bottom<=h.bottom-2,
+        titleWithinHero:t.left>=h.left-2&&t.right<=h.right+2,
+        countdownVisible:countdownStyle.display!=='none'&&countdownStyle.visibility==='visible'
+      };
+    });
+    expect(result.titleDisplay,'title display at '+width).toBe('block');
+    expect(result.titleOverflow,'title overflow at '+width).toBe('visible');
+    expect(result.titleLineClamp,'title clamp at '+width).toBe('none');
+    expect(result.titleFullyLaidOut,'title clipped at '+width).toBe(true);
+    expect(result.titleClearOfCountdown,'title overlaps countdown at '+width).toBe(true);
+    expect(result.countdownWithinNext,'countdown outside next panel at '+width).toBe(true);
+    expect(result.countdownWithinHero,'countdown outside hero at '+width).toBe(true);
+    expect(result.titleWithinHero,'title outside hero at '+width).toBe(true);
+    expect(result.countdownVisible,'countdown hidden at '+width).toBe(true);
+  }
+});
