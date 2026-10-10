@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { readFileSync } from 'node:fs';
+import { createServer } from 'node:net';
+import { createHash } from 'node:crypto';
 
 const runtime = readFileSync(new URL('../../sites/eren/skeuo-runtime.js', import.meta.url), 'utf8');
 const schedule = runtime.slice(
@@ -254,4 +256,38 @@ test('audio bridge uses localhost only and no browser capture APIs', async () =>
   expect(html).toContain('scope-audio-bridge.js?v=1');
   expect(html).not.toContain('pc-audio-scope.js');
   expect(sw).toContain("asset('scope-audio-bridge.js?v=1')");
+});
+
+test('Firefox permits a GitHub HTTPS page to connect to a local WebSocket with explicit consent', async ({ page }) => {
+  const server = createServer(socket => {
+    socket.once('data', bytes => {
+      const request = bytes.toString('utf8');
+      const key = /Sec-WebSocket-Key:\\s*([^\\r\\n]+)/i.exec(request)?.[1]?.trim();
+      if (!key) { socket.destroy(); return; }
+      const accept = createHash('sha1')
+        .update(key + '258EAFA5-E914-47DA-95CA-C5AB0DC85B11').digest('base64');
+      socket.write('HTTP/1.1 101 Switching Protocols\\r\\n'
+        + 'Upgrade: websocket\\r\\nConnection: Upgrade\\r\\n'
+        + 'Sec-WebSocket-Accept: ' + accept + '\\r\\n\\r\\n');
+    });
+  });
+  try {
+    await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+    const port = server.address().port;
+    const testUrl = 'https://weather-mister.github.io/ntu-mail-push/test-bridge.html';
+    await page.route(testUrl, route => route.fulfill({
+      contentType: 'text/html',
+      body: '<!doctype html><html><body>Loopback transport test</body></html>'
+    }));
+    await page.goto(testUrl);
+    const result = await page.evaluate(port => new Promise(resolve => {
+      const socket = new WebSocket('ws://127.0.0.1:' + port + '/stream');
+      const timeout = setTimeout(() => resolve('timeout'), 8000);
+      socket.addEventListener('open', () => { clearTimeout(timeout); resolve('open'); socket.close(); });
+      socket.addEventListener('error', () => { clearTimeout(timeout); resolve('error'); });
+    }), port);
+    expect(result).toBe('open');
+  } finally {
+    server.close();
+  }
 });
