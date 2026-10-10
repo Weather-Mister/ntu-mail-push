@@ -48,6 +48,7 @@ using Microsoft::WRL::ComPtr;
 namespace fs = std::filesystem;
 constexpr std::uint16_t kPort = 43187;
 constexpr size_t kBins = 64;
+constexpr size_t kWaveSamples = 128;  // 512-frame time-domain snapshot, like the original scope.
 constexpr char kOrigin[] = "https://weather-mister.github.io";
 constexpr char kWsGuid[] = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 constexpr char kDemo[] = "https://weather-mister.github.io/ntu-mail-push/skeuo-demo.html";
@@ -72,6 +73,7 @@ static UINT gTaskbarCreated = 0;
 
 struct Frame {
     std::array<float, kBins> bins{};
+    std::array<float, kWaveSamples> wave{};
     float rms = 0;
     float pitch = 0;
     ULONGLONG timestamp = 0;
@@ -444,10 +446,12 @@ private:
         double total = 0;
         float previous = 0;
         int crossings = 0;
-        for (UINT32 i = 0; i < frames; ++i) {
+        // Read normalized signed PCM without retaining or recording audio buffers.
+        // The original browser oscilloscope sampled a 512-frame time-domain window.
+        const auto monoAt = [&](UINT32 index) -> float {
             double mono = 0;
             for (unsigned int ch = 0; ch < channels; ++ch) {
-                const BYTE* ptr = data + static_cast<size_t>(i) * stride + ch * bytes;
+                const BYTE* ptr = data + static_cast<size_t>(index) * stride + ch * bytes;
                 double sample = 0;
                 if (floating) {
                     float n;
@@ -468,7 +472,18 @@ private:
                 }
                 mono += sample;
             }
-            const float sample = static_cast<float>(mono / channels);
+            return static_cast<float>(mono / channels);
+        };
+        // A short *actual* time-domain signal instead of the old synthetic
+        // sine+amplitude-envelope formula. No PCM is stored on disk.
+        const UINT32 count = std::min<UINT32>(frames, 512);
+        for (size_t i = 0; i < kWaveSamples; ++i) {
+            const UINT32 offset = static_cast<UINT32>(
+                i * static_cast<size_t>(count - 1) / (kWaveSamples - 1));
+            value.wave[i] = monoAt(frames - count + offset);
+        }
+        for (UINT32 i = 0; i < frames; ++i) {
+            const float sample = monoAt(i);
             const double sq = static_cast<double>(sample) * sample;
             const size_t b = static_cast<size_t>(i) * kBins / frames;
             squared[b] += sq;
@@ -647,6 +662,11 @@ static std::string JsonFrame(const Frame& frame) {
         if (i) stream << ',';
         stream << Clamp(frame.bins[i]);
     }
+    stream << "],\"wave\":[";
+    for (size_t i = 0; i < frame.wave.size(); ++i) {
+        if (i) stream << ',';
+        stream << std::clamp(std::isfinite(frame.wave[i]) ? frame.wave[i] : 0.0f, -1.0f, 1.0f);
+    }
     stream << "]}";
     return stream.str();
 }
@@ -717,7 +737,10 @@ static int SelfTest() {
             "Connection: keep-alive, Upgrade\r\nSec-WebSocket-Version: 13\r\n"
             "Sec-WebSocket-Key: " + challenge + "\r\n\r\n";
     };
-    const std::string frame = JsonFrame(Frame{});
+    Frame sample{};
+    sample.wave[0] = -.5f;
+    sample.wave[1] = .75f;
+    const std::string frame = JsonFrame(sample);
     const bool ok = WebSocketAccept(challenge) == expected &&
         Authorized(handshake(kOrigin, secret), secret) &&
         !Authorized(handshake("https://example.com", secret), secret) &&
@@ -725,7 +748,8 @@ static int SelfTest() {
         !Authorized(handshake(kOrigin, secret + "BAD"), secret) &&
         frame.find("\"version\":1") != std::string::npos &&
         frame.find("\"bins\":[") != std::string::npos &&
-        std::count(frame.begin(), frame.end(), ',') == 67;
+        frame.find("\"wave\":[-0.500,0.750,") != std::string::npos &&
+        std::count(frame.begin(), frame.end(), ',') == 195;
     std::cout << (ok ? "Native self-test: PASS\n" : "Native self-test: FAIL\n");
     return ok ? 0 : 1;
 }

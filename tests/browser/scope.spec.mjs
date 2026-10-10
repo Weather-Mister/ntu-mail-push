@@ -203,7 +203,78 @@ test('companion waveform switches on with data, and returns to schedule on disco
   expect(errors).toEqual([]);
 });
 
-test('local pairing requires a key, accepts only measured envelopes, and disconnects cleanly', async ({ page }) => {
+test('restored audio scope plots real signed time-domain samples, not a synthetic sine', async ({ page }) => {
+  const errors = await mount(page, true);
+  const result = await page.evaluate(() => {
+    const wave = new Array(128).fill(0);
+    wave[0] = -0.5;
+    wave[64] = 0.25;
+    wave[127] = 0.65;
+    let current = { rms: 0.5, pitch: 0, bins: new Array(64).fill(0), wave };
+    window.NTUScopeAudio = { read: () => current };
+    refreshScheduleScopeMeta();
+    scheduleScopeAudioGain = 1;
+    drawScheduleScope(300);
+    const first = scheduleScopeTrace.getAttribute('d');
+    const gainAfterFirst = scheduleScopeAudioGain;
+
+    // Deliberately vary the *old* fabricated pitch and envelope readings.
+    // Actual signed audio samples now solely determine waveform shape.
+    current = { ...current, pitch: 1, bins: new Array(64).fill(1) };
+    scheduleScopeAudioGain = 1;
+    drawScheduleScope(360);
+    const second = scheduleScopeTrace.getAttribute('d');
+
+    current = { ...current, wave: new Array(128).fill(0) };
+    drawScheduleScope(420);
+    const silent = scheduleScopeTrace.getAttribute('d');
+
+    current = null;
+    refreshScheduleScopeMeta();
+    drawScheduleScope(480);
+    return {
+      first, second, silent,
+      gainAfterFirst,
+      firstY: Number(first.match(/^M0 ([-0-9.]+)/)?.[1]),
+      lastY: Number(first.match(/L200 ([-0-9.]+)$/)?.[1]),
+      label: scheduleScopeLabel.textContent,
+      mode: scheduleScopeMode.textContent,
+      fallback: scheduleScopeTrace.getAttribute('d')
+    };
+  });
+  expect(result.first).toBe(result.second);
+  expect(result.firstY).toBeCloseTo(21 - 0.5 * result.gainAfterFirst * 17.5, 1);
+  expect(result.lastY).toBeCloseTo(21 + 0.65 * result.gainAfterFirst * 17.5, 1);
+  expect(result.first).not.toContain('NaN');
+  expect(result.gainAfterFirst).toBeGreaterThan(1);
+  expect(result.silent).toMatch(/^M0 21\.00(?: L\d+ 21\.00)+$/);
+  expect(result.mode).toBe('NEXT START');
+  expect(result.label).toBe('ΔT / SCHED');
+  expect(result.fallback).not.toBe(result.silent);
+  expect(errors).toEqual([]);
+});
+
+test('audio scope stays inside CRT boundaries for clipped and very quiet audio', async ({ page }) => {
+  const errors = await mount(page, true);
+  const result = await page.evaluate(() => {
+    let wave = Array.from({length: 128}, (_, i) => i % 2 ? 1 : -1);
+    window.NTUScopeAudio = {read: () => ({rms: 1, bins: new Array(64).fill(1), pitch: 0, wave})};
+    drawScheduleScope(1);
+    const clipped = scheduleScopeTrace.getAttribute('d');
+    wave = wave.map(n => n * 0.01);
+    scheduleScopeAudioGain = 1;
+    drawScheduleScope(50);
+    const quiet = scheduleScopeTrace.getAttribute('d');
+    const ys = path => Array.from(path.matchAll(/[ML]\d+ ([-\d.]+)/g), m => Number(m[1]));
+    return { clippedYs: ys(clipped), quietYs: ys(quiet) };
+  });
+  expect(Math.min(...result.clippedYs)).toBeGreaterThanOrEqual(2.5);
+  expect(Math.max(...result.clippedYs)).toBeLessThanOrEqual(39.5);
+  expect(Math.max(...result.quietYs) - Math.min(...result.quietYs)).toBeLessThan(2);
+  expect(errors).toEqual([]);
+});
+
+test('local pairing validates signed wave snapshots and keeps older helpers compatible', async ({ page }) => {
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
   await page.setContent(`<button id="scopeAudioToggle">AUX</button>
@@ -236,15 +307,21 @@ test('local pairing requires a key, accepts only measured envelopes, and disconn
     const url = socket.url;
     socket.readyState = 1;
     socket.dispatch('open');
-    socket.dispatch('message', { data: JSON.stringify({ type: 'levels', version: 1, rms: .5, pitch: .2, bins: new Array(64).fill(.4) }) });
+    const wave = Array.from({ length: 128 }, (_, i) => (i - 64) / 128);
+    socket.dispatch('message', { data: JSON.stringify({ type: 'levels', version: 1, rms: .5, pitch: .2, bins: new Array(64).fill(.4), wave }) });
     const fresh = window.NTUScopeAudio.read();
-    socket.dispatch('message', { data: JSON.stringify({ type: 'levels', version: 1, rms: .5, pitch: .2, bins: [1, 2] }) });
+    socket.dispatch('message', { data: JSON.stringify({ type: 'levels', version: 1, rms: .5, pitch: .2, bins: new Array(64).fill(.4), wave: new Array(128).fill(7) }) });
     const stillFresh = window.NTUScopeAudio.read();
-    return { url, fresh, stillFresh };
+    socket.dispatch('message', { data: JSON.stringify({ type: 'levels', version: 1, rms: .5, pitch: .2, bins: new Array(64).fill(.4) }) });
+    const legacy = window.NTUScopeAudio.read();
+    return { url, fresh, stillFresh, legacy };
   });
   expect(result.url).toBe(`ws://127.0.0.1:43187/stream?key=${key}`);
   expect(result.fresh.bins).toHaveLength(64);
-  expect(result.stillFresh.bins).toHaveLength(64);
+  expect(result.fresh.wave).toHaveLength(128);
+  expect(result.fresh.wave[0]).toBe(-0.5);
+  expect(result.stillFresh.wave).toEqual(result.fresh.wave);
+  expect(result.legacy.wave).toBe(null);
   await page.locator('#scopeAudioDisconnect').click();
   expect(await page.evaluate(() => window.NTUScopeAudio.read())).toBe(null);
   expect(errors).toEqual([]);
@@ -253,9 +330,9 @@ test('local pairing requires a key, accepts only measured envelopes, and disconn
 test('audio bridge uses localhost only and no browser capture APIs', async () => {
   expect(schedule + bridge).not.toMatch(/getDisplayMedia|getUserMedia|AudioContext|MediaRecorder/);
   expect(bridge).toContain('ws://127.0.0.1:43187');
-  expect(html).toContain('scope-audio-bridge.js?v=1');
+  expect(html).toContain('scope-audio-bridge.js?v=2');
   expect(html).not.toContain('pc-audio-scope.js');
-  expect(sw).toContain("asset('scope-audio-bridge.js?v=1')");
+  expect(sw).toContain("asset('scope-audio-bridge.js?v=2')");
 });
 
 test('Firefox permits a GitHub HTTPS page to connect to a local WebSocket with explicit consent', async ({ page }) => {

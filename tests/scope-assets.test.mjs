@@ -27,8 +27,8 @@ test('scope uses an opt-in localhost bridge without browser media capture APIs',
   assert.match(html, /id="scheduleScope" role="group"/);
   assert.match(html, /id="scopeAudioToggle"/);
   assert.match(html, /id="scopeAudioDialog"/);
-  assert.match(html, /scope-audio-bridge\.js\?v=1/);
-  assert.match(sw, /asset\('scope-audio-bridge\.js\?v=1'\)/);
+  assert.match(html, /scope-audio-bridge\.js\?v=2/);
+  assert.match(sw, /asset\('scope-audio-bridge\.js\?v=2'\)/);
   assert.match(read('scope-audio-bridge.js'), /ws:\/\/127\.0\.0\.1:43187/);
   assert.doesNotMatch(sw, /pc-audio-scope/);
   assert.doesNotMatch(runtime, /getDisplayMedia|getUserMedia|AudioContext|audioLevel|pc-audio/);

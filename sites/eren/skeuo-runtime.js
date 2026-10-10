@@ -1888,6 +1888,7 @@ let scheduleScopeLastMeta = 0;
 let scheduleScopeLastDraw = 0;
 let scheduleScopePhase = 0;      /* accumulated, so changing speed never rewinds or snaps the wave */
 let scheduleScopeLastTs = 0;
+let scheduleScopeAudioGain = 1;  /* original audio scope's slow, gentle automatic gain */
 
 function formatScheduleScopeDelta(ms){
   const seconds = Math.max(0, Math.ceil(ms / 1000));
@@ -1933,10 +1934,36 @@ function refreshScheduleScopeMeta(){
 function drawScheduleScope(timestamp=0){
   if (!scheduleScopeTrace) return;
 
-  // The optional localhost companion sends only 64 envelope measurements.
-  // In audio mode the CRT remains a waveform, with amplitude driven by real playback.
-  // On disconnect/stale frames the original schedule trace is retained unchanged.
+  // The first audio scope drew actual audio samples, rather than a synthetic
+  // sine whose frequency wandered with the companion's rough pitch estimate.
+  // Native companion v2.1 restores those 128 signed time-domain samples.
+  // An older installed companion still uses the legacy envelope fallback.
   const pcFrame = globalThis.NTUScopeAudio?.read?.();
+  if (pcFrame?.wave?.length === 128) {
+    const wave = pcFrame.wave;
+    let energy = 0;
+    for (const sample of wave) energy += sample * sample;
+    const rms = Math.sqrt(energy / wave.length);
+    // Match the first browser-audio prototype: a quiet signal is boosted,
+    // loud passages stay inside the CRT, and silence is a dead-flat baseline.
+    const desired = rms > 0.004
+      ? Math.min(5.5, Math.max(1, 0.24 / rms)) : 1;
+    scheduleScopeAudioGain += (desired - scheduleScopeAudioGain) * 0.12;
+    let d = '';
+    const width = 200, mid = 21, amplitude = 17.5;
+    for (let x = 0; x <= width; x += 2) {
+      const index = Math.min(wave.length - 1,
+        Math.floor(x / width * (wave.length - 1)));
+      const y = Math.max(2.5, Math.min(39.5,
+        mid + wave[index] * scheduleScopeAudioGain * amplitude));
+      d += `${x === 0 ? 'M' : 'L'}${x} ${y.toFixed(2)} `;
+    }
+    scheduleScopeTrace.setAttribute('d', d.trim());
+    // When schedule fallback resumes, integrate only the following frame,
+    // not all time that passed while the real waveform was being drawn.
+    scheduleScopeLastTs = timestamp;
+    return;
+  }
   if (pcFrame) {
     const width = 200, mid = 21, samples = 160;
     const tau = Math.PI * 2;
