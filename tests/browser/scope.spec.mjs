@@ -235,14 +235,16 @@ test('restored audio scope plots real signed time-domain samples, not a syntheti
     return {
       first, second, silent,
       gainAfterFirst,
+      firstY: Number(first.match(/^M0 ([-\\d.]+)/)?.[1]),
+      lastY: Number(first.match(/L200 ([-\\d.]+)$/)?.[1]),
       label: scheduleScopeLabel.textContent,
       mode: scheduleScopeMode.textContent,
       fallback: scheduleScopeTrace.getAttribute('d')
     };
   });
   expect(result.first).toBe(result.second);
-  expect(result.first).toMatch(/^M0 12\.[0-9]+/);
-  expect(result.first).toMatch(/L200 3[0-9]\.[0-9]+$/);
+  expect(result.firstY).toBeCloseTo(21 - 0.5 * result.gainAfterFirst * 17.5, 1);
+  expect(result.lastY).toBeCloseTo(21 + 0.65 * result.gainAfterFirst * 17.5, 1);
   expect(result.first).not.toContain('NaN');
   expect(result.gainAfterFirst).toBeGreaterThan(1);
   expect(result.silent).toMatch(/^M0 21\.00(?: L\d+ 21\.00)+$/);
