@@ -18,12 +18,26 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '8.0.x'
-      - name: Publish self-contained Windows executable
+      - name: Configure native x64 Release (MSVC /MT)
         shell: pwsh
-        run: dotnet publish companion/NTUScope/NTUScope.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o dist/scope
+        run: cmake -S companion/NTUScope -B build/ntu-scope -G "Visual Studio 17 2022" -A x64
+      - name: Compile no-runtime Windows application
+        shell: pwsh
+        run: cmake --build build/ntu-scope --config Release --parallel
+      - name: Validate executable and size
+        shell: pwsh
+        run: |
+          $exe = "build/ntu-scope/Release/NTUScope.exe"
+          if (!(Test-Path $exe)) { throw "Native NTUScope.exe was not produced" }
+          & $exe --self-test
+          if ($LASTEXITCODE -ne 0) { throw "Native audio companion self-tests failed" }
+          $version = & $exe --version
+          if ($version -notmatch "native 2.0") { throw "Wrong executable version" }
+          $bytes = (Get-Item $exe).Length
+          Write-Host "NTUScope.exe: $bytes bytes ($([math]::Round($bytes / 1MB, 3)) MiB)"
+          if ($bytes -ge 5MB) { throw "Native executable exceeded 5 MiB size budget" }
+          New-Item -ItemType Directory -Path dist/scope -Force | Out-Null
+          Copy-Item $exe dist/scope/NTUScope.exe
       - name: Upload companion exe
         uses: actions/upload-artifact@v4
         with:
