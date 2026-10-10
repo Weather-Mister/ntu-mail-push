@@ -180,7 +180,7 @@ let todoExpanded = false;
 
 // Keep the two schedule PWAs and their storage independent. This only moves
 // Begüm's existing shortcuts to convenient places on larger screens.
-const desktopLayoutQuery = window.matchMedia('(min-width: 860px)');
+const desktopLayoutQuery = window.matchMedia('(min-width: 901px)');
 const utilityColumn = document.querySelector('.utility-column');
 const quickAccessRow = document.getElementById('quickAccessRow');
 const desktopShortcutsColumn = document.querySelector('.desktop-shortcuts-column');
