@@ -1920,13 +1920,47 @@ function readScheduleScope(){
 function refreshScheduleScopeMeta(){
   if (!scheduleScope) return;
   scheduleScopeState = readScheduleScope();
-  if (scheduleScopeValue) scheduleScopeValue.textContent = scheduleScopeState.active ? scheduleScopeState.value : '--';
-  if (scheduleScopeMode) scheduleScopeMode.textContent = scheduleScopeState.mode;
-  scheduleScope.setAttribute('aria-label', scheduleScopeState.aria);
+  const pcFrame = globalThis.NTUScopeAudio?.read?.();
+  const pcActive = Boolean(pcFrame);
+  scheduleScope.classList.toggle('is-audio', pcActive);
+  const label = document.getElementById('scheduleScopeLabel');
+  if (label) label.textContent = pcActive ? 'SIGNAL / PC' : 'ΔT / SCHED';
+  if (scheduleScopeValue) scheduleScopeValue.textContent = pcActive ? 'LIVE' : (scheduleScopeState.active ? scheduleScopeState.value : '--');
+  if (scheduleScopeMode) scheduleScopeMode.textContent = pcActive ? 'SYSTEM AUDIO' : scheduleScopeState.mode;
+  scheduleScope.setAttribute('aria-label', pcActive ? 'PC system audio waveform monitor' : scheduleScopeState.aria);
 }
 
 function drawScheduleScope(timestamp=0){
   if (!scheduleScopeTrace) return;
+
+  // The optional localhost companion sends only 64 envelope measurements.
+  // In audio mode the CRT remains a waveform, with amplitude driven by real playback.
+  // On disconnect/stale frames the original schedule trace is retained unchanged.
+  const pcFrame = globalThis.NTUScopeAudio?.read?.();
+  if (pcFrame) {
+    const width = 200, mid = 21, samples = 160;
+    const tau = Math.PI * 2;
+    const bins = pcFrame.bins;
+    const dt = scheduleScopeLastTs && timestamp > scheduleScopeLastTs
+      ? Math.min(100, timestamp - scheduleScopeLastTs) : 0;
+    scheduleScopeLastTs = timestamp;
+    if (!scheduleScopeReducedMotion) scheduleScopePhase += dt * 0.006;
+    let path = '';
+    for (let i = 0; i <= samples; i++) {
+      const x = i * width / samples;
+      const binIndex = (x / width) * (bins.length - 1);
+      const first = Math.floor(binIndex);
+      const blend = binIndex - first;
+      const level = bins[first] * (1 - blend) + bins[Math.min(first + 1, bins.length - 1)] * blend;
+      const gain = Math.min(17.4, Math.max(0, level) * 18.5);
+      const cycles = 4.6 + pcFrame.pitch * 4.2;
+      const phase = (x / width) * cycles * tau + scheduleScopePhase;
+      const y = mid + Math.sin(phase) * gain;
+      path += `${i === 0 ? 'M' : 'L'}${x.toFixed(1)} ${y.toFixed(2)} `;
+    }
+    scheduleScopeTrace.setAttribute('d', path.trim());
+    return;
+  }
 
   const width = 200;
   const mid = 21;

@@ -1,0 +1,32 @@
+name: Build NTU Scope Companion
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'companion/NTUScope/**'
+      - '.github/workflows/build-scope-companion.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'companion/NTUScope/**'
+      - '.github/workflows/build-scope-companion.yml'
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Publish self-contained Windows executable
+        shell: pwsh
+        run: dotnet publish companion/NTUScope/NTUScope.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o dist/scope
+      - name: Upload companion exe
+        uses: actions/upload-artifact@v4
+        with:
+          name: ntu-scope-companion-win-x64
+          path: dist/scope/NTUScope.exe
+          if-no-files-found: error
