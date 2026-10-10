@@ -10,32 +10,22 @@ const css = read('garden-theme.css');
 const sw = read('sw.js');
 
 test('Begüm live garden preserves all production integrations', () => {
-  assert.doesNotThrow(() => new Script(app, { filename: 'begum/app.js' }));
-  assert.doesNotThrow(() => new Script(sw, { filename: 'begum/sw.js' }));
-  for (const id of ['scheduleList','nextClass','todoForm','coolDeadlines','coolRefresh','pairingDialog','placesDialog','ntuHubSection','mailAlertDialog','todoMoreButton','weekDateJump','mailAlertButton','pageRefreshButton','quickAccessRow']) {
-    assert.ok(html.includes('id="' + id + '"'), id + ' remains available');
-  }
-  for (const feature of ['function renderDay()', 'function renderNextClass()', 'function syncTodos()', 'function renderCoolDeadlines()', 'function positionHubs()', 'if (pairingForm)']) {
-    assert.ok(app.includes(feature), feature + ' remains wired');
-  }
-  assert.match(html, /class="app-shell garden"/);
-  assert.match(html, /class="schedule-split"/);
-  assert.match(html, /class="panel cool-panel cool-section"/);
-  assert.match(html, /class="panel tasks-panel todo-section"/);
-  assert.match(html, /class="panel links-panel"/);
-  assert.match(css, /\\.garden \\.cool-section/);
-  assert.match(css, /\\.garden \\.schedule-list \\.lesson/);
-  assert.match(css, /\\.garden \\.todo-section/);
+  assert.doesNotThrow(() => new Script(app, {filename:'begum/app.js'}));
+  assert.doesNotThrow(() => new Script(sw, {filename:'begum/sw.js'}));
+  for (const id of ['scheduleList','nextClass','todoForm','coolDeadlines','coolRefresh','pairingDialog','placesDialog','ntuHubSection','mailAlertDialog','todoMoreButton','weekDateJump','mailAlertButton','pageRefreshButton','quickAccessRow']) assert.ok(html.includes('id="'+id+'"'),id);
+  for (const feature of ['function renderDay()', 'function renderNextClass()', 'function syncTodos()', 'function renderCoolDeadlines()', 'function positionHubs()', 'if (pairingForm)']) assert.ok(app.includes(feature),feature);
+  for (const klass of ['app-shell garden','schedule-split','panel cool-panel cool-section','panel tasks-panel todo-section','panel links-panel']) assert.ok(html.includes('class="'+klass+'"'),klass);
+  for (const selector of ['.garden .cool-section','.garden .schedule-list .lesson','.garden .todo-section']) assert.ok(css.includes(selector),selector);
 });
-test('garden production retains exact demo design and 50-50 schedule/deadlines layout', () => {
+test('production retains the exact demo garden identity and a 50/50 schedule and COOL split', () => {
   const demo = read('desk-demo/index.html');
-  const theme = demo.match(/<style>([\\s\\S]*?)<\\/style>/)?.[1];
-  assert.ok(theme && css.startsWith(theme), 'Garden CSS begins with the unmodified demo stylesheet');
+  const theme = demo.slice(demo.indexOf('<style>') + 7,demo.indexOf('</style>'));
+  assert.ok(theme.length > 20000 && css.startsWith(theme), 'garden production starts with exact demo stylesheet');
   for (const part of ['class="hero"','class="hero-bee bee-a"','class="hero-bee bee-b"','THE FLOWER BED','SWEET LITTLE THINGS','Made to grow at your own pace']) assert.ok(html.includes(part),part);
   assert.ok(css.includes('grid-template-columns:repeat(2,minmax(0,1fr))'));
   assert.ok(css.includes('@media(max-width:610px)'));
-  assert.match(app, /if \\(studyHubSection && desktopShortcutsColumn/);
-  assert.doesNotMatch(html, /weekOverview|week-overview|sample-task|demoCoolItems/);
+  assert.ok(app.includes('if (studyHubSection && desktopShortcutsColumn'));
+  assert.doesNotMatch(html,/weekOverview|week-overview|sample-task|demoCoolItems/);
 });
 test('Begüm removes transfer and Hanzi UI, code and heavy FFmpeg preloading', () => {
   assert.doesNotMatch(html, /transferForm|transfer-section|transferSaveDialog|Phone ↔ PC|vendor\/ffmpeg/);
