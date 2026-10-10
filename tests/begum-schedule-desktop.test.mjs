@@ -50,7 +50,7 @@ test('Begüm removes transfer and Hanzi UI, code and heavy FFmpeg preloading', (
 });
 
 test('Begüm PWA assets remain scoped and version matched', () => {
-  for (const asset of ['app.js?v=118','todo-realtime.js?v=1','garden-theme.css?v=8','garden-bees.js?v=2']) {
+  for (const asset of ['app.js?v=118','todo-realtime.js?v=1','garden-theme.css?v=9','garden-bees.js?v=2']) {
     assert.ok(html.includes(asset), 'HTML references ' + asset);
     assert.ok(sw.includes(asset), 'cache includes ' + asset);
   }
@@ -125,4 +125,13 @@ test('Begüm decorative bee script loads and respects motion preferences', () =>
   assert.ok(bees.includes('speedBand'));
   assert.ok(bees.includes('visibilitychange'));
   assert.ok(css.includes('Bee depth variations for randomized garden flights.'));
+});
+
+test('mobile heading and clock use separate layout rows without footer dingbats', () => {
+  assert.ok(css.includes('Phone header: the Taipei clock gets its own row'));
+  assert.ok(css.includes('position:static;'));
+  assert.ok(css.includes('order:-1;'));
+  assert.ok(css.includes('.garden-floral-corners{display:none;}'));
+  assert.ok(css.includes('.garden .links-panel .study-hub:not(.ntu-hub) .hub-label::before{content:none;}'));
+  assert.ok(!html.includes('Made to grow at your own pace <strong>✿</strong>'));
 });
