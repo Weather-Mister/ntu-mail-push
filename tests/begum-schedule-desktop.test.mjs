@@ -110,12 +110,12 @@ test('the 2026 date navigation is reachable on desktop and mobile', () => {
 
 test('Begüm decorative bee script loads and respects motion preferences', () => {
   assert.doesNotThrow(() => new Script(bees,{filename:'begum/garden-bees.js'}));
-  assert.match(html, /garden-floral-corners/);
-  assert.match(html, /garden-bees\\.js\\?v=1/);
-  assert.match(sw, /garden-bees\\.js\\?v=1/);
-  assert.match(css, /\\.garden-flight-layer/);
-  assert.match(css, /\\.garden-flyer/);
-  assert.match(css, /\\.garden-pollen/);
-  assert.match(bees, /prefers-reduced-motion: reduce/);
-  assert.match(bees, /pointer-events|garden-flight-layer/);
+  assert.ok(html.includes('garden-floral-corners'));
+  assert.ok(html.includes('garden-bees.js?v=1'));
+  assert.ok(sw.includes('garden-bees.js?v=1'));
+  assert.ok(css.includes('.garden-flight-layer'));
+  assert.ok(css.includes('.garden-flyer'));
+  assert.ok(css.includes('.garden-pollen'));
+  assert.ok(bees.includes('prefers-reduced-motion: reduce'));
+  assert.ok(bees.includes('garden-flight-layer'));
 });
