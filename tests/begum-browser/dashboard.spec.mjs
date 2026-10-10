@@ -227,6 +227,35 @@ test('COOL deadlines and honey-do tasks scroll independently while class cards s
  expect(result.classesScrollbar).toBe(false);
 });
 
+
+test('desktop garden and all class cards fit the viewport',async ({page},testInfo)=>{
+ if(!testInfo.project.name.startsWith('mac')) return;
+ await page.goto('/?pair=begum');
+ for(const day of [1,2,3,4,5,6]){
+  await page.locator('[data-day="'+day+'"]').click();
+  const result=await page.evaluate(()=>{
+   const box=e=>e.getBoundingClientRect();
+   const panel=document.querySelector('.classes-panel');
+   const list=document.querySelector('#scheduleList');
+   const cards=[...list.querySelectorAll('.lesson')];
+   const outer=document.querySelector('.garden');
+   const p=box(panel),o=box(outer);
+   return {
+     outerFits:o.top>=-2&&o.bottom<=innerHeight+2,
+     noPageScroll:document.documentElement.scrollHeight<=innerHeight+2,
+     allCardsFit:cards.every(c=>box(c).bottom<=p.bottom-18&&box(c).top>=p.top-2),
+     noScheduleScroll:list.scrollHeight<=list.clientHeight+3,
+     noHorizontalOverflow:document.documentElement.scrollWidth<=innerWidth+2
+   };
+  });
+  expect(result.outerFits,'day '+day+' viewport fit').toBe(true);
+  expect(result.noPageScroll,'day '+day+' page scroll').toBe(true);
+  expect(result.allCardsFit,'day '+day+' cards').toBe(true);
+  expect(result.noScheduleScroll,'day '+day+' schedule scroll').toBe(true);
+  expect(result.noHorizontalOverflow,'day '+day+' width').toBe(true);
+ }
+});
+
 test('TOC is listed on both days with $800 in place of a location', async ({ page }) => {
   const errors=[];
   page.on('pageerror', error => errors.push(error.message));
