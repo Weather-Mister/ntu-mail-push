@@ -849,3 +849,112 @@ body{min-width:320px}
  }
  .garden .hero-art{opacity:.38}
 }
+
+/* Garden finishing touches: keep the fourth (Statistics & R) shortcut visible.
+   The honey-do list is the flexible/scrollable panel; shortcut targets never clip. */
+@media(min-width:901px){
+  .garden .links-panel{
+    flex:0 0 141px;
+    min-height:141px;
+    overflow:visible;
+    padding:11px 14px;
+  }
+  .garden .links-panel .desktop-shortcuts-column{
+    flex:0 0 auto;
+    min-height:max-content;
+    gap:5px;
+  }
+  .garden .links-panel .study-hub:not(.ntu-hub){
+    margin-top:0;
+  }
+  .garden .links-panel .study-hub:not(.ntu-hub) .hub-app{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    justify-content:flex-start;
+    min-height:27px;
+    padding:3px 8px;
+    border:1px solid #dfe7d4;
+    border-radius:9px;
+    background:#fcf9ef;
+  }
+  .garden .links-panel .study-hub:not(.ntu-hub) .hub-icon{
+    display:grid;
+    width:16px;
+    height:16px;
+    min-width:16px;
+    min-height:16px;
+  }
+  .garden .links-panel .study-hub:not(.ntu-hub) .hub-icon img{
+    width:100%;height:100%;object-fit:contain;
+  }
+  .garden .links-panel .study-hub:not(.ntu-hub) .hub-label{
+    font-size:11px;
+    white-space:normal;
+    line-height:1.25;
+  }
+  .garden .links-panel .study-hub:not(.ntu-hub) .hub-label::before{content:none;}
+  .garden .todo-section{min-height:0;}
+}
+@media(min-width:901px) and (max-height:735px){
+  .garden .links-panel{flex-basis:128px;min-height:128px;padding:8px 13px;}
+  .garden .links-panel .side-heading{margin-bottom:4px;}
+  .garden .links-panel .hub-app{min-height:36px;}
+  .garden .links-panel .study-hub:not(.ntu-hub) .hub-app{min-height:25px;padding:2px 7px;}
+}
+/* The existing wildflower artwork is intentionally more legible. */
+.garden .hero-art{opacity:.96;filter:saturate(1.16) contrast(1.035);}
+.garden .hero-art .petal-pink{fill:#e893ab;}
+.garden .hero-art .petal-yellow{fill:#f0bf4e;}
+.garden .hero-art .petal-white{fill:#fff7e5;}
+.garden .hero-art .flower-center{fill:#d18f27;}
+.garden .day-tile.active .tile-flower{
+  width:22px;height:22px;color:#f3b5c6;
+  filter:drop-shadow(0 2px 2px #224a3940);
+}
+.garden-floral-corners{
+  position:absolute;inset:0;z-index:8;overflow:hidden;
+  pointer-events:none;
+}
+.garden-floral-corners .bloom{
+  position:absolute;width:29px;height:29px;
+  color:#e59caf;opacity:.88;
+  filter:drop-shadow(0 2px 2px #46654b38);
+}
+.garden-floral-corners .bloom:nth-child(1){top:13px;right:12px;width:34px;height:34px;transform:rotate(20deg);}
+.garden-floral-corners .bloom:nth-child(2){top:112px;right:3%;width:22px;height:22px;color:#ffefb7;transform:rotate(-25deg);}
+.garden-floral-corners .bloom:nth-child(3){top:34%;left:7px;width:25px;height:25px;color:#eb9eb1;transform:rotate(-18deg);}
+.garden-floral-corners .bloom:nth-child(4){top:57%;right:6px;width:32px;height:32px;color:#f1c66a;transform:rotate(26deg);}
+.garden-floral-corners .bloom:nth-child(5){bottom:15%;left:5px;width:29px;height:29px;color:#e79caf;transform:rotate(8deg);}
+.garden-floral-corners .bloom:nth-child(6){bottom:8px;right:18px;width:26px;height:26px;color:#f0bc6c;transform:rotate(-12deg);}
+@media(max-width:900px){
+  .garden .hero-art{opacity:.90;}
+  .garden-floral-corners .bloom:nth-child(3),
+  .garden-floral-corners .bloom:nth-child(4),
+  .garden-floral-corners .bloom:nth-child(5){display:none;}
+}
+@media(max-width:610px){
+  .garden .hero-art{opacity:.72;}
+  .garden-floral-corners .bloom:nth-child(1){right:7px;width:24px;height:24px;}
+  .garden-floral-corners .bloom:nth-child(2){display:none;}
+}
+/* Flights occupy their own overlay and never intercept clicks or focus. */
+.garden-flight-layer{position:absolute;inset:0;z-index:9;pointer-events:none;overflow:hidden;}
+.garden-flyer{position:absolute;top:0;left:0;width:58px;height:45px;pointer-events:none;will-change:transform;}
+.garden-flyer .hero-bee{position:absolute;inset:0;width:58px;height:45px;pointer-events:none;}
+.garden-flyer.is-reversed .hero-bee{transform:scaleX(-1);}
+.garden-pollen{
+  position:absolute;display:block;width:var(--pollen-size,4px);height:var(--pollen-size,4px);
+  border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle at 35% 30%,#fff5ab 0 24%,#ecc257 60%,#c59632 100%);
+  box-shadow:0 0 5px #efcd70a0;
+  animation:garden-pollen-fall 1550ms ease-out forwards;
+}
+@keyframes garden-pollen-fall{
+  0%{opacity:.95;transform:translate3d(0,0,0) scale(1);}
+  65%{opacity:.62;}
+  100%{opacity:0;transform:translate3d(var(--pollen-x,24px),var(--pollen-y,36px),0) scale(.3);}
+}
+@media(prefers-reduced-motion:reduce){
+  .garden-flight-layer{display:none!important;}
+}
