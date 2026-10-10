@@ -958,3 +958,7 @@ body{min-width:320px}
 @media(prefers-reduced-motion:reduce){
   .garden-flight-layer{display:none!important;}
 }
+
+/* Visible without dominating the timetable: slightly larger passing bees. */
+.garden-flyer{width:70px;height:52px;}
+.garden-flyer .hero-bee{width:70px;height:52px;filter:drop-shadow(0 3px 4px #35543a66);}
