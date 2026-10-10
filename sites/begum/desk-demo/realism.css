@@ -1,0 +1,398 @@
+/* Begüm's Desk / skeuomorphic concept v2.
+   A true viewport composition: physical objects in 3D space,
+   with the schedule UI still accessible on the laptop display.
+   This is isolated to desk-demo and has zero production dependencies. */
+:root{--real-metal:#d6b3c1;--real-rim:#8c6773}
+html,body{height:100%;width:100%;overflow:hidden}
+body{background:#eee1d8}
+.page{height:100dvh;min-height:0;overflow:hidden}
+.top,.below{display:none!important}
+.scene{
+  height:100dvh;min-height:0;width:100vw;max-width:none;margin:0;
+  border:0;border-radius:0;overflow:hidden;
+  background:
+    radial-gradient(ellipse 56% 56% at 84% 19%,rgba(255,249,222,.8),transparent 76%),
+    radial-gradient(ellipse 90% 90% at 35% 47%,rgba(255,248,242,.9),transparent 72%),
+    linear-gradient(117deg,#cdb8b4 0%,#efe1dc 20%,#f6e9dd 65%,#dec6bd 100%);
+  perspective:1900px;
+}
+.scene:before{
+  content:"";position:absolute;inset:-5% -4% 0;
+  background:radial-gradient(ellipse 70% 95% at 47% 18%,transparent 49%,rgba(88,59,52,.18) 100%);
+  pointer-events:none;z-index:11;mix-blend-mode:multiply
+}
+.scene:after{display:none}
+.wall-dots{opacity:.035;background-size:12px 12px;z-index:0}
+.scene .desk{
+  top:70%;bottom:0;z-index:1;border:0;
+  background:
+    linear-gradient(180deg,rgba(255,250,229,.29),transparent 23%,rgba(78,36,26,.07) 93%),
+    repeating-linear-gradient(97deg,transparent 0,rgba(120,77,52,.025) 1px,transparent 2px,transparent 39px,rgba(98,51,41,.024) 40px,transparent 43px),
+    repeating-linear-gradient(8deg,rgba(134,81,59,.02) 0 1px,transparent 2px 37px,rgba(255,250,230,.06) 38px 41px),
+    linear-gradient(120deg,#ecd2b8 0%,#d7aa91 47%,#b98371 100%);
+  box-shadow:0 -2px 0 #c49e8a,0 -10px 0 #f6e2d2,0 -16px 23px rgba(75,47,40,.20),inset 0 20px 30px rgba(255,246,219,.28);
+}
+.scene .desk:before{height:3px;top:7px;opacity:.3;box-shadow:0 6px 0 rgba(255,245,230,.38)}
+.scene .desk:after{left:0;right:0;bottom:12%;background:linear-gradient(90deg,transparent,rgba(88,43,36,.16),transparent);height:1px}
+.scene .desk::selection{background:transparent}
+/* Light projected through the window onto the desktop.
+   Decorative, never intercepting controls. */
+.light-cast{
+  position:absolute;z-index:2;pointer-events:none;
+  width:62%;height:48%;top:62%;right:-13%;
+  background:linear-gradient(115deg,rgba(255,247,212,.30),rgba(255,250,231,.57) 25%,rgba(255,240,203,.14) 70%,transparent);
+  filter:blur(16px);clip-path:polygon(22% 0,75% 0,100% 100%,0 100%);
+  transform:skewX(-24deg);mix-blend-mode:screen
+}
+.light-cast:after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(80deg,transparent 39%,rgba(95,69,59,.20) 39%,rgba(95,69,59,.20) 43%,transparent 43%,transparent 73%,rgba(95,69,59,.14) 73%,rgba(95,69,59,.14) 76%,transparent 76%);
+  filter:blur(8px)
+}
+.sky-night .light-cast{opacity:.09}
+.sky-sunset .light-cast{filter:blur(19px) sepia(.3)}
+/* Window has a real frame thickness, glazed sheen and wood-toned reveal. */
+.window{
+  top:3.8%;right:8.1%;width:36%;height:57%;
+  border:12px solid #eddbca;outline:3px solid #a88d84;
+  border-radius:47% 47% 9px 9px / 31% 31% 9px 9px;
+  box-shadow:
+    -13px 13px 33px rgba(93,62,59,.27),
+    8px 9px 0 #c4aaa0,
+    11px 13px 0 rgba(110,76,70,.15),
+    inset 0 0 0 5px #be9c90,
+    inset 0 0 25px rgba(78,76,80,.22);
+  z-index:2;cursor:pointer;
+}
+.window:before{
+  content:"";position:absolute;inset:-8px;border-radius:inherit;pointer-events:none;z-index:6;
+  box-shadow:inset 5px 6px 4px rgba(255,253,237,.94),inset -5px -4px 5px rgba(112,79,68,.28)
+}
+.window:after{
+  content:"";position:absolute;top:4%;left:8%;height:78%;width:22%;z-index:5;
+  background:linear-gradient(102deg,rgba(255,255,255,.22),rgba(255,255,255,.035),transparent);
+  transform:skewX(-8deg);pointer-events:none;filter:blur(1px)
+}
+.window:hover .glass{filter:saturate(1.07)}
+.window .glass{
+  border-radius:46% 46% 0 0 / 30% 30% 0 0;inset:2px;
+  background:
+    radial-gradient(circle at 27% 22%,rgba(255,254,228,.6),transparent 36%),
+    linear-gradient(180deg,#86aec0 0%,#bfdae0 49%,#eee4d0 100%);
+}
+.window .glass:after{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(118deg,rgba(255,255,255,.31) 0 10%,transparent 20% 77%,rgba(255,255,255,.13) 90% 100%);
+}
+.window-cross{
+  left:49%;width:17px;border-left:2px solid #94796e;border-right:3px solid #a88a80;
+  background:linear-gradient(90deg,#c2a397,#ffeed9 48%,#d6bcb0 85%);box-shadow:3px 0 8px rgba(68,58,60,.2),-2px 0 4px rgba(255,255,255,.35)
+}
+.window-sill{
+  bottom:-35px;height:36px;left:-9%;right:-9%;border-radius:4px 5px 9px 8px;
+  border:2px solid #9c7b71;
+  background:linear-gradient(180deg,#fff3e2 0,#e4c9b6 33%,#c7a193 69%,#e5c9b9 100%);
+  box-shadow:0 10px 12px rgba(82,49,39,.19),0 16px 0 rgba(115,77,63,.06);z-index:10
+}
+.window .sun{height:75px;width:75px;box-shadow:0 0 65px 17px rgba(255,246,211,.5);background:#fff5d6}
+.window .cloud{filter:blur(.3px) drop-shadow(0 8px 3px rgba(126,145,151,.08))}
+.window .hills{
+  height:46%;background:linear-gradient(0deg,#8aa49e,#b7c8b6);filter:blur(1px);
+  clip-path:polygon(0 78%,18% 56%,33% 69%,52% 39%,69% 61%,83% 44%,100% 76%,100% 100%,0 100%);
+}
+.window .building{border-color:rgba(47,74,82,.15);background:linear-gradient(90deg,#7a97a0,#9cb5b5 42%,#6f929c)}
+.window .building:after{opacity:.44}
+.window .tower>span{background:repeating-linear-gradient(0deg,#4f7c85 0 13%,#a1c4bd 13% 16%,#598e96 16% 22%)}
+.sky-sunset .window .glass{background:radial-gradient(circle at 32% 52%,rgba(255,224,173,.6),transparent 42%),linear-gradient(#bf97a9,#f7b7a7 55%,#f6dec5)}
+.sky-night .window .glass{background:radial-gradient(circle at 22% 19%,rgba(142,162,195,.25),transparent 40%),linear-gradient(#2c3458,#526482 69%,#9b9b9f)}
+.wall-note{
+  left:9%;top:9%;background:linear-gradient(143deg,#fff4d7,#edcfaa);
+  border:1px solid #d0b391;box-shadow:4px 7px 12px rgba(115,79,62,.14),inset 0 0 15px rgba(255,255,255,.5);
+  font-family:"Fraunces",Georgia,serif;transform:rotate(-7deg);
+}
+.wall-note:before{box-shadow:0 2px 3px rgba(99,65,65,.14)}
+.flowerpot{top:34%;right:2%;filter:drop-shadow(7px 10px 5px rgba(88,59,54,.19))}
+.flowerpot .pot{background:linear-gradient(90deg,#bc827a,#efc5a8 40%,#d7a59b 75%,#a97879)}
+/* Laptop: physical bevel, brushed rosy aluminum, translucent lacquer and glass. */
+.laptop{
+  top:11%;left:2.2%;width:77.3%;z-index:5;
+  transform:rotateZ(-1.7deg) rotateY(-8deg) rotateX(1.8deg);
+  transform-origin:center 63%;
+  transform-style:preserve-3d;
+  filter:drop-shadow(18px 23px 18px rgba(67,37,39,.21))
+         drop-shadow(0 4px 3px rgba(59,42,45,.10));
+}
+.laptop:before{
+  content:"";position:absolute;z-index:-1;
+  left:3%;right:-2%;top:10%;bottom:-1%;
+  border-radius:25px;
+  box-shadow:20px 27px 40px rgba(71,38,35,.26)
+}
+.lid{
+  position:relative;
+  background:
+    linear-gradient(104deg,rgba(255,255,255,.63) 0,rgba(255,255,255,.19) 11%,transparent 30%,rgba(115,68,82,.14) 86%,rgba(255,243,245,.38) 100%),
+    linear-gradient(180deg,#e3c8d0 0,#bf899d 12%,#d9aeba 45%,#b27f94 100%);
+  border:2px solid #785962;border-radius:23px 23px 12px 12px;
+  padding:16px 16px 20px;
+  box-shadow:
+    inset 2px 3px 0 rgba(255,253,251,.82),
+    inset -5px -1px 0 rgba(112,65,79,.39),
+    inset 0 -6px 0 rgba(126,79,93,.24),
+    0 3px 0 #966c7e,
+    0 8px 0 #745264,
+    15px 22px 30px rgba(76,47,48,.12);
+}
+.lid:before{
+  content:"";position:absolute;inset:4px 4px 4px 4px;border:1px solid rgba(255,249,251,.38);
+  border-radius:18px 18px 8px 8px;pointer-events:none
+}
+.lid:after{
+  content:"";position:absolute;left:3%;right:3%;top:4px;height:10px;
+  border-radius:12px;background:linear-gradient(180deg,rgba(255,255,255,.23),transparent);pointer-events:none
+}
+.camera{top:8px;width:6px;height:6px;border:2px solid #b58e9c;background:radial-gradient(circle at 25% 25%,#59869c,#2a2838 75%);box-shadow:0 0 0 2px rgba(255,248,250,.2);z-index:2}
+.screen{
+  position:relative;z-index:1;
+  height:clamp(335px,calc(100dvh - 273px),735px);
+  max-height:none;min-height:0;overflow:hidden;
+  background:#fffaf7;
+  border:5px solid #4d414d;border-radius:8px;
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.19),0 1px 0 rgba(255,250,251,.75),inset 1px 1px 14px rgba(63,46,53,.3),0 4px 12px rgba(91,58,73,.25);
+}
+.screen:after{
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:30;
+  background:linear-gradient(115deg,rgba(255,255,255,.22) 0%,rgba(255,255,255,.09) 8%,transparent 27%,transparent 74%,rgba(255,255,255,.045) 100%);
+  mix-blend-mode:screen
+}
+.osbar{height:34px;background:linear-gradient(#f9eef1,#e9d5db);border-bottom:1px solid #d6b6c0;box-shadow:inset 0 1px 0 #fff}
+.osbar .traffic i{box-shadow:inset -1px -1px 2px rgba(74,46,44,.14),0 1px 0 #fff}
+.os-demo{color:#a16f7c;background:#fff4f1;border-color:#e5cad0}
+.desktop-ui{
+  height:calc(100% - 34px);overflow:hidden;
+  padding:clamp(10px,1.15vh,20px) clamp(11px,1.55vw,25px) 9px;
+  display:flex;flex-direction:column;
+  background:radial-gradient(circle at 15% 10%,#fffdfa 0,#fff9f7 46%,#fbf0ee 100%);
+}
+.intro{margin-bottom:clamp(6px,1.4vh,15px);flex:none}
+.intro h1{font-size:clamp(19px,2.1vw,35px)}
+.intro .sub{font-size:clamp(9px,.76vw,12px);margin-top:4px}
+.kicker{font-size:clamp(7px,.68vw,10px)}
+.week-line{margin-bottom:clamp(5px,.7vh,11px);flex:none}
+.days{margin-bottom:clamp(6px,.9vh,14px);flex:none}
+.day-btn{min-height:clamp(37px,5vh,54px)}
+.content-grid{
+  flex:1 1 auto;min-height:0;align-items:stretch;
+  grid-template-columns:minmax(0,1.56fr) minmax(0,.99fr);
+  gap:clamp(7px,.9vw,13px)
+}
+.classes-panel{display:flex;flex-direction:column;min-height:0;padding:clamp(10px,1.1vw,15px)}
+.panel-title{flex:none;margin-bottom:clamp(6px,1vh,12px)}
+.class-list{flex:1;min-height:0;overflow:hidden;gap:clamp(5px,.65vh,9px)}
+.class-card{
+  min-height:0;flex:1 1 0;
+  padding:clamp(6px,.75vw,11px) 8px;
+  grid-template-columns:clamp(52px,5vw,65px) minmax(0,1fr);
+  background:linear-gradient(118deg,#fff9f5 0%,#fffefd 100%);
+  box-shadow:inset 0 1px 0 #fff,1px 2px 3px rgba(146,105,98,.035)
+}
+.class-time{font-size:clamp(10px,.8vw,13px)}
+.class-info h3{font-size:clamp(10px,.82vw,13px);line-height:1.22}
+.class-info p{font-size:clamp(9px,.7vw,11px)}
+.class-foot{flex:none;margin-top:clamp(5px,.7vh,11px);font-size:9px}
+.side-panels{display:flex;min-height:0;gap:clamp(7px,1vh,13px)}
+.task-panel,.transfer-panel{flex:1 1 0;min-height:0;display:flex;flex-direction:column;padding:clamp(8px,1vw,13px)}
+.side-header{flex:none;margin-bottom:clamp(5px,.75vh,10px)}
+.side-header h2{font-size:clamp(13px,1.15vw,18px)}
+.task-list,.note-list{max-height:none;min-height:0;flex:1 1 auto;overflow:auto;scrollbar-width:thin;scrollbar-color:#eacfd0 transparent}
+.task-row{min-height:clamp(20px,2.35vh,27px)}
+.small-form{height:clamp(26px,3.3vh,33px);flex:none;margin-top:6px}
+.micro{font-size:8px;margin-top:4px;flex:none}
+.screen-bottom{flex:none;margin-top:3px;padding-top:clamp(3px,.5vh,9px)}
+.hinge{
+  width:98%;height:8px;
+  background:linear-gradient(180deg,#d0aab9,#745565 58%,#b88a99);
+  border:1px solid #785863;border-radius:2px 2px 7px 7px;
+  box-shadow:inset 0 1px rgba(255,255,255,.55)
+}
+.keyboard-base{
+  margin:-1px -3.1% 0;
+  height:clamp(68px,10vh,112px);
+  border:2px solid #77565e;border-radius:4px 4px 15px 15px;
+  clip-path:polygon(3% 0,97% 0,100% 88%,99% 99%,1% 99%,0 88%);
+  background:
+    linear-gradient(0deg,rgba(103,63,74,.33),transparent 25%),
+    linear-gradient(155deg,rgba(255,252,251,.92),transparent 24%,transparent 65%,rgba(93,49,64,.2)),
+    linear-gradient(#e7c6cd 0,#d4a3b3 52%,#bc899a 96%);
+  transform:perspective(820px) rotateX(45deg);
+  transform-origin:top center;
+  box-shadow:inset 0 7px 7px rgba(255,251,244,.5),inset 0 -9px 6px rgba(114,69,78,.23),0 9px 0 #8c6373,8px 20px 16px rgba(76,47,45,.3)
+}
+.keyboard-keys{
+  top:10%;left:16%;width:68%;height:55%;
+  gap:clamp(2px,.35vw,5px);transform:perspective(800px) rotateX(2deg)
+}
+.keyboard-keys i{
+  border:1px solid #866576;
+  border-bottom:2px solid #735467;border-radius:3px;
+  background:linear-gradient(145deg,#f9e6e9,#d5a9b8 65%,#a17c8f);
+  box-shadow:inset 1px 1px 1px rgba(255,255,255,.86),0 2px 1px rgba(77,45,57,.17);
+}
+.keyboard-base:after{
+  content:"";position:absolute;left:6%;right:6%;bottom:2px;height:5px;border-radius:50%;
+  background:linear-gradient(90deg,transparent,#ffeff0,transparent);opacity:.42
+}
+.trackpad{
+  bottom:4%;left:39.5%;width:21%;height:21%;
+  border:1px solid rgba(113,79,96,.5);
+  border-radius:5px;background:linear-gradient(155deg,rgba(248,221,231,.2),rgba(140,93,116,.13));
+  box-shadow:inset 0 1px 3px rgba(119,73,89,.14),0 1px rgba(255,255,255,.48)
+}
+.laptop-foot{height:4px;width:92%;margin-top:-7px;filter:blur(1px);background:#8a6573}
+/* Rich, cylindrical ceramic mug with heavy cast shadow. */
+.mug-area{
+  top:auto;bottom:13%;right:2.1%;width:20.8%;
+  max-width:330px;z-index:7;
+  filter:drop-shadow(3px 9px 10px rgba(94,52,46,.19))
+}
+.mug-area:before{
+  content:"";position:absolute;left:8%;right:-10%;height:17%;bottom:-5%;
+  background:radial-gradient(ellipse,rgba(65,35,32,.37),rgba(89,47,40,.14) 43%,transparent 75%);
+  filter:blur(7px);transform:rotate(-8deg);pointer-events:none
+}
+.mug-click{
+  width:100%;z-index:2;transition:transform .25s cubic-bezier(.2,.8,.2,1);
+  transform:rotateZ(2deg);filter:drop-shadow(3px 14px 10px rgba(93,48,48,.15))
+}
+.mug-click:hover{transform:rotateZ(0deg) translateY(-6px) scale(1.025)}
+.mug-svg{width:100%;filter:drop-shadow(0 4px 2px rgba(83,54,54,.14))}
+.mug-hint{
+  margin:-7% 0 0 0;position:relative;z-index:3;
+  color:#765a63;text-shadow:0 2px 4px rgba(255,233,215,.92);font-size:clamp(10px,1.1vw,17px)
+}
+.shortcut-pop{
+  right:10%;bottom:97%;width:225px;z-index:20;
+  background:linear-gradient(155deg,#fffefa,#f6eae5);
+  border:1px solid #c9a6a1;border-radius:18px;
+  box-shadow:0 17px 38px rgba(93,52,52,.27),inset 0 1px #fff,4px 4px 0 rgba(163,120,125,.18);
+  transform:rotate(0)
+}
+.shortcut-pop.open{animation:rise .25s ease-out both}
+.shortcut-pop:after{border-color:#c9a6a1;background:#f6eae5}
+.shortcut-pop a{background:rgba(255,255,255,.65);box-shadow:inset 0 1px #fff}
+.shortcut-pop a:hover{background:#f2dfe6;transform:translateX(2px)}
+.notepad{
+  width:clamp(126px,15vw,214px);height:clamp(80px,8.8vw,120px);
+  right:22%;bottom:3%;z-index:2;
+  background:repeating-linear-gradient(#fff4d6 0 22px,#e9ceb2 23px,#fff4d6 24px);
+  box-shadow:4px 9px 13px rgba(101,59,43,.22),0 2px 2px rgba(71,45,40,.1);
+  transform:rotate(8deg);border-radius:1px 5px 6px 2px
+}
+.notepad strong{font-size:clamp(12px,1.25vw,18px)}
+.notepad span{font-size:clamp(8px,.85vw,11px)}
+.pencil{
+  right:20%;bottom:4%;z-index:3;
+  background:linear-gradient(180deg,#d2dcc7,#859e8c 50%,#6e877d 83%,#4f6f67);
+  box-shadow:3px 6px 4px rgba(76,53,49,.22)
+}
+/* Wide screens: make this fill the page without shrinking the readable UI. */
+@media (min-width:1450px){
+  .laptop{left:3.8%;width:74%}
+  .mug-area{right:4%;bottom:12%}
+  .window{right:7.5%;width:36%}
+}
+@media (max-width:1180px){
+ .laptop{top:13%;left:1%;width:79.5%;transform:rotateZ(-1.3deg) rotateY(-5deg) rotateX(1deg)}
+ .mug-area{right:.5%;bottom:9%;width:19%}
+ .window{top:4%;right:5%;height:55%;width:42%}
+ .notepad{right:19%;bottom:2%}
+ .screen{height:clamp(330px,calc(100dvh - 245px),735px)}
+ .desktop-ui{padding:10px 12px 8px}
+ .intro h1{font-size:24px}
+ .class-time{font-size:10px}
+ .class-info h3{font-size:10px}
+ .side-header h2{font-size:14px}
+}
+@media (max-height:780px) and (min-width:791px){
+ .laptop{top:8%}
+ .screen{height:calc(100dvh - 204px)}
+ .desktop-ui{padding-top:8px}
+ .intro{margin-bottom:5px}
+ .intro h1{font-size:clamp(17px,2vw,25px)}
+ .intro .sub{margin:3px 0 0}
+ .intro-doodle{font-size:22px}
+ .week-line{margin-bottom:4px}
+ .days{margin-bottom:5px}
+ .day-btn{min-height:35px}
+ .osbar{height:29px}
+ .desktop-ui{height:calc(100% - 29px)}
+ .class-card{padding:5px 7px}
+ .panel-title{margin-bottom:5px}
+ .class-foot{margin-top:5px}
+ .keyboard-base{height:70px}
+ .mug-area{bottom:9%;width:19%}
+ .notepad{bottom:2%}
+}
+@media (max-height:600px) and (min-width:791px){
+ .laptop{top:4%;width:74%}
+ .screen{height:calc(100dvh - 137px);min-height:300px}
+ .keyboard-base{height:42px}
+ .osbar{height:24px}
+ .desktop-ui{height:calc(100% - 24px)}
+ .screen-bottom,.intro .sub,.class-foot{display:none}
+ .intro h1{font-size:20px}
+ .intro{margin-bottom:3px}
+ .days{margin-bottom:3px}
+ .day-btn{min-height:29px}
+ .task-list,.note-list{min-height:15px}
+}
+/* Small viewport: scene still never scrolls. The physical screen acts
+   as the laptop's own scroll area, not as document scrolling. */
+@media (max-width:790px){
+  .page,.scene{height:100dvh;min-height:0}
+  .scene{
+    display:flex;justify-content:center;align-items:flex-start;
+    padding:clamp(112px,21dvh,175px) 8px 0;
+  }
+  .scene .desk{top:66%}
+  .wall-note{top:3%;left:5%;z-index:2}
+  .window{top:1.5%;right:4%;height:30%;width:56%;border-width:7px}
+  .light-cast{top:60%;right:-20%;width:95%;height:40%}
+  .laptop{position:relative;top:auto;left:auto;width:94%;max-width:670px;margin:0;transform:rotateZ(-1deg) rotateY(-2deg)}
+  .lid{padding:10px 9px 12px}
+  .screen{height:clamp(260px,calc(100dvh - 365px),690px);overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain}
+  .desktop-ui{height:auto;min-height:100%;overflow:visible}
+  .content-grid{flex:initial;grid-template-columns:1fr}
+  .class-list{display:flex;max-height:none;overflow:visible}
+  .class-card{flex:auto;min-height:62px}
+  .side-panels{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+  .task-panel,.transfer-panel{flex:initial}
+  .task-list,.note-list{max-height:115px;min-height:30px}
+  .keyboard-base{height:72px;margin-top:-1px}
+  .keyboard-keys{height:42%;top:8%}
+  .trackpad{height:17%}
+  .mug-area{top:auto;bottom:2.5%;right:1%;width:clamp(135px,28%,205px)}
+  .mug-hint{font-size:12px}
+  .notepad{bottom:4%;left:6%;right:auto;transform:scale(.75) rotate(8deg);transform-origin:bottom left}
+  .pencil{bottom:1%;right:35%;width:98px}
+  .flowerpot{display:none}
+}
+@media (max-width:450px){
+  .scene{padding:clamp(91px,17dvh,136px) 5px 0}
+  .window{height:25%;width:61%;right:4%;border-width:6px}
+  .wall-note{top:3%;left:5%;width:83px;height:66px;padding:12px 4px;font-size:11px}
+  .laptop{width:97%;transform:rotateZ(-.6deg)}
+  .lid{padding:8px 6px 10px;border-width:2px}
+  .screen{height:calc(100dvh - 296px);min-height:245px;border-width:3px}
+  .desktop-ui{padding:9px 8px}
+  .intro h1{font-size:21px}
+  .intro .sub{font-size:9px}
+  .side-panels{grid-template-columns:1fr}
+  .class-card{min-height:57px}
+  .class-time{font-size:10px}
+  .keyboard-base{height:55px}
+  .mug-area{width:clamp(115px,35%,170px);bottom:1%;right:0}
+  .mug-hint{font-size:10px}
+  .notepad{left:1%;bottom:2%;transform:scale(.66) rotate(8deg)}
+}
+@media (prefers-reduced-motion:reduce){.cloud,.steam{animation:none}}
