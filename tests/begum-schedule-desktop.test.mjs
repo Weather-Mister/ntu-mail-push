@@ -27,6 +27,20 @@ test('production retains the exact demo garden identity and a 50/50 schedule and
   assert.ok(app.includes('if (studyHubSection && desktopShortcutsColumn'));
   assert.doesNotMatch(html,/weekOverview|week-overview|sample-task|demoCoolItems/);
 });
+test('Garden polish keeps demo colors, honey jar, compact controls and live data', () => {
+  assert.ok(html.includes('class="honey-jar"'));
+  assert.ok(html.includes('class="hero-next-class"'));
+  assert.ok(html.includes('class="week-caption week-picker"'));
+  assert.ok(html.includes('id="weekDateJump"'));
+  assert.ok(html.includes('id="placesButton"'));
+  assert.doesNotMatch(html,/class="date-jump"/);
+  assert.match(app,/gardenCourseColors/);
+  assert.match(app,/cool-month/);
+  assert.match(app,/cool-weekday/);
+  assert.match(css,/Garden layout polish/);
+  assert.match(css,/grid-template-columns:repeat\(6,minmax\(0,1fr\)\)!important/);
+});
+
 test('Begüm removes transfer and Hanzi UI, code and heavy FFmpeg preloading', () => {
   assert.doesNotMatch(html, /transferForm|transfer-section|transferSaveDialog|Phone ↔ PC|vendor\/ffmpeg/);
   assert.doesNotMatch(app, /transferForm|loadTransfers|sendTransfer|transferItems|hanziWidgetSlot|loadHanziWidget|vendor\/ffmpeg/);
@@ -40,7 +54,7 @@ test('Begüm PWA assets remain scoped and version matched', () => {
     assert.ok(sw.includes(asset), 'cache includes ' + asset);
   }
   assert.match(sw, /const ROOT = new URL\(self.registration.scope\)\.pathname/);
-  assert.match(app, /serviceWorker\.register\('\.\/sw\.js\?v=8'/);
+  assert.match(app, /serviceWorker\.register\('\.\/sw\.js\?v=9'/);
   assert.match(app, /begum-ntu-manual-todos-v1/);
   assert.match(app, /ntu-schedule-begum-pairing-key-v1/);
 });
