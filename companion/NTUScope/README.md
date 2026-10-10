@@ -1,37 +1,53 @@
-# NTU Schedule – lightweight Windows PC Audio Companion
+# NTU Scope — silent Windows audio companion
 
-A **native C++ Windows 10/11 (x64)** companion for the Eren GitHub schedule's skeuomorphic oscilloscope. Uses only Windows system APIs, not .NET, NAudio, Electron, Python or an embedded HTTP framework.
+A tiny, **tray-only** native Windows 10/11 x64 companion for the Eren skeuomorphic NTU Schedule oscilloscope. It captures default Windows playback via WASAPI loopback and streams only 64 waveform envelopes at 20 Hz to the already-paired GitHub schedule using the authenticated local WebSocket at `127.0.0.1:43187`. No audio files, microphone capture, remote audio transmission, .NET, drivers or elevated privileges.
 
-The application reads the default Windows output with **WASAPI loopback**, computes 64 envelope levels plus amplitude and a rough zero-crossing frequency indicator, and sends these small JSON frames at 20 Hz over an authenticated **127.0.0.1-only WebSocket**. It never records, persists, or uploads sound, and never accesses your microphone. No elevated permissions or added audio driver required.
+## Install once
 
-## Install and use
+1. Download `ntu-scope-companion-win-x64` from the latest successful **main** run of [Build NTU Scope Companion](https://github.com/Weather-Mister/ntu-mail-push/actions/workflows/build-scope-companion.yml). Extract `NTUScope.exe`.
+2. **Exit any older NTUScope version first**, especially an earlier black console window. Double-click the extracted executable once.
+3. The app copies itself into `%LOCALAPPDATA%\NTUScope\NTUScope.exe` and starts from that stable location. **No console or taskbar window appears.** Look under the Windows notification area (^ arrow) for the green oscilloscope icon.
+4. By default it **starts automatically every time you sign in to Windows** (no administrator privileges or Task Scheduler needed). It will run quietly without displaying a window.
+5. Open [Eren's NTU schedule demo](https://weather-mister.github.io/ntu-mail-push/skeuo-demo.html) in Firefox. Click **AUX** to connect if it has not already paired. If you need the 32-character pairing key, right-click the new green tray icon and select **Copy pairing key**; paste it into the AUX form. The pairing key survives upgrades.
 
-1. Open [Build NTU Scope Companion](https://github.com/Weather-Mister/ntu-mail-push/actions/workflows/build-scope-companion.yml), select the most recent **successful main-branch build** and download the `ntu-scope-companion-win-x64` ZIP under **Artifacts** (requires GitHub login).
-2. Extract and run **NTUScope.exe**. A small console shows the pairing key and capture status; leave it open while using the visualizer.
-3. Open [Eren's skeuomorphic schedule](https://weather-mister.github.io/ntu-mail-push/skeuo-demo.html) in Firefox.
-4. Click **AUX** beside the waveform. If this is your first setup, enter the 32-character pairing key displayed by the companion and click **CONNECT**.
-5. The site remembers your key in that Firefox profile and reconnects on subsequent visits while the companion runs. If Firefox asks permission to connect to local services, approve it for the schedule site.
-6. **DISCONNECT** in AUX settings to stop the website receiving data. Close the companion window to stop capture entirely.
+The tray icon stays available while the companion runs, including when Firefox is closed. Only the connected schedule website receives waveform measurements.
 
-**Upgrading from the original 75 MB .NET version:** Close and delete the old `NTUScope.exe`, then run the smaller replacement. **Your existing pairing key continues working** because the new app reuses `%LOCALAPPDATA%\NTUScope\pairing-key.txt`.
+## Tray controls
 
-## Build from source (Visual Studio 2022 C++ desktop tools)
+Right-click (or left-click) the notification-area icon:
+
+- **Audio visualizer: Ready / Connected** — current Firefox connection status
+- **Open NTU Schedule** — opens the schedule in your default browser
+- **Copy pairing key** — copies the persistent 32-character key to the clipboard
+- **Start with Windows** — checked by default; toggle it to enable or disable logon startup. Your choice persists when the app is opened manually again
+- **Exit NTU Scope** — stops audio capture and closes the companion until you launch it again or the next sign-in (if startup is enabled)
+
+Windows may initially place the icon behind the **^** hidden-icons arrow. Windows Task Manager will show `NTUScope.exe` under background processes; that is expected.
+
+## Updating
+
+Exit NTUScope from its tray menu, then run a freshly downloaded executable. It updates the installed copy in `%LOCALAPPDATA%\NTUScope` and launches it with your old pairing key and startup preference. Do not delete the pairing-key file when upgrading.
+
+## Uninstalling
+
+1. From the tray menu, uncheck **Start with Windows** and select **Exit NTU Scope**.
+2. Delete the folder `%LOCALAPPDATA%\NTUScope` (this also deletes the pairing key).
+3. Optionally click **DISCONNECT** in the schedule's AUX dialog to clear the remembered key in Firefox.
+
+The app stores its startup preference at `HKCU\Software\NTUScope\StartWithWindows` and the launch entry at `HKCU\Software\Microsoft\Windows\CurrentVersion\Run\NTUScope`. Neither uses administrator rights.
+
+## Building and validation
+
+With CMake and Visual Studio C++ desktop tools installed:
 
 ```powershell
 cmake -S companion/NTUScope -B build/ntu-scope -G "Visual Studio 17 2022" -A x64
 cmake --build build/ntu-scope --config Release
-.\build\ntu-scope\Release\NTUScope.exe --self-test
+Start-Process -FilePath .\build\ntu-scope\Release\NTUScope.exe -ArgumentList "--self-test" -Wait -PassThru
 ```
 
-The binary is statically linked to the C++ runtime (`/MT`), so it doesn't require users to install the MSVC redistributable. Its actual size is measured by GitHub Actions, which rejects builds larger than **5 MiB**. The self-test runs without playback hardware and verifies WebSocket handshake hashing, authorization checks, and frame serialization.
+GitHub Actions detects the runner's Visual Studio version, compiles a statically linked **Windows GUI-subsystem** executable (no console), checks handshake/authorization/frame self-tests, checks the PE subsystem, and rejects any binary 5 MiB or larger.
 
-## Security, privacy, and limitations
+**Limits:** Startup occurs at user sign-in, not before login. Default playback output is selected when the helper starts; restart it after switching audio outputs. Some DRM-protected or exclusive-mode audio cannot be captured. Actual speaker/headphone playback and tray behavior still need verification on the user's Windows installation, beyond automated Windows build and protocol tests.
 
-- The listener binds only to IPv4 **127.0.0.1:43187** and uses both **site Origin restriction** (`https://weather-mister.github.io`) and a cryptographically random **32-character per-install pairing key**. The key is stored in `%LOCALAPPDATA%\NTUScope\pairing-key.txt`; deleting that file while the companion is closed rotates the key.
-- Only one website connection is handled at a time. It is not an open LAN server; you cannot access the sound waveform from a different machine.
-- The local WebSocket uses `ws://` on loopback, not an internet connection. Firefox's behavior can depend on local-network-access and mixed-content policies; the Firefox browser connection test covers the current CI version, but local user permission prompts may still appear.
-- The default Windows **playback** device is selected when the app starts. Restart after switching to Bluetooth headphones or a different output.
-- Silence flattens the wave. Some DRM-protected audio and exclusive-mode apps are not exposed to shared-mode WASAPI loopback.
-- **The CI self-test is hardware-free:** live device capture still requires testing on a Windows PC. An unsigned new executable may receive a Windows SmartScreen warning; download only from this repository's build.
-
-This update affects the **companion executable only**. It does **not** change either schedule's regular dashboard, Begüm's schedule, the website's waveform UI, or any Hatchable deployment.
+This native companion update does **not** modify Eren's schedule HTML, Begüm's schedule, Hatchable or the Firefox AUX protocol.
