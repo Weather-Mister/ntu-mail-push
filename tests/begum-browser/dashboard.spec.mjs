@@ -110,6 +110,7 @@ test('Garden polish has stacked COOL dates, colorful lessons and no clipped day 
  await expect(page.locator('.cool-month').first()).toHaveText('Dec');
  await expect(page.locator('.cool-date strong').first()).toHaveText('11');
  await expect(page.locator('.cool-weekday').first()).toHaveText('Fri');
+ await page.locator('[data-day="1"]').click();
  await expect(page.locator('.lesson').first()).toHaveAttribute('style',/--course-color:\s*#d997ae/);
  const positions=await page.evaluate(()=>{
    const box=el=>el.getBoundingClientRect();
