@@ -1,117 +1,109 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <meta name="theme-color" content="#d16f9d" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="apple-mobile-web-app-title" content="NTU Schedule" />
-  <title>NTU Schedule</title>
-  <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
-  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=1" />
-  <link rel="manifest" href="./manifest.webmanifest?v=1" />
-  <style>
-    :root{--bg:#fbf2f6;--card:#fffafd;--text:#3f2f37;--muted:#8b6f7d;--line:#efdce5;--accent:#d16f9d;--accent-soft:#f7dfea;--shadow:0 10px 30px rgba(177,84,126,.10)}
-    *{box-sizing:border-box}html,body{background:var(--bg)}body{margin:0;color:var(--text);font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}.app-shell{width:min(760px,100%);margin:0 auto;padding:22px 16px calc(34px + env(safe-area-inset-bottom))}.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}.topbar-actions{display:flex;align-items:center;gap:7px}.refresh-page-button{width:30px;height:30px;border:0;border-radius:9px;background:transparent;color:#8f8b84;padding:0;font-size:17px;line-height:1;display:grid;place-items:center;cursor:pointer}.eyebrow{margin:0 0 4px;font-size:11px;line-height:1.2;font-weight:800;letter-spacing:.14em;color:var(--muted)}h1{font-size:31px;line-height:1.02;letter-spacing:-.04em;margin:0;font-weight:800}.today-button{border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:999px;padding:10px 15px;min-height:42px;font-weight:700}.home-button{display:inline-flex;align-items:center;gap:6px;text-decoration:none;white-space:nowrap;font-size:14px}.next-class{background:#8f4f70;color:white;border-radius:20px;padding:17px 18px;margin-bottom:16px;min-height:88px;display:flex;justify-content:space-between;align-items:center;gap:16px}.day-strip{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;margin-bottom:23px}.day-strip button{border:0;background:transparent;border-radius:16px;min-height:59px;padding:8px 2px}.day-strip button.active{background:var(--accent);color:white}.schedule-list{display:flex;flex-direction:column;gap:10px}
-  </style>
-  <link rel="stylesheet" href="./styles.css?v=110" />
-  <link rel="stylesheet" href="./desktop-renewal.css?v=5" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#e9efdb">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Begüm's Garden">
+<meta name="description" content="Begüm's Garden — live NTU schedule, COOL deadlines, synchronized manual tasks, and campus shortcuts.">
+<title>Begüm's Garden · NTU Schedule</title>
+<link rel="icon" type="image/svg+xml" href="./garden-favicon.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=1">
+<link rel="manifest" href="./manifest.webmanifest?v=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Fraunces:opsz,wght,SOFT,WONK@9..144,400..700,45,1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./styles.css?v=110">
+<link rel="stylesheet" href="./garden-theme.css?v=1">
 </head>
 <body>
-  <main class="app-shell">
-    <header class="topbar">
-      <div>
-        <p class="eyebrow">NTU · FALL 2026</p>
-        <h1>My Schedule</h1>
-        <p class="desktop-subline">Classes, tasks and campus shortcuts.</p>
+<svg class="sr-only" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
+<symbol id="i-flower" viewBox="0 0 40 40"><g fill="currentColor"><ellipse cx="20" cy="9.5" rx="6" ry="8"/><ellipse cx="20" cy="30.5" rx="6" ry="8"/><ellipse cx="9.5" cy="20" rx="8" ry="6"/><ellipse cx="30.5" cy="20" rx="8" ry="6"/><ellipse cx="12.6" cy="12.6" rx="5.6" ry="7" transform="rotate(-45 12.6 12.6)"/><ellipse cx="27.4" cy="12.6" rx="5.6" ry="7" transform="rotate(45 27.4 12.6)"/><ellipse cx="12.6" cy="27.4" rx="5.6" ry="7" transform="rotate(45 12.6 27.4)"/><ellipse cx="27.4" cy="27.4" rx="5.6" ry="7" transform="rotate(-45 27.4 27.4)"/></g><circle cx="20" cy="20" r="6.7" fill="#efbb5c"/></symbol>
+<symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.7"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 5 5L20 7"/></symbol>
+<symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3m-9 0 1 13h10l1-13M10 11v6m4-6v6"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="i-home" viewBox="0 0 24 24"><path d="m3 11 9-8 9 8M5 10v11h14V10M10 21v-8h4v8"/></symbol>
+<symbol id="i-book" viewBox="0 0 24 24"><path d="M12 6C9 3 5 3 2 5v14c3-2 7-2 10 1 3-3 7-3 10-1V5c-3-2-7-2-10 1ZM12 6v14"/></symbol>
+<symbol id="i-mail" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="m3 7 9 7 9-7"/></symbol>
+<symbol id="i-arrow" viewBox="0 0 24 24"><path d="M7 17 17 7M8 7h9v9"/></symbol>
+<symbol id="i-sprout" viewBox="0 0 24 24"><path d="M12 22V10m0 5c-5 0-8-3-8-8 5 0 8 3 8 8Zm0-5c0-5 3-8 8-8 0 5-3 8-8 8Z"/></symbol>
+</defs></svg>
+<div class="outer">
+<main class="app-shell garden" aria-label="Begüm's garden · NTU schedule">
+<header class="hero"><div class="hero-copy"><p class="eyebrow">✦ NATIONAL TAIWAN UNIVERSITY · FALL 2026</p><h1>Every day, a little<br><em>room to bloom.</em></h1><p class="hero-tagline">Your classes, little plans, and a pocket of sunshine.</p></div>
+<div class="hero-art" aria-hidden="true">
+<svg viewBox="0 0 490 175" preserveAspectRatio="xMidYMax meet"><circle class="sun" cx="345" cy="39" r="42"/><path class="hill-back" d="M0 164Q109 57 235 135T490 98v77H0Z"/><path class="hill-front" d="M0 168Q126 104 278 151T490 128v47H0Z"/>
+<path class="bee-trail" d="M167 64Q217 95 265 31"/><path class="stem" d="M31 176Q39 104 69 91M112 176Q97 111 110 73M374 176Q388 112 421 94M312 176Q299 104 314 91M243 176Q248 134 227 118"/>
+<ellipse class="leaf" cx="46" cy="137" rx="23" ry="11" transform="rotate(-37 46 137)"/><ellipse class="leaf-alt" cx="32" cy="154" rx="20" ry="9" transform="rotate(30 32 154)"/><ellipse class="leaf" cx="107" cy="124" rx="24" ry="10" transform="rotate(44 107 124)"/><ellipse class="leaf-alt" cx="127" cy="143" rx="23" ry="10" transform="rotate(-36 127 143)"/><ellipse class="leaf-alt" cx="333" cy="132" rx="24" ry="10" transform="rotate(-35 333 132)"/><ellipse class="leaf" cx="394" cy="131" rx="27" ry="10" transform="rotate(43 394 131)"/><ellipse class="leaf-alt" cx="284" cy="160" rx="22" ry="9" transform="rotate(35 284 160)"/>
+<g transform="translate(69 91)"><ellipse class="petal-pink" cy="-17" rx="11" ry="15"/><ellipse class="petal-pink" cy="17" rx="11" ry="15"/><ellipse class="petal-pink" cx="-17" rx="15" ry="11"/><ellipse class="petal-pink" cx="17" rx="15" ry="11"/><circle class="flower-center" r="9"/></g><g transform="translate(110 73) scale(.72)"><ellipse class="petal-white" cy="-17" rx="11" ry="15"/><ellipse class="petal-white" cy="17" rx="11" ry="15"/><ellipse class="petal-white" cx="-17" rx="15" ry="11"/><ellipse class="petal-white" cx="17" rx="15" ry="11"/><circle class="flower-center" r="9"/></g><g transform="translate(421 94) scale(1.1)"><ellipse class="petal-white" cy="-17" rx="11" ry="15"/><ellipse class="petal-white" cy="17" rx="11" ry="15"/><ellipse class="petal-white" cx="-17" rx="15" ry="11"/><ellipse class="petal-white" cx="17" rx="15" ry="11"/><circle class="flower-center" r="9"/></g><g transform="translate(314 91) scale(.8)"><ellipse class="petal-yellow" cy="-17" rx="11" ry="15"/><ellipse class="petal-yellow" cy="17" rx="11" ry="15"/><ellipse class="petal-yellow" cx="-17" rx="15" ry="11"/><ellipse class="petal-yellow" cx="17" rx="15" ry="11"/><circle class="flower-center" r="9"/></g><g transform="translate(227 118) scale(.55)"><ellipse class="petal-pink" cy="-17" rx="11" ry="15"/><ellipse class="petal-pink" cy="17" rx="11" ry="15"/><ellipse class="petal-pink" cx="-17" rx="15" ry="11"/><ellipse class="petal-pink" cx="17" rx="15" ry="11"/><circle class="flower-center" r="9"/></g>
+</svg>
+<div class="hero-bee bee-a"><span class="bee-wing"></span><span class="bee-wing right"></span><span class="bee-body"></span><span class="bee-head"></span><span class="bee-antenna"></span></div><div class="hero-bee bee-b"><span class="bee-wing"></span><span class="bee-wing right"></span><span class="bee-body"></span><span class="bee-head"></span><span class="bee-antenna"></span></div></div>
+<div id="desktopClock" aria-label="Taipei time"></div></header>
+<div class="main">
+<div class="weekbar">
+  <div class="week-caption"><p class="section-kicker">YOUR LITTLE WEEK</p><strong class="week-range" id="weekRange">This week</strong></div>
+  <section id="nextClass" class="next-class" aria-label="Next class" aria-live="polite"></section>
+  <div class="week-actions">
+    <button type="button" class="nav-button" id="previousWeek" aria-label="Previous week">‹</button>
+    <button type="button" class="nav-button today-button" id="jumpTodayButton">Today</button>
+    <button type="button" class="nav-button" id="nextWeek" aria-label="Next week">›</button>
+    <label class="date-jump" for="weekDateJump" title="Jump to date" aria-label="Jump to date">▦
+      <input id="weekDateJump" type="date" min="2026-09-01" max="2026-12-31" aria-label="Jump to a date">
+    </label>
+    <button id="pageRefreshButton" type="button" class="nav-button" aria-label="Refresh page" title="Refresh page">↻</button>
+    <button id="placesButton" type="button" class="nav-button" aria-haspopup="dialog" aria-label="Open saved places"><span class="places-button-icon" aria-hidden="true">⌖</span><span>Places</span></button>
+  </div>
+</div>
+<nav class="day-strip day-rail" aria-label="Choose weekday">
+<button type="button" class="day-tile active" data-day="1" aria-pressed="true"><span class="day-label"><span class="day-name">Mon</span><span class="day-note">2 blooms</span></span><small class="day-date">—</small><svg class="tile-flower" viewBox="0 0 40 40" aria-hidden="true"><use href="#i-flower"/></svg></button>
+<button type="button" class="day-tile" data-day="2" aria-pressed="false"><span class="day-label"><span class="day-name">Tue</span><span class="day-note">1 bloom</span></span><small class="day-date">—</small><svg class="tile-flower" viewBox="0 0 40 40" aria-hidden="true"><use href="#i-flower"/></svg></button>
+<button type="button" class="day-tile" data-day="3" aria-pressed="false"><span class="day-label"><span class="day-name">Wed</span><span class="day-note">2 blooms</span></span><small class="day-date">—</small><svg class="tile-flower" viewBox="0 0 40 40" aria-hidden="true"><use href="#i-flower"/></svg></button>
+<button type="button" class="day-tile" data-day="4" aria-pressed="false"><span class="day-label"><span class="day-name">Thu</span><span class="day-note">3 blooms</span></span><small class="day-date">—</small><svg class="tile-flower" viewBox="0 0 40 40" aria-hidden="true"><use href="#i-flower"/></svg></button>
+<button type="button" class="day-tile" data-day="5" aria-pressed="false"><span class="day-label"><span class="day-name">Fri</span><span class="day-note">2 blooms</span></span><small class="day-date">—</small><svg class="tile-flower" viewBox="0 0 40 40" aria-hidden="true"><use href="#i-flower"/></svg></button>
+<button type="button" class="day-tile" data-day="6" aria-pressed="false"><span class="day-label"><span class="day-name">Sat</span><span class="day-note">Take it slow</span></span><small class="day-date">—</small><svg class="tile-flower" viewBox="0 0 40 40" aria-hidden="true"><use href="#i-flower"/></svg></button>
+</nav>
+<div class="dashboard">
+  <div class="schedule-split">
+    <section class="panel classes-panel schedule-column" aria-labelledby="selectedDay">
+      <div class="panel-heading">
+        <div><p class="section-kicker">THE FLOWER BED · DAILY SCHEDULE</p><h2 id="selectedDay">Monday in bloom</h2><p id="selectedDate" class="selected-date garden-date"></p></div>
+        <span id="classCount" class="count-pill">—</span>
       </div>
-      <div class="topbar-actions">
-        <span id="desktopClock" class="desktop-clock" aria-label="Taipei date and time"></span>
-        <button id="jumpTodayButton" class="today-button desktop-today" type="button">Today <span class="keyboard-hint">T</span></button>
-        <button id="pageRefreshButton" class="refresh-page-button" type="button" aria-label="Refresh page">↻</button>
-        <button id="placesButton" class="today-button places-button" type="button" aria-haspopup="dialog" aria-label="Open saved places"><span class="places-button-icon" aria-hidden="true">⌖</span><span>Places</span></button>
+      <div id="scheduleList" class="class-list schedule-list" aria-live="polite"></div>
+      <div class="class-footer"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-sprout"/></svg><span>One little bloom at a time.</span></div>
+    </section>
+    <section class="panel cool-panel cool-section" aria-labelledby="coolHeading">
+      <div class="cool-heading-row">
+        <div><p class="cool-eyebrow section-kicker">NECTAR NOTES · NTU COOL</p><h3 id="coolHeading">Upcoming deadlines</h3></div>
+        <button id="coolRefresh" class="cool-refresh" type="button" aria-label="Refresh NTU COOL deadlines">Refresh</button>
       </div>
-    </header>
-
-    <div class="desktop-status-row">
-      <section id="nextClass" class="next-class" aria-live="polite"></section>
-    </div>
-
-    <div class="desktop-workspace">
-      <aside class="desktop-day-rail">
-        <p class="desktop-rail-label">WEEK</p>
-        <div class="week-navigation" aria-label="Browse schedule weeks">
-          <button id="previousWeek" class="week-nav-button" type="button" aria-label="Previous week" title="Previous week">‹</button>
-          <label class="week-jump-control" for="weekDateJump" title="Choose a date to jump to its week">
-            <span id="weekRange">This week</span>
-            <input id="weekDateJump" type="date" min="2026-09-01" max="2026-12-31" aria-label="Jump to week containing date" />
-          </label>
-          <button id="nextWeek" class="week-nav-button" type="button" aria-label="Next week" title="Next week">›</button>
-        </div>
-        <nav class="day-strip" aria-label="Choose day">
-          <button type="button" data-day="1"><span>Mon</span><small>15</small></button>
-          <button type="button" data-day="2"><span>Tue</span><small>16</small></button>
-          <button type="button" data-day="3"><span>Wed</span><small>17</small></button>
-          <button type="button" data-day="4"><span>Thu</span><small>18</small></button>
-          <button type="button" data-day="5"><span>Fri</span><small>19</small></button>
-          <button type="button" data-day="6"><span>Sat</span><small>20</small></button>
-        </nav>
-        <p class="rail-tip">Tip: use <kbd>1</kbd>–<kbd>6</kbd> to switch days</p>
-      </aside>
-
-      <div class="planning-column">
-      <div class="schedule-column">
-        <section class="day-heading">
-          <div>
-            <p id="selectedDate" class="selected-date"></p>
-            <h2 id="selectedDay">Monday</h2>
-          </div>
-          <p id="classCount" class="class-count"></p>
-        </section>
-
-        <section id="scheduleList" class="schedule-list" aria-live="polite"></section>
+      <p class="cool-intro">A little buzz about what's due next.</p>
+      <div id="coolDeadlines" class="cool-deadlines" aria-live="polite"><div class="cool-status">Syncing deadlines…</div></div>
+      <div class="cool-meta"><span>Live NTU COOL deadlines</span><a href="https://cool.ntu.edu.tw/" target="_blank" rel="noopener noreferrer external">Open COOL ↗</a></div>
+    </section>
+  </div>
+  <div class="side-stack utility-column">
+    <section class="panel tasks-panel todo-section" aria-labelledby="todoHeading">
+      <div class="todo-heading-row">
+        <div><p class="todo-eyebrow section-kicker">SWEET LITTLE THINGS</p><h3 id="todoHeading">The honey-do list</h3></div>
+        <span id="todoCount" class="todo-count">0 tasks</span>
       </div>
-
-      </div>
-
-      <aside class="utility-column">
-        <section class="cool-section" aria-labelledby="coolHeading">
-          <div class="cool-heading-row">
-            <div>
-              <p class="cool-eyebrow">NTU COOL</p>
-              <h3 id="coolHeading">Upcoming deadlines</h3>
-            </div>
-            <button id="coolRefresh" class="cool-refresh" type="button">Refresh</button>
-          </div>
-          <div id="coolDeadlines" class="cool-deadlines" aria-live="polite">
-            <div class="cool-status">Syncing deadlines…</div>
-          </div>
-        </section>
-
-
-        <section class="todo-section" aria-labelledby="todoHeading">
-          <div class="todo-heading-row">
-            <div>
-              <p class="todo-eyebrow">TO DO</p>
-              <h3 id="todoHeading">Manual tasks</h3>
-            </div>
-            <span id="todoCount" class="todo-count">0 tasks</span>
-          </div>
-          <form id="todoForm" class="todo-form">
-            <input id="todoInput" type="text" maxlength="140" autocomplete="off" placeholder="Add a task…" aria-label="New to-do item" />
-            <button type="submit">Add</button>
-          </form>
-          <div id="todoList" class="todo-list" aria-live="polite"></div>
-          <button id="todoMoreButton" class="desktop-more-button" type="button" hidden>Show more</button>
-        </section>
-      </aside>
-      <aside class="desktop-shortcuts-column" aria-label="Campus and study shortcuts"></aside>
-
-    </div>
-
-    <div id="quickAccessRow" class="quick-access-row">
-    <section class="study-hub" aria-labelledby="studyHubHeading">
+      <div id="todoList" class="todo-list" aria-live="polite"></div>
+      <button id="todoMoreButton" class="desktop-more-button" type="button" hidden>Show more</button>
+      <form id="todoForm" class="todo-form">
+        <label for="todoInput" class="sr-only">Add a task</label>
+        <input id="todoInput" type="text" maxlength="140" autocomplete="off" placeholder="Plant a little task…" aria-label="New to-do item" required>
+        <button type="submit">＋ Add</button>
+      </form>
+    </section>
+    <section class="panel links-panel" aria-label="Campus and study shortcuts">
+      <div class="side-heading"><div><p class="section-kicker">YOUR LITTLE HIVE</p><h2>Campus shortcuts</h2></div><span aria-hidden="true" style="color:#cfa34f;font-size:20px">✳</span></div>
+      <div class="desktop-shortcuts-column"></div>
+      <div id="quickAccessRow" class="quick-access-row">
+        <section class="study-hub" aria-labelledby="studyHubHeading">
       <div class="study-hub-heading">
         <p class="study-hub-eyebrow">QUICK ACCESS</p>
         <h3 id="studyHubHeading">Study hub</h3>
@@ -123,8 +115,7 @@
         </a>
       </div>
     </section>
-
-    <section id="ntuHubSection" class="study-hub ntu-hub" aria-labelledby="ntuHubHeading">
+        <section id="ntuHubSection" class="study-hub ntu-hub" aria-labelledby="ntuHubHeading">
       <div class="study-hub-heading ntu-hub-heading">
         <h3 id="ntuHubHeading">NTU</h3>
         <button id="mailAlertButton" class="mail-alert-button" type="button" aria-haspopup="dialog" aria-label="Mail alerts">
@@ -148,11 +139,15 @@
       </div>
       <!-- Mail alerts control moved into the NTU heading. -->
     </section>
-    </div>
-
-  </main>
-
-  <dialog id="placesDialog" class="lesson-dialog places-dialog">
+      </div>
+    </section>
+  </div>
+</div>
+<footer class="foot"><span>Made to grow at your own pace <strong>✿</strong></span><span>Live schedule · NTU COOL · synced to-dos</span></footer>
+</div>
+</main>
+</div>
+<dialog id="placesDialog" class="lesson-dialog places-dialog">
     <div class="dialog-sheet">
       <button id="closePlacesDialog" class="close-dialog" type="button" aria-label="Close">×</button>
       <span class="dialog-dot places-dot"></span>
@@ -239,7 +234,7 @@
     </div>
   </dialog>
 
-  <script src="./app.js?v=113"></script>
-  <script src="./todo-realtime.js?v=1"></script>
-</body>
-</html>
+
+<script src="./app.js?v=113"></script>
+<script src="./todo-realtime.js?v=1"></script>
+</body></html>
