@@ -41,10 +41,14 @@ jobs:
         run: |
           $exe = "build/ntu-scope/Release/NTUScope.exe"
           if (!(Test-Path $exe)) { throw "Native NTUScope.exe was not produced" }
-          & $exe --self-test
-          if ($LASTEXITCODE -ne 0) { throw "Native audio companion self-tests failed" }
-          $version = & $exe --version
-          if ($version -notmatch "native 2.0") { throw "Wrong executable version" }
+          $check = Start-Process -FilePath (Resolve-Path $exe).Path -ArgumentList '--self-test' -PassThru -Wait
+          if ($check.ExitCode -ne 0) { throw "Native audio companion self-tests failed: $($check.ExitCode)" }
+          Write-Host "Native self-test: PASS"
+          $bin = [System.IO.File]::ReadAllBytes((Resolve-Path $exe).Path)
+          $pe = [BitConverter]::ToInt32($bin, 0x3C)
+          $subsystem = [BitConverter]::ToUInt16($bin, $pe + 24 + 68)
+          if ($subsystem -ne 2) { throw "NTUScope must have Windows GUI subsystem (2), not a console ($subsystem)" }
+          Write-Host "Windows GUI subsystem verified; no console is created."
           $bytes = (Get-Item $exe).Length
           Write-Host "NTUScope.exe: $bytes bytes ($([math]::Round($bytes / 1MB, 3)) MiB)"
           if ($bytes -ge 5MB) { throw "Native executable exceeded 5 MiB size budget" }

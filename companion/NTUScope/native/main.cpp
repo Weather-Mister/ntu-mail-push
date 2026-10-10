@@ -1,5 +1,7 @@
 // NTU Scope: native Windows WASAPI loopback -> authenticated local WebSocket.
 // No .NET, web server framework, microphone, audio recording or outbound network access.
+#define UNICODE
+#define _UNICODE
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #define _WIN32_WINNT 0x0A00
@@ -11,6 +13,7 @@
 #include <mmreg.h>
 #include <wrl/client.h>
 #include <shlobj.h>
+#include <shellapi.h>
 #include <bcrypt.h>
 #include <wincrypt.h>
 
@@ -31,6 +34,7 @@
 #include <stdexcept>
 #include <string>
 #include <thread>
+#include <vector>
 #include <utility>
 
 #pragma comment(lib, "ole32.lib")
@@ -47,6 +51,24 @@ constexpr size_t kBins = 64;
 constexpr char kOrigin[] = "https://weather-mister.github.io";
 constexpr char kWsGuid[] = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 constexpr char kDemo[] = "https://weather-mister.github.io/ntu-mail-push/skeuo-demo.html";
+constexpr wchar_t kDemoWide[] = L"https://weather-mister.github.io/ntu-mail-push/skeuo-demo.html";
+constexpr wchar_t kStartupRun[] = L"Software\\Microsoft\\Windows\\CurrentVersion\\Run";
+constexpr wchar_t kPreferenceRoot[] = L"Software\\NTUScope";
+constexpr wchar_t kStartupValue[] = L"NTUScope";
+constexpr UINT kTrayMessage = WM_APP + 21;
+constexpr UINT kNetworkStatusMessage = WM_APP + 22;
+constexpr UINT_PTR kTrayId = 42;
+constexpr UINT kMenuOpen = 101;
+constexpr UINT kMenuCopy = 102;
+constexpr UINT kMenuStartup = 103;
+constexpr UINT kMenuExit = 104;
+static std::atomic<bool> gRunning{true};
+static std::atomic<bool> gConnected{false};
+static HWND gWindow = nullptr;
+static HICON gIcon = nullptr;
+static std::string gPairingKey;
+static std::wstring gInstalledPath;
+static UINT gTaskbarCreated = 0;
 
 struct Frame {
     std::array<float, kBins> bins{};
@@ -116,6 +138,253 @@ static std::string PairingKey() {
             throw std::runtime_error("Could not save the pairing key.");
     }
     return key;
+}
+
+
+static std::wstring CurrentExePath() {
+    std::vector<wchar_t> characters(MAX_PATH);
+    for (;;) {
+        const DWORD count = GetModuleFileNameW(nullptr, characters.data(),
+            static_cast<DWORD>(characters.size()));
+        if (!count) throw std::runtime_error("Cannot locate NTUScope.exe.");
+        if (count < characters.size() - 1)
+            return std::wstring(characters.data(), count);
+        if (characters.size() > 32768)
+            throw std::runtime_error("Executable path is too long.");
+        characters.resize(characters.size() * 2);
+    }
+}
+static std::wstring InstalledExePath() {
+    PWSTR local = nullptr;
+    if (FAILED(SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, nullptr, &local)))
+        throw std::runtime_error("Cannot locate LocalAppData.");
+    const fs::path folder(local);
+    CoTaskMemFree(local);
+    const fs::path appFolder = folder / L"NTUScope";
+    fs::create_directories(appFolder);
+    return (appFolder / L"NTUScope.exe").wstring();
+}
+static bool EnsureInstalled() {
+    gInstalledPath = InstalledExePath();
+    const auto current = CurrentExePath();
+    if (_wcsicmp(current.c_str(), gInstalledPath.c_str()) == 0)
+        return false;
+    // Install into a stable per-user folder. Startup must never point to a
+    // disposable GitHub ZIP extraction or Downloads folder.
+    fs::copy_file(current, gInstalledPath, fs::copy_options::overwrite_existing);
+    const auto launched = reinterpret_cast<INT_PTR>(ShellExecuteW(
+        nullptr, L"open", gInstalledPath.c_str(), nullptr, nullptr, SW_SHOWNORMAL));
+    if (launched <= 32)
+        throw std::runtime_error("Could not launch installed NTUScope.exe.");
+    return true;
+}
+static bool StartupPreference() {
+    DWORD value = 1;
+    DWORD bytes = sizeof(value);
+    const LSTATUS result = RegGetValueW(HKEY_CURRENT_USER, kPreferenceRoot,
+        L"StartWithWindows", RRF_RT_REG_DWORD, nullptr, &value, &bytes);
+    return result == ERROR_SUCCESS ? value != 0 : true;
+}
+static bool SetStartup(bool enabled, bool persistPreference) {
+    HKEY run = nullptr;
+    if (RegCreateKeyExW(HKEY_CURRENT_USER, kStartupRun, 0, nullptr, 0,
+        KEY_SET_VALUE, nullptr, &run, nullptr) != ERROR_SUCCESS)
+        return false;
+    LSTATUS status;
+    if (enabled) {
+        const auto command = L"\"" + gInstalledPath + L"\"";
+        status = RegSetValueExW(run, kStartupValue, 0, REG_SZ,
+            reinterpret_cast<const BYTE*>(command.c_str()),
+            static_cast<DWORD>((command.size() + 1) * sizeof(wchar_t)));
+    } else {
+        status = RegDeleteValueW(run, kStartupValue);
+        if (status == ERROR_FILE_NOT_FOUND) status = ERROR_SUCCESS;
+    }
+    RegCloseKey(run);
+    if (status != ERROR_SUCCESS) return false;
+    if (!persistPreference) return true;
+    HKEY preferences = nullptr;
+    if (RegCreateKeyExW(HKEY_CURRENT_USER, kPreferenceRoot, 0, nullptr, 0,
+        KEY_SET_VALUE, nullptr, &preferences, nullptr) != ERROR_SUCCESS)
+        return false;
+    const DWORD value = enabled ? 1 : 0;
+    status = RegSetValueExW(preferences, L"StartWithWindows", 0, REG_DWORD,
+        reinterpret_cast<const BYTE*>(&value), sizeof(value));
+    RegCloseKey(preferences);
+    return status == ERROR_SUCCESS;
+}
+static bool StartupEntryExists() {
+    wchar_t command[32768] = {};
+    DWORD bytes = sizeof(command);
+    if (RegGetValueW(HKEY_CURRENT_USER, kStartupRun, kStartupValue,
+        RRF_RT_REG_SZ, nullptr, command, &bytes) != ERROR_SUCCESS)
+        return false;
+    return std::wstring(command) == L"\"" + gInstalledPath + L"\"";
+}
+static bool CopyPairingKey(HWND hwnd) {
+    std::wstring text(gPairingKey.begin(), gPairingKey.end());
+    HGLOBAL memory = GlobalAlloc(GMEM_MOVEABLE, (text.size() + 1) * sizeof(wchar_t));
+    if (!memory) return false;
+    void* contents = GlobalLock(memory);
+    if (!contents) {
+        GlobalFree(memory);
+        return false;
+    }
+    std::memcpy(contents, text.c_str(), (text.size() + 1) * sizeof(wchar_t));
+    GlobalUnlock(memory);
+    if (!OpenClipboard(hwnd)) {
+        GlobalFree(memory);
+        return false;
+    }
+    EmptyClipboard();
+    if (!SetClipboardData(CF_UNICODETEXT, memory)) {
+        CloseClipboard();
+        GlobalFree(memory);
+        return false;
+    }
+    CloseClipboard();  // Windows now owns the allocation.
+    return true;
+}
+// Draw a tiny 32px phosphor-wave icon without shipping external art/assets.
+static HICON CreateScopeIcon() {
+    BITMAPV5HEADER header{};
+    header.bV5Size = sizeof(header);
+    header.bV5Width = 32;
+    header.bV5Height = -32;
+    header.bV5Planes = 1;
+    header.bV5BitCount = 32;
+    header.bV5Compression = BI_BITFIELDS;
+    header.bV5RedMask = 0x00ff0000;
+    header.bV5GreenMask = 0x0000ff00;
+    header.bV5BlueMask = 0x000000ff;
+    header.bV5AlphaMask = 0xff000000;
+    void* pixels = nullptr;
+    HDC dc = GetDC(nullptr);
+    HBITMAP color = CreateDIBSection(dc, reinterpret_cast<BITMAPINFO*>(&header),
+        DIB_RGB_COLORS, &pixels, nullptr, 0);
+    ReleaseDC(nullptr, dc);
+    if (!color || !pixels) {
+        if (color) DeleteObject(color);
+        return nullptr;
+    }
+    auto* bitmap = reinterpret_cast<DWORD*>(pixels);
+    for (int y = 0; y < 32; ++y) {
+        for (int x = 0; x < 32; ++x) {
+            const int dx = std::max(0, std::abs(x - 15) - 10);
+            const int dy = std::max(0, std::abs(y - 15) - 10);
+            if (dx * dx + dy * dy > 36) continue;
+            const bool frame = x == 3 || x == 28 || y == 3 || y == 28;
+            bitmap[y * 32 + x] = frame ? 0xff4c926e : 0xff19352d;
+            if (x >= 5 && x <= 26) {
+                const float wave = std::sin((x - 5) * 0.57f);
+                const int target = 16 - static_cast<int>(std::round(wave * 7));
+                if (std::abs(y - target) <= 1)
+                    bitmap[y * 32 + x] = 0xff9fe4a5;
+            }
+        }
+    }
+    HBITMAP mask = CreateBitmap(32, 32, 1, 1, nullptr);
+    ICONINFO info{};
+    info.fIcon = TRUE;
+    info.hbmColor = color;
+    info.hbmMask = mask;
+    HICON icon = CreateIconIndirect(&info);
+    DeleteObject(color);
+    DeleteObject(mask);
+    return icon;
+}
+static void AddOrUpdateTrayIcon(DWORD operation = NIM_ADD) {
+    if (!gWindow) return;
+    NOTIFYICONDATAW data{};
+    data.cbSize = sizeof(data);
+    data.hWnd = gWindow;
+    data.uID = static_cast<UINT>(kTrayId);
+    data.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
+    data.uCallbackMessage = kTrayMessage;
+    data.hIcon = gIcon ? gIcon : LoadIconW(nullptr, IDI_APPLICATION);
+    const wchar_t* status = gConnected.load()
+        ? L"NTU Scope - Firefox connected"
+        : L"NTU Scope - running quietly";
+    wcscpy_s(data.szTip, status);
+    Shell_NotifyIconW(operation, &data);
+}
+static void RemoveTrayIcon() {
+    NOTIFYICONDATAW data{};
+    data.cbSize = sizeof(data);
+    data.hWnd = gWindow;
+    data.uID = static_cast<UINT>(kTrayId);
+    Shell_NotifyIconW(NIM_DELETE, &data);
+}
+static void ShowTrayMenu(HWND hwnd) {
+    HMENU menu = CreatePopupMenu();
+    if (!menu) return;
+    AppendMenuW(menu, MF_STRING | MF_DISABLED, 0,
+        gConnected.load() ? L"Audio visualizer: Connected" : L"Audio visualizer: Ready");
+    AppendMenuW(menu, MF_SEPARATOR, 0, nullptr);
+    AppendMenuW(menu, MF_STRING, kMenuOpen, L"Open NTU Schedule");
+    AppendMenuW(menu, MF_STRING, kMenuCopy, L"Copy pairing key");
+    AppendMenuW(menu, MF_SEPARATOR, 0, nullptr);
+    AppendMenuW(menu, MF_STRING | (StartupEntryExists() ? MF_CHECKED : 0),
+        kMenuStartup, L"Start with Windows");
+    AppendMenuW(menu, MF_STRING, kMenuExit, L"Exit NTU Scope");
+    POINT point{};
+    GetCursorPos(&point);
+    SetForegroundWindow(hwnd);
+    TrackPopupMenu(menu, TPM_RIGHTBUTTON | TPM_BOTTOMALIGN | TPM_LEFTALIGN,
+        point.x, point.y, 0, hwnd, nullptr);
+    PostMessageW(hwnd, WM_NULL, 0, 0);
+    DestroyMenu(menu);
+}
+static LRESULT CALLBACK TrayWindowProc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp) {
+    if (gTaskbarCreated && message == gTaskbarCreated) {
+        AddOrUpdateTrayIcon();
+        return 0;
+    }
+    switch (message) {
+    case kTrayMessage:
+        if (lp == WM_RBUTTONUP || lp == WM_LBUTTONUP ||
+            lp == WM_CONTEXTMENU) ShowTrayMenu(hwnd);
+        return 0;
+    case kNetworkStatusMessage:
+        AddOrUpdateTrayIcon(NIM_MODIFY);
+        return 0;
+    case WM_COMMAND:
+        switch (LOWORD(wp)) {
+        case kMenuOpen:
+            ShellExecuteW(nullptr, L"open", kDemoWide, nullptr, nullptr, SW_SHOWNORMAL);
+            break;
+        case kMenuCopy:
+            if (!CopyPairingKey(hwnd))
+                MessageBoxW(hwnd, L"Unable to copy the pairing key.", L"NTU Scope", MB_ICONERROR);
+            break;
+        case kMenuStartup:
+            if (!SetStartup(!StartupEntryExists(), true))
+                MessageBoxW(hwnd, L"Could not change Windows startup settings.",
+                    L"NTU Scope", MB_ICONERROR);
+            break;
+        case kMenuExit:
+            DestroyWindow(hwnd);
+            break;
+        }
+        return 0;
+    case WM_DESTROY:
+        gRunning.store(false);
+        RemoveTrayIcon();
+        PostQuitMessage(0);
+        return 0;
+    default:
+        return DefWindowProcW(hwnd, message, wp, lp);
+    }
+}
+static HWND MakeTrayWindow(HINSTANCE instance) {
+    WNDCLASSW cls{};
+    cls.lpfnWndProc = TrayWindowProc;
+    cls.hInstance = instance;
+    cls.lpszClassName = L"NTUScopeTrayHidden";
+    if (!RegisterClassW(&cls) && GetLastError() != ERROR_CLASS_ALREADY_EXISTS)
+        return nullptr;
+    return CreateWindowExW(WS_EX_TOOLWINDOW, cls.lpszClassName, L"NTUScope",
+        WS_OVERLAPPED, 0, 0, 0, 0, nullptr, nullptr, instance, nullptr);
 }
 
 class LoopbackMeter {
@@ -460,73 +729,146 @@ static int SelfTest() {
     std::cout << (ok ? "Native self-test: PASS\n" : "Native self-test: FAIL\n");
     return ok ? 0 : 1;
 }
-int main(int argc, char** argv) {
-    if (argc == 2 && std::string(argv[1]) == "--self-test") return SelfTest();
-    if (argc == 2 && std::string(argv[1]) == "--version") {
-        std::cout << "NTUScope native 2.0\n"; return 0;
-    }
-    SetConsoleTitleW(L"NTU Schedule - PC Audio Companion");
-    std::string secret;
-    try { secret = PairingKey(); }
-    catch (const std::exception& e) {
-        std::cerr << "Setup failed: " << e.what() << "\n";
-        return 1;
-    }
-    std::cout << "NTU SCHEDULE / NATIVE PC AUDIO\n"
-              << "==============================\n"
-              << "Audio never leaves this PC; only small waveform measurements are shared.\n\n"
-              << "1. Open " << kDemo << "\n"
-              << "2. Click AUX beside the oscilloscope.\n"
-              << "3. Enter this same pairing key as before:\n\n    "
-              << secret << "\n\n"
-              << "Close this window to stop capture and disconnect.\n\n";
-    WSADATA wsa{};
-    if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
-        std::cerr << "Windows networking initialization failed.\n"; return 1;
-    }
-    SOCKET listener = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (listener == INVALID_SOCKET) {
-        std::cerr << "Could not open the local socket.\n"; WSACleanup(); return 1;
-    }
-    sockaddr_in endpoint{};
-    endpoint.sin_family = AF_INET;
-    endpoint.sin_port = htons(kPort);
-    endpoint.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-    const BOOL exclusive = TRUE;
-    setsockopt(listener, SOL_SOCKET, SO_EXCLUSIVEADDRUSE,
-        reinterpret_cast<const char*>(&exclusive), sizeof(exclusive));
-    if (bind(listener, reinterpret_cast<sockaddr*>(&endpoint), sizeof(endpoint)) ==
-            SOCKET_ERROR || listen(listener, SOMAXCONN) == SOCKET_ERROR) {
-        std::cerr << "Port 43187 is occupied. Close any earlier NTUScope window.\n";
-        closesocket(listener); WSACleanup(); return 1;
-    }
-    LoopbackMeter meter;
-    if (!meter.Start()) {
-        std::cerr << "Could not capture the default Windows playback device.\n";
-        closesocket(listener); WSACleanup(); return 1;
-    }
-    std::cout << "Audio capture: ACTIVE | 127.0.0.1:43187 only\n"
-              << "No administrator rights, drivers, runtime or installation required.\n\n";
-    for (;;) {
+
+static void ServeAudio(SOCKET listener, LoopbackMeter& meter, const std::string& secret) {
+    while (gRunning.load()) {
+        fd_set set{};
+        FD_ZERO(&set);
+        FD_SET(listener, &set);
+        timeval interval{0, 200000};
+        const int ready = select(0, &set, nullptr, nullptr, &interval);
+        if (ready == SOCKET_ERROR) break;
+        if (ready == 0) continue;
         SOCKET client = accept(listener, nullptr, nullptr);
-        if (client == INVALID_SOCKET) break;
+        if (client == INVALID_SOCKET) continue;
         constexpr DWORD timeoutMs = 2500;
         setsockopt(client, SOL_SOCKET, SO_RCVTIMEO,
             reinterpret_cast<const char*>(&timeoutMs), sizeof(timeoutMs));
         setsockopt(client, SOL_SOCKET, SO_SNDTIMEO,
             reinterpret_cast<const char*>(&timeoutMs), sizeof(timeoutMs));
         if (Handshake(client, secret)) {
-            std::cout << "Website connected.\n";
-            while (ContinueClient(client)) {
+            gConnected.store(true);
+            PostMessageW(gWindow, kNetworkStatusMessage, 0, 0);
+            while (gRunning.load() && ContinueClient(client)) {
                 if (!SendFrame(client, JsonFrame(meter.Latest()))) break;
                 std::this_thread::sleep_for(std::chrono::milliseconds(50));
             }
-            std::cout << "Website disconnected.\n";
+            gConnected.store(false);
+            PostMessageW(gWindow, kNetworkStatusMessage, 0, 0);
         }
         shutdown(client, SD_BOTH);
         closesocket(client);
     }
+    if (gRunning.load())
+        PostMessageW(gWindow, WM_CLOSE, 0, 0);
+}
+int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int) {
+    int argc = 0;
+    LPWSTR* argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+    const bool selfTest = argc == 2 && wcscmp(argv[1], L"--self-test") == 0;
+    const bool versionCheck = argc == 2 && wcscmp(argv[1], L"--version") == 0;
+    if (argv) LocalFree(argv);
+    if (selfTest) return SelfTest();
+    if (versionCheck) return 0;
+
+    try {
+        if (EnsureInstalled()) return 0;
+        gPairingKey = PairingKey();
+    } catch (const std::exception&) {
+        MessageBoxW(nullptr,
+            L"NTU Scope could not install to your local AppData directory.\n"
+            L"Close any older NTUScope instance, then try again.",
+            L"NTU Scope - Installation", MB_OK | MB_ICONERROR);
+        return 1;
+    }
+
+    HANDLE singleton = CreateMutexW(nullptr, TRUE, L"Local\\NTUScopeNativeSingleton");
+    if (!singleton) return 1;
+    if (GetLastError() == ERROR_ALREADY_EXISTS) {
+        CloseHandle(singleton);
+        return 0;
+    }
+
+    gTaskbarCreated = RegisterWindowMessageW(L"TaskbarCreated");
+    gWindow = MakeTrayWindow(instance);
+    if (!gWindow) {
+        CloseHandle(singleton);
+        return 1;
+    }
+    gIcon = CreateScopeIcon();
+    AddOrUpdateTrayIcon();
+    // Persist the user's startup choice. On first launch it defaults to on;
+    // manually launching after opting out will NOT switch it back on.
+    if (!SetStartup(StartupPreference(), true))
+        MessageBoxW(gWindow,
+            L"NTU Scope started but Windows autostart could not be configured.\n"
+            L"You can try enabling it later from the tray icon.",
+            L"NTU Scope", MB_OK | MB_ICONWARNING);
+
+    WSADATA wsa{};
+    if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
+        MessageBoxW(gWindow, L"Windows networking initialization failed.",
+            L"NTU Scope", MB_OK | MB_ICONERROR);
+        DestroyWindow(gWindow);
+        if (gIcon) DestroyIcon(gIcon);
+        ReleaseMutex(singleton);
+        CloseHandle(singleton);
+        return 1;
+    }
+    SOCKET listener = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    sockaddr_in endpoint{};
+    endpoint.sin_family = AF_INET;
+    endpoint.sin_port = htons(kPort);
+    endpoint.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    const BOOL exclusive = TRUE;
+    if (listener == INVALID_SOCKET ||
+        setsockopt(listener, SOL_SOCKET, SO_EXCLUSIVEADDRUSE,
+            reinterpret_cast<const char*>(&exclusive), sizeof(exclusive)) == SOCKET_ERROR ||
+        bind(listener, reinterpret_cast<sockaddr*>(&endpoint),
+            sizeof(endpoint)) == SOCKET_ERROR ||
+        listen(listener, SOMAXCONN) == SOCKET_ERROR) {
+        MessageBoxW(gWindow,
+            L"NTU Scope could not use localhost port 43187.\n"
+            L"Close the previous NTUScope console/tray app, then relaunch.",
+            L"NTU Scope - Already running?", MB_OK | MB_ICONERROR);
+        if (listener != INVALID_SOCKET) closesocket(listener);
+        WSACleanup();
+        DestroyWindow(gWindow);
+        if (gIcon) DestroyIcon(gIcon);
+        ReleaseMutex(singleton);
+        CloseHandle(singleton);
+        return 1;
+    }
+
+    {
+        LoopbackMeter meter;
+        if (!meter.Start()) {
+            MessageBoxW(gWindow,
+                L"NTU Scope could not capture the default Windows audio output.\n"
+                L"Check that speakers or headphones are connected, then restart.",
+                L"NTU Scope - Audio device", MB_OK | MB_ICONERROR);
+            closesocket(listener);
+            WSACleanup();
+            DestroyWindow(gWindow);
+            if (gIcon) DestroyIcon(gIcon);
+            ReleaseMutex(singleton);
+            CloseHandle(singleton);
+            return 1;
+        }
+        std::thread server([&]() { ServeAudio(listener, meter, gPairingKey); });
+        MSG message{};
+        while (GetMessageW(&message, nullptr, 0, 0) > 0) {
+            TranslateMessage(&message);
+            DispatchMessageW(&message);
+        }
+        gRunning.store(false);
+        server.join();
+    }
+
     closesocket(listener);
     WSACleanup();
+    if (gIcon) DestroyIcon(gIcon);
+    ReleaseMutex(singleton);
+    CloseHandle(singleton);
     return 0;
 }
