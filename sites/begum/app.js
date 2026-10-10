@@ -1,3 +1,5 @@
+// Pastel display colors from the approved Garden demo; canonical course data stays intact.
+const gardenCourseColors = {women:'#d997ae',globalhealth:'#8aae94',macro:'#d9b269',statistics:'#8aa3c5',period:'#b1a0ca',resources:'#95b29b',micro:'#d29d8c',toc:'#9aadb2',chatterbox:'#d1b38d'};
 const courses = {
   women: { name: 'Exploring Taiwan: Women and Taiwanese Society', color: '#aa5f86', location: 'Boya Building · Room 202' },
   globalhealth: { name: 'Essentials of Global Health', color: '#47796b', location: 'NTU Hospital · Room 211' },
@@ -576,13 +578,14 @@ function renderCoolDeadlines(){
 
   const itemsHtml = visible.map(event => {
     const due = new Date(event.dueAt);
-    const dateText = `${shortMonths[due.getMonth()]} ${due.getDate()}`;
+    const monthText = shortMonths[due.getMonth()];
+    const dateText = due.getDate();
     const dayText = dayNames[due.getDay()].slice(0,3);
     const done = coolDone.has(event.id);
     return `
       <article class="cool-item ${done ? 'done' : ''}">
         <a class="cool-main" href="${escapeHtml(event.url)}" target="_blank" rel="noopener noreferrer external" aria-label="Open ${escapeHtml(event.title)} in Safari">
-          <div class="cool-date"><strong>${dateText}</strong><span>${dayText}</span></div>
+          <div class="cool-date"><span class="cool-month">${monthText}</span><strong>${dateText}</strong><small class="cool-weekday">${dayText}</small></div>
           <div class="cool-copy">
             <p class="cool-title">${escapeHtml(event.title)}</p>
             <p class="cool-course">${escapeHtml(event.course)}</p>
@@ -715,7 +718,7 @@ function renderDay(){
     const live = !inactive && isCurrentLesson(selectedDay, lesson);
     const completed = !inactive && isLessonCompleted(selectedDay, lesson, date);
     return `
-      <button class="lesson ${live ? 'live' : ''} ${completed ? 'completed' : ''} ${inactive ? 'inactive' : ''}" type="button" data-index="${index}" style="--course-color:${course.color}" ${inactive ? 'disabled aria-disabled="true"' : ''}>
+      <button class="lesson ${live ? 'live' : ''} ${completed ? 'completed' : ''} ${inactive ? 'inactive' : ''}" type="button" data-index="${index}" style="--course-color:${gardenCourseColors[lesson.course] || course.color}" ${inactive ? 'disabled aria-disabled="true"' : ''}>
         <span class="time-block">
           <span class="time-start">${lesson.start}</span>
           <span class="time-end">${lesson.end}</span>
@@ -1127,7 +1130,7 @@ if (launchParams.get('open') === 'ntu-mail'){
 if ('serviceWorker' in navigator){
   window.addEventListener('load', async () => {
     try {
-      const registration = await navigator.serviceWorker.register('./sw.js?v=8', { updateViaCache:'none' });
+      const registration = await navigator.serviceWorker.register('./sw.js?v=9', { updateViaCache:'none' });
       await registration.update();
     } catch (error) {}
   });
