@@ -1,12 +1,18 @@
 {
-  "name": "NTU Schedule",
-  "short_name": "Schedule",
+  "name": "Begüm's Garden · NTU Schedule",
+  "short_name": "Garden",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#fbf2f6",
-  "theme_color": "#d16f9d",
+  "background_color": "#e9efdb",
+  "theme_color": "#e9efdb",
   "icons": [
+    {
+      "src": "./garden-favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
     {
       "src": "./apple-touch-icon.png",
       "sizes": "180x180",
