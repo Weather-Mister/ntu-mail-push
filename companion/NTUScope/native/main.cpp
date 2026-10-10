@@ -392,6 +392,51 @@ static bool SendFrame(SOCKET socket, const std::string& payload) {
     return SendAll(socket, head.data(), head.size()) &&
         SendAll(socket, payload.data(), payload.size());
 }
+// Browsers send a masked WebSocket CLOSE frame; if it isn't read, a single-client
+// helper can block a new connection until the browser's close timeout. Handle
+// CLOSE promptly, and respond to optional PING control frames.
+static bool ContinueClient(SOCKET socket) {
+    fd_set reads{};
+    FD_ZERO(&reads);
+    FD_SET(socket, &reads);
+    timeval immediate{0, 0};
+    const int selected = select(0, &reads, nullptr, nullptr, &immediate);
+    if (selected == 0) return true;
+    if (selected == SOCKET_ERROR) return false;
+
+    std::array<unsigned char, 256> peek{};
+    const int available = recv(socket, reinterpret_cast<char*>(peek.data()),
+        static_cast<int>(peek.size()), MSG_PEEK);
+    if (available <= 0) return false;
+    if (available < 2) return true;  // Header still arriving.
+    const unsigned int opcode = peek[0] & 0x0f;
+    const bool mask = (peek[1] & 0x80) != 0;
+    const size_t count = peek[1] & 0x7f;
+    if ((peek[0] & 0x70) || !mask || count > 125) return false;
+    const size_t size = 6 + count;
+    if (static_cast<size_t>(available) < size) return true;
+
+    std::array<unsigned char, 256> data{};
+    const int received = recv(socket, reinterpret_cast<char*>(data.data()),
+        static_cast<int>(size), 0);
+    if (received != static_cast<int>(size)) return false;
+    if (opcode == 8) {
+        const std::array<char, 2> reply{static_cast<char>(0x88), 0};
+        SendAll(socket, reply.data(), reply.size());
+        return false;
+    }
+    if (opcode == 9) {
+        std::array<char, 127> reply{};
+        reply[0] = static_cast<char>(0x8a);
+        reply[1] = static_cast<char>(count);
+        for (size_t i = 0; i < count; ++i)
+            reply[i + 2] = static_cast<char>(
+                data[i + 6] ^ data[2 + i % 4]);
+        return SendAll(socket, reply.data(), count + 2);
+    }
+    // A visualizer connection accepts no application uploads from the browser.
+    return false;
+}
 static int SelfTest() {
     const std::string expected = "s3pPLMBiTxaQ9kYGzzhZRbK+xOo=";
     const std::string challenge = "dGhlIHNhbXBsZSBub25jZQ==";
@@ -472,8 +517,10 @@ int main(int argc, char** argv) {
             reinterpret_cast<const char*>(&timeoutMs), sizeof(timeoutMs));
         if (Handshake(client, secret)) {
             std::cout << "Website connected.\n";
-            while (SendFrame(client, JsonFrame(meter.Latest())))
+            while (ContinueClient(client)) {
+                if (!SendFrame(client, JsonFrame(meter.Latest()))) break;
                 std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            }
             std::cout << "Website disconnected.\n";
         }
         shutdown(client, SD_BOTH);
