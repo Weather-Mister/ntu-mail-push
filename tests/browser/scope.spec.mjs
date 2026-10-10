@@ -253,9 +253,9 @@ test('local pairing requires a key, accepts only measured envelopes, and disconn
 test('audio bridge uses localhost only and no browser capture APIs', async () => {
   expect(schedule + bridge).not.toMatch(/getDisplayMedia|getUserMedia|AudioContext|MediaRecorder/);
   expect(bridge).toContain('ws://127.0.0.1:43187');
-  expect(html).toContain('scope-audio-bridge.js?v=1');
+  expect(html).toContain('scope-audio-bridge.js?v=2');
   expect(html).not.toContain('pc-audio-scope.js');
-  expect(sw).toContain("asset('scope-audio-bridge.js?v=1')");
+  expect(sw).toContain("asset('scope-audio-bridge.js?v=2')");
 });
 
 test('Firefox permits a GitHub HTTPS page to connect to a local WebSocket with explicit consent', async ({ page }) => {
