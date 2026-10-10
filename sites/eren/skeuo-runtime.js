@@ -1888,7 +1888,30 @@ let scheduleScopeLastMeta = 0;
 let scheduleScopeLastDraw = 0;
 let scheduleScopePhase = 0;      /* accumulated, so changing speed never rewinds or snaps the wave */
 let scheduleScopeLastTs = 0;
-let scheduleScopeAudioGain = 1;  /* original audio scope's slow, gentle automatic gain */
+let scheduleScopeAudioGain = 1;  /* fast attack / release, adapt to quiet sound */ 
+const scheduleScopeAfterglow = document.getElementById('scheduleScopeAfterglow');
+const scopeSensitivityInput = document.getElementById('scopeAudioSensitivity');
+const scopeSensitivityOutput = document.getElementById('scopeAudioSensitivityValue');
+const scopeSensitivityKey = 'ntu-scope-visual-intensity-v1';
+const scopeSensitivityNames = ['CLASSIC', 'LIVE', 'BOOST', 'WILD', 'MAX'];
+const scopeSensitivityFactors = [0.65, 1.0, 1.4, 2.05, 2.8];
+function readScopeSensitivity(){
+  try {
+    const n = Number(localStorage.getItem(scopeSensitivityKey));
+    return Number.isInteger(n) && n >= 1 && n <= 5 ? n : 4;
+  } catch (_) { return 4; }
+}
+let scopeSensitivity = readScopeSensitivity();
+function setScopeSensitivity(level){
+  const safe = Math.max(1, Math.min(5, Math.round(Number(level) || 4)));
+  scopeSensitivity = safe;
+  if (scopeSensitivityInput) scopeSensitivityInput.value = String(safe);
+  if (scopeSensitivityOutput) scopeSensitivityOutput.textContent = scopeSensitivityNames[safe - 1];
+  try { localStorage.setItem(scopeSensitivityKey, String(safe)); } catch (_) {}
+}
+setScopeSensitivity(scopeSensitivity);
+scopeSensitivityInput?.addEventListener('input', event => setScopeSensitivity(event.target.value));
+
 
 function formatScheduleScopeDelta(ms){
   const seconds = Math.max(0, Math.ceil(ms / 1000));
@@ -1941,23 +1964,36 @@ function drawScheduleScope(timestamp=0){
   const pcFrame = globalThis.NTUScopeAudio?.read?.();
   if (pcFrame?.wave?.length === 128) {
     const wave = pcFrame.wave;
-    let energy = 0;
-    for (const sample of wave) energy += sample * sample;
+    let energy = 0, peak = 0;
+    for (const sample of wave) {
+      energy += sample * sample;
+      peak = Math.max(peak, Math.abs(sample));
+    }
     const rms = Math.sqrt(energy / wave.length);
-    // Match the first browser-audio prototype: a quiet signal is boosted,
-    // loud passages stay inside the CRT, and silence is a dead-flat baseline.
-    const desired = rms > 0.004
-      ? Math.min(5.5, Math.max(1, 0.24 / rms)) : 1;
-    scheduleScopeAudioGain += (desired - scheduleScopeAudioGain) * 0.12;
+    const active = peak > 0.00035 && rms > 0.00018;
+    // Screen-side oscilloscope gain only: never touch or change the audio.
+    // Normalize quiet-but-real signals so Windows volume doesn't hide them;
+    // use fast attack, quick release and soft saturation for a lively CRT.
+    const sensitivity = scopeSensitivityFactors[scopeSensitivity - 1];
+    const target = active
+      ? Math.min(320, Math.max(0.5,
+          (0.86 * sensitivity) / Math.max(peak, rms * 1.7, 0.0008)))
+      : 1;
+    const response = target > scheduleScopeAudioGain ? 0.83 : 0.44;
+    scheduleScopeAudioGain += (target - scheduleScopeAudioGain) * response;
     let d = '';
-    const width = 200, mid = 21, amplitude = 17.5;
+    const width = 200, mid = 21, amplitude = 18;
     for (let x = 0; x <= width; x += 2) {
       const index = Math.min(wave.length - 1,
         Math.floor(x / width * (wave.length - 1)));
-      const y = Math.max(2.5, Math.min(39.5,
-        mid + wave[index] * scheduleScopeAudioGain * amplitude));
+      const boosted = active ? wave[index] * scheduleScopeAudioGain : 0;
+      // Real signed PCM shape, not a synthetic sine. The tanh curve preserves
+      // spikes without pinning half the graph to a hard clipping boundary.
+      const y = mid + Math.tanh(boosted * 1.15) * amplitude;
       d += `${x === 0 ? 'M' : 'L'}${x} ${y.toFixed(2)} `;
     }
+    const previous = scheduleScopeTrace.getAttribute('d');
+    if (scheduleScopeAfterglow) scheduleScopeAfterglow.setAttribute('d', previous || '');
     scheduleScopeTrace.setAttribute('d', d.trim());
     // When schedule fallback resumes, integrate only the following frame,
     // not all time that passed while the real waveform was being drawn.
@@ -1979,16 +2015,20 @@ function drawScheduleScope(timestamp=0){
       const first = Math.floor(binIndex);
       const blend = binIndex - first;
       const level = bins[first] * (1 - blend) + bins[Math.min(first + 1, bins.length - 1)] * blend;
-      const gain = Math.min(17.4, Math.max(0, level) * 18.5);
+      const gain = Math.min(18, Math.max(0, level) * 18.5 * scopeSensitivityFactors[scopeSensitivity - 1]);
       const cycles = 4.6 + pcFrame.pitch * 4.2;
       const phase = (x / width) * cycles * tau + scheduleScopePhase;
       const y = mid + Math.sin(phase) * gain;
       path += `${i === 0 ? 'M' : 'L'}${x.toFixed(1)} ${y.toFixed(2)} `;
     }
+    if (scheduleScopeAfterglow)
+      scheduleScopeAfterglow.setAttribute('d', scheduleScopeTrace.getAttribute('d') || '');
     scheduleScopeTrace.setAttribute('d', path.trim());
     return;
   }
 
+  if (scheduleScopeAfterglow) scheduleScopeAfterglow.setAttribute('d', '');
+  scheduleScopeAudioGain = 1;
   const width = 200;
   const mid = 21;
   const minutes = Math.max(0, scheduleScopeState.minutes || 0);
