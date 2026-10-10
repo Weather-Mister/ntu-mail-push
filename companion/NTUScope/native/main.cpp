@@ -451,7 +451,7 @@ private:
         const auto monoAt = [&](UINT32 index) -> float {
             double mono = 0;
             for (unsigned int ch = 0; ch < channels; ++ch) {
-                const BYTE* ptr = data + static_cast<size_t>(i) * stride + ch * bytes;
+                const BYTE* ptr = data + static_cast<size_t>(index) * stride + ch * bytes;
                 double sample = 0;
                 if (floating) {
                     float n;
