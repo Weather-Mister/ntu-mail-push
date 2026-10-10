@@ -282,3 +282,14 @@ body{min-width:320px}
  .garden .foot{height:auto;padding:0 15px 19px}
  .garden #placesButton span:last-child{display:none}
 }
+
+/* Keep the functional notification bell accessible in the exact demo shortcut rail. */
+.garden .links-panel .ntu-hub-heading{display:contents}
+.garden .links-panel .ntu-hub-heading h3{display:none}
+.garden .links-panel #mailAlertButton{top:-29px}
+.garden .garden-date{margin:2px 0 0;font-size:10px;color:#81957d;font-weight:600}
+.garden .cool-section .cool-intro{margin:0 0 10px}
+@media(max-width:900px){
+ .garden .links-panel #quickAccessRow .ntu-hub-heading{display:contents}
+ .garden .links-panel #mailAlertButton{top:-29px}
+}
