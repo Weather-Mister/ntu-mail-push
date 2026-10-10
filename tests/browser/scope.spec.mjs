@@ -294,7 +294,7 @@ test('web-only intensity boosts the same real audio and remembers the setting', 
     drawScheduleScope(160);
     const maximum = scheduleScopeTrace.getAttribute('d');
     const span = path => {
-      const y = [...path.matchAll(/[ML]\\d+ ([-\\d.]+)/g)].map(m => Number(m[1]));
+      const y = [...path.matchAll(/[ML]\d+ ([-\d.]+)/g)].map(m => Number(m[1]));
       return Math.max(...y) - Math.min(...y);
     };
     return {
