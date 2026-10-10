@@ -962,3 +962,13 @@ body{min-width:320px}
 /* Visible without dominating the timetable: slightly larger passing bees. */
 .garden-flyer{width:70px;height:52px;}
 .garden-flyer .hero-bee{width:70px;height:52px;filter:drop-shadow(0 3px 4px #35543a66);}
+
+/* Bee depth variations for randomized garden flights. */
+.garden-flyer.is-distant .hero-bee{
+  opacity:.77;
+  filter:drop-shadow(0 2px 2px #35543a36);
+}
+.garden-flyer.is-near .hero-bee{
+  opacity:1;
+  filter:drop-shadow(0 4px 5px #35543a66);
+}
