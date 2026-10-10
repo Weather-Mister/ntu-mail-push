@@ -49,12 +49,12 @@ test('Begüm removes transfer and Hanzi UI, code and heavy FFmpeg preloading', (
 });
 
 test('Begüm PWA assets remain scoped and version matched', () => {
-  for (const asset of ['app.js?v=117','todo-realtime.js?v=1','garden-theme.css?v=4']) {
+  for (const asset of ['app.js?v=118','todo-realtime.js?v=1','garden-theme.css?v=5']) {
     assert.ok(html.includes(asset), 'HTML references ' + asset);
     assert.ok(sw.includes(asset), 'cache includes ' + asset);
   }
   assert.match(sw, /const ROOT = new URL\(self.registration.scope\)\.pathname/);
-  assert.match(app, /serviceWorker\.register\('\.\/sw\.js\?v=11'/);
+  assert.match(app, /serviceWorker\.register\('\.\/sw\.js\?v=12'/);
   assert.match(app, /begum-ntu-manual-todos-v1/);
   assert.match(app, /ntu-schedule-begum-pairing-key-v1/);
 });
