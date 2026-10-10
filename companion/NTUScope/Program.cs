@@ -6,7 +6,6 @@ using NAudio.Wave;
 
 const int port = 43187;
 const string allowedOrigin = "https://weather-mister.github.io";
-const string floatSubtype = "00000003-0000-0010-8000-00AA00389B71";
 
 var keyDirectory = Path.Combine(
     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "NTUScope");
