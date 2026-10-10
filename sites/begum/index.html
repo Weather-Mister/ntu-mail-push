@@ -41,20 +41,15 @@
 <g transform="translate(69 91)"><ellipse class="petal-pink" cy="-17" rx="11" ry="15"/><ellipse class="petal-pink" cy="17" rx="11" ry="15"/><ellipse class="petal-pink" cx="-17" rx="15" ry="11"/><ellipse class="petal-pink" cx="17" rx="15" ry="11"/><circle class="flower-center" r="9"/></g><g transform="translate(110 73) scale(.72)"><ellipse class="petal-white" cy="-17" rx="11" ry="15"/><ellipse class="petal-white" cy="17" rx="11" ry="15"/><ellipse class="petal-white" cx="-17" rx="15" ry="11"/><ellipse class="petal-white" cx="17" rx="15" ry="11"/><circle class="flower-center" r="9"/></g><g transform="translate(421 94) scale(1.1)"><ellipse class="petal-white" cy="-17" rx="11" ry="15"/><ellipse class="petal-white" cy="17" rx="11" ry="15"/><ellipse class="petal-white" cx="-17" rx="15" ry="11"/><ellipse class="petal-white" cx="17" rx="15" ry="11"/><circle class="flower-center" r="9"/></g><g transform="translate(314 91) scale(.8)"><ellipse class="petal-yellow" cy="-17" rx="11" ry="15"/><ellipse class="petal-yellow" cy="17" rx="11" ry="15"/><ellipse class="petal-yellow" cx="-17" rx="15" ry="11"/><ellipse class="petal-yellow" cx="17" rx="15" ry="11"/><circle class="flower-center" r="9"/></g><g transform="translate(227 118) scale(.55)"><ellipse class="petal-pink" cy="-17" rx="11" ry="15"/><ellipse class="petal-pink" cy="17" rx="11" ry="15"/><ellipse class="petal-pink" cx="-17" rx="15" ry="11"/><ellipse class="petal-pink" cx="17" rx="15" ry="11"/><circle class="flower-center" r="9"/></g>
 </svg>
 <div class="hero-bee bee-a"><span class="bee-wing"></span><span class="bee-wing right"></span><span class="bee-body"></span><span class="bee-head"></span><span class="bee-antenna"></span></div><div class="hero-bee bee-b"><span class="bee-wing"></span><span class="bee-wing right"></span><span class="bee-body"></span><span class="bee-head"></span><span class="bee-antenna"></span></div></div>
-<div id="desktopClock" class="desktop-clock" aria-label="Taipei time"></div></header>
+<section id="nextClass" class="next-class hero-next-class" aria-label="Next class" aria-live="polite"></section><div id="desktopClock" class="desktop-clock" aria-label="Taipei time"></div></header>
 <div class="main">
 <div class="weekbar">
-  <div class="week-caption"><p class="section-kicker">YOUR LITTLE WEEK</p><strong class="week-range" id="weekRange">This week</strong></div>
-  <section id="nextClass" class="next-class" aria-label="Next class" aria-live="polite"></section>
+  <label class="week-caption week-picker" for="weekDateJump" title="Choose a date"><p class="section-kicker">YOUR LITTLE WEEK</p><strong class="week-range" id="weekRange">This week</strong><input id="weekDateJump" type="date" min="2026-09-01" max="2026-12-31" aria-label="Jump to a date"></label>
   <div class="week-actions">
     <button type="button" class="nav-button" id="previousWeek" aria-label="Previous week">‹</button>
     <button type="button" class="nav-button today-button" id="jumpTodayButton">Today</button>
     <button type="button" class="nav-button" id="nextWeek" aria-label="Next week">›</button>
-    <label class="date-jump" for="weekDateJump" title="Jump to date" aria-label="Jump to date">▦
-      <input id="weekDateJump" type="date" min="2026-09-01" max="2026-12-31" aria-label="Jump to a date">
-    </label>
     <button id="pageRefreshButton" type="button" class="nav-button" aria-label="Refresh page" title="Refresh page">↻</button>
-    <button id="placesButton" type="button" class="nav-button" aria-haspopup="dialog" aria-label="Open saved places"><span class="places-button-icon" aria-hidden="true">⌖</span><span>Places</span></button>
   </div>
 </div>
 <nav class="day-strip day-rail" aria-label="Choose weekday">
@@ -90,6 +85,7 @@
       <div class="todo-heading-row">
         <div><p class="todo-eyebrow section-kicker">SWEET LITTLE THINGS</p><h3 id="todoHeading">The honey-do list</h3></div>
         <span id="todoCount" class="todo-count">0 tasks</span>
+        <svg class="honey-jar" viewBox="0 0 64 70" aria-hidden="true"><path d="M19 18h26v7c0 4 7 7 7 14v18a8 8 0 0 1-8 8H20a8 8 0 0 1-8-8V39c0-7 7-10 7-14Z" fill="#e9b347" stroke="#8b6c39" stroke-width="2"/><rect x="16" y="14" width="32" height="10" rx="3" fill="#a77c4c"/><rect x="20" y="10" width="24" height="6" rx="2" fill="#e2c28f"/><path d="M13 48q20-9 38 0v9a7 7 0 0 1-7 7H20a7 7 0 0 1-7-7Z" fill="#d58a38"/><path d="M29 35q-8-5-8 4 0 6 11 12 11-6 11-12 0-9-11-4l-2 2Z" fill="#fff4c5" opacity=".88"/><path d="M20 29v12" stroke="#ffedb8" stroke-width="4" stroke-linecap="round"/></svg>
       </div>
       <div id="todoList" class="todo-list" aria-live="polite"></div>
       <button id="todoMoreButton" class="desktop-more-button" type="button" hidden>Show more</button>
@@ -140,6 +136,7 @@
       <!-- Mail alerts control moved into the NTU heading. -->
     </section>
       </div>
+      <div class="garden-links-footer"><span class="garden-places-caption">Little places worth visiting</span><button id="placesButton" type="button" class="nav-button" aria-haspopup="dialog" aria-label="Open saved places"><span class="places-button-icon" aria-hidden="true">⌖</span><span>Places</span></button></div>
     </section>
   </div>
 </div>
