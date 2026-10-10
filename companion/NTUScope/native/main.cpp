@@ -727,73 +727,146 @@ static int SelfTest() {
     std::cout << (ok ? "Native self-test: PASS\n" : "Native self-test: FAIL\n");
     return ok ? 0 : 1;
 }
-int main(int argc, char** argv) {
-    if (argc == 2 && std::string(argv[1]) == "--self-test") return SelfTest();
-    if (argc == 2 && std::string(argv[1]) == "--version") {
-        std::cout << "NTUScope native 2.0\n"; return 0;
-    }
-    SetConsoleTitleW(L"NTU Schedule - PC Audio Companion");
-    std::string secret;
-    try { secret = PairingKey(); }
-    catch (const std::exception& e) {
-        std::cerr << "Setup failed: " << e.what() << "\n";
-        return 1;
-    }
-    std::cout << "NTU SCHEDULE / NATIVE PC AUDIO\n"
-              << "==============================\n"
-              << "Audio never leaves this PC; only small waveform measurements are shared.\n\n"
-              << "1. Open " << kDemo << "\n"
-              << "2. Click AUX beside the oscilloscope.\n"
-              << "3. Enter this same pairing key as before:\n\n    "
-              << secret << "\n\n"
-              << "Close this window to stop capture and disconnect.\n\n";
-    WSADATA wsa{};
-    if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
-        std::cerr << "Windows networking initialization failed.\n"; return 1;
-    }
-    SOCKET listener = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (listener == INVALID_SOCKET) {
-        std::cerr << "Could not open the local socket.\n"; WSACleanup(); return 1;
-    }
-    sockaddr_in endpoint{};
-    endpoint.sin_family = AF_INET;
-    endpoint.sin_port = htons(kPort);
-    endpoint.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-    const BOOL exclusive = TRUE;
-    setsockopt(listener, SOL_SOCKET, SO_EXCLUSIVEADDRUSE,
-        reinterpret_cast<const char*>(&exclusive), sizeof(exclusive));
-    if (bind(listener, reinterpret_cast<sockaddr*>(&endpoint), sizeof(endpoint)) ==
-            SOCKET_ERROR || listen(listener, SOMAXCONN) == SOCKET_ERROR) {
-        std::cerr << "Port 43187 is occupied. Close any earlier NTUScope window.\n";
-        closesocket(listener); WSACleanup(); return 1;
-    }
-    LoopbackMeter meter;
-    if (!meter.Start()) {
-        std::cerr << "Could not capture the default Windows playback device.\n";
-        closesocket(listener); WSACleanup(); return 1;
-    }
-    std::cout << "Audio capture: ACTIVE | 127.0.0.1:43187 only\n"
-              << "No administrator rights, drivers, runtime or installation required.\n\n";
-    for (;;) {
+
+static void ServeAudio(SOCKET listener, LoopbackMeter& meter, const std::string& secret) {
+    while (gRunning.load()) {
+        fd_set set{};
+        FD_ZERO(&set);
+        FD_SET(listener, &set);
+        timeval interval{0, 200000};
+        const int ready = select(0, &set, nullptr, nullptr, &interval);
+        if (ready == SOCKET_ERROR) break;
+        if (ready == 0) continue;
         SOCKET client = accept(listener, nullptr, nullptr);
-        if (client == INVALID_SOCKET) break;
+        if (client == INVALID_SOCKET) continue;
         constexpr DWORD timeoutMs = 2500;
         setsockopt(client, SOL_SOCKET, SO_RCVTIMEO,
             reinterpret_cast<const char*>(&timeoutMs), sizeof(timeoutMs));
         setsockopt(client, SOL_SOCKET, SO_SNDTIMEO,
             reinterpret_cast<const char*>(&timeoutMs), sizeof(timeoutMs));
         if (Handshake(client, secret)) {
-            std::cout << "Website connected.\n";
-            while (ContinueClient(client)) {
+            gConnected.store(true);
+            PostMessageW(gWindow, kNetworkStatusMessage, 0, 0);
+            while (gRunning.load() && ContinueClient(client)) {
                 if (!SendFrame(client, JsonFrame(meter.Latest()))) break;
                 std::this_thread::sleep_for(std::chrono::milliseconds(50));
             }
-            std::cout << "Website disconnected.\n";
+            gConnected.store(false);
+            PostMessageW(gWindow, kNetworkStatusMessage, 0, 0);
         }
         shutdown(client, SD_BOTH);
         closesocket(client);
     }
+    if (gRunning.load())
+        PostMessageW(gWindow, WM_CLOSE, 0, 0);
+}
+int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int) {
+    int argc = 0;
+    LPWSTR* argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+    const bool selfTest = argc == 2 && wcscmp(argv[1], L"--self-test") == 0;
+    const bool versionCheck = argc == 2 && wcscmp(argv[1], L"--version") == 0;
+    if (argv) LocalFree(argv);
+    if (selfTest) return SelfTest();
+    if (versionCheck) return 0;
+
+    try {
+        if (EnsureInstalled()) return 0;
+        gPairingKey = PairingKey();
+    } catch (const std::exception&) {
+        MessageBoxW(nullptr,
+            L"NTU Scope could not install to your local AppData directory.\n"
+            L"Close any older NTUScope instance, then try again.",
+            L"NTU Scope - Installation", MB_OK | MB_ICONERROR);
+        return 1;
+    }
+
+    HANDLE singleton = CreateMutexW(nullptr, TRUE, L"Local\\NTUScopeNativeSingleton");
+    if (!singleton) return 1;
+    if (GetLastError() == ERROR_ALREADY_EXISTS) {
+        CloseHandle(singleton);
+        return 0;
+    }
+
+    gTaskbarCreated = RegisterWindowMessageW(L"TaskbarCreated");
+    gWindow = MakeTrayWindow(instance);
+    if (!gWindow) {
+        CloseHandle(singleton);
+        return 1;
+    }
+    gIcon = CreateScopeIcon();
+    AddOrUpdateTrayIcon();
+    // Persist the user's startup choice. On first launch it defaults to on;
+    // manually launching after opting out will NOT switch it back on.
+    if (!SetStartup(StartupPreference(), true))
+        MessageBoxW(gWindow,
+            L"NTU Scope started but Windows autostart could not be configured.\n"
+            L"You can try enabling it later from the tray icon.",
+            L"NTU Scope", MB_OK | MB_ICONWARNING);
+
+    WSADATA wsa{};
+    if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
+        MessageBoxW(gWindow, L"Windows networking initialization failed.",
+            L"NTU Scope", MB_OK | MB_ICONERROR);
+        DestroyWindow(gWindow);
+        if (gIcon) DestroyIcon(gIcon);
+        ReleaseMutex(singleton);
+        CloseHandle(singleton);
+        return 1;
+    }
+    SOCKET listener = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    sockaddr_in endpoint{};
+    endpoint.sin_family = AF_INET;
+    endpoint.sin_port = htons(kPort);
+    endpoint.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    const BOOL exclusive = TRUE;
+    if (listener == INVALID_SOCKET ||
+        setsockopt(listener, SOL_SOCKET, SO_EXCLUSIVEADDRUSE,
+            reinterpret_cast<const char*>(&exclusive), sizeof(exclusive)) == SOCKET_ERROR ||
+        bind(listener, reinterpret_cast<sockaddr*>(&endpoint),
+            sizeof(endpoint)) == SOCKET_ERROR ||
+        listen(listener, SOMAXCONN) == SOCKET_ERROR) {
+        MessageBoxW(gWindow,
+            L"NTU Scope could not use localhost port 43187.\n"
+            L"Close the previous NTUScope console/tray app, then relaunch.",
+            L"NTU Scope - Already running?", MB_OK | MB_ICONERROR);
+        if (listener != INVALID_SOCKET) closesocket(listener);
+        WSACleanup();
+        DestroyWindow(gWindow);
+        if (gIcon) DestroyIcon(gIcon);
+        ReleaseMutex(singleton);
+        CloseHandle(singleton);
+        return 1;
+    }
+
+    {
+        LoopbackMeter meter;
+        if (!meter.Start()) {
+            MessageBoxW(gWindow,
+                L"NTU Scope could not capture the default Windows audio output.\n"
+                L"Check that speakers or headphones are connected, then restart.",
+                L"NTU Scope - Audio device", MB_OK | MB_ICONERROR);
+            closesocket(listener);
+            WSACleanup();
+            DestroyWindow(gWindow);
+            if (gIcon) DestroyIcon(gIcon);
+            ReleaseMutex(singleton);
+            CloseHandle(singleton);
+            return 1;
+        }
+        std::thread server([&]() { ServeAudio(listener, meter, gPairingKey); });
+        MSG message{};
+        while (GetMessageW(&message, nullptr, 0, 0) > 0) {
+            TranslateMessage(&message);
+            DispatchMessageW(&message);
+        }
+        gRunning.store(false);
+        server.join();
+    }
+
     closesocket(listener);
     WSACleanup();
+    if (gIcon) DestroyIcon(gIcon);
+    ReleaseMutex(singleton);
+    CloseHandle(singleton);
     return 0;
 }
