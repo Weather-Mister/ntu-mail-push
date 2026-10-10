@@ -3,9 +3,9 @@
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #define _WIN32_WINNT 0x0A00
-#include <windows.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include <windows.h>
 #include <mmdeviceapi.h>
 #include <audioclient.h>
 #include <mmreg.h>
@@ -28,6 +28,7 @@
 #include <iostream>
 #include <mutex>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <thread>
 #include <utility>
@@ -265,7 +266,9 @@ private:
                         if (FAILED(hr)) break;
                         Process(data, frames, raw, (flags & AUDCLNT_BUFFERFLAGS_SILENT) != 0);
                         hr = capture->ReleaseBuffer(frames);
-                        if (FAILED(hr) || FAILED(capture->GetNextPacketSize(&packets))) break;
+                        if (FAILED(hr)) break;
+                        hr = capture->GetNextPacketSize(&packets);
+                        if (FAILED(hr)) break;
                     }
                     if (FAILED(hr)) break;
                 }
@@ -408,7 +411,7 @@ static int SelfTest() {
         !Authorized(handshake(kOrigin, secret + "BAD"), secret) &&
         frame.find("\"version\":1") != std::string::npos &&
         frame.find("\"bins\":[") != std::string::npos &&
-        std::count(frame.begin(), frame.end(), ',') == 66;
+        std::count(frame.begin(), frame.end(), ',') == 67;
     std::cout << (ok ? "Native self-test: PASS\n" : "Native self-test: FAIL\n");
     return ok ? 0 : 1;
 }
