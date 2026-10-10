@@ -364,3 +364,33 @@ test('checked Chatterbox dates appear only in their exact weeks without yellow h
   await expect(page.locator('#selectedDate')).toContainText('Oct 14, 2026');
   expect(errors).toEqual([]);
 });
+
+test('mobile garden reserves a separate row for Taipei time', async ({page}) => {
+  for (const width of [320,375,390,443,610]) {
+    await page.setViewportSize({width, height:844});
+    await page.goto('/?pair=begum');
+    const result = await page.evaluate(() => {
+      const rect = selector => document.querySelector(selector).getBoundingClientRect();
+      const clock = rect('#desktopClock');
+      const eyebrow = rect('.hero-copy .eyebrow');
+      const headline = rect('.hero-copy h1');
+      const header = rect('.garden .hero');
+      return {
+        clockClear: clock.bottom + 3 <= eyebrow.top,
+        titleClear: eyebrow.bottom <= headline.top + 1,
+        headlineFits: headline.right <= innerWidth + 2,
+        headerFits: headline.bottom <= header.bottom,
+        noFloatingEmoji: getComputedStyle(document.querySelector('.garden-floral-corners')).display === 'none',
+        noFooterDingbat: !document.querySelector('.foot').textContent.includes('✿'),
+        clockPosition: getComputedStyle(document.querySelector('#desktopClock')).position
+      };
+    });
+    expect(result.clockClear, 'clock/eyebrow overlap at ' + width).toBe(true);
+    expect(result.titleClear, 'eyebrow/title overlap at ' + width).toBe(true);
+    expect(result.headlineFits, 'headline overflow at ' + width).toBe(true);
+    expect(result.headerFits, 'headline outside header at ' + width).toBe(true);
+    expect(result.clockPosition, 'clock positioning at ' + width).toBe('static');
+    expect(result.noFloatingEmoji).toBe(true);
+    expect(result.noFooterDingbat).toBe(true);
+  }
+});
