@@ -19,7 +19,10 @@ async function mount(page, reducedMotion = false) {
   await page.setContent(`<div class="schedule-scope" id="scheduleScope" role="group" aria-label="Schedule interval monitor">
     <span id="scheduleScopeLabel">ΔT / SCHED</span>
     <b id="scheduleScopeValue">--</b>
-    <svg viewBox="0 0 200 42"><path id="scheduleScopeTrace" d="M0 21H200"/></svg>
+    <svg viewBox="0 0 200 42"><path id="scheduleScopeAfterglow" d=""/><path id="scheduleScopeTrace" d="M0 21H200"/></svg>
+    <label for="scopeAudioSensitivity">WAVEFORM INTENSITY</label>
+    <input type="range" id="scopeAudioSensitivity" min="1" max="5" value="4" />
+    <output id="scopeAudioSensitivityValue">WILD</output>
     <span id="scheduleScopeMode">NEXT START</span>
     <span id="scheduleScopeHint">λ ∝ ΔT</span>
   </div>`);
@@ -243,8 +246,8 @@ test('restored audio scope plots real signed time-domain samples, not a syntheti
     };
   });
   expect(result.first).toBe(result.second);
-  expect(result.firstY).toBeCloseTo(21 - 0.5 * result.gainAfterFirst * 17.5, 1);
-  expect(result.lastY).toBeCloseTo(21 + 0.65 * result.gainAfterFirst * 17.5, 1);
+  expect(result.firstY).toBeCloseTo(21 + Math.tanh(-0.5 * result.gainAfterFirst * 1.15) * 18, 1);
+  expect(result.lastY).toBeCloseTo(21 + Math.tanh(0.65 * result.gainAfterFirst * 1.15) * 18, 1);
   expect(result.first).not.toContain('NaN');
   expect(result.gainAfterFirst).toBeGreaterThan(1);
   expect(result.silent).toMatch(/^M0 21\.00(?: L\d+ 21\.00)+$/);
@@ -270,7 +273,64 @@ test('audio scope stays inside CRT boundaries for clipped and very quiet audio',
   });
   expect(Math.min(...result.clippedYs)).toBeGreaterThanOrEqual(2.5);
   expect(Math.max(...result.clippedYs)).toBeLessThanOrEqual(39.5);
-  expect(Math.max(...result.quietYs) - Math.min(...result.quietYs)).toBeLessThan(2);
+  expect(Math.max(...result.quietYs) - Math.min(...result.quietYs)).toBeGreaterThan(10);
+  expect(Math.max(...result.quietYs)).toBeLessThanOrEqual(39.5);
+  expect(errors).toEqual([]);
+});
+
+test('web-only intensity boosts the same real audio and remembers the setting', async ({ page }) => {
+  const errors = await mount(page, true);
+  const result = await page.evaluate(() => {
+    const wave = Array.from({ length: 128 }, (_, i) => (i % 8 < 4 ? 0.005 : -0.005));
+    window.NTUScopeAudio = { read: () => ({
+      rms: 0.004, bins: new Array(64).fill(0), pitch: 0, wave
+    }) };
+    setScopeSensitivity(1);
+    scheduleScopeAudioGain = 1;
+    drawScheduleScope(100);
+    const classic = scheduleScopeTrace.getAttribute('d');
+    setScopeSensitivity(5);
+    scheduleScopeAudioGain = 1;
+    drawScheduleScope(160);
+    const maximum = scheduleScopeTrace.getAttribute('d');
+    const span = path => {
+      const y = [...path.matchAll(/[ML]\d+ ([-\d.]+)/g)].map(m => Number(m[1]));
+      return Math.max(...y) - Math.min(...y);
+    };
+    return {
+      classic: span(classic), maximum: span(maximum),
+      label: document.getElementById('scopeAudioSensitivityValue').textContent,
+      control: document.getElementById('scopeAudioSensitivity').value,
+      afterglow: document.getElementById('scheduleScopeAfterglow').getAttribute('d'),
+      live: document.getElementById('scheduleScopeTrace').getAttribute('d')
+    };
+  });
+  expect(result.maximum).toBeGreaterThan(result.classic * 1.3);
+  expect(result.maximum).toBeGreaterThan(28);
+  expect(result.label).toBe('MAX');
+  expect(result.control).toBe('5');
+  expect(result.afterglow).not.toBe(result.live);
+  expect(errors).toEqual([]);
+});
+
+test('scope intensity can be adjusted without the Windows binary or audio capture', async ({ page }) => {
+  const originPage = 'https://weather-mister.github.io/ntu-mail-push/scope-slider-test.html';
+  await page.route(originPage, route => route.fulfill({
+    contentType: 'text/html', body: '<!doctype html><html><body>Test</body></html>'
+  }));
+  await page.goto(originPage);
+  const errors = await mount(page, true);
+  const slider = page.locator('#scopeAudioSensitivity');
+  await expect(slider).toHaveValue('4');
+  await expect(page.locator('#scopeAudioSensitivityValue')).toHaveText('WILD');
+  await slider.evaluate(element => {
+    element.value = '2';
+    element.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  await expect(page.locator('#scopeAudioSensitivityValue')).toHaveText('LIVE');
+  const persisted = await page.evaluate(() => localStorage.getItem('ntu-scope-visual-intensity-v1'));
+  expect(persisted).toBe('2');
+  expect(await page.evaluate(() => captureCalls)).toBe(0);
   expect(errors).toEqual([]);
 });
 
