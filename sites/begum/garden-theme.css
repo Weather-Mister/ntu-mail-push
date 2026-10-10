@@ -1025,3 +1025,39 @@ body{min-width:320px}
 .garden-floral-corners .bloom:nth-child(5),
 .garden-floral-corners .bloom:nth-child(6){display:none;}
 .garden .links-panel .study-hub:not(.ntu-hub) .hub-label::before{content:none;}
+
+/* Mobile Up Next: never crop course names or their descenders. */
+@media(max-width:900px){
+  .garden .hero .hero-next-class{
+    overflow:visible;
+    max-height:none;
+  }
+  .garden .hero .hero-next-class .next-copy{
+    overflow:visible;
+    max-height:none;
+  }
+  .garden .hero .hero-next-class .next-title{
+    display:block;
+    overflow:visible;
+    white-space:normal;
+    -webkit-line-clamp:unset;
+    line-clamp:unset;
+    text-overflow:clip;
+    overflow-wrap:break-word;
+    max-height:none;
+    line-height:1.26;
+    padding:0 0 2px;
+  }
+}
+@media(max-width:610px){
+  .garden .hero .hero-next-class{
+    width:100%;
+    max-width:100%;
+    min-width:0;
+    height:auto;
+    padding:3px 0 5px 12px;
+  }
+  .garden .hero .hero-next-class .next-title{
+    font-size:clamp(16px,4.6vw,18px);
+  }
+}
