@@ -1,155 +1,42 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#f9eee7">
-<meta name="description" content="Begüm's Desk — a stand-alone illustrated schedule concept. Demo only.">
-<title>Begüm's Desk · The concept room</title>
-<link rel="icon" href="./favicon.svg" type="image/svg+xml">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&family=Fraunces:opsz,wght,SOFT,WONK@9..144,600,30,1&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./style.css">
-<link rel="stylesheet" href="./realism.css">
-<script src="./app.js" defer></script>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#68503d"><meta name="description" content="Begüm's CSS desk study. An isolated, local-data schedule concept.">
+<title>Begüm's Desk · CSS hardware study</title>
+<link rel="icon" href="./favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="./style.css?v=8"><script src="./app.js?v=8" defer></script>
 </head>
 <body>
-<svg xmlns="http://www.w3.org/2000/svg" class="sr-only" aria-hidden="true" style="position:absolute">
-<symbol id="checkIcon" viewBox="0 0 24 24"><path d="m4 12 5 5 11-11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-<symbol id="plusIcon" viewBox="0 0 24 24"><path d="M12 4v16M4 12h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
-<symbol id="arrowIcon" viewBox="0 0 24 24"><path d="M4 12h15m-6-6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-<symbol id="trashIcon" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3m-9 0 1 13h10l1-13M10 11v5m4-5v5" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/></symbol>
-<symbol id="sunIcon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l2 2m10 10 2 2M19 5l-2 2M7 17l-2 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
-<symbol id="moonIcon" viewBox="0 0 24 24"><path d="M19 15.5A8 8 0 0 1 8.5 5a8.5 8.5 0 1 0 10.5 10.5Z" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
-<symbol id="bookIcon" viewBox="0 0 24 24"><path d="M12 6c-4-2.5-7-2.5-9-2v15c4-1 7 0 9 2 2-2 5-3 9-2V4c-2-.5-5-.5-9 2Zm0 0v15" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/></symbol>
-<symbol id="mailIcon" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="m3 8 9 6 9-6" stroke="currentColor" stroke-width="1.8" fill="none"/></symbol>
-<symbol id="houseIcon" viewBox="0 0 24 24"><path d="m3 11 9-7 9 7v9H3v-9Zm6 9v-7h6v7" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/></symbol>
-</svg>
-<div class="page">
-<main>
-<div class="scene" id="scene">
-<div class="wall-dots" aria-hidden="true"></div>
-<div class="window" id="skyWindow" role="button" tabindex="0" title="Tap the window to change the lighting" aria-label="Taipei window. Press to change the sky.">
-<div class="glass"><div class="stars">✦ · ✧ ·</div><div class="sun"></div><div class="moon"></div><div class="cloud one"></div><div class="cloud two"></div><div class="hills"></div><div class="skyline"><div class="building b1"></div><div class="building b2"></div><div class="building b3"></div><div class="tower"><span></span></div><div class="building b4"></div><div class="building b5"></div><div class="building b6"></div></div></div>
-<div class="window-cross"></div><div class="window-sill"></div>
-</div>
-<div class="wall-note" aria-hidden="true">one little<br>day at a time<i>✿ ✿</i></div>
-<div class="flowerpot" aria-hidden="true"><span class="stems"></span><span class="petals"></span><span class="pot"></span></div>
-<div class="desk" aria-hidden="true"></div><div class="light-cast" aria-hidden="true"></div>
-<div class="laptop" aria-label="Prototype schedule laptop">
+<svg class="sr-only" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><symbol id="checkIcon" viewBox="0 0 24 24"><path d="m4 12 5 5 11-11" fill="none" stroke="currentColor" stroke-width="2.5"/></symbol><symbol id="plusIcon" viewBox="0 0 24 24"><path d="M12 4v16M4 12h16" fill="none" stroke="currentColor" stroke-width="2"/></symbol><symbol id="arrowIcon" viewBox="0 0 24 24"><path d="M4 12h15m-6-6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="2"/></symbol><symbol id="trashIcon" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3m-9 0 1 13h10l1-13M10 11v5m4-5v5" stroke="currentColor" stroke-width="1.8" fill="none"/></symbol></svg>
+<main class="scene" id="scene" aria-label="Begüm's desk, interactive CSS hardware study">
+<div class="wall" aria-hidden="true"></div><div class="desk" aria-hidden="true"></div><div class="window-light" aria-hidden="true"></div>
+<div class="stage" id="stage">
+<button class="window" id="skyWindow" aria-label="Window lighting: daytime. Click to change the time of day" title="Change window lighting"><span class="glass"><span class="distant-hills"></span><span class="skyline"><i></i><i></i><i></i><i class="tower"></i><i></i><i></i></span><span class="glass-glare"></span></span><span class="window-cross"></span><span class="window-sill"></span></button>
+<div class="wall-note" aria-hidden="true"><small>A LITTLE REMINDER</small><strong>one day<br>at a time.</strong></div>
+<div class="laptop-shadow" aria-hidden="true"></div>
+<div class="laptop" aria-label="Aluminium laptop with demo schedule">
 <div class="lid">
-<div class="camera" aria-hidden="true"></div>
+<div class="lid-back" aria-hidden="true"></div><div class="lid-edge edge-right" aria-hidden="true"></div><div class="lid-edge edge-top" aria-hidden="true"></div><div class="lid-edge edge-left" aria-hidden="true"></div>
+<div class="lid-face"><div class="camera" aria-hidden="true"></div>
 <div class="screen" id="screen">
-<div class="osbar"><div class="traffic" aria-hidden="true"><i></i><i></i><i></i></div><div class="os-mid"><span class="os-title">✿ begüm's little planner</span><span class="os-demo">DUMMY SITE</span></div><span class="os-clock" id="clock">Taipei --:--</span></div>
-<div class="desktop-ui">
-<div class="intro">
-<div><p class="kicker">YOUR WEEK AT NTU · AUTUMN 2026</p><h1>Make room for <span>today.</span></h1><p class="sub">Classes, small tasks, and a little breathing space.</p></div>
-<span class="intro-doodle" aria-hidden="true">✿</span>
+<div class="osbar"><div class="os-brand"><b>B</b><span>begüm / planner</span></div><span class="demo-indicator">LOCAL DEMO</span><span id="clock" class="os-clock">Taipei --:--</span></div>
+<div class="planner">
+<header class="planner-head"><div><p class="label">NATIONAL TAIWAN UNIVERSITY / FALL 2026</p><h1>Your week, at a glance.</h1></div><div class="week-tools"><button id="prevWeek" aria-label="Previous week">‹</button><button id="jumpToday">Today</button><button id="nextWeek" aria-label="Next week">›</button></div></header>
+<div class="screen-layout">
+<aside class="day-rail"><p class="label">WEEK / SELECT</p><nav class="days" id="dayButtons" aria-label="Weekday selector"></nav><span id="weekRange" class="week-range">This week</span></aside>
+<section class="classes-panel" aria-labelledby="classesHeading"><div class="panel-title"><div><p class="label">DAILY SCHEDULE</p><h2 id="classesHeading">Monday's classes</h2></div><span id="classCount" class="count-pill"></span></div><div class="class-list" id="classList" aria-live="polite"></div><div class="class-foot"><i></i><span id="dayFooter"></span></div></section>
+<div class="side-panels"><section class="task-panel panel" aria-labelledby="taskTitle"><div class="side-header"><div><p class="label">TO DO / PERSONAL</p><h2 id="taskTitle">Manual tasks</h2></div><span id="taskCount" class="side-badge"></span></div><ul id="taskList" class="task-list" aria-label="Demo to-do items"></ul><form class="small-form" id="taskForm"><label class="sr-only" for="taskInput">New demo task</label><input id="taskInput" maxlength="110" placeholder="Add a task…" autocomplete="off" required><button aria-label="Add task"><svg><use href="#plusIcon"/></svg></button></form></section>
+<section class="transfer-panel panel" aria-labelledby="transferTitle"><div class="side-header"><div><p class="label">DESK / SCRATCHPAD</p><h2 id="transferTitle">Quick notes</h2></div><span class="local-led" title="Saved on this device"></span></div><ul id="noteList" class="note-list" aria-label="Demo transfer notes"></ul><form id="noteForm" class="small-form"><label class="sr-only" for="noteInput">New transfer note</label><input id="noteInput" maxlength="110" placeholder="Leave a note…" autocomplete="off" required><button aria-label="Add transfer note"><svg><use href="#arrowIcon"/></svg></button></form></section></div>
+</div><div class="screen-status"><span>CONCEPT 03 / SAMPLE CLASSES · LOCAL TASKS</span><span>TAIPEI / TW</span></div></div>
+</div><div class="chin" aria-hidden="true">B E G Ü M</div></div></div>
+<div class="hinge" aria-hidden="true"><i></i><i></i></div>
+<div class="base" aria-hidden="true"><div class="base-bottom"></div><div class="base-front"></div><div class="base-left"></div><div class="base-right"></div><div class="base-top"><div class="speaker left"></div><div class="keyboard-well"><div id="keyboardKeys" class="keyboard-keys"></div></div><div class="speaker right"></div><div class="trackpad"></div><div class="palm-rest-label">ALUMINIUM / 03</div><div class="thumb-notch"></div></div></div>
 </div>
-<div class="week-line"><div><strong id="weekRange">This week</strong> <small>· fall semester</small></div><div class="week-tools"><button class="mini-btn" id="prevWeek" aria-label="Previous week">‹</button><button class="mini-btn today-btn" id="jumpToday">Today</button><button class="mini-btn" id="nextWeek" aria-label="Next week">›</button></div></div>
-<nav class="days" id="dayButtons" aria-label="Weekday selector"></nav>
-<div class="content-grid">
-<section class="panel classes-panel" aria-labelledby="classesHeading">
-<div class="panel-title"><div><p class="label">THE PLAN FOR TODAY</p><h2 id="classesHeading">Monday's classes</h2></div><span id="classCount" class="count-pill">—</span></div>
-<div class="class-list" id="classList" aria-live="polite"></div>
-<div class="class-foot"><i>✳</i><span id="dayFooter">Your day at a glance.</span></div>
-</section>
-<div class="side-panels">
-<section class="panel task-panel" aria-labelledby="taskTitle">
-<div class="side-header"><div><p class="label">WRITE IT DOWN</p><h2 id="taskTitle">Little to-dos ♡</h2></div><span class="side-badge" id="taskCount">0 left</span></div>
-<ul class="task-list" id="taskList" aria-label="Demo to-do items"></ul>
-<form class="small-form" id="taskForm"><label for="taskInput" class="sr-only">New demo task</label><input type="text" id="taskInput" autocomplete="off" maxlength="110" placeholder="Another little thing…" required><button type="submit" aria-label="Add task"><svg><use href="#plusIcon"/></svg></button></form>
-<p class="micro">Local-only demo · no real task sync</p>
-</section>
-<section class="panel transfer-panel" aria-labelledby="transferTitle">
-<div class="side-header"><div><p class="label">IDEAS THAT FOLLOW YOU</p><h2 id="transferTitle">PC transfer ↗</h2></div><span class="side-badge">LOCAL</span></div>
-<ul class="note-list" id="noteList" aria-label="Demo transfer notes"></ul>
-<form class="small-form" id="noteForm"><label for="noteInput" class="sr-only">New transfer note</label><input type="text" id="noteInput" autocomplete="off" maxlength="110" placeholder="Leave yourself a note…" required><button type="submit" aria-label="Add transfer note"><svg><use href="#arrowIcon"/></svg></button></form>
-</section>
-</div>
-</div>
-<div class="screen-bottom"><span>✿ Practice layout · no live schedule or assignment connection</span><span>made with <span class="pink-heart">♥</span> for Begüm</span></div>
-</div>
-</div>
-</div>
-<div class="hinge"></div>
-<div class="keyboard-base" aria-hidden="true"><div class="keyboard-keys" id="keyboardKeys"></div><div class="trackpad"></div></div><div class="laptop-foot"></div>
-</div>
-<div class="mug-area" id="mugArea">
-<div class="shortcut-pop" id="shortcutPop" role="region" aria-label="NTU shortcuts">
-<p>✳ the essentials, on the go</p>
-<a href="https://my.ntu.edu.tw/" target="_blank" rel="noopener noreferrer"><svg><use href="#houseIcon"/></svg><span>myNTU</span></a>
-<a href="https://cool.ntu.edu.tw/" target="_blank" rel="noopener noreferrer"><svg><use href="#bookIcon"/></svg><span>NTU COOL</span></a>
-<a href="https://wmail1.cc.ntu.edu.tw/rc/index.php" target="_blank" rel="noopener noreferrer"><svg><use href="#mailIcon"/></svg><span>NTU Mail</span></a>
-<small>Official NTU websites · opens a new tab</small>
-</div>
-<button class="mug-click" id="mugButton" type="button" aria-expanded="false" aria-controls="shortcutPop" aria-label="Open shortcuts from the NTU coffee mug" title="Click for NTU shortcuts">
-<svg class="mug-svg" viewBox="0 0 300 330" role="img" aria-label="Dimensional glazed ceramic coffee mug with embossed NTU lettering">
-<defs>
- <linearGradient id="mugCeramic" x1="0%" y1="0%" x2="100%" y2="0%">
-   <stop offset="0%" stop-color="#ad838c"/><stop offset="8%" stop-color="#c7a0a5"/><stop offset="24%" stop-color="#f7e0da"/>
-   <stop offset="43%" stop-color="#fff7ec"/><stop offset="59%" stop-color="#f5dfd5"/>
-   <stop offset="79%" stop-color="#e5c2bf"/><stop offset="94%" stop-color="#be929b"/><stop offset="100%" stop-color="#96727e"/>
- </linearGradient>
- <linearGradient id="mugHandle" x1="0%" y1="0%" x2="100%" y2="100%">
-   <stop offset="0%" stop-color="#fff9ee"/><stop offset="26%" stop-color="#f7e2de"/>
-   <stop offset="48%" stop-color="#ac7e8c"/><stop offset="80%" stop-color="#f1d3c9"/><stop offset="100%" stop-color="#a67f86"/>
- </linearGradient>
- <linearGradient id="mugRim" x1="0%" y1="0%" x2="0%" y2="100%">
-   <stop offset="0%" stop-color="#fff9f0"/><stop offset="37%" stop-color="#d0a7a7"/><stop offset="70%" stop-color="#f3ddd6"/><stop offset="100%" stop-color="#956d75"/>
- </linearGradient>
- <radialGradient id="coffeeLiquid" cx="43%" cy="37%" r="76%">
-   <stop offset="0%" stop-color="#a77457"/><stop offset="38%" stop-color="#775245"/><stop offset="86%" stop-color="#503b37"/><stop offset="100%" stop-color="#3c3332"/>
- </radialGradient>
- <linearGradient id="glareCeramic" x1="0%" y1="0%" x2="100%" y2="0%">
-  <stop offset="0%" stop-color="#fff" stop-opacity="0"/><stop offset="45%" stop-color="#fff" stop-opacity=".8"/><stop offset="100%" stop-color="#fff" stop-opacity="0"/>
- </linearGradient>
- <radialGradient id="shadowFoot"><stop offset="0%" stop-color="#65423c" stop-opacity=".39"/><stop offset="100%" stop-color="#65423c" stop-opacity="0"/></radialGradient>
-</defs>
-<!-- a genuine, separated contact shadow, underneath the foot -->
-<ellipse cx="143" cy="303" rx="109" ry="16" fill="url(#shadowFoot)"/>
-<!-- steam, naturally rising from the hot coffee -->
-<path class="steam s1" d="M104 88 C86 70 116 63 102 41 C91 25 106 20 109 10"/>
-<path class="steam s2" d="M145 79 C129 66 153 49 143 34 C134 20 144 9 150 6"/>
-<path class="steam s3" d="M183 88 C166 72 192 60 179 43 C168 27 184 20 184 11"/>
-<!-- chunky handle starts behind the main body -->
-<path d="M218 142 C253 117 284 142 282 179 C280 224 247 252 214 232"
-  fill="none" stroke="#74545d" stroke-width="36" stroke-linecap="round"/>
-<path d="M218 142 C253 117 284 142 282 179 C280 224 247 252 214 232"
-  fill="none" stroke="url(#mugHandle)" stroke-width="30" stroke-linecap="round"/>
-<path d="M235 144 C266 137 270 176 259 202" fill="none" stroke="#fff9ee" stroke-opacity=".67" stroke-width="5" stroke-linecap="round"/>
-<!-- foot ring at the bottom of a glazed cylindrical mug -->
-<ellipse cx="140" cy="275" rx="76" ry="21" fill="#a57d83" stroke="#785964" stroke-width="3"/>
-<ellipse cx="140" cy="275" rx="67" ry="13" fill="#d7b1ae" opacity=".9"/>
-<!-- nearly straight cylindrical wall and curved bottom -->
-<path d="M49 125 C49 171 54 245 68 266 C82 290 199 293 213 267 C228 241 232 168 231 125Z"
- fill="url(#mugCeramic)" stroke="#72555d" stroke-width="3.8" stroke-linejoin="round"/>
-<!-- grazing studio light glances off the left face of the glaze -->
-<path d="M68 147 C70 195 73 237 82 258" fill="none" stroke="#fffef4" stroke-opacity=".76" stroke-width="13" stroke-linecap="round"/>
-<path d="M91 151 C91 210 95 250 99 266" fill="none" stroke="url(#glareCeramic)" stroke-width="15" stroke-linecap="round" opacity=".53"/>
-<path d="M211 148 C214 199 207 250 197 266" fill="none" stroke="#986f7c" stroke-width="7" opacity=".34" stroke-linecap="round"/>
-<path d="M73 265 C112 283 184 284 209 265" fill="none" stroke="#fffbf0" stroke-opacity=".45" stroke-width="4"/>
-<!-- raised lip and coffee meniscus -->
-<ellipse cx="140" cy="129" rx="91" ry="29" fill="url(#mugRim)" stroke="#765b63" stroke-width="4"/>
-<ellipse cx="140" cy="126" rx="80" ry="22" fill="#d2b3ae" stroke="#8b6b69" stroke-width="2"/>
-<ellipse cx="140" cy="126" rx="76" ry="18" fill="url(#coffeeLiquid)"/>
-<path d="M79 125 C106 113 124 134 152 123 C173 115 184 118 198 124" fill="none" stroke="#d3ab84" stroke-width="3" opacity=".55" stroke-linecap="round"/>
-<path d="M107 134 C127 142 152 139 172 134" fill="none" stroke="#d4b7a0" stroke-width="2" opacity=".35" stroke-linecap="round"/>
-<path d="M49 128 C60 149 97 156 140 156 C183 156 220 148 231 128"
- fill="none" stroke="#fffcf1" stroke-width="4" opacity=".72"/>
-<!-- ceramic-stamped NTU embossing, offset highlight + carved interior -->
-<text x="142" y="214" text-anchor="middle" font-family="Georgia,serif" font-size="36" font-weight="bold" letter-spacing="4" fill="#fff9ed" opacity=".88">NTU</text>
-<text x="140" y="212" text-anchor="middle" font-family="Georgia,serif" font-size="36" font-weight="bold" letter-spacing="4" fill="#976878">NTU</text>
-<path d="M108 229 Q141 244 177 229" fill="none" stroke="#b38995" stroke-width="3" opacity=".8" stroke-linecap="round"/>
-</svg>
-</button>
-<p class="mug-hint">a cup of shortcuts</p>
-</div>
-<div class="notepad" aria-hidden="true"><strong>tiny reminder ♡</strong><span>you've got this.<br>drink some water!</span></div>
-<div class="pencil" aria-hidden="true"></div>
+<div class="mug-area" aria-label="Ceramic NTU shortcut mug">
+<div class="mug-shadow" aria-hidden="true"></div><div class="coaster" aria-hidden="true"></div><div class="mug-handle" aria-hidden="true"><i></i></div><div class="mug-foot" aria-hidden="true"></div><div class="mug-body" aria-hidden="true"><div class="ceramic-reflection"></div><strong>NTU</strong><span>TAIPEI · 1928</span></div>
+<div class="mug-rim" aria-hidden="true"></div><div class="mug-top"><div class="lid-disc"></div><div class="mug-keys"><a class="mug-key" href="https://my.ntu.edu.tw/" target="_blank" rel="noopener noreferrer" aria-label="Open myNTU"><span class="key-top"><b>⌂</b><small>myNTU</small></span></a><a class="mug-key" href="https://cool.ntu.edu.tw/" target="_blank" rel="noopener noreferrer" aria-label="Open NTU COOL"><span class="key-top"><b>▰</b><small>COOL</small></span></a><a class="mug-key" href="https://wmail1.cc.ntu.edu.tw/rc/index.php" target="_blank" rel="noopener noreferrer" aria-label="Open NTU Mail"><span class="key-top"><b>✉</b><small>Mail</small></span></a></div></div><div class="mug-caption">CAMPUS / QUICK ACCESS</div></div>
+<div class="notepad" aria-hidden="true"><small>BEFORE YOU GO</small><strong>keys. water. notebook.</strong><span>and a little breathing room.</span></div><div class="pencil" aria-hidden="true"></div>
 </div>
 </main>
-</div>
 </body>
 </html>

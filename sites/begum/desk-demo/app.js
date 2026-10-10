@@ -72,8 +72,7 @@ function renderWeek(){
  renderClasses(currentMon);
 }
 function timeLabel(time){
- const [hr,minute]=time.split(":").map(Number);
- return String(hr%12||12)+":"+String(minute).padStart(2,"0");
+ return time;
 }
 function simpleMinutes(time){const [h,m]=time.split(":").map(Number);return h*60+m;}
 function renderClasses(weekMon){
@@ -156,11 +155,6 @@ $("noteForm").addEventListener("submit",e=>{
 $("prevWeek").addEventListener("click",()=>{weekShift=Math.max(-26,weekShift-1);renderWeek();});
 $("nextWeek").addEventListener("click",()=>{weekShift=Math.min(26,weekShift+1);renderWeek();});
 $("jumpToday").addEventListener("click",()=>{weekShift=0;selectedDay=startToday.getUTCDay()||1;renderWeek();});
-const mug=$("mugButton"),pop=$("shortcutPop");
-function setMugOpen(open){pop.classList.toggle("open",open);mug.setAttribute("aria-expanded",String(open));if(open){pop.querySelector("a")?.focus();}}
-mug.addEventListener("click",()=>setMugOpen(!pop.classList.contains("open")));
-document.addEventListener("pointerdown",e=>{if(!e.target.closest("#mugArea")&&pop.classList.contains("open"))setMugOpen(false);});
-document.addEventListener("keydown",e=>{if(e.key==="Escape"&&pop.classList.contains("open")){setMugOpen(false);mug.focus();}});
 let skyMode="auto";const skyModes=["auto","day","sunset","night"];
 function currentSky(){
  const h=datePartsInTaipei().hour;
@@ -180,9 +174,9 @@ function changeSky(){
  renderSky();
 }
 $("skyWindow").addEventListener("click",changeSky);
-$("skyWindow").addEventListener("keydown",e=>{
- if(e.key==="Enter"||e.key===" "){e.preventDefault();changeSky();}
-});
 function clockTick(){safeText($("clock"),"Taipei · "+clockFmt.format(new Date()));if(skyMode==="auto")renderSky();}
-$("keyboardKeys").replaceChildren(...Array.from({length:45},()=>document.createElement("i")));
+const keyRows=[['esc','F1','F2','F3','F4','F5','F6','F7','F8','F9','F10','F11','F12','⏻'],['~','1','2','3','4','5','6','7','8','9','0','−','=','delete'],['tab','Q','W','E','R','T','Y','U','I','O','P','[',']','\\'],['caps','A','S','D','F','G','H','J','K','L',';','’','return'],['shift','Z','X','C','V','B','N','M',',','.','/','shift'],['fn','ctrl','option','cmd','space','cmd','option','◀','▲','▼','▶']];
+$("keyboardKeys").replaceChildren(...keyRows.map(keys=>{const row=document.createElement('div');row.className='key-row';keys.forEach(key=>{const cap=document.createElement('i');cap.textContent=key==='space'?'':key;cap.className=key==='space'?'space':key.length>3?'wide':'';row.append(cap);});return row;}));
+function fitScene(){const stage=$('stage'),scene=$('scene');const size=getComputedStyle(stage);const w=parseFloat(size.width),h=parseFloat(size.height);scene.style.setProperty('--scene-scale',Math.min(scene.clientWidth/(w+(w>1000?80:0)),scene.clientHeight/h));}
+new ResizeObserver(fitScene).observe($('scene'));fitScene();
 renderWeek();renderTasks();renderNotes();clockTick();setInterval(clockTick,60000);
