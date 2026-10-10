@@ -50,7 +50,7 @@ test('Begüm removes transfer and Hanzi UI, code and heavy FFmpeg preloading', (
 });
 
 test('Begüm PWA assets remain scoped and version matched', () => {
-  for (const asset of ['app.js?v=118','todo-realtime.js?v=1','garden-theme.css?v=11','garden-bees.js?v=2']) {
+  for (const asset of ['app.js?v=118','todo-realtime.js?v=1','garden-theme.css?v=12','garden-bees.js?v=2']) {
     assert.ok(html.includes(asset), 'HTML references ' + asset);
     assert.ok(sw.includes(asset), 'cache includes ' + asset);
   }
@@ -150,4 +150,11 @@ test('Up Next mobile header reserves room for title and countdown together', () 
   assert.ok(css.includes('padding-bottom:26px;'));
   assert.ok(css.includes('height:auto;'));
   assert.ok(css.includes('line-height:1.38;'));
+});
+
+test('desktop Up Next preserves whole Fraunces lettering and countdown', () => {
+  assert.ok(css.includes('Desktop Up Next: Fraunces descenders were clipped'));
+  assert.ok(css.includes('line-height:1.32;'));
+  assert.ok(css.includes('padding:0 0 .14em;'));
+  assert.ok(css.includes('@media(min-width:901px)'));
 });
