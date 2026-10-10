@@ -4,7 +4,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#68503d"><meta name="description" content="Begüm's CSS desk study. An isolated, local-data schedule concept.">
 <title>Begüm's Desk · CSS hardware study</title>
-<link rel="icon" href="./favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="./style.css?v=8"><script src="./app.js?v=8" defer></script>
+<link rel="icon" href="./favicon.svg" type="image/svg+xml"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&family=Fraunces:opsz,wght,SOFT,WONK@9..144,600,30,1&display=swap" rel="stylesheet"><link rel="stylesheet" href="./style.css?v=8"><link rel="stylesheet" href="./legacy-screen.css?v=1"><script src="./app.js?v=9" defer></script>
 </head>
 <body>
 <svg class="sr-only" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><symbol id="checkIcon" viewBox="0 0 24 24"><path d="m4 12 5 5 11-11" fill="none" stroke="currentColor" stroke-width="2.5"/></symbol><symbol id="plusIcon" viewBox="0 0 24 24"><path d="M12 4v16M4 12h16" fill="none" stroke="currentColor" stroke-width="2"/></symbol><symbol id="arrowIcon" viewBox="0 0 24 24"><path d="M4 12h15m-6-6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="2"/></symbol><symbol id="trashIcon" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3m-9 0 1 13h10l1-13M10 11v5m4-5v5" stroke="currentColor" stroke-width="1.8" fill="none"/></symbol></svg>
@@ -19,15 +19,32 @@
 <div class="lid-back" aria-hidden="true"></div><div class="lid-edge edge-right" aria-hidden="true"></div><div class="lid-edge edge-top" aria-hidden="true"></div><div class="lid-edge edge-left" aria-hidden="true"></div>
 <div class="lid-face"><div class="camera" aria-hidden="true"></div>
 <div class="screen" id="screen">
-<div class="osbar"><div class="os-brand"><b>B</b><span>begüm / planner</span></div><span class="demo-indicator">LOCAL DEMO</span><span id="clock" class="os-clock">Taipei --:--</span></div>
-<div class="planner">
-<header class="planner-head"><div><p class="label">NATIONAL TAIWAN UNIVERSITY / FALL 2026</p><h1>Your week, at a glance.</h1></div><div class="week-tools"><button id="prevWeek" aria-label="Previous week">‹</button><button id="jumpToday">Today</button><button id="nextWeek" aria-label="Next week">›</button></div></header>
-<div class="screen-layout">
-<aside class="day-rail"><p class="label">WEEK / SELECT</p><nav class="days" id="dayButtons" aria-label="Weekday selector"></nav><span id="weekRange" class="week-range">This week</span></aside>
-<section class="classes-panel" aria-labelledby="classesHeading"><div class="panel-title"><div><p class="label">DAILY SCHEDULE</p><h2 id="classesHeading">Monday's classes</h2></div><span id="classCount" class="count-pill"></span></div><div class="class-list" id="classList" aria-live="polite"></div><div class="class-foot"><i></i><span id="dayFooter"></span></div></section>
-<div class="side-panels"><section class="task-panel panel" aria-labelledby="taskTitle"><div class="side-header"><div><p class="label">TO DO / PERSONAL</p><h2 id="taskTitle">Manual tasks</h2></div><span id="taskCount" class="side-badge"></span></div><ul id="taskList" class="task-list" aria-label="Demo to-do items"></ul><form class="small-form" id="taskForm"><label class="sr-only" for="taskInput">New demo task</label><input id="taskInput" maxlength="110" placeholder="Add a task…" autocomplete="off" required><button aria-label="Add task"><svg><use href="#plusIcon"/></svg></button></form></section>
-<section class="transfer-panel panel" aria-labelledby="transferTitle"><div class="side-header"><div><p class="label">DESK / SCRATCHPAD</p><h2 id="transferTitle">Quick notes</h2></div><span class="local-led" title="Saved on this device"></span></div><ul id="noteList" class="note-list" aria-label="Demo transfer notes"></ul><form id="noteForm" class="small-form"><label class="sr-only" for="noteInput">New transfer note</label><input id="noteInput" maxlength="110" placeholder="Leave a note…" autocomplete="off" required><button aria-label="Add transfer note"><svg><use href="#arrowIcon"/></svg></button></form></section></div>
-</div><div class="screen-status"><span>CONCEPT 03 / SAMPLE CLASSES · LOCAL TASKS</span><span>TAIPEI / TW</span></div></div>
+<div class="osbar"><div class="traffic" aria-hidden="true"><i></i><i></i><i></i></div><div class="os-mid"><span class="os-title">✿ begüm's little planner</span><span class="os-demo">DUMMY SITE</span></div><span class="os-clock" id="clock">Taipei --:--</span></div>
+<div class="desktop-ui">
+<div class="intro">
+<div><p class="kicker">YOUR WEEK AT NTU · AUTUMN 2026</p><h1>Make room for <span>today.</span></h1><p class="sub">Classes, small tasks, and a little breathing space.</p></div>
+<span class="intro-doodle" aria-hidden="true">✿</span>
+</div>
+<div class="week-line"><div><strong id="weekRange">This week</strong> <small>· fall semester</small></div><div class="week-tools"><button class="mini-btn" id="prevWeek" aria-label="Previous week">‹</button><button class="mini-btn today-btn" id="jumpToday">Today</button><button class="mini-btn" id="nextWeek" aria-label="Next week">›</button></div></div>
+<nav class="days" id="dayButtons" aria-label="Weekday selector"></nav>
+<div class="content-grid">
+<section class="panel classes-panel" aria-labelledby="classesHeading">
+<div class="panel-title"><div><p class="label">THE PLAN FOR TODAY</p><h2 id="classesHeading">Monday's classes</h2></div><span id="classCount" class="count-pill">—</span></div>
+<div class="class-list" id="classList" aria-live="polite"></div>
+<div class="class-foot"><i>✳</i><span id="dayFooter">Your day at a glance.</span></div>
+</section>
+<div class="side-panels">
+<section class="panel task-panel" aria-labelledby="taskTitle">
+<div class="side-header"><div><p class="label">WRITE IT DOWN</p><h2 id="taskTitle">Little to-dos ♡</h2></div><span class="side-badge" id="taskCount">0 left</span></div>
+<ul class="task-list" id="taskList" aria-label="Demo to-do items"></ul>
+<form class="small-form" id="taskForm"><label for="taskInput" class="sr-only">New demo task</label><input type="text" id="taskInput" autocomplete="off" maxlength="110" placeholder="Another little thing…" required><button type="submit" aria-label="Add task"><svg><use href="#plusIcon"/></svg></button></form>
+<p class="micro">Local-only demo · no real task sync</p>
+</section>
+
+</div>
+</div>
+<div class="screen-bottom"><span>✿ Practice layout · no live schedule or assignment connection</span><span>made with <span class="pink-heart">♥</span> for Begüm</span></div>
+</div>
 </div><div class="chin" aria-hidden="true">B E G Ü M</div></div></div>
 <div class="hinge" aria-hidden="true"><i></i><i></i></div>
 <div class="base" aria-hidden="true"><div class="base-bottom"></div><div class="base-front"></div><div class="base-left"></div><div class="base-right"></div><div class="base-top"><div class="speaker left"></div><div class="keyboard-well"><div id="keyboardKeys" class="keyboard-keys"></div></div><div class="speaker right"></div><div class="trackpad"></div><div class="palm-rest-label">ALUMINIUM / 03</div><div class="thumb-notch"></div></div></div>
