@@ -4987,6 +4987,47 @@ h1{
   opacity:.14;
   vector-effect:non-scaling-stroke;
 }
+/* Two-frame phosphor persistence gives the live waveform movement and weight
+   without generating fake audio samples or affecting schedule mode. */
+.scope-afterglow{
+  fill:none;
+  stroke:#96cba4;
+  stroke-width:2.3;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  opacity:.25;
+  filter:blur(1.35px);
+  pointer-events:none;
+}
+.scope-sensitivity{
+  margin:10px 0 13px;
+  padding:10px 11px 8px;
+  border:1px solid #847960;
+  border-radius:5px;
+  background:linear-gradient(180deg,#a79e8a,#bdb29b);
+  box-shadow:inset 0 2px 5px rgba(45,36,20,.19),0 1px rgba(255,255,255,.35);
+}
+.scope-sensitivity-head,.scope-sensitivity-ends{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
+  font:800 9px "Courier New",monospace;
+  color:#4a473d;
+}
+.scope-sensitivity-head output{
+  min-width:42px;
+  text-align:right;
+  color:#385b3c;
+}
+.scope-sensitivity input[type="range"]{
+  display:block;
+  margin:10px 0 5px;
+  width:100%;
+  accent-color:#597a55;
+  cursor:pointer;
+}
+.scope-sensitivity-ends{font-size:7px;opacity:.7;}
 .scope-trace{
   fill:none;
   stroke:#9fc99b;
@@ -5235,6 +5276,7 @@ h1{
           <div class="scope-head"><span id="scheduleScopeLabel">ΔT / SCHED</span><button class="scope-source-toggle" id="scopeAudioToggle" type="button" aria-label="Connect Windows PC audio" aria-pressed="false" title="Connect Windows PC audio">AUX</button><b id="scheduleScopeValue">--</b></div>
           <svg class="scope-wave" viewBox="0 0 200 42" preserveAspectRatio="none" aria-hidden="true">
             <path class="scope-gridline" d="M0 7H200 M0 21H200 M0 35H200 M25 0V42 M75 0V42 M125 0V42 M175 0V42"></path>
+            <path class="scope-afterglow" id="scheduleScopeAfterglow" d=""></path>
             <path class="scope-trace" id="scheduleScopeTrace" d="M0 21H200"></path>
           </svg>
           <div class="scope-foot"><span id="scheduleScopeMode">NEXT START</span><span id="scheduleScopeHint">λ ∝ ΔT</span></div>
@@ -5543,7 +5585,12 @@ h1{
 <dialog id="scopeAudioDialog" class="lesson-dialog skeuo-function-dialog">
   <div class="skeuo-function-head"><div><small>AUX / LOCAL LOOPBACK</small><strong>PC audio oscilloscope</strong></div><button id="scopeAudioClose" class="skeuo-function-close" type="button" aria-label="Close">×</button></div>
   <div class="skeuo-function-body">
-    <p class="skeuo-function-meta">Run the Windows NTUScope companion, then paste the pairing key displayed in its window. Audio stays on this PC; only waveform measurements travel over localhost.</p>
+    <p class="skeuo-function-meta">Uses your already-installed Windows companion. Adjust the waveform here; no new executable or pairing is needed.</p>
+    <div class="scope-sensitivity">
+      <div class="scope-sensitivity-head"><label for="scopeAudioSensitivity">WAVEFORM INTENSITY</label><output id="scopeAudioSensitivityValue" for="scopeAudioSensitivity">WILD</output></div>
+      <input id="scopeAudioSensitivity" type="range" min="1" max="5" step="1" value="4" aria-label="Waveform intensity">
+      <div class="scope-sensitivity-ends"><span>CLASSIC</span><span>MAX</span></div>
+    </div>
     <form id="scopeAudioForm">
       <label for="scopeAudioKey" class="skeuo-function-meta">COMPANION PAIRING KEY</label>
       <input id="scopeAudioKey" type="password" autocomplete="off" spellcheck="false" maxlength="32" placeholder="32-character key">
@@ -5559,7 +5606,7 @@ h1{
 
 <script src="./vendor/ffmpeg/ffmpeg.js?v=1"></script>
 <script src="./scope-audio-bridge.js?v=2"></script>
-<script src="./skeuo-runtime.js?v=28"></script>
+<script src="./skeuo-runtime.js?v=29"></script>
 <script src="./mail-demo.js?v=22"></script>
 <script src="./skeuo-scrollbars.js?v=14"></script>
 
