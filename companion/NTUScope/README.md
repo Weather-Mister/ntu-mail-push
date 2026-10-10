@@ -1,37 +1,37 @@
-# NTU Schedule – Windows PC Audio Companion
+# NTU Schedule – lightweight Windows PC Audio Companion
 
-A small, private, **Windows-only** companion for the **Eren skeuomorphic GitHub schedule demo**.
+A **native C++ Windows 10/11 (x64)** companion for the Eren GitHub schedule's skeuomorphic oscilloscope. Uses only Windows system APIs, not .NET, NAudio, Electron, Python or an embedded HTTP framework.
 
-The Firefox website cannot directly grab system playback audio without the browser's capture permission and supported audio track. Instead, the helper uses Windows WASAPI loopback from the default playback device and computes **64 amplitude-envelope bins**, one RMS amplitude and a rough crossing-rate frequency feature. It does not save recordings, stream PCM, use a microphone or transmit audio to the internet.
+The application reads the default Windows output with **WASAPI loopback**, computes 64 envelope levels plus amplitude and a rough zero-crossing frequency indicator, and sends these small JSON frames at 20 Hz over an authenticated **127.0.0.1-only WebSocket**. It never records, persists, or uploads sound, and never accesses your microphone. No elevated permissions or added audio driver required.
 
-## Installation (Windows 10/11 x64)
+## Install and use
 
-1. Open the repository's **Actions → Build NTU Scope Companion** workflow, select the latest successful run, and download the `ntu-scope-companion-win-x64` artifact.
-2. Extract the ZIP and run `NTUScope.exe`. Keep its terminal window open.
-3. Open <https://weather-mister.github.io/ntu-mail-push/skeuo-demo.html> in Firefox.
-4. Press **AUX** on the oscilloscope. Enter the 32-character pairing key printed by `NTUScope.exe`, then click **CONNECT**.
-5. If Firefox prompts for **Device apps and services / Local Network Access**, allow this site to access the companion.
-6. Press **DISCONNECT** in the site's AUX dialog to stop the connection, or close the companion to stop audio capture. The original schedule-based waveform returns automatically.
+1. Open [Build NTU Scope Companion](https://github.com/Weather-Mister/ntu-mail-push/actions/workflows/build-scope-companion.yml), select the most recent **successful main-branch build** and download the `ntu-scope-companion-win-x64` ZIP under **Artifacts** (requires GitHub login).
+2. Extract and run **NTUScope.exe**. A small console shows the pairing key and capture status; leave it open while using the visualizer.
+3. Open [Eren's skeuomorphic schedule](https://weather-mister.github.io/ntu-mail-push/skeuo-demo.html) in Firefox.
+4. Click **AUX** beside the waveform. If this is your first setup, enter the 32-character pairing key displayed by the companion and click **CONNECT**.
+5. The site remembers your key in that Firefox profile and reconnects on subsequent visits while the companion runs. If Firefox asks permission to connect to local services, approve it for the schedule site.
+6. **DISCONNECT** in AUX settings to stop the website receiving data. Close the companion window to stop capture entirely.
 
-The website remembers the pairing key in this browser profile, so future visits reconnect automatically while the companion is running. The key is stored in `%LOCALAPPDATA%\NTUScope\pairing-key.txt` on the PC. Deleting that file with the app closed rotates the key (re-pair afterward).
+**Upgrading from the original 75 MB .NET version:** Close and delete the old `NTUScope.exe`, then run the smaller replacement. **Your existing pairing key continues working** because the new app reuses `%LOCALAPPDATA%\NTUScope\pairing-key.txt`.
 
-**No administrator rights, microphone permissions, or virtual audio devices should be needed.** Antivirus / Windows SmartScreen may warn about an unsigned custom executable. Only use a binary you built yourself or one produced by this repository's GitHub Actions workflow.
-
-## Build from source
+## Build from source (Visual Studio 2022 C++ desktop tools)
 
 ```powershell
-dotnet publish companion/NTUScope/NTUScope.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o dist/scope
+cmake -S companion/NTUScope -B build/ntu-scope -G "Visual Studio 17 2022" -A x64
+cmake --build build/ntu-scope --config Release
+.\build\ntu-scope\Release\NTUScope.exe --self-test
 ```
 
-The app listens only on `127.0.0.1:43187` (not your LAN) and accepts WebSocket connections only from origin `https://weather-mister.github.io` supplying the per-install key. The browser connects to `ws://127.0.0.1:43187/stream`. Some Firefox security configurations may block the request; use the Firefox permission dialog rather than disabling global browser security settings.
+The binary is statically linked to the C++ runtime (`/MT`), so it doesn't require users to install the MSVC redistributable. Its actual size is measured by GitHub Actions, which rejects builds larger than **5 MiB**. The self-test runs without playback hardware and verifies WebSocket handshake hashing, authorization checks, and frame serialization.
 
-The sound source is the **default Windows playback device at launch**. If you change from speakers to headphones or Bluetooth, restart the helper. Silence produces a flat waveform after 200 ms. DRM-protected streams or exclusive-mode output may not be visible to WASAPI loopback.
+## Security, privacy, and limitations
 
-## Troubleshooting
+- The listener binds only to IPv4 **127.0.0.1:43187** and uses both **site Origin restriction** (`https://weather-mister.github.io`) and a cryptographically random **32-character per-install pairing key**. The key is stored in `%LOCALAPPDATA%\NTUScope\pairing-key.txt`; deleting that file while the companion is closed rotates the key.
+- Only one website connection is handled at a time. It is not an open LAN server; you cannot access the sound waveform from a different machine.
+- The local WebSocket uses `ws://` on loopback, not an internet connection. Firefox's behavior can depend on local-network-access and mixed-content policies; the Firefox browser connection test covers the current CI version, but local user permission prompts may still appear.
+- The default Windows **playback** device is selected when the app starts. Restart after switching to Bluetooth headphones or a different output.
+- Silence flattens the wave. Some DRM-protected audio and exclusive-mode apps are not exposed to shared-mode WASAPI loopback.
+- **The CI self-test is hardware-free:** live device capture still requires testing on a Windows PC. An unsigned new executable may receive a Windows SmartScreen warning; download only from this repository's build.
 
-- **NO CONNECTION**: Verify the helper is running, the key is correct, and Firefox allowed local device access. If the browser blocks insecure loopback WebSockets in your configuration, check the Console for a mixed-content or network permission error. Do not disable browser security globally.
-- **CONNECTED but flat**: Play audio on the current default Windows output device, and check Windows volume/output routing. Restart after changing outputs.
-- **Port occupied**: Close any previous NTUScope instance, then try again.
-- **Stop all capture**: Close the companion window; the site falls back to the schedule wave.
-
-This feature does not change the production `index.html`, Begüm's schedule, or the Hatchable site.
+This update affects the **companion executable only**. It does **not** change either schedule's regular dashboard, Begüm's schedule, the website's waveform UI, or any Hatchable deployment.
