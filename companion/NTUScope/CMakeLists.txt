@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(NTUScope VERSION 2.0 LANGUAGES CXX)
+project(NTUScope VERSION 2.1 LANGUAGES CXX)
 
 if(NOT WIN32)
   message(FATAL_ERROR "NTUScope requires Windows WASAPI.")
