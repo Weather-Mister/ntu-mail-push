@@ -394,3 +394,29 @@ test('mobile garden reserves a separate row for Taipei time', async ({page}) => 
     expect(result.noFooterDingbat).toBe(true);
   }
 });
+
+test('mobile Up Next course titles wrap without clipping', async ({page}) => {
+  for (const width of [320,375,390,610,820]) {
+    await page.setViewportSize({width,height:844});
+    await page.goto('/?pair=begum');
+    const result = await page.evaluate(() => {
+      const title = document.querySelector('#nextClass .next-title');
+      title.textContent = 'Exploring Taiwan: Women and Taiwanese Society, Contemporary Perspectives';
+      const titleRect = title.getBoundingClientRect();
+      const heroRect = document.querySelector('.garden .hero').getBoundingClientRect();
+      const style = getComputedStyle(title);
+      return {
+        textFullyFits: title.scrollHeight <= title.clientHeight + 2,
+        notClamped: style.webkitLineClamp === 'none',
+        visibleOverflow: style.overflow === 'visible',
+        withinHeader: titleRect.top >= heroRect.top && titleRect.bottom <= heroRect.bottom,
+        withinViewport: titleRect.left >= 0 && titleRect.right <= innerWidth
+      };
+    });
+    expect(result.textFullyFits, 'full class title at width ' + width).toBe(true);
+    expect(result.notClamped, 'line clamp at width ' + width).toBe(true);
+    expect(result.visibleOverflow, 'title overflow at width ' + width).toBe(true);
+    expect(result.withinHeader, 'title outside header at width ' + width).toBe(true);
+    expect(result.withinViewport, 'title outside screen at width ' + width).toBe(true);
+  }
+});
