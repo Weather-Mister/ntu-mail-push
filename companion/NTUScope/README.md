@@ -1,6 +1,8 @@
 # NTU Scope — silent Windows audio companion
 
-A tiny, **tray-only** native Windows 10/11 x64 companion for the Eren skeuomorphic NTU Schedule oscilloscope. It captures default Windows playback via WASAPI loopback and streams only 64 waveform envelopes at 20 Hz to the already-paired GitHub schedule using the authenticated local WebSocket at `127.0.0.1:43187`. No audio files, microphone capture, remote audio transmission, .NET, drivers or elevated privileges.
+A tiny, **tray-only** native Windows 10/11 x64 companion for the Eren skeuomorphic NTU Schedule oscilloscope. It captures default Windows playback via WASAPI loopback and streams a **128-point signed time-domain waveform snapshot** plus 64 amplitude envelopes, at 20 Hz, to the paired GitHub schedule using the authenticated local WebSocket at `127.0.0.1:43187`. This restores the **original live-audio oscilloscope look**, rather than the synthetic pitch-driven sine wave. The snapshots represent real audio samples; they go **only to the local browser**, never to the internet. No audio files, microphone capture, remote transmission, .NET, drivers or elevated privileges.
+
+**Waveform update:** If you already have the 350 KB background helper, exit it from the tray, then download/run the latest binary. The earlier companion continues to connect but does not send real time-domain samples, so only the updated helper can show the restored waveform.
 
 ## Install once
 
