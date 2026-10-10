@@ -4941,6 +4941,30 @@ h1{
   color:#768d74;
   white-space:nowrap;
 }
+.scope-head #scheduleScopeLabel{flex:1;min-width:0}
+.scope-source-toggle{
+  flex:none;
+  padding:1px 2px 0;
+  min-width:16px;
+  border:1px solid rgba(134,158,131,.33);
+  border-radius:2px;
+  background:rgba(26,45,29,.28);
+  color:#78977b;
+  font:700 4.9px/1.1 "Courier New",monospace;
+  letter-spacing:.04em;
+  cursor:pointer;
+}
+.scope-source-toggle:hover,
+.scope-source-toggle:focus-visible{
+  color:#cce7b8;
+  border-color:#b2d4ad;
+  outline:1px solid rgba(189,222,178,.40);
+}
+.scope-source-toggle.is-connected{
+  color:#baf2a5;
+  background:rgba(67,123,62,.29);
+  box-shadow:0 0 4px rgba(117,199,98,.3);
+}
 .scope-head b{
   color:#aed1aa;
   font-size:6.7px;
@@ -5207,8 +5231,8 @@ h1{
     <section class="statusrow">
       <div class="panel display">
         <div id="nextClass"><span class="eyebrow">HAPPENING NOW / CHANNEL 01</span><strong>Engineering Mathematics</strong><p>ROOM 114 · END 16:10 · 42 MIN REMAINING</p></div>
-        <div class="schedule-scope" id="scheduleScope" role="img" aria-label="Schedule interval monitor">
-          <div class="scope-head"><span id="scheduleScopeLabel">ΔT / SCHED</span><b id="scheduleScopeValue">--</b></div>
+        <div class="schedule-scope" id="scheduleScope" role="group" aria-label="Schedule interval monitor with optional PC audio">
+          <div class="scope-head"><span id="scheduleScopeLabel">ΔT / SCHED</span><button class="scope-source-toggle" id="scopeAudioToggle" type="button" aria-label="Connect Windows PC audio" aria-pressed="false" title="Connect Windows PC audio">AUX</button><b id="scheduleScopeValue">--</b></div>
           <svg class="scope-wave" viewBox="0 0 200 42" preserveAspectRatio="none" aria-hidden="true">
             <path class="scope-gridline" d="M0 7H200 M0 21H200 M0 35H200 M25 0V42 M75 0V42 M125 0V42 M175 0V42"></path>
             <path class="scope-trace" id="scheduleScopeTrace" d="M0 21H200"></path>
@@ -5516,11 +5540,26 @@ h1{
   <div class="skeuo-function-head"><div><small>IPHONE SAVE / FILE</small><strong id="transferSaveName">File ready</strong></div><button id="closeTransferSaveDialog" class="skeuo-function-close" type="button" aria-label="Close">×</button></div>
   <div class="skeuo-function-body"><p id="transferSaveMeta" class="skeuo-function-meta"></p><p id="transferSaveHint" class="skeuo-function-meta"></p><button id="transferNativeSaveButton" class="skeuo-function-key" type="button">SAVE TO FILES</button></div>
 </dialog>
+<dialog id="scopeAudioDialog" class="lesson-dialog skeuo-function-dialog">
+  <div class="skeuo-function-head"><div><small>AUX / LOCAL LOOPBACK</small><strong>PC audio oscilloscope</strong></div><button id="scopeAudioClose" class="skeuo-function-close" type="button" aria-label="Close">×</button></div>
+  <div class="skeuo-function-body">
+    <p class="skeuo-function-meta">Run the Windows NTUScope companion, then paste the pairing key displayed in its window. Audio stays on this PC; only waveform measurements travel over localhost.</p>
+    <form id="scopeAudioForm">
+      <label for="scopeAudioKey" class="skeuo-function-meta">COMPANION PAIRING KEY</label>
+      <input id="scopeAudioKey" type="password" autocomplete="off" spellcheck="false" maxlength="32" placeholder="32-character key">
+      <p id="scopeAudioStatus" class="skeuo-function-meta" role="status" aria-live="polite">Not connected.</p>
+      <button class="skeuo-function-key" type="submit">CONNECT</button>
+      <button class="skeuo-function-key" id="scopeAudioDisconnect" type="button">DISCONNECT</button>
+    </form>
+    <p class="skeuo-function-meta"><a href="https://github.com/Weather-Mister/ntu-mail-push/tree/main/companion/NTUScope" target="_blank" rel="noopener noreferrer">GET THE WINDOWS COMPANION / INSTRUCTIONS</a></p>
+  </div>
+</dialog>
 <!-- SKEUO_FUNCTIONAL_DIALOGS_END -->
 
 
 <script src="./vendor/ffmpeg/ffmpeg.js?v=1"></script>
-<script src="./skeuo-runtime.js?v=26"></script>
+<script src="./scope-audio-bridge.js?v=1"></script>
+<script src="./skeuo-runtime.js?v=27"></script>
 <script src="./mail-demo.js?v=22"></script>
 <script src="./skeuo-scrollbars.js?v=14"></script>
 
