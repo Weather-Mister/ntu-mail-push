@@ -1133,3 +1133,47 @@ body{min-width:320px}
     padding-bottom:27px;
   }
 }
+
+/* Desktop Up Next: Fraunces descenders were clipped by -webkit-line-clamp
+   combined with overflow:hidden and a 1.12 line-height. Keep the title and
+   countdown in normal flow, with enough line box for the full glyphs. */
+@media(min-width:901px){
+  .garden .hero .hero-next-class{
+    height:auto;
+    min-width:0;
+    max-height:none;
+    overflow:visible;
+    padding-top:5px;
+    padding-bottom:8px;
+  }
+  .garden .hero .hero-next-class .next-copy{
+    height:auto;
+    max-height:none;
+    overflow:visible;
+    gap:3px;
+  }
+  .garden .hero .hero-next-class .next-title{
+    display:block;
+    overflow:visible;
+    -webkit-line-clamp:unset;
+    line-clamp:unset;
+    white-space:normal;
+    text-overflow:clip;
+    overflow-wrap:break-word;
+    max-height:none;
+    line-height:1.32;
+    padding:0 0 .14em;
+  }
+  .garden .hero .hero-next-class .next-countdown{
+    height:auto;
+    min-height:0;
+    overflow:visible;
+    line-height:1.45;
+    padding:0 0 2px;
+  }
+}
+@media(min-width:901px) and (max-width:1150px){
+  .garden .hero .hero-next-class .next-title{
+    font-size:clamp(16px,1.55vw,19px);
+  }
+}
