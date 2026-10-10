@@ -396,21 +396,34 @@ test('mobile garden reserves a separate row for Taipei time', async ({page}) => 
 });
 
 test('mobile Up Next course titles wrap without clipping', async ({page}) => {
-  for (const width of [320,375,390,610,820]) {
+  for (const width of [320,375,390,610,664,820]) {
     await page.setViewportSize({width,height:844});
     await page.goto('/?pair=begum');
     const result = await page.evaluate(() => {
       const title = document.querySelector('#nextClass .next-title');
       title.textContent = 'Exploring Taiwan: Women and Taiwanese Society, Contemporary Perspectives';
       const titleRect = title.getBoundingClientRect();
+      const next = document.querySelector('#nextClass');
+      const countdown = next.querySelector('.next-countdown');
+      const sectionRect = next.getBoundingClientRect();
+      const countdownRect = countdown?.getBoundingClientRect();
       const heroRect = document.querySelector('.garden .hero').getBoundingClientRect();
+      const weekbarRect = document.querySelector('.weekbar').getBoundingClientRect();
       const style = getComputedStyle(title);
       return {
         textFullyFits: title.scrollHeight <= title.clientHeight + 2,
         notClamped: style.webkitLineClamp === 'none',
         visibleOverflow: style.overflow === 'visible',
         withinHeader: titleRect.top >= heroRect.top && titleRect.bottom <= heroRect.bottom,
-        withinViewport: titleRect.left >= 0 && titleRect.right <= innerWidth
+        withinViewport: titleRect.left >= 0 && titleRect.right <= innerWidth,
+        countdownExists: !!countdownRect,
+        countdownFullyInsideHero: !!countdownRect &&
+          countdownRect.bottom + 4 <= heroRect.bottom,
+        countdownFullyInsideSection: !!countdownRect &&
+          countdownRect.bottom <= sectionRect.bottom + 1,
+        titleNotOverCountdown: !!countdownRect &&
+          titleRect.bottom <= countdownRect.top + 1,
+        heroNotBehindWeekbar: heroRect.bottom <= weekbarRect.top + 1
       };
     });
     expect(result.textFullyFits, 'full class title at width ' + width).toBe(true);
@@ -418,5 +431,10 @@ test('mobile Up Next course titles wrap without clipping', async ({page}) => {
     expect(result.visibleOverflow, 'title overflow at width ' + width).toBe(true);
     expect(result.withinHeader, 'title outside header at width ' + width).toBe(true);
     expect(result.withinViewport, 'title outside screen at width ' + width).toBe(true);
+    expect(result.countdownExists, 'missing countdown at width ' + width).toBe(true);
+    expect(result.countdownFullyInsideHero, 'countdown clipped by header at width ' + width).toBe(true);
+    expect(result.countdownFullyInsideSection, 'countdown clipped by Up Next section at width ' + width).toBe(true);
+    expect(result.titleNotOverCountdown, 'title overlaps countdown at width ' + width).toBe(true);
+    expect(result.heroNotBehindWeekbar, 'header overlaps week bar at width ' + width).toBe(true);
   }
 });
