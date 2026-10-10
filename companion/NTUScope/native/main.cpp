@@ -1,5 +1,7 @@
 // NTU Scope: native Windows WASAPI loopback -> authenticated local WebSocket.
 // No .NET, web server framework, microphone, audio recording or outbound network access.
+#define UNICODE
+#define _UNICODE
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #define _WIN32_WINNT 0x0A00
