@@ -262,13 +262,13 @@ test('Firefox permits a GitHub HTTPS page to connect to a local WebSocket with e
   const server = createServer(socket => {
     socket.once('data', bytes => {
       const request = bytes.toString('utf8');
-      const key = /Sec-WebSocket-Key:\\s*([^\\r\\n]+)/i.exec(request)?.[1]?.trim();
+      const key = /Sec-WebSocket-Key:\s*([^\r\n]+)/i.exec(request)?.[1]?.trim();
       if (!key) { socket.destroy(); return; }
       const accept = createHash('sha1')
         .update(key + '258EAFA5-E914-47DA-95CA-C5AB0DC85B11').digest('base64');
-      socket.write('HTTP/1.1 101 Switching Protocols\\r\\n'
-        + 'Upgrade: websocket\\r\\nConnection: Upgrade\\r\\n'
-        + 'Sec-WebSocket-Accept: ' + accept + '\\r\\n\\r\\n');
+      socket.write('HTTP/1.1 101 Switching Protocols\r\n'
+        + 'Upgrade: websocket\r\nConnection: Upgrade\r\n'
+        + 'Sec-WebSocket-Accept: ' + accept + '\r\n\r\n');
     });
   });
   try {
