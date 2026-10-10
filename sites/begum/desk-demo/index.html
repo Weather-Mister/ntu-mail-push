@@ -11,6 +11,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&family=Fraunces:opsz,wght,SOFT,WONK@9..144,600,30,1&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="./style.css">
+<link rel="stylesheet" href="./realism.css">
 <script src="./app.js" defer></script>
 </head>
 <body>
@@ -26,24 +27,16 @@
 <symbol id="houseIcon" viewBox="0 0 24 24"><path d="m3 11 9-7 9 7v9H3v-9Zm6 9v-7h6v7" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/></symbol>
 </svg>
 <div class="page">
-<header class="top">
-<a class="brand" href="./" aria-label="Begüm's Desk — top"><span class="brand-icon" aria-hidden="true"></span><span>begüm's <em>desk.</em></span></a>
-<div class="top-right">
-<span class="demo-badge">CONCEPT / NOT LIVE</span>
-<a class="back-link" href="../" title="Return to the existing Begüm schedule">↖ Original schedule</a>
-<button class="view-select" id="skyButton" type="button" aria-label="Change window sky: currently automatic"><svg aria-hidden="true"><use href="#sunIcon"/></svg><span id="skyText">Auto sky</span><span class="caret">⌄</span></button>
-</div>
-</header>
 <main>
 <div class="scene" id="scene">
 <div class="wall-dots" aria-hidden="true"></div>
-<div class="window" role="img" aria-label="Illustrated Taipei city skyline and changing sky">
+<div class="window" id="skyWindow" role="button" tabindex="0" title="Tap the window to change the lighting" aria-label="Taipei window. Press to change the sky.">
 <div class="glass"><div class="stars">✦ · ✧ ·</div><div class="sun"></div><div class="moon"></div><div class="cloud one"></div><div class="cloud two"></div><div class="hills"></div><div class="skyline"><div class="building b1"></div><div class="building b2"></div><div class="building b3"></div><div class="tower"><span></span></div><div class="building b4"></div><div class="building b5"></div><div class="building b6"></div></div></div>
 <div class="window-cross"></div><div class="window-sill"></div>
 </div>
 <div class="wall-note" aria-hidden="true">one little<br>day at a time<i>✿ ✿</i></div>
 <div class="flowerpot" aria-hidden="true"><span class="stems"></span><span class="petals"></span><span class="pot"></span></div>
-<div class="desk" aria-hidden="true"></div>
+<div class="desk" aria-hidden="true"></div><div class="light-cast" aria-hidden="true"></div>
 <div class="laptop" aria-label="Prototype schedule laptop">
 <div class="lid">
 <div class="camera" aria-hidden="true"></div>
@@ -92,18 +85,63 @@
 <small>Official NTU websites · opens a new tab</small>
 </div>
 <button class="mug-click" id="mugButton" type="button" aria-expanded="false" aria-controls="shortcutPop" aria-label="Open shortcuts from the NTU coffee mug" title="Click for NTU shortcuts">
-<svg class="mug-svg" viewBox="0 0 260 275" role="img" aria-label="Pink cream coffee mug marked NTU">
-<defs><linearGradient id="cupBody" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#e5b5b2"/><stop offset=".4" stop-color="#fff0e4"/><stop offset=".9" stop-color="#efd4ca"/><stop offset="1" stop-color="#bd8795"/></linearGradient><linearGradient id="coffeeSurface" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ad7e68"/><stop offset="1" stop-color="#775e52"/></linearGradient></defs>
-<path class="steam s1" d="M85 75 Q69 59 84 43 Q98 29 83 13"/><path class="steam s2" d="M126 64 Q113 52 127 38 Q140 22 123 6"/><path class="steam s3" d="M163 72 Q150 59 164 44 Q178 29 162 15"/>
-<path d="M198 123C262 102 267 201 196 208" fill="none" stroke="#694d52" stroke-width="25"/><path d="M198 123C257 109 253 193 197 195" fill="none" stroke="#f4ded6" stroke-width="18"/>
-<path d="M41 100 Q44 233 76 242 Q129 265 183 241 Q209 214 208 100Z" fill="url(#cupBody)" class="mug-outline"/>
-<ellipse cx="124" cy="105" rx="84" ry="26" fill="#ffeddf" stroke="#6e4f53" stroke-width="4"/>
-<ellipse cx="124" cy="104" rx="71" ry="18" fill="url(#coffeeSurface)"/>
-<path d="M78 100c23-17 45 13 66-1 12-8 27-8 36-2" stroke="#dec7b3" stroke-width="5" fill="none" opacity=".9"/>
-<path d="M47 117q7 98 32 117" fill="none" stroke="#fff6ed" stroke-width="9" stroke-linecap="round" opacity=".7"/>
-<text x="126" y="182" class="mug-text" text-anchor="middle">NTU</text>
-<path d="M92 197q33 14 65 0" fill="none" stroke="#b77b90" stroke-width="3" stroke-linecap="round"/>
-<text x="124" y="219" class="mug-open-label" text-anchor="middle">tap me ✳</text>
+<svg class="mug-svg" viewBox="0 0 300 330" role="img" aria-label="Dimensional glazed ceramic coffee mug with embossed NTU lettering">
+<defs>
+ <linearGradient id="mugCeramic" x1="0%" y1="0%" x2="100%" y2="0%">
+   <stop offset="0%" stop-color="#ad838c"/><stop offset="8%" stop-color="#c7a0a5"/><stop offset="24%" stop-color="#f7e0da"/>
+   <stop offset="43%" stop-color="#fff7ec"/><stop offset="59%" stop-color="#f5dfd5"/>
+   <stop offset="79%" stop-color="#e5c2bf"/><stop offset="94%" stop-color="#be929b"/><stop offset="100%" stop-color="#96727e"/>
+ </linearGradient>
+ <linearGradient id="mugHandle" x1="0%" y1="0%" x2="100%" y2="100%">
+   <stop offset="0%" stop-color="#fff9ee"/><stop offset="26%" stop-color="#f7e2de"/>
+   <stop offset="48%" stop-color="#ac7e8c"/><stop offset="80%" stop-color="#f1d3c9"/><stop offset="100%" stop-color="#a67f86"/>
+ </linearGradient>
+ <linearGradient id="mugRim" x1="0%" y1="0%" x2="0%" y2="100%">
+   <stop offset="0%" stop-color="#fff9f0"/><stop offset="37%" stop-color="#d0a7a7"/><stop offset="70%" stop-color="#f3ddd6"/><stop offset="100%" stop-color="#956d75"/>
+ </linearGradient>
+ <radialGradient id="coffeeLiquid" cx="43%" cy="37%" r="76%">
+   <stop offset="0%" stop-color="#a77457"/><stop offset="38%" stop-color="#775245"/><stop offset="86%" stop-color="#503b37"/><stop offset="100%" stop-color="#3c3332"/>
+ </radialGradient>
+ <linearGradient id="glareCeramic" x1="0%" y1="0%" x2="100%" y2="0%">
+  <stop offset="0%" stop-color="#fff" stop-opacity="0"/><stop offset="45%" stop-color="#fff" stop-opacity=".8"/><stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+ </linearGradient>
+ <radialGradient id="shadowFoot"><stop offset="0%" stop-color="#65423c" stop-opacity=".39"/><stop offset="100%" stop-color="#65423c" stop-opacity="0"/></radialGradient>
+</defs>
+<!-- a genuine, separated contact shadow, underneath the foot -->
+<ellipse cx="143" cy="303" rx="109" ry="16" fill="url(#shadowFoot)"/>
+<!-- steam, naturally rising from the hot coffee -->
+<path class="steam s1" d="M104 88 C86 70 116 63 102 41 C91 25 106 20 109 10"/>
+<path class="steam s2" d="M145 79 C129 66 153 49 143 34 C134 20 144 9 150 6"/>
+<path class="steam s3" d="M183 88 C166 72 192 60 179 43 C168 27 184 20 184 11"/>
+<!-- chunky handle starts behind the main body -->
+<path d="M218 142 C253 117 284 142 282 179 C280 224 247 252 214 232"
+  fill="none" stroke="#74545d" stroke-width="36" stroke-linecap="round"/>
+<path d="M218 142 C253 117 284 142 282 179 C280 224 247 252 214 232"
+  fill="none" stroke="url(#mugHandle)" stroke-width="30" stroke-linecap="round"/>
+<path d="M235 144 C266 137 270 176 259 202" fill="none" stroke="#fff9ee" stroke-opacity=".67" stroke-width="5" stroke-linecap="round"/>
+<!-- foot ring at the bottom of a glazed cylindrical mug -->
+<ellipse cx="140" cy="275" rx="76" ry="21" fill="#a57d83" stroke="#785964" stroke-width="3"/>
+<ellipse cx="140" cy="275" rx="67" ry="13" fill="#d7b1ae" opacity=".9"/>
+<!-- nearly straight cylindrical wall and curved bottom -->
+<path d="M49 125 C49 171 54 245 68 266 C82 290 199 293 213 267 C228 241 232 168 231 125Z"
+ fill="url(#mugCeramic)" stroke="#72555d" stroke-width="3.8" stroke-linejoin="round"/>
+<!-- grazing studio light glances off the left face of the glaze -->
+<path d="M68 147 C70 195 73 237 82 258" fill="none" stroke="#fffef4" stroke-opacity=".76" stroke-width="13" stroke-linecap="round"/>
+<path d="M91 151 C91 210 95 250 99 266" fill="none" stroke="url(#glareCeramic)" stroke-width="15" stroke-linecap="round" opacity=".53"/>
+<path d="M211 148 C214 199 207 250 197 266" fill="none" stroke="#986f7c" stroke-width="7" opacity=".34" stroke-linecap="round"/>
+<path d="M73 265 C112 283 184 284 209 265" fill="none" stroke="#fffbf0" stroke-opacity=".45" stroke-width="4"/>
+<!-- raised lip and coffee meniscus -->
+<ellipse cx="140" cy="129" rx="91" ry="29" fill="url(#mugRim)" stroke="#765b63" stroke-width="4"/>
+<ellipse cx="140" cy="126" rx="80" ry="22" fill="#d2b3ae" stroke="#8b6b69" stroke-width="2"/>
+<ellipse cx="140" cy="126" rx="76" ry="18" fill="url(#coffeeLiquid)"/>
+<path d="M79 125 C106 113 124 134 152 123 C173 115 184 118 198 124" fill="none" stroke="#d3ab84" stroke-width="3" opacity=".55" stroke-linecap="round"/>
+<path d="M107 134 C127 142 152 139 172 134" fill="none" stroke="#d4b7a0" stroke-width="2" opacity=".35" stroke-linecap="round"/>
+<path d="M49 128 C60 149 97 156 140 156 C183 156 220 148 231 128"
+ fill="none" stroke="#fffcf1" stroke-width="4" opacity=".72"/>
+<!-- ceramic-stamped NTU embossing, offset highlight + carved interior -->
+<text x="142" y="214" text-anchor="middle" font-family="Georgia,serif" font-size="36" font-weight="bold" letter-spacing="4" fill="#fff9ed" opacity=".88">NTU</text>
+<text x="140" y="212" text-anchor="middle" font-family="Georgia,serif" font-size="36" font-weight="bold" letter-spacing="4" fill="#976878">NTU</text>
+<path d="M108 229 Q141 244 177 229" fill="none" stroke="#b38995" stroke-width="3" opacity=".8" stroke-linecap="round"/>
 </svg>
 </button>
 <p class="mug-hint">a cup of shortcuts</p>
@@ -112,7 +150,6 @@
 <div class="pencil" aria-hidden="true"></div>
 </div>
 </main>
-<footer class="below"><div><strong>Still just a little experiment.</strong><p>Trying the illustrated desk idea before touching the actual schedule.</p></div><a href="../">Back to the real schedule ↗</a></footer>
 </div>
 </body>
 </html>
