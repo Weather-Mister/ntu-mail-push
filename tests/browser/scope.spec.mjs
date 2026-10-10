@@ -8,12 +8,13 @@ const schedule = runtime.slice(
 );
 const html = readFileSync(new URL('../../sites/eren/skeuo-demo.html', import.meta.url), 'utf8');
 const sw = readFileSync(new URL('../../sites/eren/sw.js', import.meta.url), 'utf8');
+const bridge = readFileSync(new URL('../../sites/eren/scope-audio-bridge.js', import.meta.url), 'utf8');
 
 async function mount(page, reducedMotion = false) {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.emulateMedia({ reducedMotion: reducedMotion ? 'reduce' : 'no-preference' });
-  await page.setContent(`<div class="schedule-scope" id="scheduleScope" role="img" aria-label="Schedule interval monitor">
+  await page.setContent(`<div class="schedule-scope" id="scheduleScope" role="group" aria-label="Schedule interval monitor">
     <span id="scheduleScopeLabel">ΔT / SCHED</span>
     <b id="scheduleScopeValue">--</b>
     <svg viewBox="0 0 200 42"><path id="scheduleScopeTrace" d="M0 21H200"/></svg>
@@ -45,17 +46,17 @@ test('schedule oscilloscope initializes with next-class countdown', async ({ pag
   expect(errors).toEqual([]);
 });
 
-test('schedule oscilloscope is display-only, not an audio-capture control', async ({ page }) => {
+test('oscilloscope has separate opt-in AUX controls and never captures browser audio', async ({ page }) => {
   const errors = await mount(page);
   const scope = page.locator('#scheduleScope');
-  await expect(scope).toHaveAttribute('role', 'img');
-  await expect(scope).not.toHaveAttribute('tabindex');
-  await expect(scope).not.toHaveAttribute('aria-pressed');
+  await expect(scope).toHaveAttribute('role', 'group');
+  expect(html).toContain('id="scopeAudioToggle"');
+  expect(html).toContain('id="scopeAudioDialog"');
+  expect(html).toContain('id="scopeAudioDisconnect"');
   await scope.click();
   await page.keyboard.press('Enter');
   await page.keyboard.press('Space');
   expect(await page.evaluate(() => captureCalls)).toBe(0);
-  await expect(scope).not.toHaveClass(/pc-audio|is-audio/);
   await expect(page.locator('#scheduleScopeMode')).toHaveText('NEXT START');
   expect(errors).toEqual([]);
 });
@@ -169,10 +170,88 @@ test('waveform height depends on schedule state alone', async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
-test('oscilloscope uses no browser audio APIs or audio-only PWA assets', async () => {
-  expect(schedule).not.toMatch(/getDisplayMedia|getUserMedia|AudioContext|audioLevel|pc-audio/);
+test('companion waveform switches on with data, and returns to schedule on disconnect', async ({ page }) => {
+  const errors = await mount(page, true);
+  const scope = page.locator('#scheduleScope');
+  const result = await page.evaluate(() => {
+    const quiet = { rms: 0, pitch: 0, bins: new Array(64).fill(0) };
+    const music = { rms: .8, pitch: .4, bins: new Array(64).fill(.75) };
+    let current = music;
+    window.NTUScopeAudio = { read: () => current };
+    refreshScheduleScopeMeta();
+    drawScheduleScope(500);
+    const live = { mode: scheduleScopeMode.textContent, label: scheduleScope.querySelector('#scheduleScopeLabel').textContent, path: scheduleScopeTrace.getAttribute('d') };
+    current = quiet;
+    drawScheduleScope(600);
+    const silence = scheduleScopeTrace.getAttribute('d');
+    current = null;
+    refreshScheduleScopeMeta();
+    drawScheduleScope(700);
+    return { live, silence, fallbackMode: scheduleScopeMode.textContent, fallbackLabel: scheduleScope.querySelector('#scheduleScopeLabel').textContent, fallbackPath: scheduleScopeTrace.getAttribute('d') };
+  });
+  expect(result.live.mode).toBe('SYSTEM AUDIO');
+  expect(result.live.label).toBe('SIGNAL / PC');
+  expect(result.live.path).toMatch(/^M0\.0 /);
+  expect(result.live.path).not.toContain('NaN');
+  expect(result.silence).toMatch(/M0\.0 21\.00/);
+  expect(result.silence).not.toContain('NaN');
+  expect(result.fallbackMode).toBe('NEXT START');
+  expect(result.fallbackLabel).toBe('ΔT / SCHED');
+  expect(result.fallbackPath).not.toBe(result.silence);
+  expect(errors).toEqual([]);
+});
+
+test('local pairing requires a key, accepts only measured envelopes, and disconnects cleanly', async ({ page }) => {
+  const errors = [];
+  page.on('pageerror', e => errors.push(e.message));
+  await page.setContent(`<button id="scopeAudioToggle">AUX</button>
+  <dialog id="scopeAudioDialog"><button id="scopeAudioClose">X</button>
+  <form id="scopeAudioForm"><input id="scopeAudioKey"><p id="scopeAudioStatus"></p><button type="submit">CONNECT</button></form>
+  <button id="scopeAudioDisconnect">DISCONNECT</button></dialog>`);
+  await page.evaluate(() => {
+    class FakeSocket {
+      static OPEN = 1;
+      static CONNECTING = 0;
+      static last = null;
+      constructor(url) { this.url = url; this.readyState = 0; this.listeners = {}; FakeSocket.last = this; }
+      addEventListener(name, cb) { (this.listeners[name] ??= []).push(cb); }
+      dispatch(name, payload = {}) { for (const cb of this.listeners[name] || []) cb(payload); }
+      close() { this.readyState = 3; this.dispatch('close', { code: 1000 }); }
+    }
+    window.WebSocket = FakeSocket;
+    window.FakeSocket = FakeSocket;
+  });
+  await page.addScriptTag({ content: bridge });
+  await page.locator('#scopeAudioToggle').click();
+  await page.locator('#scopeAudioKey').fill('bad key');
+  await page.locator('#scopeAudioForm button').click();
+  await expect(page.locator('#scopeAudioStatus')).toContainText('32-character');
+  const key = '0123456789ABCDEF0123456789ABCDEF';
+  await page.locator('#scopeAudioKey').fill(key);
+  await page.locator('#scopeAudioForm button').click();
+  const result = await page.evaluate(() => {
+    const socket = window.FakeSocket.last;
+    const url = socket.url;
+    socket.readyState = 1;
+    socket.dispatch('open');
+    socket.dispatch('message', { data: JSON.stringify({ type: 'levels', version: 1, rms: .5, pitch: .2, bins: new Array(64).fill(.4) }) });
+    const fresh = window.NTUScopeAudio.read();
+    socket.dispatch('message', { data: JSON.stringify({ type: 'levels', version: 1, rms: .5, pitch: .2, bins: [1, 2] }) });
+    const stillFresh = window.NTUScopeAudio.read();
+    return { url, fresh, stillFresh };
+  });
+  expect(result.url).toBe(`ws://127.0.0.1:43187/stream?key=${key}`);
+  expect(result.fresh.bins).toHaveLength(64);
+  expect(result.stillFresh.bins).toHaveLength(64);
+  await page.locator('#scopeAudioDisconnect').click();
+  expect(await page.evaluate(() => window.NTUScopeAudio.read())).toBe(null);
+  expect(errors).toEqual([]);
+});
+
+test('audio bridge uses localhost only and no browser capture APIs', async () => {
+  expect(schedule + bridge).not.toMatch(/getDisplayMedia|getUserMedia|AudioContext|MediaRecorder/);
+  expect(bridge).toContain('ws://127.0.0.1:43187');
+  expect(html).toContain('scope-audio-bridge.js?v=1');
   expect(html).not.toContain('pc-audio-scope.js');
-  expect(html).not.toMatch(/id="scheduleScope"[^>]*role="button"/);
-  expect(html).not.toMatch(/\.schedule-scope\.is-audio|\.schedule-scope:focus-visible/);
-  expect(sw).not.toContain('pc-audio-scope.js');
+  expect(sw).toContain("asset('scope-audio-bridge.js?v=1')");
 });
