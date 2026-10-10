@@ -314,3 +314,168 @@ body{min-width:320px}
 }
 .garden .schedule-split{grid-auto-columns:minmax(0,1fr);grid-auto-flow:row}
 .garden .schedule-split > .panel{isolation:isolate}
+
+/* Garden layout polish: keep the same visual language without overflow. */
+.garden .hero{position:relative;isolation:isolate}
+.garden .hero .hero-next-class{
+ position:absolute;z-index:4;top:46px;left:43%;right:auto;
+ display:flex;align-items:center;justify-content:flex-start;
+ width:min(315px,27%);min-width:235px;max-width:315px;height:auto;min-height:67px;
+ padding:11px 14px;border:1px solid #d6e3c5;border-radius:16px;
+ background:rgba(255,254,242,.91);box-shadow:0 5px 16px #4f695114;
+ color:#365c40;backdrop-filter:blur(5px);
+}
+.garden .hero .hero-next-class .next-copy{
+ display:flex;align-items:flex-start;flex-direction:column;gap:3px;
+ max-width:100%;width:100%;min-width:0;overflow:hidden;
+}
+.garden .hero .hero-next-class .next-label{
+ display:block;color:#7b9b77;font-size:9px;letter-spacing:.1em;font-weight:850;
+}
+.garden .hero .hero-next-class .next-title{
+ display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;
+ max-width:100%;overflow:hidden;white-space:normal;text-overflow:ellipsis;
+ line-height:1.2;font-size:12px;font-weight:800;color:#315d40;
+}
+.garden .hero .hero-next-class .next-countdown{
+ display:block;font-size:10px;color:#9c753d;white-space:normal;
+}
+.garden .hero .hero-next-class .next-meta,.garden .hero .hero-next-class .next-badge{display:none}
+.garden .weekbar{min-height:39px;gap:10px}
+.garden .week-picker{position:relative;cursor:pointer;min-height:34px;max-width:max-content;align-items:center}
+.garden .week-picker .week-range{white-space:nowrap}
+.garden .week-picker input{
+ position:absolute;inset:0;width:100%;height:100%;opacity:0;
+ cursor:pointer;z-index:2;border:0;font-size:16px;
+}
+.garden .week-picker:hover .week-range{text-decoration:underline;text-decoration-color:#c7d5b4;text-underline-offset:3px}
+
+/* Legacy desktop CSS put weekdays in a side rail. Reset it fully. */
+.garden .day-strip.day-rail{
+ display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;
+ grid-template-rows:minmax(0,1fr)!important;grid-auto-flow:row!important;
+ align-items:stretch;justify-content:stretch;
+ width:100%;height:69px;min-height:69px;max-height:69px;
+ flex:0 0 69px;gap:10px;margin:0;padding:0;overflow:visible;
+}
+.garden .day-strip.day-rail > .day-tile{
+ display:flex!important;flex-direction:row!important;
+ position:relative;align-items:center;justify-content:space-between;
+ float:none;width:100%;min-width:0;height:65px!important;min-height:65px!important;
+ max-height:65px!important;margin:0;padding:10px 14px;
+ overflow:visible;text-align:left;border-radius:15px;
+ transform:none;box-sizing:border-box;
+}
+.garden .day-strip.day-rail > .day-tile:hover{transform:none;box-shadow:0 4px 12px #385a3016}
+.garden .day-strip .day-label{min-width:0;flex:1 1 auto;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px}
+.garden .day-strip .day-label .day-name{display:block;font:800 12px/1.3 var(--sans);margin:0}
+.garden .day-strip .day-label .day-note{display:block;font:600 10px/1.3 var(--sans);margin:0;opacity:.72;white-space:nowrap}
+.garden .day-strip .day-tile .day-date{
+ display:block;position:static;flex:0 0 auto;margin:0;padding:0;
+ font:600 29px/1 var(--serif);color:inherit;letter-spacing:-.05em;
+}
+.garden .day-strip .day-tile.has-deadline::after{bottom:7px;right:8px}
+.garden .day-strip .tile-flower{z-index:3;pointer-events:none}
+
+/* Date column copied directly from the demo. Deadline labels stay below
+   the assignment so neither can squeeze or overlap the month/day column. */
+.garden .cool-section .cool-deadlines{overflow-x:hidden;overflow-y:auto;min-height:0;max-width:100%;gap:8px}
+.garden .cool-section .cool-deadlines .cool-item{
+ display:flex;align-items:center;gap:10px;min-width:0;max-width:100%;
+ min-height:82px;padding:9px 9px;overflow:hidden;
+ border-left:4px solid #e9b75f;
+ background:linear-gradient(105deg,#fff8e9,#fffef9 80%);
+ box-shadow:none;transform:none;
+}
+.garden .cool-section .cool-item:hover{transform:none;background:#fffaf0}
+.garden .cool-item .cool-main{
+ display:grid;grid-template-columns:50px minmax(0,1fr);grid-template-rows:auto auto;
+ column-gap:11px;row-gap:3px;align-items:center;min-width:0;flex:1;
+ max-width:100%;margin:0;padding:0;text-decoration:none;
+}
+.garden .cool-item .cool-date{
+ grid-column:1;grid-row:1 / 3;
+ display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+ min-width:0;width:50px;min-height:54px;padding:0 8px 0 0;
+ border-right:1px solid #e0e5d8;line-height:1;text-align:center;
+}
+.garden .cool-item .cool-date .cool-month,
+.garden .cool-item .cool-date .cool-weekday{
+ display:block;font:800 9px/1.1 var(--sans);letter-spacing:.04em;
+ color:#7b9378;text-transform:uppercase;margin:0;
+}
+.garden .cool-item .cool-date strong{
+ display:block;font:650 25px/.98 var(--serif);letter-spacing:-.045em;
+ color:#3c6349;white-space:nowrap;
+}
+.garden .cool-item .cool-copy{grid-column:2;grid-row:1;min-width:0;max-width:100%;margin:0;padding:0;gap:3px}
+.garden .cool-item .cool-title{white-space:normal;overflow-wrap:anywhere;font-size:12px;line-height:1.28;color:#375341}
+.garden .cool-item .cool-course{font-size:10px;line-height:1.25;overflow-wrap:anywhere}
+.garden .cool-item .cool-due{
+ display:inline-block;grid-column:2;grid-row:2;justify-self:start;align-self:center;
+ max-width:100%;padding:3px 7px;margin:1px 0 0;
+ background:#f8eee1;border-radius:7px;color:#9a773f;
+ font:800 10px/1.3 var(--sans);white-space:normal;
+}
+.garden .cool-item .cool-done-button{margin:0;flex:0 0 27px;align-self:center}
+.garden .cool-section .cool-meta{min-height:31px}
+.garden .todo-section .todo-list{overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-gutter:stable}
+.garden .todo-section .todo-list .todo-item{min-width:0;width:100%}
+.garden .todo-section .todo-form{position:relative;z-index:1}
+.garden .todo-section .todo-heading-row{align-items:center}
+.garden .todo-section .todo-heading-row .honey-jar{width:35px;height:39px;flex:0 0 auto;transform:rotate(8deg)}
+.garden .todo-section .todo-heading-row #todoCount{margin-left:auto}
+.garden .links-panel{position:relative}
+.garden .garden-links-footer{
+ position:absolute;right:13px;top:8px;z-index:2;
+ display:flex;align-items:center;gap:4px;
+}
+.garden .garden-places-caption{display:none}
+.garden .garden-links-footer #placesButton{
+ position:static;width:auto;min-width:0;min-height:25px;height:25px;
+ display:flex;gap:3px;align-items:center;padding:0 7px;border:0;
+ background:transparent;color:#82997f;box-shadow:none;
+ border-radius:8px;font:750 10px var(--sans);
+}
+.garden .garden-links-footer #placesButton:hover{background:#eaf2df;color:#446d4b}
+.garden .garden-links-footer .places-button-icon{font-size:14px}
+.garden .links-panel .side-heading{padding-right:77px}
+@media(min-width:901px) and (max-width:1190px){
+ .garden .hero .hero-next-class{left:46%;min-width:210px;width:225px}
+ .garden .day-strip.day-rail{gap:7px}
+ .garden .day-strip.day-rail > .day-tile{padding:8px 10px}
+ .garden .day-strip .day-tile .day-date{font-size:25px}
+ .garden .cool-item .cool-main{column-gap:8px}
+ .garden .cool-item .cool-due{font-size:9px}
+}
+@media(max-width:900px){
+ .garden .hero{min-height:178px}
+ .garden .hero .hero-next-class{left:auto;right:16px;top:auto;bottom:10px;width:275px;min-width:0;min-height:52px;padding:8px 10px}
+ .garden .hero .hero-next-class .next-title{font-size:11px}
+ .garden .day-strip.day-rail{gap:6px;min-height:65px;max-height:65px;height:65px;flex-basis:65px}
+ .garden .day-strip.day-rail > .day-tile{height:61px!important;min-height:61px!important;max-height:61px!important;padding:8px}
+ .garden .cool-section .cool-deadlines{overflow:visible}
+}
+@media(max-width:610px){
+ .garden .hero{min-height:228px;padding-bottom:73px}
+ .garden .hero .hero-next-class{left:16px;right:16px;bottom:11px;top:auto;width:auto;max-width:none;min-height:49px}
+ .garden .hero .hero-next-class .next-copy{gap:2px}
+ .garden .hero .hero-next-class .next-title{-webkit-line-clamp:1;line-clamp:1}
+ .garden .day-strip.day-rail{
+  grid-template-columns:repeat(6,minmax(0,1fr))!important;
+  gap:4px;height:63px;max-height:63px;min-height:63px;flex-basis:63px;
+ }
+ .garden .day-strip.day-rail > .day-tile{
+  flex-direction:column-reverse!important;justify-content:center;align-items:center;
+  height:59px!important;min-height:59px!important;max-height:59px!important;
+  padding:5px 2px;gap:4px;border-radius:11px;
+ }
+ .garden .day-strip .day-label{align-items:center;flex:0 0 auto}
+ .garden .day-strip .day-label .day-name{font-size:10px}
+ .garden .day-strip .day-label .day-note{display:none}
+ .garden .day-strip .day-tile .day-date{font-size:23px}
+ .garden .cool-section .cool-deadlines .cool-item{min-height:77px}
+ .garden .todo-section .todo-heading-row .honey-jar{width:30px;height:34px}
+ .garden .garden-links-footer{top:8px;right:9px}
+ .garden .garden-links-footer #placesButton{font-size:9px}
+}
