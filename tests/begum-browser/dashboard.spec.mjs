@@ -74,6 +74,7 @@ test('Garden production matches demo layout while every live feature remains con
   expect(classes.height).toBeGreaterThan(300);
   await expect(page.locator('.desktop-shortcuts-column .ntu-hub')).toBeVisible();
   await expect(page.locator('.desktop-shortcuts-column .hub-stats')).toBeVisible();
+  await page.locator('#todoInput').evaluate(input => input.blur());
   await page.keyboard.press('5');
   await expect(page.locator('#selectedDay')).toHaveText('Friday in bloom');
   await page.setViewportSize({width:390,height:844});
