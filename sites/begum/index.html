@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Fraunces:opsz,wght,SOFT,WONK@9..144,400..700,45,1&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="./styles.css?v=110">
-<link rel="stylesheet" href="./garden-theme.css?v=2">
+<link rel="stylesheet" href="./garden-theme.css?v=3">
 </head>
 <body>
 <svg class="sr-only" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
@@ -136,7 +136,7 @@
       <!-- Mail alerts control moved into the NTU heading. -->
     </section>
       </div>
-      <div class="garden-links-footer"><span class="garden-places-caption">Little places worth visiting</span><button id="placesButton" type="button" class="nav-button" aria-haspopup="dialog" aria-label="Open saved places"><span class="places-button-icon" aria-hidden="true">⌖</span><span>Places</span></button></div>
+      
     </section>
   </div>
 </div>
@@ -144,42 +144,7 @@
 </div>
 </main>
 </div>
-<dialog id="placesDialog" class="lesson-dialog places-dialog">
-    <div class="dialog-sheet">
-      <button id="closePlacesDialog" class="close-dialog" type="button" aria-label="Close">×</button>
-      <span class="dialog-dot places-dot"></span>
-      <p class="dialog-day">GOOGLE MAPS</p>
-      <h3>Places</h3>
-      <div class="places-grid">
-        <a class="place-link" href="https://maps.app.goo.gl/5UjB1mboHGqLUTYD6?g_st=ic" target="_blank" rel="noopener noreferrer external" aria-label="Open Banana in Google Maps">
-          <span class="place-icon place-banana" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5.5c.1 5.7 3.7 10.5 9.1 11.8 1.1.3 2.1-.8 1.6-1.9-.6-1.4-1.6-2.8-3-4.1-2.2-2.1-3.4-4.2-3.5-6.2"/><path d="M8 5.5c.1-1 .8-1.7 1.7-1.7h1.6c.8 0 1.5.6 1.6 1.4"/><path d="M9.3 14.8c2.1.2 4.2-.4 5.9-1.7"/></svg></span>
-          <span class="place-name">Banana</span>
-        </a>
-        <a class="place-link" href="https://www.google.com/maps/search/?api=1&query=National+Taiwan+University+College+of+Social+Sciences" target="_blank" rel="noopener noreferrer external" aria-label="Open NTU Social Sciences in Google Maps">
-          <span class="place-icon place-social" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 20h16M6 20V9l6-4 6 4v11M9 20v-6h6v6M8 10h.01M12 10h.01M16 10h.01"/></svg></span>
-          <span class="place-name">Social Sciences</span>
-        </a>
-        <a class="place-link" href="https://www.google.com/maps/search/?api=1&query=Taipei+Mandarin+Center+TMC+297+Section+3+Roosevelt+Road+Taipei" target="_blank" rel="noopener noreferrer external" aria-label="Open Taipei Mandarin Center in Google Maps">
-          <span class="place-icon place-mandarin" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 5h14v11H9l-4 3V5Z"/><path d="M9 9h6M9 12h4"/></svg></span>
-          <span class="place-name">Mandarin Center</span>
-        </a>
-        <a class="place-link" href="https://www.google.com/maps/search/?api=1&query=Gongguan+MRT+Station+Taipei" target="_blank" rel="noopener noreferrer external" aria-label="Open Gongguan MRT Station in Google Maps">
-          <span class="place-icon place-mrt" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="15" rx="3"/><path d="M8 8h8M9 13h.01M15 13h.01M8 21l2-3M16 21l-2-3"/></svg></span>
-          <span class="place-name">Gongguan MRT</span>
-        </a>
-        <a class="place-link" href="https://www.google.com/maps/search/?api=1&query=National+Taiwan+University+Main+Library" target="_blank" rel="noopener noreferrer external" aria-label="Open NTU Main Library in Google Maps">
-          <span class="place-icon place-library" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 20h16M6 17h12M7 17V9M11 17V9M15 17V9M19 17V9M4 8l8-4 8 4H4Z"/></svg></span>
-          <span class="place-name">Main Library</span>
-        </a>
-        <a class="place-link" href="https://maps.app.goo.gl/LdBacJ5jNVS8Hs4F7?g_st=ic" target="_blank" rel="noopener noreferrer external" aria-label="Open Carrefour in Google Maps">
-          <span class="place-icon place-carrefour" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 7h14l-1 7H8L6.5 4H4"/><circle cx="9" cy="18" r="1"/><circle cx="17" cy="18" r="1"/></svg></span>
-          <span class="place-name">Carrefour</span>
-        </a>
-      </div>
-    </div>
-  </dialog>
-
-  <dialog id="lessonDialog" class="lesson-dialog">
+<dialog id="lessonDialog" class="lesson-dialog">
     <div class="dialog-sheet">
       <button id="closeDialog" class="close-dialog" type="button" aria-label="Close">×</button>
       <span id="dialogCourseDot" class="dialog-dot"></span>
@@ -232,6 +197,6 @@
   </dialog>
 
 
-<script src="./app.js?v=115"></script>
+<script src="./app.js?v=116"></script>
 <script src="./todo-realtime.js?v=1"></script>
 </body></html>

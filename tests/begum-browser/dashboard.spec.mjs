@@ -42,7 +42,7 @@ test('Garden production matches demo layout while every live feature remains con
  await expect(page.locator('#todoInput')).toBeVisible();
  await expect(page.locator('#ntuHubSection')).toBeVisible();
  await expect(page.locator('#nextClass')).toBeVisible();
- await expect(page.locator('#placesButton')).toBeVisible();
+ await expect(page.locator('#placesButton, #placesDialog')).toHaveCount(0);
  await expect(page.locator('#pageRefreshButton')).toBeVisible();
  await expect(page.locator('#mailAlertButton')).toBeVisible();
  await expect(page.locator('[data-day]')).toHaveCount(6);
@@ -106,10 +106,11 @@ test('Garden polish has stacked COOL dates, colorful lessons and no clipped day 
  await expect(page.locator('.hero #nextClass')).toBeVisible();
  await expect(page.locator('.todo-heading-row .honey-jar')).toBeVisible();
  await expect(page.locator('.week-actions #placesButton, .week-actions #weekDateJump')).toHaveCount(0);
- await expect(page.locator('.links-panel #placesButton')).toBeVisible();
+ await expect(page.locator('#placesButton, #placesDialog')).toHaveCount(0);
  await expect(page.locator('.cool-month').first()).toHaveText('Dec');
  await expect(page.locator('.cool-date strong').first()).toHaveText('11');
  await expect(page.locator('.cool-weekday').first()).toHaveText('Fri');
+ await expect(page.locator('.cool-item').first()).toHaveAttribute('style',/--cool-color:\s*#8aae94/);
  await page.locator('[data-day="1"]').click();
  await expect(page.locator('.lesson').first()).toHaveAttribute('style',/--course-color:\s*#d997ae/);
  const positions=await page.evaluate(()=>{
@@ -133,6 +134,39 @@ test('Garden polish has stacked COOL dates, colorful lessons and no clipped day 
  expect(positions.dateOk).toBe(true);
  expect(positions.horizontalOverflow).toBe(false);
  expect(errors).toEqual([]);
+});
+
+
+test('Thursday courses remain readable, inside their cards, and need no schedule scrolling', async ({page})=>{
+ await page.goto('/?pair=begum');
+ await page.locator('[data-day="4"]').click();
+ await expect(page.locator('.lesson')).toHaveCount(3);
+ const layout=await page.evaluate(()=>{
+  const list=document.querySelector('#scheduleList');
+  const panel=document.querySelector('.classes-panel');
+  const cardEls=[...list.querySelectorAll('.lesson')];
+  const bounds=e=>e.getBoundingClientRect();
+  const panelBox=bounds(panel),listBox=bounds(list);
+  return {
+    overflowY:getComputedStyle(list).overflowY,
+    hasInternalScroll:list.scrollHeight>list.clientHeight+3,
+    lastCardVisible:bounds(cardEls.at(-1)).bottom<=panelBox.bottom-20,
+    cardsNotClipped:cardEls.every(e=>{
+      const b=bounds(e),t=bounds(e.querySelector('.time-block')),copy=bounds(e.querySelector('.lesson-card'));
+      return b.left>=listBox.left-3 && b.right<=listBox.right+3 &&
+             t.right<=copy.left+3 && copy.right<=b.right+3 &&
+             copy.top>=b.top-3 && copy.bottom<=b.bottom+3;
+    }),
+    pseudoRemoved:getComputedStyle(cardEls[0].querySelector('.lesson-card'),'::before').content==='none',
+    grassRemoved:getComputedStyle(document.querySelector('.garden'),'::after').content==='none'
+  };
+ });
+ expect(layout.overflowY).toBe('visible');
+ expect(layout.hasInternalScroll).toBe(false);
+ expect(layout.lastCardVisible).toBe(true);
+ expect(layout.cardsNotClipped).toBe(true);
+ expect(layout.pseudoRemoved).toBe(true);
+ expect(layout.grassRemoved).toBe(true);
 });
 
 test('TOC is listed on both days with $800 in place of a location', async ({ page }) => {

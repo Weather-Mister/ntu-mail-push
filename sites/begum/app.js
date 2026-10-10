@@ -149,9 +149,6 @@ const todoList = document.getElementById('todoList');
 const todoCount = document.getElementById('todoCount');
 const todoMoreButton = document.getElementById('todoMoreButton');
 const pageRefreshButton = document.getElementById('pageRefreshButton');
-const placesButton = document.getElementById('placesButton');
-const placesDialog = document.getElementById('placesDialog');
-const closePlacesDialog = document.getElementById('closePlacesDialog');
 const mailAlertButton = document.getElementById('mailAlertButton');
 const mailAlertStatus = document.getElementById('mailAlertStatus');
 const mailAlertDialog = document.getElementById('mailAlertDialog');
@@ -559,6 +556,23 @@ function renderCoolDeadlineDots(){
   });
 }
 
+
+// Stable, calm course colors for live COOL items. A new course gets one
+// deterministic pastel, so repeated assignments share their visual identity.
+const coolCoursePalette = ['#8aae94','#8aa3c5','#d997ae','#d29d8c','#ae9ec8','#d6b365','#9bb9ae','#96a7ba'];
+function colorForCoolCourse(course) {
+  const name=String(course || '').toLocaleLowerCase();
+  if (name.includes('psych')) return '#ae9ec8';
+  if (name.includes('statistic')) return '#8aa3c5';
+  if (name.includes('macro') || name.includes('micro')) return '#d29d8c';
+  if (name.includes('women') || name.includes('taiwan')) return '#d997ae';
+  if (name.includes('global health') || name.includes('health')) return '#8aae94';
+  if (name.includes('marketing')) return '#d6b365';
+  let hash=0;
+  for (const char of name) hash=((hash*31)+char.codePointAt(0))>>>0;
+  return coolCoursePalette[hash % coolCoursePalette.length];
+}
+
 function renderCoolDeadlines(){
   if (!coolDeadlinesEl) return;
 
@@ -583,7 +597,7 @@ function renderCoolDeadlines(){
     const dayText = dayNames[due.getDay()].slice(0,3);
     const done = coolDone.has(event.id);
     return `
-      <article class="cool-item ${done ? 'done' : ''}">
+      <article class="cool-item ${done ? 'done' : ''}" style="--cool-color:${colorForCoolCourse(event.course)}">
         <a class="cool-main" href="${escapeHtml(event.url)}" target="_blank" rel="noopener noreferrer external" aria-label="Open ${escapeHtml(event.title)} in Safari">
           <div class="cool-date"><span class="cool-month">${monthText}</span><strong>${dateText}</strong><small class="cool-weekday">${dayText}</small></div>
           <div class="cool-copy">
@@ -682,6 +696,7 @@ function isLessonCompleted(day, lesson, date = dateForDay(day)){
 function renderDay(){
   const date = dateForDay(selectedDay);
   const lessons = lessonsForDate(date, selectedDay);
+  document.querySelector('.garden .classes-panel')?.style.setProperty('--lessons-height', `${Math.max(455, 170 + lessons.length * 116)}px`);
   selectedDayEl.textContent = dayNames[selectedDay] + ' in bloom';
   selectedDateEl.textContent = `${shortMonths[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
   classCountEl.textContent = `${lessons.length} ${lessons.length === 1 ? 'class' : 'classes'}`;
@@ -1024,28 +1039,6 @@ if (pageRefreshButton){
   pageRefreshButton.addEventListener('click', () => window.location.reload());
 }
 
-if (placesButton && placesDialog){
-  placesButton.addEventListener('click', () => {
-    if (typeof placesDialog.showModal === 'function') placesDialog.showModal();
-    else placesDialog.setAttribute('open','');
-  });
-}
-
-if (closePlacesDialog && placesDialog){
-  closePlacesDialog.addEventListener('click', () => placesDialog.close());
-}
-
-if (placesDialog){
-  placesDialog.addEventListener('click', event => {
-    if (event.target === placesDialog) placesDialog.close();
-  });
-  placesDialog.querySelectorAll('.place-link').forEach(link => {
-    link.addEventListener('click', () => {
-      if (placesDialog.open) placesDialog.close();
-    });
-  });
-}
-
 if (coolRefreshButton){
   coolRefreshButton.addEventListener('click', () => loadCoolDeadlines(true));
 }
@@ -1130,7 +1123,7 @@ if (launchParams.get('open') === 'ntu-mail'){
 if ('serviceWorker' in navigator){
   window.addEventListener('load', async () => {
     try {
-      const registration = await navigator.serviceWorker.register('./sw.js?v=9', { updateViaCache:'none' });
+      const registration = await navigator.serviceWorker.register('./sw.js?v=10', { updateViaCache:'none' });
       await registration.update();
     } catch (error) {}
   });
