@@ -1,5 +1,11 @@
 name: Begüm schedule browser checks
 on:
+  push:
+    branches: [main]
+    paths:
+      - "sites/begum/garden-theme.css"
+      - "tests/begum-browser/**"
+      - ".github/workflows/begum-dashboard-check.yml"
   pull_request:
     paths:
       - "sites/begum/**"
@@ -23,4 +29,9 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
-      - run: npx playwright test --config playwright.begum.config.mjs
+      - name: Desktop Up Next regression on direct pushes
+        if: github.event_name == 'push'
+        run: npx playwright test --config playwright.begum.config.mjs --grep "desktop Up Next does not clip"
+      - name: Full Begüm browser suite on PR or manual request
+        if: github.event_name != 'push'
+        run: npx playwright test --config playwright.begum.config.mjs
