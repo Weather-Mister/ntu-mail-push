@@ -35,7 +35,7 @@ test('Begüm removes transfer and Hanzi UI, code and heavy FFmpeg preloading', (
 });
 
 test('Begüm PWA assets remain scoped and version matched', () => {
-  for (const asset of ['app.js?v=114','todo-realtime.js?v=1','garden-theme.css?v=1']) {
+  for (const asset of ['app.js?v=115','todo-realtime.js?v=1','garden-theme.css?v=2']) {
     assert.ok(html.includes(asset), 'HTML references ' + asset);
     assert.ok(sw.includes(asset), 'cache includes ' + asset);
   }
