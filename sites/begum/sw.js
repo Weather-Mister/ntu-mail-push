@@ -1,4 +1,4 @@
-const CACHE_NAME = 'begum-schedule-github-v7';
+const CACHE_NAME = 'begum-schedule-github-v8';
 const NTU_MAIL_URL = 'https://wmail1.cc.ntu.edu.tw/rc/index.php';
 const ROOT = new URL(self.registration.scope).pathname;
 const asset = path => ROOT + (path.startsWith('/') ? path.slice(1) : path);
@@ -7,11 +7,11 @@ const APP_SHELL = [
   ROOT,
   asset('index.html'),
   asset('styles.css?v=110'),
-  asset('desktop-renewal.css?v=5'),
-  asset('app.js?v=113'),
+  asset('garden-theme.css?v=1'),
+  asset('app.js?v=114'),
   asset('todo-realtime.js?v=1'),
   asset('manifest.webmanifest?v=1'),
-  asset('favicon.svg'),
+  asset('garden-favicon.svg'),
   asset('apple-touch-icon.png'),
   asset('icon-512.png')
 ];
@@ -49,7 +49,7 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  const freshShell = new Set([asset('styles.css'), asset('desktop-renewal.css'), asset('app.js'), asset('manifest.webmanifest')]);
+  const freshShell = new Set([asset('styles.css'), asset('garden-theme.css'), asset('app.js'), asset('manifest.webmanifest')]);
   if (freshShell.has(url.pathname)){
     event.respondWith(
       fetch(request, { cache:'no-store' })

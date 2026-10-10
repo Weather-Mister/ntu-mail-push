@@ -180,7 +180,7 @@ let todoExpanded = false;
 
 // Keep the two schedule PWAs and their storage independent. This only moves
 // Begüm's existing shortcuts to convenient places on larger screens.
-const desktopLayoutQuery = window.matchMedia('(min-width: 860px)');
+const desktopLayoutQuery = window.matchMedia('(min-width: 901px)');
 const utilityColumn = document.querySelector('.utility-column');
 const quickAccessRow = document.getElementById('quickAccessRow');
 const desktopShortcutsColumn = document.querySelector('.desktop-shortcuts-column');
@@ -679,7 +679,7 @@ function isLessonCompleted(day, lesson, date = dateForDay(day)){
 function renderDay(){
   const date = dateForDay(selectedDay);
   const lessons = lessonsForDate(date, selectedDay);
-  selectedDayEl.textContent = dayNames[selectedDay];
+  selectedDayEl.textContent = dayNames[selectedDay] + ' in bloom';
   selectedDateEl.textContent = `${shortMonths[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
   classCountEl.textContent = `${lessons.length} ${lessons.length === 1 ? 'class' : 'classes'}`;
   const weekRangeEl = document.getElementById('weekRange');
@@ -692,6 +692,8 @@ function renderDay(){
     btn.classList.toggle('active', day === selectedDay);
     btn.classList.toggle('today', dateKey(dateForDay(day)) === dateKey(new Date()));
     btn.querySelector('small').textContent = dateForDay(day).getDate();
+    const note = btn.querySelector('.day-note');
+    if (note) { const count = lessonsForDate(dateForDay(day), day).length; note.textContent = count ? count + (count === 1 ? ' bloom' : ' blooms') : 'Take it slow'; }
     btn.setAttribute('aria-pressed', day === selectedDay ? 'true' : 'false');
   });
 
@@ -1125,7 +1127,7 @@ if (launchParams.get('open') === 'ntu-mail'){
 if ('serviceWorker' in navigator){
   window.addEventListener('load', async () => {
     try {
-      const registration = await navigator.serviceWorker.register('./sw.js?v=7', { updateViaCache:'none' });
+      const registration = await navigator.serviceWorker.register('./sw.js?v=8', { updateViaCache:'none' });
       await registration.update();
     } catch (error) {}
   });
