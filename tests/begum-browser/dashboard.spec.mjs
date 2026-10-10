@@ -32,88 +32,62 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
-test('Begüm schedule works at all target widths without device-transfer tools', async ({ page }, testInfo) => {
-  const errors=[];
-  page.on('pageerror',error=>errors.push(error.message));
-  await page.goto('/?pair=begum');
-  await expect(page.locator('#selectedDay')).toBeVisible();
-  await expect(page.locator('#coolDeadlines')).toBeVisible();
-  await expect(page.locator('#todoInput')).toBeVisible();
-  await expect(page.locator('#ntuHubSection')).toBeVisible();
-  await expect(page.locator('.transfer-section')).toHaveCount(0);
-  await expect(page.locator('#transferForm')).toHaveCount(0);
-  await expect(page.locator('#hanziWidgetSlot')).toHaveCount(0);
-  await page.locator('[data-day="2"]').click();
-  await expect(page.locator('#selectedDay')).toHaveText('Tuesday');
-  await expect(page.locator('.optional-pill')).toBeVisible();
-  await page.locator('[data-day="1"]').click();
-  await expect(page.locator('.lesson')).toHaveCount(2);
-  await page.locator('.lesson').first().click();
-  await expect(page.locator('#lessonDialog')).toBeVisible();
-  await page.locator('#closeDialog').click();
 
-  if (testInfo.project.name.startsWith('mac')){
-    await expect(page.locator('.week-overview,.week-preview')).toHaveCount(0);
-    await expect(page.locator('.desktop-clock')).toBeVisible();
-    const rail = await page.locator('.desktop-day-rail').boundingBox();
-    const schedule = await page.locator('.schedule-column').boundingBox();
-    const deadlines = await page.locator('.cool-section').boundingBox();
-    const tasks = await page.locator('.todo-section').boundingBox();
-    const shortcuts = await page.locator('.desktop-shortcuts-column').boundingBox();
-    expect(rail && schedule && deadlines && tasks && shortcuts).toBeTruthy();
-    expect(schedule.x + schedule.width).toBeLessThanOrEqual(tasks.x + 3);
-    expect(tasks.x + tasks.width).toBeLessThanOrEqual(shortcuts.x + 3);
-    expect(Math.abs(schedule.y - deadlines.y)).toBeLessThan(3);
-    expect(Math.abs(schedule.y - shortcuts.y)).toBeLessThan(3);
-    expect(Math.abs(schedule.y + schedule.height - tasks.y - tasks.height)).toBeLessThan(3);
-    expect(schedule.height).toBeGreaterThan(testInfo.project.use.viewport.height * .58);
-    expect(schedule.width).toBeGreaterThan(330);
-    expect(tasks.width).toBeGreaterThan(240);
-    expect(tasks.height).toBeGreaterThan(230);
-    if (testInfo.project.name === 'mac-1440') {
-      expect(rail.x).toBeLessThan(schedule.x);
-      expect(Math.abs(rail.y - schedule.y)).toBeLessThan(3);
-      expect(schedule.width).toBeGreaterThan(470);
-    } else {
-      expect(rail.y + rail.height).toBeLessThanOrEqual(schedule.y);
-    }
-    for (const day of ['1','2','3','4','5','6']) {
-      const button = await page.locator('[data-day="' + day + '"]').boundingBox();
-      expect(Math.round(button.height)).toBeGreaterThanOrEqual(50);
-      expect(button.width).toBeGreaterThan(70);
-    }
-    const mondayCard = await page.locator('.lesson-card').first().boundingBox();
-    expect(Math.round(mondayCard.height)).toBeGreaterThanOrEqual(96);
-    await page.keyboard.press('5');
-    await expect(page.locator('#selectedDay')).toHaveText('Friday');
-    await page.keyboard.press('3');
-    await expect(page.locator('#selectedDay')).toHaveText('Wednesday');
-    await expect(page.locator('.desktop-shortcuts-column .ntu-hub')).toBeVisible();
-    await expect(page.locator('.desktop-shortcuts-column .hub-stats')).toBeVisible();
-  } else {
-    await expect(page.locator('.week-overview,.week-preview')).toHaveCount(0);
-    await expect(page.locator('.desktop-today')).toBeHidden();
-    await expect(page.locator('#quickAccessRow .ntu-hub')).toBeVisible();
-    await expect(page.locator('#quickAccessRow .hub-stats')).toBeVisible();
-  }
-
-  await page.locator('#todoInput').fill('Review Mac schedule');
-  await page.locator('#todoForm button[type="submit"]').click();
-  await expect(page.locator('.todo-item')).toContainText('Review Mac schedule');
-  const hasHorizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 2);
-  expect(hasHorizontalOverflow).toBe(false);
-  if (testInfo.project.name.startsWith('mac')) {
-    await page.setViewportSize({width:390,height:844});
-    await expect(page.locator('#quickAccessRow .ntu-hub')).toBeVisible();
-    await expect(page.locator('#quickAccessRow .hub-stats')).toBeVisible();
-    await expect(page.locator('.desktop-shortcuts-column')).toBeHidden();
-    await page.setViewportSize(testInfo.project.use.viewport);
-    await expect(page.locator('.desktop-shortcuts-column .ntu-hub')).toBeVisible();
-    await expect(page.locator('.desktop-shortcuts-column .hub-stats')).toBeVisible();
-    await expect(page.locator('#todoList')).toContainText('Review Mac schedule');
-    await expect(page.locator('#ntuHubSection')).toHaveCount(1);
-  }
-  expect(errors).toEqual([]);
+test('Garden production matches demo layout while every live feature remains connected', async ({page},testInfo)=>{
+ const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('/?pair=begum');
+ await expect(page.locator('.garden .hero-bee')).toHaveCount(2);
+ await expect(page.locator('#scheduleList')).toBeVisible();
+ await expect(page.locator('#coolDeadlines')).toBeVisible();
+ await expect(page.locator('#todoInput')).toBeVisible();
+ await expect(page.locator('#ntuHubSection')).toBeVisible();
+ await expect(page.locator('#nextClass')).toBeVisible();
+ await expect(page.locator('#placesButton')).toBeVisible();
+ await expect(page.locator('#pageRefreshButton')).toBeVisible();
+ await expect(page.locator('#mailAlertButton')).toBeVisible();
+ await expect(page.locator('[data-day]')).toHaveCount(6);
+ await expect(page.locator('.transfer-section, #hanziWidgetSlot')).toHaveCount(0);
+ await page.locator('[data-day="2"]').click();
+ await expect(page.locator('#selectedDay')).toHaveText('Tuesday in bloom');
+ await expect(page.locator('.optional-pill')).toBeVisible();
+ await page.locator('[data-day="1"]').click();
+ await expect(page.locator('.lesson')).toHaveCount(2);
+ await page.locator('.lesson').first().click();
+ await expect(page.locator('#lessonDialog')).toBeVisible();
+ await page.locator('#closeDialog').click();
+ await page.locator('#todoInput').fill('Review macro');
+ await page.locator('#todoForm button[type="submit"]').click();
+ await expect(page.locator('.todo-item')).toContainText('Review macro');
+ if(testInfo.project.name.startsWith('mac')){
+  const classes=await page.locator('.classes-panel').boundingBox();
+  const cool=await page.locator('.cool-section').boundingBox();
+  const tasks=await page.locator('.todo-section').boundingBox();
+  const rail=await page.locator('.day-rail').boundingBox();
+  const shortcuts=await page.locator('.links-panel').boundingBox();
+  expect(classes&&cool&&tasks&&rail&&shortcuts).toBeTruthy();
+  expect(Math.abs(classes.y-cool.y)).toBeLessThan(4);
+  expect(Math.abs(classes.width-cool.width)).toBeLessThan(6);
+  expect(classes.x+classes.width).toBeLessThan(cool.x+5);
+  expect(cool.x+cool.width).toBeLessThan(tasks.x+5);
+  expect(rail.y+rail.height).toBeLessThan(classes.y+5);
+  expect(tasks.y+tasks.height).toBeLessThan(shortcuts.y+5);
+  expect(classes.height).toBeGreaterThan(300);
+  await expect(page.locator('.desktop-shortcuts-column .ntu-hub')).toBeVisible();
+  await expect(page.locator('.desktop-shortcuts-column .hub-stats')).toBeVisible();
+  await page.keyboard.press('5');
+  await expect(page.locator('#selectedDay')).toHaveText('Friday in bloom');
+  await page.setViewportSize({width:390,height:844});
+  await expect(page.locator('#quickAccessRow .ntu-hub')).toBeVisible();
+  await expect(page.locator('#quickAccessRow .hub-stats')).toBeVisible();
+  await page.setViewportSize(testInfo.project.use.viewport);
+  await expect(page.locator('.desktop-shortcuts-column .ntu-hub')).toBeVisible();
+ } else {
+  await expect(page.locator('#quickAccessRow .ntu-hub')).toBeVisible();
+  await expect(page.locator('#quickAccessRow .hub-stats')).toBeVisible();
+ }
+ const overflows=await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth+2);
+ expect(overflows).toBe(false);
+ expect(errors).toEqual([]);
 });
 
 test('TOC is listed on both days with $800 in place of a location', async ({ page }) => {
