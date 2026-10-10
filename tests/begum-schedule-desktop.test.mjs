@@ -50,7 +50,7 @@ test('Begüm removes transfer and Hanzi UI, code and heavy FFmpeg preloading', (
 });
 
 test('Begüm PWA assets remain scoped and version matched', () => {
-  for (const asset of ['app.js?v=118','todo-realtime.js?v=1','garden-theme.css?v=9','garden-bees.js?v=2']) {
+  for (const asset of ['app.js?v=118','todo-realtime.js?v=1','garden-theme.css?v=10','garden-bees.js?v=2']) {
     assert.ok(html.includes(asset), 'HTML references ' + asset);
     assert.ok(sw.includes(asset), 'cache includes ' + asset);
   }
@@ -134,4 +134,12 @@ test('mobile heading and clock use separate layout rows without footer dingbats'
   assert.ok(css.includes('.garden-floral-corners{display:none;}'));
   assert.ok(css.includes('.garden .links-panel .study-hub:not(.ntu-hub) .hub-label::before{content:none;}'));
   assert.ok(!html.includes('Made to grow at your own pace <strong>✿</strong>'));
+});
+
+test('mobile Up Next course titles are not line-clamped', () => {
+  assert.ok(css.includes('Mobile Up Next: never crop course names'));
+  assert.ok(css.includes('line-clamp:unset;'));
+  assert.ok(css.includes('text-overflow:clip;'));
+  assert.ok(css.includes('overflow-wrap:break-word;'));
+  assert.ok(css.includes('max-height:none;'));
 });
