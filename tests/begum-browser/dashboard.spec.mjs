@@ -91,6 +91,49 @@ test('Garden production matches demo layout while every live feature remains con
  expect(errors).toEqual([]);
 });
 
+
+test('Garden polish has stacked COOL dates, colorful lessons and no clipped day tiles', async ({page},testInfo)=>{
+ const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.route('**/functions/v1/ntu-schedule-api**',route=>{
+  const kind=new URL(route.request().url()).searchParams.get('route');
+  if(kind!=='cool-calendar') return route.fallback();
+  return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({events:[
+   {id:'garden-regression-1',date:'2026-12-11',dueAt:'2026-12-11T20:00:00+08:00',
+    title:'Reflection on week 15',course:'Global Health',url:'https://cool.ntu.edu.tw/',allDay:false}
+  ]})});
+ });
+ await page.goto('/?pair=begum');
+ await expect(page.locator('.hero #nextClass')).toBeVisible();
+ await expect(page.locator('.todo-heading-row .honey-jar')).toBeVisible();
+ await expect(page.locator('.week-actions #placesButton, .week-actions #weekDateJump')).toHaveCount(0);
+ await expect(page.locator('.links-panel #placesButton')).toBeVisible();
+ await expect(page.locator('.cool-month').first()).toHaveText('Dec');
+ await expect(page.locator('.cool-date strong').first()).toHaveText('11');
+ await expect(page.locator('.cool-weekday').first()).toHaveText('Fri');
+ await expect(page.locator('.lesson').first()).toHaveAttribute('style',/--course-color:\s*#d997ae/);
+ const positions=await page.evaluate(()=>{
+   const box=el=>el.getBoundingClientRect();
+   const rail=box(document.querySelector('.day-rail'));
+   const tiles=[...document.querySelectorAll('.day-rail .day-tile')];
+   const dayOk=tiles.every(el=>{
+    const r=box(el),d=box(el.querySelector('.day-date'));
+    return r.left>=rail.left-2 && r.right<=rail.right+2 && r.top>=rail.top-2 &&
+           r.bottom<=rail.bottom+2 && d.top>=r.top-2 && d.bottom<=r.bottom+2;
+   });
+   const next=box(document.querySelector('#nextClass')),hero=box(document.querySelector('.hero'));
+   const nextOk=next.top>=hero.top-2 && next.bottom<=hero.bottom+2;
+   const date=box(document.querySelector('.cool-date')),copy=box(document.querySelector('.cool-copy'));
+   return {dayOk,nextOk,dateOk:date.right<=copy.left+3,
+     horizontalOverflow:document.documentElement.scrollWidth>innerWidth+2,
+     layout:[rail.width,hero.height,next.width]};
+ });
+ expect(positions.dayOk).toBe(true);
+ expect(positions.nextOk).toBe(true);
+ expect(positions.dateOk).toBe(true);
+ expect(positions.horizontalOverflow).toBe(false);
+ expect(errors).toEqual([]);
+});
+
 test('TOC is listed on both days with $800 in place of a location', async ({ page }) => {
   const errors=[];
   page.on('pageerror', error => errors.push(error.message));
