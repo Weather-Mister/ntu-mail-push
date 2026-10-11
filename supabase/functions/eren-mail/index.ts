@@ -1,5 +1,5 @@
 import { defer } from './memory.ts';
-import { db, check, secret, hash, config, workspaceFor, ownedAccount, gmailClient, accountRules, cacheMessages, messageView, threadMessageViews, fullThread, mapLimit, revise, MailError, rate, REDIRECT, SITE, clearMailMemory, invalidateThread, cachedOverviews } from './services.ts';
+import { db, check, secret, hash, config, workspaceFor, ownedAccount, gmailClient, accountRules, cacheMessages, messageView, threadMessageViews, fullThread, mapLimit, revise, translateMessage, MailError, rate, REDIRECT, SITE, clearMailMemory, invalidateThread, cachedOverviews } from './services.ts';
 import { oauthStart, oauthCallback, oauthFinish } from './oauth.ts';
 import { enqueue, deliver, reconcile, tick, syncAccount } from './jobs.ts';
 import { oneClickUnsubscribe } from './unsubscribe.ts';
