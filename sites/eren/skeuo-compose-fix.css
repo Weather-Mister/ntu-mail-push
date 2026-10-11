@@ -24,7 +24,9 @@
 }
 .machine.mail-mode #mailxCompose .mailx-email-body{
   min-height:0!important;
-  height:100%!important;
+  height:calc(100% - 4px)!important;
+  grid-row:6!important;
+  align-self:stretch!important;
   min-width:0!important;
   box-sizing:border-box!important;
   overflow:auto!important;
@@ -101,7 +103,8 @@
 .machine.mail-mode #mailxCompose .mailx-compose-foot{
   grid-row:9!important;
   position:relative!important;
-  z-index:2!important;
+  z-index:100!important;
+  isolation:isolate!important;
   min-height:50px!important;
   height:50px!important;
   width:100%!important;
@@ -109,6 +112,8 @@
   overflow:visible!important;
 }
 .machine.mail-mode #mailxCompose #mailxSend{
+  position:relative!important;
+  z-index:1!important;
   pointer-events:auto!important;
 }
 @media(min-width:861px) and (max-height:760px){
