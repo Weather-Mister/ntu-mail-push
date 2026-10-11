@@ -41,9 +41,16 @@ async function assertUnclipped(page,selector){
     const item=document.querySelector(sel),composer=document.querySelector('#mailxCompose');
     if(!item||!composer)return null;
     const r=item.getBoundingClientRect(),c=composer.getBoundingClientRect();
+    const midpointX=r.left+r.width/2,midpointY=r.top+r.height/2;
+    const hit=document.elementFromPoint(midpointX,midpointY);
+    const editor=document.querySelector('#mailxBody')?.getBoundingClientRect();
     return {top:r.top,bottom:r.bottom,left:r.left,right:r.right,
       clipTop:c.top,clipBottom:c.bottom,clipLeft:c.left,clipRight:c.right,
-      height:r.height,shown:getComputedStyle(item).display!=='none'};
+      height:r.height,shown:getComputedStyle(item).display!=='none',
+      hit:hit===item||item.contains(hit),hitName:hit?.id||hit?.className||hit?.tagName,
+      editorBottom:editor?.bottom,
+      rows:getComputedStyle(composer).gridTemplateRows,
+      footerZ:getComputedStyle(document.querySelector('.mailx-compose-foot')).zIndex};
   },selector);
   expect(bounds).toBeTruthy();
   expect(bounds.shown).toBe(true);
@@ -52,10 +59,12 @@ async function assertUnclipped(page,selector){
   expect(bounds.bottom).toBeLessThanOrEqual(bounds.clipBottom+1);
   expect(bounds.left).toBeGreaterThanOrEqual(bounds.clipLeft-1);
   expect(bounds.right).toBeLessThanOrEqual(bounds.clipRight+1);
+  if(selector==='#mailxSend')expect(bounds.hit,JSON.stringify(bounds)).toBe(true);
 }
 
 test('compose shows upload chips and lets a real attachment payload go through Send',async({page})=>{
   const {calls,errors}=await setup(page);
+  await assertUnclipped(page,'#mailxSend');
   await page.locator('#mailxSend').click();
   await expect(page.locator('#mailxComposeError')).toContainText('valid recipient');
 
@@ -90,6 +99,7 @@ test('compose shows upload chips and lets a real attachment payload go through S
 
 test('composer surfaces send failure without losing attached files; retry remains available',async({page})=>{
   const {calls,errors,failSend}=await setup(page);
+  await assertUnclipped(page,'#mailxSend');
   await page.locator('#mailxTo').fill('recipient@example.org');
   await page.locator('#mailxSubject').fill('Important');
   await page.locator('#mailxBody').fill('Please see attachment.');
