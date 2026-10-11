@@ -56,7 +56,7 @@ test('HTML mail defaults to native CRT typography, retains tables/images/links, 
   await expect(body.locator('li')).toHaveCount(2);
   await expect(body.locator('img[alt="Bank logo"]')).toHaveCount(1);
   await expect(body.locator('a[href="https://bank.example.org/details"]')).toHaveCount(1);
-  await expect(body.locator('a')).not.toHaveAttribute('href',/javascript:/);
+  await expect(body.locator('a[href^="javascript:"]')).toHaveCount(0);
   await expect(body.locator('script,style,iframe')).toHaveCount(0);
   const appearance=await body.evaluate(el=>{
     const p=el.querySelector('p'),table=el.querySelector('table');
