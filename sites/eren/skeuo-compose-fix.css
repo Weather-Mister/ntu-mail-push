@@ -1,0 +1,165 @@
+/* Keep all nine composer rows inside the machine's window.
+   Previous forced 260px editor minimum pushed the attachment shelf and Send
+   keys outside the clipped grid on laptop-sized viewports. */
+.machine.mail-mode > .mail-console-view > #mailxCompose.is-open{
+  display:grid!important;
+  grid-template-rows:
+    38px
+    auto
+    minmax(88px,.58fr)
+    26px
+    37px
+    minmax(118px,1.42fr)
+    minmax(0,auto)
+    minmax(0,auto)
+    50px!important;
+  min-height:0!important;
+  overflow:hidden!important;
+}
+.machine.mail-mode #mailxCompose .mailx-ai-hardware,
+.machine.mail-mode #mailxCompose .mailx-ai-wrap,
+.machine.mail-mode #mailxCompose .mailx-ai-row,
+.machine.mail-mode #mailxCompose .mailx-ai-prompt{
+  min-height:0!important;
+}
+.machine.mail-mode #mailxCompose .mailx-email-body{
+  min-height:0!important;
+  height:calc(100% - 4px)!important;
+  grid-row:6!important;
+  align-self:stretch!important;
+  min-width:0!important;
+  box-sizing:border-box!important;
+  overflow:auto!important;
+}
+.machine.mail-mode #mailxCompose .mailx-attachment-list{
+  min-height:0!important;
+  max-height:108px!important;
+  height:auto!important;
+  align-self:stretch!important;
+  display:flex!important;
+  flex-wrap:wrap!important;
+  align-content:flex-start!important;
+  gap:5px!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  margin:0!important;
+  padding:0 13px!important;
+  box-sizing:border-box!important;
+  scrollbar-width:thin;
+}
+.machine.mail-mode #mailxCompose .mailx-attachment-list:empty{
+  display:none!important;
+}
+.machine.mail-mode #mailxCompose .mailx-attachment-list:not(:empty){
+  min-height:44px!important;
+  padding:4px 13px 7px!important;
+  border-top:1px solid rgba(85,77,61,.25)!important;
+}
+.machine.mail-mode #mailxCompose .mailx-attachment-chip{
+  min-height:34px!important;
+  max-width:100%!important;
+  flex:0 1 auto!important;
+  padding:4px 7px!important;
+  border:1px solid #877c65!important;
+  border-radius:4px!important;
+  background:#d6cbb3!important;
+  box-shadow:inset 0 1px rgba(255,255,255,.38)!important;
+}
+.machine.mail-mode #mailxCompose .mailx-attachment-info strong{
+  color:#332e26!important;
+  font-size:10px!important;
+}
+.machine.mail-mode #mailxCompose .mailx-attachment-info small{
+  color:#625846!important;
+  font-size:9px!important;
+}
+.machine.mail-mode #mailxCompose .mailx-attachment-chip.is-error{
+  background:#e7c5bc!important;
+  border-color:#99594b!important;
+}
+.machine.mail-mode #mailxCompose .mailx-attachment-chip.is-uploading{
+  opacity:1!important;
+}
+.machine.mail-mode #mailxCompose #mailxComposeError{
+  align-self:stretch!important;
+  min-height:0!important;
+  max-height:65px!important;
+  overflow-y:auto!important;
+  padding:0 13px!important;
+  margin:0!important;
+  line-height:1.4!important;
+}
+.machine.mail-mode #mailxCompose #mailxComposeError:empty{
+  display:none!important;
+}
+.machine.mail-mode #mailxCompose #mailxComposeError:not(:empty){
+  display:block!important;
+  padding:6px 13px!important;
+  background:#ead0bf!important;
+  color:#71392d!important;
+  font-size:10px!important;
+  font-weight:700!important;
+}
+.machine.mail-mode #mailxCompose .mailx-compose-foot{
+  grid-row:9!important;
+  position:relative!important;
+  z-index:100!important;
+  isolation:isolate!important;
+  min-height:50px!important;
+  height:50px!important;
+  width:100%!important;
+  align-self:end!important;
+  overflow:visible!important;
+}
+.machine.mail-mode #mailxCompose #mailxSend{
+  position:relative!important;
+  z-index:1!important;
+  pointer-events:auto!important;
+}
+@media(min-width:861px) and (max-height:760px){
+  .machine.mail-mode > .mail-console-view > #mailxCompose.is-open{
+    grid-template-rows:
+      34px
+      auto
+      minmax(70px,.53fr)
+      23px
+      33px
+      minmax(95px,1.47fr)
+      minmax(0,auto)
+      minmax(0,auto)
+      44px!important;
+  }
+  .machine.mail-mode #mailxCompose .mailx-compose-foot{
+    min-height:44px!important;
+    height:44px!important;
+  }
+}
+@media(max-width:860px){
+  .machine.mail-mode > .mail-console-view > #mailxCompose.is-open{
+    grid-template-rows:
+      36px
+      auto
+      minmax(75px,.55fr)
+      24px
+      34px
+      minmax(105px,1.45fr)
+      minmax(0,auto)
+      minmax(0,auto)
+      calc(52px + env(safe-area-inset-bottom))!important;
+  }
+  .machine.mail-mode #mailxCompose .mailx-compose-foot{
+    min-height:calc(52px + env(safe-area-inset-bottom))!important;
+    height:calc(52px + env(safe-area-inset-bottom))!important;
+    gap:5px!important;
+  }
+  .machine.mail-mode #mailxCompose #mailxSchedule,
+  .machine.mail-mode #mailxCompose #mailxSend{
+    min-width:74px!important;
+    width:clamp(74px,24vw,112px)!important;
+    padding:0 7px!important;
+  }
+}
+@media(max-width:480px){
+  .machine.mail-mode #mailxCompose .mailx-compose-note{display:none!important}
+  .machine.mail-mode #mailxCompose #mailxSaveDraft{margin-left:auto!important}
+}

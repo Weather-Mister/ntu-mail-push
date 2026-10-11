@@ -587,7 +587,14 @@
   }
   async function addFiles(files){
     const list=[...files];if(!list.length)return;clearTimeout(draftTimer);
-    try{await saveDraft();}catch(e){showToast('Save the draft before attaching files: '+e.message);return;}
+    if(isSkeuoDemo())$('#mailxDraftState').textContent='Preparing attachments…';
+    try{await saveDraft();}
+    catch(e){
+      const message='Save the draft before attaching files: '+e.message;
+      if(isSkeuoDemo())$('#mailxComposeError').textContent=message;
+      showToast(message);return;
+    }
+    if(isSkeuoDemo())$('#mailxComposeError').textContent='';
     let used=currentAttachments.reduce((n,a)=>n+a.size,0);
     for(const file of list){
       if(currentAttachments.length>=8){showToast('You can attach up to 8 files.');break;}
@@ -606,7 +613,11 @@
   async function waitForAttachmentUploads(requireSuccess=false){
     if(attachmentUploads.size)await Promise.allSettled([...attachmentUploads.values()]);
     const failed=currentAttachments.filter(a=>a.status!=='done');
-    if(requireSuccess&&failed.length){showToast('Retry or remove failed attachments before sending.');return false;}
+    if(requireSuccess&&failed.length){
+      const message='Retry or remove failed attachments before sending.';
+      if(isSkeuoDemo())$('#mailxComposeError').textContent=message;
+      showToast(message);return false;
+    }
     return true;
   }
   function saveEditorRange(){
@@ -691,11 +702,19 @@
   function redoAi(){if(state.busySend||!state.redo.length)return;state.history.push(editorState());const v=state.redo.pop();setEditor(v.body,v.bodyHtml);state.editVersion++;keepDraft();scheduleDraftSave();}
   async function send(sendAt=null){
     if(state.busySend)return;clearTimeout(draftTimer);const c=ce();
-    if(!c.to.reportValidity()||!c.to.value.trim()||(!editorText().trim()&&!currentAttachments.length)){showToast('Add a recipient and email body or attachment.');return;}
+    if(!c.to.reportValidity()||!c.to.value.trim()||(!editorText().trim()&&!currentAttachments.length)){
+      const message='Add a valid recipient and email body or attachment.';
+      if(isSkeuoDemo())$('#mailxComposeError').textContent=message;
+      showToast(message);return;
+    }
     if(!await waitForAttachmentUploads(true))return;
     if(state.busySend)return;
     const payload={...draftSnapshot(),draftId:state.draftId,sendAt};delete payload.id;
-    if(state.requestId&&JSON.stringify(payload)!==JSON.stringify(state.requestPayload)){showToast('A previous send is unresolved. Check Outbox before sending changed text.');return;}
+    if(state.requestId&&JSON.stringify(payload)!==JSON.stringify(state.requestPayload)){
+      const message='A previous send is unresolved. Check Outbox before sending changed text.';
+      if(isSkeuoDemo())$('#mailxComposeError').textContent=message;
+      showToast(message);return;
+    }
     state.requestId ||=crypto.randomUUID();state.requestPayload=payload;keepDraft();state.busySend=true;state.composeVersion++;
     const editing=[c.from,c.to,c.subject,c.prompt];const previous=editing.map(el=>el.disabled);editing.forEach(el=>el.disabled=true);const editable=c.body.getAttribute('contenteditable');c.body.setAttribute('contenteditable','false');
     $('#mailxSend').disabled=true;$('#mailxSchedule').disabled=true;$('#mailxSaveDraft').disabled=true;$('#mailxAttach').disabled=true;$$('[data-format-command]').forEach(b=>b.disabled=true);$('#mailxBlockFormat').disabled=true;$('#mailxComposeError').textContent='';
@@ -707,7 +726,11 @@
       showToast(job.status==='sent'?'Sent through Gmail':sendAt?'Scheduled on the server':'Send queued on the server. Check Outbox for its status.');
       api('drafts/delete',{id:state.draftId}).catch(()=>{});try{sessionStorage.removeItem(DRAFT);}catch{}
       c.pane.classList.remove('is-open');state.requestId=null;state.requestPayload=null;state.draftId=null;state.replyContext=null;currentAttachments=[];clearMailCache();loadMail(false,true);
-    }catch(e){$('#mailxComposeError').textContent=e.message;keepDraft();}
+    }catch(e){
+      $('#mailxComposeError').textContent=e.message;
+      if(isSkeuoDemo())showToast('Send not completed: '+e.message);
+      keepDraft();
+    }
     finally{state.busySend=false;editing.forEach((el,i)=>el.disabled=previous[i]);c.body.setAttribute('contenteditable',editable||'true');$('#mailxSend').disabled=false;$('#mailxSchedule').disabled=false;$('#mailxSaveDraft').disabled=false;$('#mailxAttach').disabled=false;$$('[data-format-command]').forEach(b=>b.disabled=false);$('#mailxBlockFormat').disabled=false;setAiBusy(c,false);}
   }
   function sheet(title,html,onMount){
