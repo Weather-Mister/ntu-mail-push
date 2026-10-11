@@ -9,6 +9,7 @@ const message={id:'chinese-id',threadId:'thread-1',accountId:'account-1',sender:
   text:'請在10月12日前繳交作業。',html:'',attachments:[]};
 test('skeuo reader translates Chinese mail on demand and can restore the original',async({page})=>{
   const calls=[],errors=[];
+  let format='html';
   page.on('pageerror',e=>errors.push(e.message));
   await page.addInitScript(()=>localStorage.setItem('ntu-schedule-pairing-key-v1','test-key-'.repeat(6)));
   await page.route('https://**/*',async route=>{
@@ -23,7 +24,7 @@ test('skeuo reader translates Chinese mail on demand and can restore the origina
       if(action==='rules')data={rules:[]};
       if(action==='accounts')data={accounts:[{id:'account-1',display_name:'NTU',email:'student@example.com',status:'active'}]};
       if(action==='status')data={configured:true,aiConfigured:true,types:['University'],priorities:['Normal'],actions:['FYI']};
-      if(action==='translate')data={subject:'Homework reminder',body:'Please submit your homework by October 12.'};
+      if(action==='translate')data={subject:'Homework reminder',body:'Please submit your homework by October 12.\n\n- Attach the file.',...(format==='html'?{bodyHtml:'<h2>Homework reminder</h2><p>Please submit your homework by October 12.</p><table><tbody><tr><th>Due</th><td>October 12</td></tr><tr><th>Action</th><td>Upload assignment</td></tr></tbody></table><ul><li>Attach the file</li></ul><script>window.mailxXss=1</script><img src=x onerror=alert(1)><a href="javascript:alert(1)">Bad link</a>'}:{})};
       if(action==='modify-batch')data={results:(body.operations||[]).map(()=>({ok:true}))};
     }
     await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(data)});
@@ -49,6 +50,12 @@ test('skeuo reader translates Chinese mail on demand and can restore the origina
   expect(calls.some(c=>c.action==='translate')).toBe(false);
   await page.locator('[data-mailx-translate]').click();
   await expect(page.locator('.mailx-translation-body')).toContainText('October 12');
+  await expect(page.locator('.mailx-translation-body table tr')).toHaveCount(2);
+  await expect(page.locator('.mailx-translation-body li')).toContainText(['Attach the file']);
+  await expect(page.locator('.mailx-translation')).toHaveCSS('background-color','rgba(0, 0, 0, 0)');
+  await expect(page.locator('.mailx-translation-body script, .mailx-translation-body img')).toHaveCount(0);
+  await expect(page.locator('.mailx-translation-body a')).not.toHaveAttribute('href',/javascript:/);
+  expect(await page.evaluate(()=>window.mailxXss)).toBeUndefined();
   await expect(page.locator('.mailx-thread-details.is-current > .mailx-mail-body')).toBeHidden();
   expect(calls.filter(c=>c.action==='translate')).toEqual([{action:'translate',body:{accountId:'account-1',messageId:'chinese-id'}}]);
   await page.locator('[data-mailx-translate]').click();
@@ -57,5 +64,13 @@ test('skeuo reader translates Chinese mail on demand and can restore the origina
   await page.locator('[data-mailx-translate]').click();
   await expect(page.locator('.mailx-translation-body')).toContainText('October 12');
   expect(calls.filter(c=>c.action==='translate')).toHaveLength(1);
+  format='plain';
+  await page.reload();
+  await page.locator('#mailDashboardButton').click();
+  await page.locator('#mailxList .mailx-message').first().click();
+  await page.locator('[data-mailx-translate]').click();
+  await expect(page.locator('.mailx-translation-body p')).toHaveCount(1);
+  await expect(page.locator('.mailx-translation-body li')).toContainText(['Attach the file']);
+  expect(calls.filter(c=>c.action==='translate')).toHaveLength(2);
   expect(errors).toEqual([]);
 });
