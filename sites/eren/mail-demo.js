@@ -4,6 +4,7 @@
   const API='https://evckshjtzikuusnkdnjn.supabase.co/functions/v1/eren-mail';
   const PREF='eren-mail-preferences-v1', DRAFT='eren-mail-draft-v1', OAUTH='eren-mail-oauth-v1', LAYOUT='eren-mail-layout-v2', FLOATING='eren-mail-floating-v1';
   const translationCache=new Map(),translatedOpen=new Set();
+  const originalMailMarkupCache=new WeakMap();
   const isSkeuoDemo=()=>location.pathname.endsWith('/skeuo-demo.html');
   const hasChinese=text=>/[\u3400-\u9fff]/.test(String(text||''));
   const translationKey=(thread,msg)=>thread.accountId+':'+msg.id;
@@ -35,6 +36,10 @@
       if(version===state.readVersion&&state.selected===key&&state.thread){
         state.thread=t;
         $$('[data-body]').forEach(frame=>{const i=Number(frame.dataset.body);if(frame.dataset.loaded==='1'&&t.messages[i]?.html)frame.srcdoc=t.messages[i].html;});
+        if(isSkeuoDemo())$$('[data-mailx-original]').forEach(el=>{
+          const msg=t.messages[Number(el.dataset.mailxOriginal)];
+          if(el.dataset.loaded==='1'&&msg?.html)el.innerHTML=terminalOriginalHtml(msg);
+        });
       }
     }).catch(()=>{}).finally(()=>{if(threadImageRequests.get(key)===pending)threadImageRequests.delete(key);});
     threadImageRequests.set(key,pending);
@@ -366,9 +371,9 @@
     return `<button class="mailx-translate-button" type="button" data-mailx-translate="${i}" aria-label="${description}" aria-pressed="${active}" title="${description}"><span class="mailx-translate-symbol" aria-hidden="true">⇄</span>${label}</button>`;
   }
   /* Rebuild only harmless semantic elements. Never inject Gemini HTML directly into the reader. */
-  function safeTranslationHtml(value) {
+  function safeTranslationHtml(value,allowImages=false) {
     const template=document.createElement('template');
-    template.innerHTML=String(value||'').slice(0,60000);
+    template.innerHTML=String(value||'').slice(0,allowImages?1500000:60000);
     const allowed=new Set(['p','div','br','strong','b','em','i','u','ul','ol','li','blockquote','h1','h2','h3','h4','table','thead','tbody','tfoot','tr','td','th','hr','a']);
     const discard=new Set(['script','style','iframe','object','svg','math','form','template','noscript']);
     const render=node=>{
@@ -376,6 +381,20 @@
       if(node.nodeType!==Node.ELEMENT_NODE)return '';
       const tag=node.localName.toLowerCase();
       if(discard.has(tag))return '';
+      // The original Gmail HTML was sanitized by the mail service. Recheck image
+      // schemes here because this version is inserted into the terminal DOM.
+      if(tag==='img'){
+        if(!allowImages)return '';
+        const raw=(node.getAttribute('src')||'').trim();
+        let src='';
+        if(/^data:image\/(?:png|jpeg|gif|webp);base64,[a-z0-9+/=]+$/i.test(raw)&&raw.length<=2800000)src=raw;
+        else try{
+          const u=new URL(raw);
+          if(u.protocol==='https:'&&!u.username&&!u.password&&(!u.port||u.port==='443'))src=u.href;
+        }catch{}
+        if(!src)return '';
+        return '<img src="'+escapeHtml(src)+'" alt="'+escapeHtml(node.getAttribute('alt')||'')+'" loading="lazy" decoding="async" referrerpolicy="no-referrer">';
+      }
       const content=Array.from(node.childNodes,render).join('');
       if(!allowed.has(tag))return content;
       if(tag==='br'||tag==='hr')return '<'+tag+'>';
@@ -397,6 +416,27 @@
       return '<'+tag+attrs+'>'+content+'</'+tag+'>';
     };
     return Array.from(template.content.childNodes,render).join('');
+  }
+  function terminalOriginalHtml(msg) {
+    const cached=originalMailMarkupCache.get(msg);
+    if(cached&&cached.html===msg.html)return cached.content;
+    // The returned message HTML is a complete, server-sanitized iframe document.
+    // Extract just its body; sender CSS and background colors never reach the CRT.
+    const doc=new DOMParser().parseFromString(String(msg.html||''),'text/html');
+    const rendered=safeTranslationHtml(doc.body.innerHTML,true);
+    const content=rendered.trim()?rendered:plainTranslationHtml(msg.text||'');
+    originalMailMarkupCache.set(msg,{html:msg.html,content});
+    return content;
+  }
+  function originalMessageMarkup(msg,i) {
+    if(!msg.html)return '<div class="mailx-mail-body">'+escapeHtml(msg.text||'(No text body)')+'</div>';
+    const originalFrame='<iframe class="mailx-html-body" data-body="'+i+'" sandbox="allow-popups allow-popups-to-escape-sandbox" referrerpolicy="no-referrer" title="Email body from '+escapeHtml(msg.sender)+'"></iframe>';
+    const alternative='<details class="mailx-text-alternative"><summary>Plain text / accessible view</summary><div class="mailx-mail-body">'+escapeHtml(msg.text)+'</div></details>';
+    if(!isSkeuoDemo())return originalFrame+alternative;
+    // A consistent terminal-first reading surface; retain the untouched sender
+    // layout in its original sandboxed iframe for complex branded emails.
+    return '<div class="mailx-original-body mailx-translation-body" data-mailx-original="'+i+'" aria-label="Email content"></div>'+
+      '<details class="mailx-original-layout"><summary>View original email layout</summary>'+originalFrame+'</details>'+alternative;
   }
   function plainTranslationHtml(value) {
     const blocks=String(value||'').replace(/\r\n?/g,'\n').trim().split(/\n[ \t]*\n+/);
@@ -426,14 +466,31 @@
     const t=state.thread;if(!t)return blankReader();const m=currentMessage(),account=state.accounts.find(a=>a.id===t.accountId),incoming=[...t.messages].reverse().find(x=>address(x.email)!==address(account?.email))||m;
     const c=incoming.classification,unsub=incoming.unsubscribe,archived=!t.messages.some(x=>x.labels.includes('INBOX'));
     const focused=shell.classList.contains('is-reader-focused');
-    readerEl.innerHTML=`<div class="mailx-reader-toolbar"><button class="mailx-action mailx-reader-back" data-action="back" aria-label="Back to mail list">←</button><button class="mailx-action" data-action="archive">${archived?'Unarchive':'Archive'}</button><button class="mailx-action" data-action="mute">Mute</button><button class="mailx-action danger" data-action="block">Block</button>${unsub.web||unsub.mailto?'<button class="mailx-action good" data-action="unsubscribe">Unsubscribe</button>':''}<button class="mailx-action" data-action="unread">Unread</button><button class="mailx-action mailx-toolbar-reply" data-action="reply">Reply</button><button class="mailx-action mailx-toolbar-forward" data-action="forward">Forward</button>${isEmbedded()?'<button class="mailx-action" data-action="classify">Rule</button><button class="mailx-action" data-action="sender">Sender</button>':''}<span class="mailx-toolbar-spacer"></span><button class="mailx-action mailx-focus-action" data-action="focus" aria-pressed="${focused?'true':'false'}">${focused?'Exit focus':'Focus'}</button></div><div class="mailx-reader-scroll"><div class="mailx-reader-head"><div class="mailx-reader-title-row"><h2 class="mailx-reader-subject">${escapeHtml(m.subject)}</h2>${translationControls(t,m,t.messages.length-1)}${isEmbedded()?'':'<div class="mailx-reader-head-actions"><button class="mailx-action" data-action="classify">Rule</button><button class="mailx-action" data-action="sender">Sender</button></div>'}</div><div class="mailx-reader-tags"><span class="mailx-account">${escapeHtml(accountName(t.accountId))}</span><span class="mailx-chip">${escapeHtml(c.type)}</span><span class="mailx-chip">${escapeHtml(c.context||'No context')}</span>${chipsFor(incoming)}</div></div>${t.messages.map((msg,i)=>`<article class="mailx-thread-message${i===t.messages.length-1?' is-current':''}"><details class="mailx-thread-details${i===t.messages.length-1?' is-current':''}" ${i===t.messages.length-1?'open':''}><summary>${avatar(msg.sender)}<span class="mailx-thread-summary"><strong>${escapeHtml(msg.sender)}</strong><span>${escapeHtml(msg.snippet||msg.text?.slice(0,110))}</span></span><time>${escapeHtml(time(msg.timestamp))}</time></summary><details class="mailx-message-meta"><summary>Message details</summary><div class="mailx-sender-row"><div class="mailx-sender-details"><div class="mailx-sender-email">From: ${escapeHtml(msg.from)}</div><div class="mailx-recipient-line">To: ${escapeHtml(msg.to)}${msg.cc?' · Cc: '+escapeHtml(msg.cc):''}</div><div class="mailx-recipient-line">Date: ${escapeHtml(time(msg.timestamp))} · ${escapeHtml(accountName(t.accountId))}</div></div></div></details>${msg.classification.code?`<div class="mailx-login-card ${Date.now()-msg.timestamp>3600000?'is-old-code':''}"><div class="mailx-login-label">${Date.now()-msg.timestamp>3600000?'OLDER CODE · MAY HAVE EXPIRED':'VERIFICATION CODE'}</div><div class="mailx-login-code">${escapeHtml(msg.classification.code)}</div><button class="mailx-copy-code" data-copy="${i}">Copy code</button></div>`:''}${msg.html?`<iframe class="mailx-html-body" data-body="${i}" sandbox="allow-popups allow-popups-to-escape-sandbox" referrerpolicy="no-referrer" title="Email body from ${escapeHtml(msg.sender)}"></iframe><details class="mailx-text-alternative"><summary>Plain text / accessible view</summary><div class="mailx-mail-body">${escapeHtml(msg.text)}</div></details>`:`<div class="mailx-mail-body">${escapeHtml(msg.text||'(No text body)')}</div>`}${translatedBlock(t,msg,i)}${msg.attachments.length?`<div class="mailx-attachments">${msg.attachments.map((a,j)=>`<button class="mailx-attachment-download" data-attachment="${i}:${j}" title="Download ${escapeHtml(a.filename)}"><span class="mailx-file-type">${escapeHtml(a.filename.split('.').pop().slice(0,5).toUpperCase())}</span><span><strong>${escapeHtml(a.filename)}</strong><small>${formatBytes(a.size)} · Download ↓</small></span></button>`).join('')}</div>`:''}</details></article>`).join('')}</div>`;
+    readerEl.innerHTML=`<div class="mailx-reader-toolbar"><button class="mailx-action mailx-reader-back" data-action="back" aria-label="Back to mail list">←</button><button class="mailx-action" data-action="archive">${archived?'Unarchive':'Archive'}</button><button class="mailx-action" data-action="mute">Mute</button><button class="mailx-action danger" data-action="block">Block</button>${unsub.web||unsub.mailto?'<button class="mailx-action good" data-action="unsubscribe">Unsubscribe</button>':''}<button class="mailx-action" data-action="unread">Unread</button><button class="mailx-action mailx-toolbar-reply" data-action="reply">Reply</button><button class="mailx-action mailx-toolbar-forward" data-action="forward">Forward</button>${isEmbedded()?'<button class="mailx-action" data-action="classify">Rule</button><button class="mailx-action" data-action="sender">Sender</button>':''}<span class="mailx-toolbar-spacer"></span><button class="mailx-action mailx-focus-action" data-action="focus" aria-pressed="${focused?'true':'false'}">${focused?'Exit focus':'Focus'}</button></div><div class="mailx-reader-scroll"><div class="mailx-reader-head"><div class="mailx-reader-title-row"><h2 class="mailx-reader-subject">${escapeHtml(m.subject)}</h2>${translationControls(t,m,t.messages.length-1)}${isEmbedded()?'':'<div class="mailx-reader-head-actions"><button class="mailx-action" data-action="classify">Rule</button><button class="mailx-action" data-action="sender">Sender</button></div>'}</div><div class="mailx-reader-tags"><span class="mailx-account">${escapeHtml(accountName(t.accountId))}</span><span class="mailx-chip">${escapeHtml(c.type)}</span><span class="mailx-chip">${escapeHtml(c.context||'No context')}</span>${chipsFor(incoming)}</div></div>${t.messages.map((msg,i)=>`<article class="mailx-thread-message${i===t.messages.length-1?' is-current':''}"><details class="mailx-thread-details${i===t.messages.length-1?' is-current':''}" ${i===t.messages.length-1?'open':''}><summary>${avatar(msg.sender)}<span class="mailx-thread-summary"><strong>${escapeHtml(msg.sender)}</strong><span>${escapeHtml(msg.snippet||msg.text?.slice(0,110))}</span></span><time>${escapeHtml(time(msg.timestamp))}</time></summary><details class="mailx-message-meta"><summary>Message details</summary><div class="mailx-sender-row"><div class="mailx-sender-details"><div class="mailx-sender-email">From: ${escapeHtml(msg.from)}</div><div class="mailx-recipient-line">To: ${escapeHtml(msg.to)}${msg.cc?' · Cc: '+escapeHtml(msg.cc):''}</div><div class="mailx-recipient-line">Date: ${escapeHtml(time(msg.timestamp))} · ${escapeHtml(accountName(t.accountId))}</div></div></div></details>${msg.classification.code?`<div class="mailx-login-card ${Date.now()-msg.timestamp>3600000?'is-old-code':''}"><div class="mailx-login-label">${Date.now()-msg.timestamp>3600000?'OLDER CODE · MAY HAVE EXPIRED':'VERIFICATION CODE'}</div><div class="mailx-login-code">${escapeHtml(msg.classification.code)}</div><button class="mailx-copy-code" data-copy="${i}">Copy code</button></div>`:''}${originalMessageMarkup(msg,i)}${translatedBlock(t,msg,i)}${msg.attachments.length?`<div class="mailx-attachments">${msg.attachments.map((a,j)=>`<button class="mailx-attachment-download" data-attachment="${i}:${j}" title="Download ${escapeHtml(a.filename)}"><span class="mailx-file-type">${escapeHtml(a.filename.split('.').pop().slice(0,5).toUpperCase())}</span><span><strong>${escapeHtml(a.filename)}</strong><small>${formatBytes(a.size)} · Download ↓</small></span></button>`).join('')}</div>`:''}</details></article>`).join('')}</div>`;
     // Keep the original mail body as a direct child; hide it only while viewing the English translation.
     if(isSkeuoDemo())$$('.mailx-thread-details').forEach((details,i)=>{
-      if(wantsEnglish(t,t.messages[i]))details.querySelectorAll('.mailx-html-body,.mailx-text-alternative,.mailx-mail-body').forEach(el=>{el.hidden=true;});
+      if(wantsEnglish(t,t.messages[i]))details.querySelectorAll('.mailx-html-body,.mailx-text-alternative,.mailx-mail-body,.mailx-original-body,.mailx-original-layout').forEach(el=>{el.hidden=true;});
     });
     const toolbar=$('.mailx-reader-toolbar'),more=document.createElement('details');more.className='mailx-reader-more';more.innerHTML='<summary aria-label="More message actions" title="More message actions">'+icon('more')+'</summary><div></div>';toolbar.insertBefore(more,$('.mailx-toolbar-spacer'));for(const action of (isEmbedded()?['mute','block','unsubscribe']:['mute','block','unsubscribe','classify','sender'])){const button=$('[data-action="'+action+'"]');if(button)more.querySelector('div').appendChild(button);}
-    const loadBody=details=>details.querySelectorAll('[data-body]').forEach(frame=>{if(!frame.dataset.loaded){frame.srcdoc=t.messages[Number(frame.dataset.body)].html;frame.dataset.loaded='1';}});
-    $$('.mailx-thread-details').forEach(details=>{if(details.open)loadBody(details);details.addEventListener('toggle',()=>{if(details.open)loadBody(details);});});
+    const loadBody=details=>details.querySelectorAll('[data-body]').forEach(frame=>{
+      const original=frame.closest('.mailx-original-layout');
+      if(original&&!original.open)return; // Don't load external images until original layout is requested.
+      if(!frame.dataset.loaded){frame.srcdoc=t.messages[Number(frame.dataset.body)].html;frame.dataset.loaded='1';}
+    });
+    const loadTerminalBody=details=>{
+      if(!isSkeuoDemo())return;
+      details.querySelectorAll('[data-mailx-original]').forEach(el=>{
+        if(el.dataset.loaded==='1'||el.hidden)return;
+        const msg=t.messages[Number(el.dataset.mailxOriginal)];
+        if(msg?.html){el.innerHTML=terminalOriginalHtml(msg);el.dataset.loaded='1';}
+      });
+    };
+    $$('.mailx-thread-details').forEach(details=>{
+      const onOpen=()=>{if(details.open){loadTerminalBody(details);loadBody(details);}};
+      onOpen();
+      details.addEventListener('toggle',onOpen);
+    });
+    $$('.mailx-original-layout').forEach(original=>original.addEventListener('toggle',()=>{if(original.open)loadBody(original);}));
     $$('[data-mailx-translate]').forEach(b=>b.onclick=guarded(async()=>{
       const msg=t.messages[Number(b.dataset.mailxTranslate)],key=translationKey(t,msg);
       if(translationCache.has(key)) {
