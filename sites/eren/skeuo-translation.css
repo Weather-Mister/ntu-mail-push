@@ -1,0 +1,45 @@
+/* Gemini translation is deliberately confined to the skeuomorphic mail reader. */
+.machine.mail-mode .mailx-translate-controls {
+  display:flex;align-items:center;gap:11px;flex-wrap:wrap;
+  margin:9px 0 13px;color:#aeb5a4;font:700 9px/1.4 "Courier New",monospace;
+}
+.machine.mail-mode .mailx-translate-button {
+  min-height:31px;padding:0 12px;border:1px solid #716653;border-radius:5px;
+  color:#2e302b;background:linear-gradient(#ebe4d2,#c1b59c);
+  box-shadow:inset 0 1px 0 #f7f0e0,0 3px 0 #6a6152,0 4px 7px #080b0780;
+  font:800 10px/1 Arial,sans-serif;letter-spacing:.015em;
+  cursor:pointer;transition:transform .08s ease,box-shadow .08s ease;
+}
+.machine.mail-mode .mailx-translate-button:hover {
+  background:linear-gradient(#faf0d9,#d3c4a7);
+}
+.machine.mail-mode .mailx-translate-button:active,
+.machine.mail-mode .mailx-translate-button[aria-pressed="true"] {
+  transform:translateY(2px);
+  box-shadow:inset 0 2px 3px #63594a55,0 1px 0 #6a6152;
+}
+.machine.mail-mode .mailx-translate-button:disabled {
+  opacity:.7;cursor:progress;
+}
+.machine.mail-mode .mailx-translation {
+  padding:14px 16px;margin:0 0 13px;
+  border:1px solid #88826e;border-radius:5px;
+  background:linear-gradient(145deg,#eeeadc,#d6d0ba);
+  color:#262b26;box-shadow:inset 0 1px 0 #ffffff92,0 5px 9px #080b0760;
+}
+.machine.mail-mode .mailx-translation-label {
+  font:800 9px/1.35 "Courier New",monospace;letter-spacing:.09em;
+  color:#61715b;margin-bottom:9px;
+}
+.machine.mail-mode .mailx-translation-subject {
+  font:800 15px/1.3 Arial,sans-serif;margin:0 0 12px;
+}
+.machine.mail-mode .mailx-translation-body {
+  white-space:pre-wrap;overflow-wrap:anywhere;
+  font:13px/1.72 Arial,sans-serif;
+}
+.machine.mail-mode .mailx-original-content[hidden] { display:none!important; }
+@media(max-width:640px){
+  .machine.mail-mode .mailx-translate-controls{gap:6px}
+  .machine.mail-mode .mailx-translate-controls>span{font-size:8px}
+}
