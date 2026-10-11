@@ -5208,6 +5208,105 @@ h1{
 </style>
 <link rel="stylesheet" href="./slider-knob.css?v=4">\n<link rel="stylesheet" href="./skeuo-scrollbars.css?v=16">
 <link rel="stylesheet" href="./skeuo-compose-fix.css?v=1">
+<style id="skeuo-digital-clock-pass">
+/* A bare phosphor readout between the class status and scope; no extra widget, bezel or glitch. */
+@media (min-width:860px) {
+  .display{
+    grid-template-columns:minmax(0,1fr) clamp(132px,13vw,156px) clamp(128px,13vw,172px) auto!important;
+    align-items:center!important;
+    gap:8px!important;
+  }
+}
+.skeuo-time{
+  position:relative;
+  box-sizing:border-box;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  justify-content:center;
+  min-width:0;
+  height:60px;
+  padding:3px 0 2px 11px;
+  border-left:1px solid rgba(124,145,123,.30);
+  color:#bfdcb3;
+}
+.skeuo-time-label{
+  display:block;
+  margin-bottom:9px;
+  color:#779575;
+  font:700 5.5px/1 "Courier New",monospace;
+  letter-spacing:.1em;
+  white-space:nowrap;
+}
+.skeuo-time time{
+  display:flex;
+  align-items:baseline;
+  justify-content:flex-start;
+  gap:0;
+  min-width:0;
+  white-space:nowrap;
+  color:#bee0b9;
+  font-family:"Courier New",monospace;
+  font-variant-numeric:tabular-nums;
+  font-feature-settings:"tnum";
+  text-shadow:0 0 3px rgba(159,218,143,.38),0 0 9px rgba(129,201,117,.13);
+}
+#skeuoTimeMain{
+  font:700 23px/1 "Courier New",monospace;
+  letter-spacing:-.075em;
+}
+#skeuoTimeTail{
+  margin-left:2px;
+  font:700 10.5px/1 "Courier New",monospace;
+  color:#a4c7a1;
+  letter-spacing:-.06em;
+}
+@media(min-width:860px) and (max-width:1120px){
+  .display{
+    grid-template-columns:minmax(0,1fr) 124px 118px auto!important;
+    gap:6px!important;
+  }
+  .display > .schedule-scope{display:block!important}
+  .skeuo-time{padding-left:8px}
+  #skeuoTimeMain{font-size:20px}
+  #skeuoTimeTail{font-size:9px}
+}
+@media(max-width:859px){
+  .display{
+    grid-template-columns:minmax(0,1fr) 110px 31px!important;
+    gap:6px!important;
+    padding-left:11px!important;
+    padding-right:11px!important;
+  }
+  .display > #nextClass{max-width:100%!important}
+  .skeuo-time{
+    height:58px;
+    padding-left:5px;
+  }
+  .skeuo-time-label{font-size:5px;margin-bottom:8px}
+  #skeuoTimeMain{font-size:18px}
+  #skeuoTimeTail{font-size:8.5px;margin-left:1px}
+  .display > .display-right{
+    margin-left:0!important;
+    padding-left:5px!important;
+    gap:6px!important;
+    min-width:0;
+  }
+  .display > .display-right .indicator{font-size:4.7px}
+  .display > .display-right .led{width:6px;height:6px}
+}
+@media(max-width:380px){
+  .display{
+    grid-template-columns:minmax(0,1fr) 98px 27px!important;
+    gap:4px!important;
+  }
+  .skeuo-time{padding-left:4px}
+  #skeuoTimeMain{font-size:16px}
+  #skeuoTimeTail{font-size:8px}
+  .display > .display-right{padding-left:3px!important;gap:3px!important}
+  .display > .display-right .indicator{font-size:4px}
+}
+</style>
 </head>
 <body>
 <div class="desk-stage">
@@ -5274,6 +5373,12 @@ h1{
     <section class="statusrow">
       <div class="panel display">
         <div id="nextClass"><span class="eyebrow">HAPPENING NOW / CHANNEL 01</span><strong>Engineering Mathematics</strong><p>ROOM 114 · END 16:10 · 42 MIN REMAINING</p></div>
+        <div class="skeuo-time" role="group" aria-label="Live Taipei local time">
+          <span class="skeuo-time-label">LOCAL / TPE</span>
+          <time id="skeuoTimeReadout" datetime="">
+            <span id="skeuoTimeMain">--:--</span><span id="skeuoTimeTail">:--.---</span>
+          </time>
+        </div>
         <div class="schedule-scope" id="scheduleScope" role="group" aria-label="Schedule interval monitor with optional PC audio">
           <div class="scope-head"><span id="scheduleScopeLabel">ΔT / SCHED</span><button class="scope-source-toggle" id="scopeAudioToggle" type="button" aria-label="Connect Windows PC audio" aria-pressed="false" title="Connect Windows PC audio">AUX</button><b id="scheduleScopeValue">--</b></div>
           <svg class="scope-wave" viewBox="0 0 200 42" preserveAspectRatio="none" aria-hidden="true">
@@ -5612,5 +5717,48 @@ h1{
 <script src="./mail-demo.js?v=27"></script>
 <script src="./skeuo-scrollbars.js?v=14"></script>
 
+<script id="skeuo-digital-clock-runtime">
+(() => {
+  const readout = document.getElementById('skeuoTimeReadout');
+  const main = document.getElementById('skeuoTimeMain');
+  const tail = document.getElementById('skeuoTimeTail');
+  if (!readout || !main || !tail) return;
+
+  const format = new Intl.DateTimeFormat('en-GB', {
+    timeZone:'Asia/Taipei',
+    hour:'2-digit',
+    minute:'2-digit',
+    second:'2-digit',
+    hourCycle:'h23'
+  });
+
+  // Date milliseconds are the absolute instant's fractional second,
+  // and therefore identical in every timezone. Only HH:MM:SS needs TZ conversion.
+  let lastSecond = -1;
+  let timeHead = '--:--';
+  let timeSecond = '--';
+  let lastDraw = -Infinity;
+  function render(timestamp) {
+    if (!document.hidden && timestamp - lastDraw >= 16) {
+      lastDraw = timestamp;
+      const now = new Date();
+      const unixSecond = Math.floor(now.getTime() / 1000);
+      if (unixSecond !== lastSecond) {
+        lastSecond = unixSecond;
+        const parts = format.formatToParts(now);
+        const get = type => parts.find(part => part.type === type)?.value ?? '00';
+        timeHead = get('hour') + ':' + get('minute');
+        timeSecond = get('second');
+        if (main.textContent !== timeHead) main.textContent = timeHead;
+      }
+      const trail = ':' + timeSecond + '.' + String(now.getMilliseconds()).padStart(3, '0');
+      if (tail.textContent !== trail) tail.textContent = trail;
+      readout.dateTime = timeHead + trail;
+    }
+    requestAnimationFrame(render);
+  }
+  requestAnimationFrame(render);
+})();
+</script>
 </body>
 </html>
