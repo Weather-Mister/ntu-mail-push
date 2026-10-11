@@ -35,8 +35,8 @@
       if(t.messages.reduce((n,msg)=>n+(msg.html?.length||0)+(msg.text?.length||0),0)<2000000)putCache(threadCache,key,t,8);
       if(version===state.readVersion&&state.selected===key&&state.thread){
         state.thread=t;
-        $('[data-body]').forEach(frame=>{const i=Number(frame.dataset.body);if(frame.dataset.loaded==='1'&&t.messages[i]?.html)frame.srcdoc=t.messages[i].html;});
-        if(isSkeuoDemo())$('[data-mailx-original]').forEach(el=>{
+        $$('[data-body]').forEach(frame=>{const i=Number(frame.dataset.body);if(frame.dataset.loaded==='1'&&t.messages[i]?.html)frame.srcdoc=t.messages[i].html;});
+        if(isSkeuoDemo())$$('[data-mailx-original]').forEach(el=>{
           const msg=t.messages[Number(el.dataset.mailxOriginal)];
           if(el.dataset.loaded==='1'&&msg?.html)el.innerHTML=terminalOriginalHtml(msg);
         });
@@ -485,12 +485,12 @@
         if(msg?.html){el.innerHTML=terminalOriginalHtml(msg);el.dataset.loaded='1';}
       });
     };
-    $('.mailx-thread-details').forEach(details=>{
+    $$('.mailx-thread-details').forEach(details=>{
       const onOpen=()=>{if(details.open){loadTerminalBody(details);loadBody(details);}};
       onOpen();
       details.addEventListener('toggle',onOpen);
     });
-    $('.mailx-original-layout').forEach(original=>original.addEventListener('toggle',()=>{if(original.open)loadBody(original);}));
+    $$('.mailx-original-layout').forEach(original=>original.addEventListener('toggle',()=>{if(original.open)loadBody(original);}));
     $$('[data-mailx-translate]').forEach(b=>b.onclick=guarded(async()=>{
       const msg=t.messages[Number(b.dataset.mailxTranslate)],key=translationKey(t,msg);
       if(translationCache.has(key)) {
