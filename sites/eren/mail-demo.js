@@ -430,7 +430,7 @@
   }
   function originalMessageMarkup(msg,i) {
     if(!msg.html)return '<div class="mailx-mail-body">'+escapeHtml(msg.text||'(No text body)')+'</div>';
-    const originalFrame='<iframe class="mailx-html-body" data-body="'+i+'" sandbox="allow-popups allow-popups-to-escape-sandbox" referrerpolicy="no-referrer" title="Original email layout from '+escapeHtml(msg.sender)+'"></iframe>';
+    const originalFrame='<iframe class="mailx-html-body" data-body="'+i+'" sandbox="allow-popups allow-popups-to-escape-sandbox" referrerpolicy="no-referrer" title="Email body from '+escapeHtml(msg.sender)+'"></iframe>';
     const alternative='<details class="mailx-text-alternative"><summary>Plain text / accessible view</summary><div class="mailx-mail-body">'+escapeHtml(msg.text)+'</div></details>';
     if(!isSkeuoDemo())return originalFrame+alternative;
     // A consistent terminal-first reading surface; retain the untouched sender
