@@ -47,23 +47,55 @@
 .machine.mail-mode .mailx-reader-title-row>.mailx-translate-button:focus-visible{
   outline:2px solid #b8ffc1!important;outline-offset:3px!important;
 }
-.machine.mail-mode .mailx-translation {
-  padding:14px 16px;margin:0 0 13px;
-  border:1px solid #88826e;border-radius:5px;
-  background:linear-gradient(145deg,#eeeadc,#d6d0ba);
-  color:#262b26;box-shadow:inset 0 1px 0 #ffffff92,0 5px 9px #080b0760;
+/* English text belongs directly in the same dark, inset CRT reader as the original mail. */
+.machine.mail-mode .mailx-translation{
+  margin:0 0 14px!important;padding:13px 0 17px!important;
+  border:0!important;border-radius:0!important;
+  background:transparent!important;color:#cfd2c4!important;
+  box-shadow:none!important;
 }
-.machine.mail-mode .mailx-translation-label {
-  font:800 9px/1.35 "Courier New",monospace;letter-spacing:.09em;
-  color:#61715b;margin-bottom:9px;
+.machine.mail-mode .mailx-translation-label{
+  margin:0 0 12px!important;padding:0 0 7px!important;
+  border-bottom:1px solid #464d41!important;
+  color:#95bd8e!important;
+  font:800 9px/1.4 "Courier New",monospace!important;
+  letter-spacing:.1em!important;
 }
-.machine.mail-mode .mailx-translation-subject {
-  font:800 15px/1.3 Arial,sans-serif;margin:0 0 12px;
+.machine.mail-mode .mailx-translation-subject{
+  color:#e1dfd1!important;font:700 15px/1.45 Arial,sans-serif!important;
+  overflow-wrap:anywhere;margin:0 0 12px!important;
 }
-.machine.mail-mode .mailx-translation-body {
-  white-space:pre-wrap;overflow-wrap:anywhere;
-  font:13px/1.72 Arial,sans-serif;
+.machine.mail-mode .mailx-translation-body{
+  padding:0!important;margin:0!important;
+  color:#cfd2c4!important;background:transparent!important;
+  font:12px/1.78 Arial,sans-serif!important;
+  overflow-wrap:anywhere;overflow-x:auto;white-space:normal!important;
 }
+.machine.mail-mode .mailx-translation-body p{margin:0 0 12px}
+.machine.mail-mode .mailx-translation-body p:last-child{margin-bottom:0}
+.machine.mail-mode .mailx-translation-body :is(h1,h2,h3,h4){
+  color:#e1dfd1;font-weight:700;line-height:1.4;margin:12px 0 7px;
+}
+.machine.mail-mode .mailx-translation-body :is(h1,h2){font-size:15px}
+.machine.mail-mode .mailx-translation-body :is(h3,h4){font-size:13px}
+.machine.mail-mode .mailx-translation-body :is(ul,ol){padding-left:20px;margin:4px 0 13px}
+.machine.mail-mode .mailx-translation-body li{margin:0 0 6px}
+.machine.mail-mode .mailx-translation-body blockquote{
+  margin:10px 0;padding:4px 0 4px 12px;border-left:2px solid #667560;
+}
+.machine.mail-mode .mailx-translation-body table{
+  width:100%;max-width:100%;border-collapse:collapse;
+  margin:7px 0 14px;font:inherit;color:inherit;
+}
+.machine.mail-mode .mailx-translation-body :is(td,th){
+  padding:7px 10px 7px 0;border-bottom:1px solid #43493f;
+  text-align:left;vertical-align:top;overflow-wrap:anywhere;
+}
+.machine.mail-mode .mailx-translation-body th{
+  font-weight:750;color:#a8bea0;
+}
+.machine.mail-mode .mailx-translation-body a{color:#a9d6a5;text-decoration:underline;text-underline-offset:2px}
+.machine.mail-mode .mailx-translation-body strong{color:#e0e0d3}
 .machine.mail-mode .mailx-html-body[hidden],
 .machine.mail-mode .mailx-text-alternative[hidden],
 .machine.mail-mode .mailx-mail-body[hidden] { display:none!important; }

@@ -190,6 +190,46 @@ Deno.test('Chinese email translation fetches only an owned Gmail message and ret
  clearMailMemory();
 });
 
+Deno.test('formatted bank translation retains source tables, sanitizes Gemini HTML, and preserves amounts',async()=>{
+ const {db,a}=setup();
+ db.secrets['eren-mail:workspace:config:GEMINI_API_KEY']='gemini-test';
+ db.secrets['eren-mail:workspace:config:GEMINI_MODEL']='configurable-model';
+ let geminiRequest:any;
+ await fetching(async(url:any,init:any)=>{
+  const path=String(url);
+  if(path.includes('oauth2'))return Response.json({access_token:'access-test',expires_in:3600});
+  if(path.includes('/messages/bank-1?format=full'))return Response.json({
+   id:'bank-1',payload:{mimeType:'multipart/alternative',headers:[{name:'Subject',value:'華南銀行交易通知'}],parts:[
+    {mimeType:'text/plain',body:{data:b64url('交易金額：NT$96\n卡號：****29')}},
+    {mimeType:'text/html',body:{data:b64url('<div><table><tr><th>交易金額</th><td>NT$96</td></tr><tr><th>卡號</th><td>****29</td></tr></table><img src="https://tracker.invalid/a"><script>evil()</script></div>')}}
+   ]}
+  });
+  if(path.includes('generativelanguage.googleapis.com')){
+   geminiRequest=JSON.parse(init.body);
+   return Response.json({candidates:[{finishReason:'STOP',content:{parts:[{text:JSON.stringify({
+    subject:'Hua Nan Bank Transaction Notification',
+    body:'Transaction amount: NT$96\nCard: ****29',
+    bodyHtml:'<table class="x" onclick="alert(1)"><tr><th>Transaction amount</th><td>NT$96</td></tr><tr><th>Card</th><td>****29</td></tr></table><script>alert(1)</script><img src="https://tracking.invalid/x"><a href="javascript:alert(1)">Bad link</a>'
+   })}]}}]});
+  }
+  throw new Error('Unexpected request: '+path);
+ },async()=>{
+  const result=await translateMessage(db,a,{messageId:'bank-1'});
+  assert.equal(result.body,'Transaction amount: NT$96\nCard: ****29');
+  assert.match(result.bodyHtml,/<table>/);
+  assert.match(result.bodyHtml,/<th>Transaction amount<\/th>/);
+  assert.match(result.bodyHtml,/NT\$96/);
+  assert.match(result.bodyHtml,/\*\*\*\*29/);
+  assert(!/script|onclick|<img|javascript:|tracker/i.test(result.bodyHtml));
+  const source=JSON.parse(geminiRequest.contents[0].parts[0].text);
+  assert.match(source.sourceHtml,/<table>/);
+  assert(!/script|<img|tracker/i.test(source.sourceHtml));
+  assert.match(geminiRequest.systemInstruction.parts[0].text,/table row/i);
+  assert.equal(geminiRequest.generationConfig.responseMimeType,'application/json');
+ });
+ clearMailMemory();
+});
+
 Deno.test('Gemini repairs HTML returned in the plain body field and keeps paragraph breaks',async()=>{
  const {db,a}=setup();db.secrets['eren-mail:workspace:config:GEMINI_API_KEY']='gemini-test';db.secrets['eren-mail:workspace:config:GEMINI_MODEL']='configurable-model';
  const input={body:'Original draft',bodyHtml:'',to:'friend@example.org',subject:'Update',instruction:'Format this clearly'};

@@ -365,10 +365,57 @@
     const description=stored?(active?'Show original Chinese email':'Show English translation'):'Translate Chinese email to English';
     return `<button class="mailx-translate-button" type="button" data-mailx-translate="${i}" aria-label="${description}" aria-pressed="${active}" title="${description}"><span class="mailx-translate-symbol" aria-hidden="true">⇄</span>${label}</button>`;
   }
+  /* Rebuild only harmless semantic elements. Never inject Gemini HTML directly into the reader. */
+  function safeTranslationHtml(value) {
+    const template=document.createElement('template');
+    template.innerHTML=String(value||'').slice(0,60000);
+    const allowed=new Set(['p','div','br','strong','b','em','i','u','ul','ol','li','blockquote','h1','h2','h3','h4','table','thead','tbody','tfoot','tr','td','th','hr','a']);
+    const discard=new Set(['script','style','iframe','object','svg','math','form','template','noscript']);
+    const render=node=>{
+      if(node.nodeType===Node.TEXT_NODE)return escapeHtml(node.textContent||'');
+      if(node.nodeType!==Node.ELEMENT_NODE)return '';
+      const tag=node.localName.toLowerCase();
+      if(discard.has(tag))return '';
+      const content=Array.from(node.childNodes,render).join('');
+      if(!allowed.has(tag))return content;
+      if(tag==='br'||tag==='hr')return '<'+tag+'>';
+      let attrs='';
+      if(tag==='a'){
+        const raw=node.getAttribute('href')||'';
+        try{
+          const url=new URL(raw);
+          if(['https:','http:','mailto:'].includes(url.protocol))
+            attrs=' href="'+escapeHtml(url.href)+'" target="_blank" rel="noopener noreferrer"';
+        }catch{}
+      }
+      if(tag==='td'||tag==='th'){
+        for(const name of ['colspan','rowspan']){
+          const num=Number(node.getAttribute(name));
+          if(Number.isInteger(num)&&num>=2&&num<=12)attrs+=' '+name+'="'+num+'"';
+        }
+      }
+      return '<'+tag+attrs+'>'+content+'</'+tag+'>';
+    };
+    return Array.from(template.content.childNodes,render).join('');
+  }
+  function plainTranslationHtml(value) {
+    const blocks=String(value||'').replace(/\r\n?/g,'\n').trim().split(/\n[ \t]*\n+/);
+    return blocks.map(block=>{
+      const lines=block.split('\n').map(l=>l.trim()).filter(Boolean);
+      if(!lines.length)return '';
+      if(lines.every(l=>/^[-*•]\s+/.test(l)))
+        return '<ul>'+lines.map(l=>'<li>'+escapeHtml(l.replace(/^[-*•]\s+/,''))+'</li>').join('')+'</ul>';
+      if(lines.every(l=>/^\d+[.)]\s+/.test(l)))
+        return '<ol>'+lines.map(l=>'<li>'+escapeHtml(l.replace(/^\d+[.)]\s+/,''))+'</li>').join('')+'</ol>';
+      return '<p>'+lines.map(escapeHtml).join('<br>')+'</p>';
+    }).join('');
+  }
   function translatedBlock(t,msg,i) {
     if(!wantsEnglish(t,msg))return '';
     const translation=translationCache.get(translationKey(t,msg));
-    return `<div class="mailx-translation" data-mailx-translation="${i}"><div class="mailx-translation-label">ENGLISH TRANSLATION</div>${hasChinese(msg.subject)?`<div class="mailx-translation-subject">${escapeHtml(translation.subject)}</div>`:''}<div class="mailx-translation-body">${escapeHtml(translation.body)}</div></div>`;
+    const html=translation.bodyHtml?safeTranslationHtml(translation.bodyHtml):'';
+    const content=html.trim()?html:plainTranslationHtml(translation.body);
+    return `<div class="mailx-translation" data-mailx-translation="${i}"><div class="mailx-translation-label">ENGLISH TRANSLATION</div>${hasChinese(msg.subject)?`<div class="mailx-translation-subject">${escapeHtml(translation.subject)}</div>`:''}<div class="mailx-translation-body">${content}</div></div>`;
   }
   function rerenderReaderPreservingPosition() {
     const previous=readerEl.querySelector('.mailx-reader-scroll'),position=previous?.scrollTop||0;
@@ -398,7 +445,7 @@
         const result=await api('translate',{accountId:t.accountId,messageId:msg.id});
         if(typeof result.body!=='string'||!result.body.trim())throw new Error('Gemini returned no readable text.');
         if(translationCache.size>=30)translationCache.delete(translationCache.keys().next().value);
-        translationCache.set(key,{subject:result.subject||msg.subject,body:result.body});
+        translationCache.set(key,{subject:result.subject||msg.subject,body:result.body,bodyHtml:typeof result.bodyHtml==='string'?result.bodyHtml:''});
         translatedOpen.add(key);
         if(state.thread===t)rerenderReaderPreservingPosition();
       }catch(e){
