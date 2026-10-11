@@ -24,7 +24,7 @@ function mockMessage({htmlBody=html,subject='華南銀行通知',text='交易金
 async function setup(page,message) {
   const errors=[],actions=[];
   page.on('pageerror',error=>errors.push(error.message));
-  await page.addInitScript(()=>localStorage.setItem('ntu-schedule-pairing-key-v1','test-key-'.repeat(6)));
+  await page.addInitScript(()=>{if(window.top===window.self)localStorage.setItem('ntu-schedule-pairing-key-v1','test-key-'.repeat(6));});
   await page.route('https://**/*',async route=>{
     const req=route.request(),url=new URL(req.url()),action=url.searchParams.get('route');
     actions.push(action);
