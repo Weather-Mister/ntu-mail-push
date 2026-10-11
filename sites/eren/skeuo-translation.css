@@ -38,7 +38,9 @@
   white-space:pre-wrap;overflow-wrap:anywhere;
   font:13px/1.72 Arial,sans-serif;
 }
-.machine.mail-mode .mailx-original-content[hidden] { display:none!important; }
+.machine.mail-mode .mailx-html-body[hidden],
+.machine.mail-mode .mailx-text-alternative[hidden],
+.machine.mail-mode .mailx-mail-body[hidden] { display:none!important; }
 @media(max-width:640px){
   .machine.mail-mode .mailx-translate-controls{gap:6px}
   .machine.mail-mode .mailx-translate-controls>span{font-size:8px}
