@@ -135,7 +135,21 @@
   }
 }
 @media(max-width:860px){
+  /* On phones the hardware scene is taller than the visual viewport.
+     Compose above the scene, so scrolling cannot move the Send button
+     beneath the editor or redirect touches to a different row. */
   .machine.mail-mode > .mail-console-view > #mailxCompose.is-open{
+    position:fixed!important;
+    top:0!important;
+    right:0!important;
+    bottom:0!important;
+    left:0!important;
+    width:100vw!important;
+    height:100dvh!important;
+    max-height:100dvh!important;
+    margin:0!important;
+    transform:none!important;
+    z-index:2000!important;
     grid-template-rows:
       36px
       auto
