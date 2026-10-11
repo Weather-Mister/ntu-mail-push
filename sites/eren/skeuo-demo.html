@@ -5220,38 +5220,36 @@ h1{
 .skeuo-time{
   position:relative;
   box-sizing:border-box;
-  display:grid;
-  grid-template-rows:8px 43px 1fr;
-  align-items:start;
-  justify-items:start;
-  align-content:start;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  justify-content:center;
   min-width:0;
   height:60px;
-  padding:3px 2px 2px 7px;
-  border-left:0;
+  padding:3px 0 2px 11px;
+  border-left:1px solid rgba(124,145,123,.30);
   color:#94ad90;
 }
 .skeuo-time-label{
   display:block;
-  margin-bottom:0;
-  color:#678267;
+  margin-bottom:9px;
+  color:#708a70;
   font:700 5.5px/1 "Courier New",monospace;
   letter-spacing:.1em;
   white-space:nowrap;
 }
 .skeuo-time time{
-  align-self:center;
   display:flex;
   align-items:baseline;
   justify-content:flex-start;
   gap:0;
   min-width:0;
   white-space:nowrap;
-  color:#91ad91;
+  color:#9fba9e;
   font-family:"Courier New",monospace;
   font-variant-numeric:tabular-nums;
   font-feature-settings:"tnum";
-  text-shadow:0 0 2px rgba(137,187,132,.13);
+  text-shadow:0 0 2px rgba(137,187,132,.19);
 }
 #skeuoTimeMain{
   font:700 23px/1 "Courier New",monospace;
@@ -5260,7 +5258,7 @@ h1{
 #skeuoTimeTail{
   margin-left:2px;
   font:700 10.5px/1 "Courier New",monospace;
-  color:#789678;
+  color:#83a083;
   letter-spacing:-.06em;
 }
 @media(min-width:860px) and (max-width:1120px){
@@ -5269,7 +5267,7 @@ h1{
     gap:6px!important;
   }
   .display > .schedule-scope{display:block!important}
-  .skeuo-time{padding-left:7px}
+  .skeuo-time{padding-left:8px}
   #skeuoTimeMain{font-size:20px}
   #skeuoTimeTail{font-size:9px}
 }
@@ -5283,10 +5281,9 @@ h1{
   .display > #nextClass{max-width:100%!important}
   .skeuo-time{
     height:58px;
-    grid-template-rows:8px 41px 1fr;
     padding-left:5px;
   }
-  .skeuo-time-label{font-size:5px;margin-bottom:0}
+  .skeuo-time-label{font-size:5px;margin-bottom:8px}
   #skeuoTimeMain{font-size:18px}
   #skeuoTimeTail{font-size:8.5px;margin-left:1px}
   .display > .display-right{
