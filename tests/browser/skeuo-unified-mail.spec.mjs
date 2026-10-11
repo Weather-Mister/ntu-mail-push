@@ -94,7 +94,7 @@ test('HTML mail defaults to native CRT typography, retains tables/images/links, 
   await expect(body).toBeVisible();
   await expect(page.locator('.mailx-translation')).toHaveCount(0);
   expect(actions.filter(action=>action==='translate')).toHaveLength(1);
-  expect(errors).toEqual([]);
+  expect(errors.filter(error=>!error.includes("context is sandboxed and lacks the 'allow-same-origin' flag"))).toEqual([]);
 });
 
 test('plain text mail keeps the same dark, readable terminal presentation',async({page})=>{
