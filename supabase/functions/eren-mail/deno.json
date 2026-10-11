@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
-    "strict": false
+    "strict": false,
+    "types": ["npm:@types/node@24.10.1"]
   },
   "imports": {
     "@supabase/supabase-js": "npm:@supabase/supabase-js@2.117.2",
