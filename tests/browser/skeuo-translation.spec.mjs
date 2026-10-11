@@ -36,10 +36,10 @@ test('skeuo reader translates Chinese mail on demand and can restore the origina
   expect(calls.some(c=>c.action==='translate')).toBe(false);
   await page.locator('[data-mailx-translate]').click();
   await expect(page.locator('.mailx-translation-body')).toContainText('October 12');
-  await expect(page.locator('.mailx-original-content')).toBeHidden();
+  await expect(page.locator('.mailx-thread-details.is-current > .mailx-mail-body')).toBeHidden();
   expect(calls.filter(c=>c.action==='translate')).toEqual([{action:'translate',body:{accountId:'account-1',messageId:'chinese-id'}}]);
   await page.locator('[data-mailx-translate]').click();
-  await expect(page.locator('.mailx-original-content')).toContainText('請在10月12日前繳交作業');
+  await expect(page.locator('.mailx-thread-details.is-current > .mailx-mail-body')).toContainText('請在10月12日前繳交作業');
   await expect(page.locator('.mailx-translation')).toHaveCount(0);
   await page.locator('[data-mailx-translate]').click();
   await expect(page.locator('.mailx-translation-body')).toContainText('October 12');
