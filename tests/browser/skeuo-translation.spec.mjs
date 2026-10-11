@@ -46,7 +46,25 @@ test('skeuo reader translates Chinese mail on demand and can restore the origina
   expect(button.y).toBeGreaterThanOrEqual(heading.y-1);
   expect(button.y+button.height).toBeLessThanOrEqual(heading.y+heading.height+1);
   expect(heading.height).toBeLessThanOrEqual(34);
-  expect(await translate.evaluate(el=>getComputedStyle(el).color)).toBe('rgb(170, 255, 171)');
+  const appearance=await translate.evaluate(el=>{
+    const style=getComputedStyle(el);
+    return {
+      color:style.color,
+      background:style.backgroundColor,
+      radius:style.borderRadius,
+      height:el.getBoundingClientRect().height,
+      symbol:getComputedStyle(el.querySelector('.mailx-translate-symbol')).display,
+      overlay:getComputedStyle(el,'::after').display,
+      prompt:getComputedStyle(el,'::before').content,
+    };
+  });
+  expect(appearance.color).toBe('rgb(159, 199, 154)');
+  expect(appearance.background).toBe('rgb(38, 43, 37)');
+  expect(appearance.radius).toBe('2px');
+  expect(appearance.height).toBeLessThanOrEqual(24);
+  expect(appearance.symbol).toBe('none');
+  expect(appearance.overlay).toBe('none');
+  expect(appearance.prompt).toBe('">"');
   expect(calls.some(c=>c.action==='translate')).toBe(false);
   await page.locator('[data-mailx-translate]').click();
   await expect(page.locator('.mailx-translation-body')).toContainText('October 12');
