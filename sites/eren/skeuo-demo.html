@@ -5213,11 +5213,11 @@ h1{
 /* Clean phosphor analog gauge: continuous luminous bezel and three clearly distinct hands. */
 @media(min-width:860px){
   .display{
-    grid-template-columns:minmax(0,1fr) clamp(140px,14vw,184px) clamp(130px,14vw,165px)!important;
+    grid-template-columns:minmax(0,1fr) clamp(140px,14vw,184px) clamp(116px,11vw,140px)!important;
     align-items:center!important;
-    gap:10px!important;
-    padding-top:9px!important;
-    padding-bottom:9px!important;
+    gap:8px!important;
+    padding-top:6px!important;
+    padding-bottom:6px!important;
   }
   .display > #nextClass{max-width:100%!important}
 }
@@ -5230,13 +5230,13 @@ h1{
   height:100%!important;
   min-height:0;
   margin:0!important;
-  padding:0 0 0 7px!important;
+  padding:0 0 0 5px!important;
   align-self:stretch!important;
   border-left:1px solid rgba(124,145,123,.30);
   display:grid!important;
-  grid-template-columns:minmax(0,1fr) 28px;
+  grid-template-columns:minmax(0,1fr) 24px;
   align-items:center!important;
-  column-gap:4px!important;
+  column-gap:3px!important;
 }
 .skeuo-chrono{
   display:flex;
@@ -5254,7 +5254,7 @@ h1{
   width:auto;
   max-width:100%;
   height:100%;
-  max-height:76px;
+  max-height:84px;
   aspect-ratio:1;
   overflow:visible;
   flex:0 1 auto;
@@ -5343,32 +5343,57 @@ h1{
 }
 .skeuo-rtc-indicators .led{width:7px;height:7px;flex:none}
 @media(min-width:860px) and (max-width:1100px){
-  .display{grid-template-columns:minmax(0,1fr) clamp(130px,16vw,156px)!important}
+  .display{grid-template-columns:minmax(0,1fr) clamp(116px,13vw,136px)!important}
   .display > .schedule-scope{display:none!important}
 }
 @media(max-width:859px){
   .display{
-    grid-template-columns:minmax(0,1fr) 119px!important;
-    gap:7px!important;
+    grid-template-columns:minmax(0,1fr) 112px!important;
+    gap:6px!important;
     padding-left:11px!important;
     padding-right:11px!important;
   }
   .display > #nextClass{max-width:100%!important}
   .display > .display-right{
-    grid-template-columns:minmax(0,1fr) 25px;
+    grid-template-columns:minmax(0,1fr) 22px;
     column-gap:3px!important;
     padding-left:5px!important;
   }
-  .skeuo-chrono-face{max-height:64px}
+  .skeuo-chrono-face{max-height:70px}
   .skeuo-rtc-indicators{padding-left:3px}
   .skeuo-rtc-indicators .indicator{font-size:4.5px}
 }
 @media(max-width:380px){
-  .display{grid-template-columns:minmax(0,1fr) 105px!important;gap:5px!important}
-  .display > .display-right{grid-template-columns:minmax(0,1fr) 23px}
-  .skeuo-chrono-face{max-height:55px}
+  .display{grid-template-columns:minmax(0,1fr) 103px!important;gap:5px!important}
+  .display > .display-right{grid-template-columns:minmax(0,1fr) 21px}
+  .skeuo-chrono-face{max-height:60px}
 }
 @media(prefers-reduced-motion:reduce){
+  .skeuo-chrono.is-glitching .skeuo-dial-hand.afterglow path{opacity:.19}
+}
+
+/* Instrument-quality phosphor persistence and a brief double image, never gaps in the bezel. */
+.skeuo-chrono-face{
+  transition:transform 75ms steps(2,end),filter 75ms linear;
+  transform-origin:center center;
+}
+.skeuo-chrono.is-glitching .skeuo-chrono-face{
+  transform:translate(var(--glitch-x,1px),var(--glitch-y,-1px)) scaleX(1.012);
+  filter:drop-shadow(1.4px 0 rgba(137,224,148,.35)) drop-shadow(-1px 0 rgba(225,216,148,.16)) drop-shadow(0 0 4px rgba(130,193,119,.30));
+}
+.skeuo-chrono.is-glitching .skeuo-dial-outer-halo{
+  opacity:.53;
+  transform:translate(.65px,-.35px);
+}
+.skeuo-dial-hand.afterglow path{
+  stroke-width:4.6;
+  filter:blur(1.6px);
+}
+.skeuo-chrono.is-glitching .skeuo-dial-hand.afterglow path{opacity:.58}
+@media(prefers-reduced-motion:reduce){
+  .skeuo-chrono-face{transition:none!important}
+  .skeuo-chrono.is-glitching .skeuo-chrono-face{transform:none;filter:drop-shadow(0 0 2.5px rgba(130,193,119,.18))}
+  .skeuo-chrono.is-glitching .skeuo-dial-outer-halo{transform:none;opacity:.28}
   .skeuo-chrono.is-glitching .skeuo-dial-hand.afterglow path{opacity:.19}
 }
 </style>
@@ -5810,19 +5835,23 @@ h1{
   });
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   let glitchTimeout;
+  const randomOffset = (span) => ((Math.random() * 2 - 1) * span).toFixed(2) + 'px';
   const update = () => {
     const parts = formatter.formatToParts(new Date());
     const read = (type) => Number(parts.find((entry) => entry.type === type)?.value || 0);
     const hour = read('hour'), minute = read('minute'), second = read('second');
     hourHand.setAttribute('transform','rotate(' + (((hour%12)+minute/60+second/3600)*30) + ' 40 40)');
     minuteHand.setAttribute('transform','rotate(' + ((minute+second/60)*6) + ' 40 40)');
-    secondHand.setAttribute('transform','rotate(' + (second*6) + ' 40 40)');
-    ghost.setAttribute('transform','rotate(' + ((second-1)*6) + ' 40 40)');
+    const secondJitter = reducedMotion.matches ? 0 : (second % 2 ? 1.35 : -1.35);
+    secondHand.setAttribute('transform','rotate(' + (second*6+secondJitter) + ' 40 40)');
+    ghost.setAttribute('transform','rotate(' + (second*6-5.2-secondJitter*.55) + ' 40 40)');
     face.setAttribute('aria-label','Taipei analog clock, '+String(hour).padStart(2,'0')+':'+String(minute).padStart(2,'0')+':'+String(second).padStart(2,'0'));
-    if(!reducedMotion.matches && second%17===0){
+    if(!reducedMotion.matches && (Math.random()<.24 || second%13===0)){
+      face.style.setProperty('--glitch-x',randomOffset(1.65));
+      face.style.setProperty('--glitch-y',randomOffset(1.15));
       face.classList.add('is-glitching');
       clearTimeout(glitchTimeout);
-      glitchTimeout=setTimeout(()=>face.classList.remove('is-glitching'),130);
+      glitchTimeout=setTimeout(()=>face.classList.remove('is-glitching'),120+Math.round(Math.random()*70));
     }
   };
   update();
