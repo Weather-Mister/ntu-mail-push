@@ -5,7 +5,7 @@ const assert:any=Object.assign((ok:any,message='Assertion failed')=>{if(!ok)thro
  deepEqual:(a:any,b:any)=>{if(JSON.stringify(a)!==JSON.stringify(b))throw new Error('Not deeply equal');},
  rejects:async(fn:any)=>{let rejected=false;try{await fn();}catch{rejected=true;}if(!rejected)throw new Error('Expected rejection');}
 });
-import { safeHtml, workspaceFor, hash, revise, threadMessageViews, fullThread, gmailClient, clearMailMemory, cachedOverviews } from '../supabase/functions/eren-mail/services.ts';
+import { safeHtml, workspaceFor, hash, revise, translateMessage, threadMessageViews, fullThread, gmailClient, clearMailMemory, cachedOverviews } from '../supabase/functions/eren-mail/services.ts';
 import { inlineImages } from '../supabase/functions/eren-mail/render.ts';
 import { deliver, enqueue, reconcile, syncAccount } from '../supabase/functions/eren-mail/jobs.ts';
 import { oauthStart, oauthFinish } from '../supabase/functions/eren-mail/oauth.ts';
@@ -161,6 +161,33 @@ Deno.test('Gemini receives latest rich draft, preserves formatting contract and 
  await fetching(async(url:any,init:any)=>{assert(String(url).includes('/configurable-model:'));got=JSON.parse(init.body);return Response.json({candidates:[{finishReason:'STOP',content:{parts:[{text:JSON.stringify({body:'Warm revision',bodyHtml:'<p><strong>Warm</strong> revision<script>x()</script></p>'})}]}}]});},async()=>{const r=await revise(db,a,input);assert.equal(r.body,'Warm revision');assert.equal(r.bodyHtml,'<p><strong>Warm</strong> revision</p>');});
  const data=JSON.parse(got.contents[0].parts[0].text);assert.equal(data.currentEditableDraft,'I can meet after 4.');assert.equal(data.currentEditableHtml,'<p>I can meet <strong>after 4</strong>.</p>');assert.deepEqual(data.threadContext,[]);assert.equal(got.generationConfig.responseMimeType,'application/json');
  await fetching(async()=>new Response('',{status:429}),async()=>{await assert.rejects(()=>revise(db,a,input));assert.equal(input.body,'I can meet after 4.');});
+});
+
+Deno.test('Chinese email translation fetches only an owned Gmail message and retains exact details',async()=>{
+ const {db,a}=setup();
+ db.secrets['eren-mail:workspace:config:GEMINI_API_KEY']='gemini-test';
+ db.secrets['eren-mail:workspace:config:GEMINI_MODEL']='configurable-model';
+ let geminiCalls=0,sent:any;
+ await fetching(async(url:any,init:any)=>{
+   const value=String(url);
+   if(value.includes('oauth2'))return Response.json({access_token:'access-test',expires_in:3600});
+   if(value.includes('/messages/chinese-id?format=full'))return Response.json({id:'chinese-id',payload:{mimeType:'text/plain',headers:[{name:'Subject',value:'作業提醒'}],body:{data:b64url('請在10月12日前繳交作業。') }}});
+   if(value.includes('generativelanguage.googleapis.com')){
+     geminiCalls++;sent=JSON.parse(init.body);
+     return Response.json({candidates:[{finishReason:'STOP',content:{parts:[{text:JSON.stringify({subject:'Homework reminder',body:'Submit your homework by October 12.'})}]}}]});
+   }
+   throw new Error('Unexpected network request: '+value);
+ },async()=>{
+   const result=await translateMessage(db,a,{messageId:'chinese-id'});
+   assert.equal(result.subject,'Homework reminder');
+   assert.equal(result.body,'Submit your homework by October 12.');
+   assert.equal(geminiCalls,1);
+   const data=JSON.parse(sent.contents[0].parts[0].text);
+   assert.equal(data.body,'請在10月12日前繳交作業。');
+   assert.match(sent.systemInstruction.parts[0].text,/untrusted content/);
+   await assert.rejects(()=>translateMessage(db,a,{messageId:'../../other'}));
+ });
+ clearMailMemory();
 });
 
 Deno.test('Gemini repairs HTML returned in the plain body field and keeps paragraph breaks',async()=>{
