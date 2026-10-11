@@ -1,5 +1,5 @@
 import { defer } from './memory.ts';
-import { db, check, secret, hash, config, workspaceFor, ownedAccount, gmailClient, accountRules, cacheMessages, messageView, threadMessageViews, fullThread, mapLimit, revise, MailError, rate, REDIRECT, SITE, clearMailMemory, invalidateThread, cachedOverviews } from './services.ts';
+import { db, check, secret, hash, config, workspaceFor, ownedAccount, gmailClient, accountRules, cacheMessages, messageView, threadMessageViews, fullThread, mapLimit, revise, translateMessage, MailError, rate, REDIRECT, SITE, clearMailMemory, invalidateThread, cachedOverviews } from './services.ts';
 import { oauthStart, oauthCallback, oauthFinish } from './oauth.ts';
 import { enqueue, deliver, reconcile, tick, syncAccount } from './jobs.ts';
 import { oneClickUnsubscribe } from './unsubscribe.ts';
@@ -260,6 +260,7 @@ export async function handle(req:Request) {
    check(await admin.from('eren_mail_unsubscribes').upsert({account_id:a.id,message_id:m.id,status:result.status,updated_at:new Date().toISOString()}));
    return response(result);
   }
+  if(route==='translate'){mustPost(req);await rate(admin,workspace+':translate',12);const a=await ownedAccount(admin,workspace,input.accountId);return response(await translateMessage(admin,a,input));}
   if(route==='ai'){mustPost(req);await rate(admin,workspace+':ai',12);const a=await ownedAccount(admin,workspace,input.accountId);return response(await revise(admin,a,input));}
   if(route==='send') {
    mustPost(req);await rate(admin,workspace+':send',20);const a=await ownedAccount(admin,workspace,input.accountId);
