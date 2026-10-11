@@ -5210,10 +5210,11 @@ h1{
 <link rel="stylesheet" href="./skeuo-compose-fix.css?v=1">
 
 <style id="skeuo-analog-clock-pass">
-/* Full-height phosphor instrument: the dial speaks the same visual language as the oscilloscope. */
-@media (min-width:860px){
+/* Clean phosphor analog gauge: continuous luminous bezel and three clearly distinct hands. */
+@media(min-width:860px){
   .display{
-    grid-template-columns:minmax(0,1fr) clamp(132px,13vw,184px) clamp(216px,22vw,270px)!important;
+    grid-template-columns:minmax(0,1fr) clamp(140px,14vw,184px) clamp(130px,14vw,165px)!important;
+    align-items:center!important;
     gap:10px!important;
     padding-top:9px!important;
     padding-bottom:9px!important;
@@ -5228,125 +5229,97 @@ h1{
   min-width:0;
   height:100%!important;
   min-height:0;
-  padding:0 0 0 10px!important;
   margin:0!important;
+  padding:0 0 0 7px!important;
   align-self:stretch!important;
   border-left:1px solid rgba(124,145,123,.30);
   display:grid!important;
-  grid-template-columns:minmax(0,1fr) 31px;
-  align-items:stretch!important;
-  column-gap:6px!important;
+  grid-template-columns:minmax(0,1fr) 28px;
+  align-items:center!important;
+  column-gap:4px!important;
 }
 .skeuo-chrono{
-  display:grid;
-  grid-template-columns:auto minmax(0,1fr);
+  display:flex;
+  justify-content:center;
   align-items:center;
-  justify-content:stretch;
-  gap:7px;
+  width:100%;
+  height:100%;
   min-width:0;
   min-height:0;
-  height:100%;
+  overflow:visible;
 }
 .skeuo-chrono-face{
-  position:relative;
   display:block;
+  box-sizing:border-box;
   width:auto;
+  max-width:100%;
   height:100%;
-  max-height:72px;
-  min-height:0;
+  max-height:76px;
   aspect-ratio:1;
   overflow:visible;
-  flex:none;
-  color:#94b891;
-  filter:drop-shadow(0 0 2px rgba(121,188,116,.11));
+  flex:0 1 auto;
+  filter:drop-shadow(0 0 2.5px rgba(130,193,119,.18));
 }
-.skeuo-dial-grid circle,.skeuo-dial-grid path{
+.skeuo-dial-well{
+  fill:#152019;
+  fill-opacity:.27;
+}
+.skeuo-dial-outer{
   fill:none;
-  stroke:#72906f;
+  stroke:#a0c69a;
+  stroke-width:1.95;
+  opacity:.92;
+  vector-effect:non-scaling-stroke;
+}
+.skeuo-dial-outer-halo{
+  fill:none;
+  stroke:#8ec28a;
+  stroke-width:4.5;
+  opacity:.28;
+  filter:blur(1.75px);
+}
+.skeuo-dial-inner{
+  fill:none;
+  stroke:#6e8f6a;
   stroke-width:.65;
-  opacity:.38;
+  opacity:.29;
   vector-effect:non-scaling-stroke;
 }
-.skeuo-dial-grid .skeuo-dial-cross{opacity:.15;stroke-dasharray:1.4 3}
-.skeuo-dial-grid .skeuo-dial-ticks{opacity:.7;stroke:#90ab87;stroke-width:1.05}
-.skeuo-dial-progress,
-.skeuo-dial-progress-halo{
+.skeuo-dial-guides{
   fill:none;
-  stroke:#9aca96;
-  stroke-width:1.4;
-  stroke-linecap:round;
-  transform:rotate(-90deg);
-  transform-origin:40px 40px;
-  stroke-dasharray:0 60;
-}
-.skeuo-dial-progress-halo{
-  stroke:#a9dfac;
-  stroke-width:3.6;
-  opacity:.25;
-  filter:blur(1.45px);
-}
-.skeuo-dial-hand path{
-  fill:none;
-  stroke-linecap:round;
+  stroke:#739575;
+  stroke-width:.6;
+  opacity:.16;
   vector-effect:non-scaling-stroke;
 }
-.skeuo-dial-hand.hour path{stroke:#afcbaa;stroke-width:2.7}
-.skeuo-dial-hand.minute path{stroke:#c5dfbc;stroke-width:1.75}
+.skeuo-dial-hand path{fill:none;stroke-linecap:round;vector-effect:non-scaling-stroke}
+.skeuo-dial-hand.hour path{
+  stroke:#f0efd5;
+  stroke-width:3.8;
+  filter:drop-shadow(0 0 1px rgba(194,225,178,.3));
+}
+.skeuo-dial-hand.minute path{
+  stroke:#b9dcba;
+  stroke-width:2.15;
+  filter:drop-shadow(0 0 1px rgba(156,217,153,.4));
+}
 .skeuo-dial-hand.second path{
-  stroke:#a0cfa1;
+  stroke:#8dd6a0;
   stroke-width:1.05;
-  filter:drop-shadow(0 0 1.5px rgba(128,201,124,.48));
+  filter:drop-shadow(0 0 2px rgba(124,211,134,.58));
 }
+.skeuo-dial-hand.second circle{fill:#b3ecbc;opacity:.94}
 .skeuo-dial-hand.afterglow path{
-  stroke:#a5daa6;
-  stroke-width:3.7;
-  opacity:.22;
-  filter:blur(1.25px);
+  stroke:#9fe3ac;
+  stroke-width:4.1;
+  opacity:.19;
+  filter:blur(1.4px);
 }
-.skeuo-dial-hub{
-  fill:#bad6af;
-  stroke:#202f22;
-  stroke-width:1.3;
-}
-.skeuo-chrono.is-glitching .skeuo-dial-hand.afterglow{opacity:.54}
-.skeuo-chrono-digital{
-  min-width:0;
-  align-self:center;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  gap:5px;
-  padding:2px 0;
-}
-.skeuo-chrono-label,.skeuo-chrono-foot{
-  display:flex;
-  justify-content:space-between;
-  gap:4px;
-  font:700 5.5px/1 "Courier New",monospace;
-  letter-spacing:.09em;
-  white-space:nowrap;
-  color:#7b9879;
-}
-.skeuo-chrono-digital time{
-  display:flex;
-  align-items:baseline;
-  gap:1px;
-  white-space:nowrap;
-  min-width:0;
-  color:#c3e0b8;
-  text-shadow:0 0 3px rgba(159,218,143,.43),0 0 11px rgba(129,201,117,.20);
-  font:700 20px/1.08 "Courier New",monospace;
-  letter-spacing:-.065em;
-  font-variant-numeric:tabular-nums;
-}
-.skeuo-chrono-digital time small{
-  font:700 10px/1 "Courier New",monospace;
-  letter-spacing:-.055em;
-  color:#a5cfa0;
-}
-.skeuo-chrono-foot{font-size:5px;color:#668263}
-.skeuo-chrono-foot span{color:#789877}
+.skeuo-chrono.is-glitching .skeuo-dial-hand.afterglow path{opacity:.36}
+.skeuo-dial-hub-halo{fill:#afdfaa;opacity:.13}
+.skeuo-dial-hub{fill:#d7e7c5;stroke:#182a1d;stroke-width:1.2}
 .skeuo-rtc-indicators{
+  width:100%;
   height:100%;
   min-height:0;
   display:flex;
@@ -5355,8 +5328,8 @@ h1{
   justify-content:space-evenly;
   gap:3px;
   border-left:1px solid rgba(124,145,123,.22);
-  padding-left:5px;
   box-sizing:border-box;
+  padding-left:4px;
 }
 .skeuo-rtc-indicators .indicator{
   display:flex;
@@ -5369,37 +5342,34 @@ h1{
   letter-spacing:.025em;
 }
 .skeuo-rtc-indicators .led{width:7px;height:7px;flex:none}
-@media (min-width:860px) and (max-width:1100px){
-  /* Protect the class readout at narrow widths; keep the graph's visual language in the clock. */
-  .display{grid-template-columns:minmax(0,1fr) clamp(204px,24vw,238px)!important}
+@media(min-width:860px) and (max-width:1100px){
+  .display{grid-template-columns:minmax(0,1fr) clamp(130px,16vw,156px)!important}
   .display > .schedule-scope{display:none!important}
 }
-@media (max-width:859px){
+@media(max-width:859px){
   .display{
-    grid-template-columns:minmax(0,1fr) minmax(158px,48%)!important;
-    gap:8px!important;
+    grid-template-columns:minmax(0,1fr) 119px!important;
+    gap:7px!important;
     padding-left:11px!important;
     padding-right:11px!important;
   }
   .display > #nextClass{max-width:100%!important}
-  .display > .display-right{padding-left:6px!important;grid-template-columns:minmax(0,1fr) 26px;column-gap:4px!important}
-  .skeuo-chrono{gap:3px}
-  .skeuo-chrono-face{max-height:59px}
-  .skeuo-chrono-digital{gap:4px}
-  .skeuo-chrono-digital time{font-size:16px}
-  .skeuo-chrono-digital time small{font-size:8px}
+  .display > .display-right{
+    grid-template-columns:minmax(0,1fr) 25px;
+    column-gap:3px!important;
+    padding-left:5px!important;
+  }
+  .skeuo-chrono-face{max-height:64px}
   .skeuo-rtc-indicators{padding-left:3px}
   .skeuo-rtc-indicators .indicator{font-size:4.5px}
 }
-@media(max-width:395px){
-  .display{grid-template-columns:minmax(0,1fr) 154px!important;gap:5px!important}
-  .skeuo-chrono-face{max-height:48px}
-  .skeuo-chrono-digital time{font-size:13px}
-  .skeuo-chrono-digital time small{font-size:7px}
-  .skeuo-chrono-label,.skeuo-chrono-foot{font-size:4.5px}
+@media(max-width:380px){
+  .display{grid-template-columns:minmax(0,1fr) 105px!important;gap:5px!important}
+  .display > .display-right{grid-template-columns:minmax(0,1fr) 23px}
+  .skeuo-chrono-face{max-height:55px}
 }
 @media(prefers-reduced-motion:reduce){
-  .skeuo-chrono.is-glitching .skeuo-dial-hand.afterglow{opacity:.22}
+  .skeuo-chrono.is-glitching .skeuo-dial-hand.afterglow path{opacity:.19}
 }
 </style>
 </head>
@@ -5478,28 +5448,20 @@ h1{
           <div class="scope-foot"><span id="scheduleScopeMode">NEXT START</span><span id="scheduleScopeHint">λ ∝ ΔT</span></div>
         </div>
         <div class="display-right">
-          <div class="skeuo-chrono" role="group" aria-label="Live analog and digital Taipei time">
+          <div class="skeuo-chrono" role="img" aria-label="Analog clock showing Taipei local time">
             <svg class="skeuo-chrono-face" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <g class="skeuo-dial-grid">
-                <path d="M7 40H73 M40 7V73 M17 17L63 63 M63 17L17 63" class="skeuo-dial-cross"></path>
-                <circle cx="40" cy="40" r="31"></circle>
-                <circle cx="40" cy="40" r="21"></circle>
-                <circle cx="40" cy="40" r="11"></circle>
-                <path class="skeuo-dial-ticks" d="M40 6V13 M40 67V74 M6 40H13 M67 40H74 M23 10.5L26 16.5 M54 63.5L57 69.5 M10.5 23L16.5 26 M63.5 54L69.5 57 M10.5 57L16.5 54 M63.5 26L69.5 23 M23 69.5L26 63.5 M54 16.5L57 10.5"></path>
-              </g>
-              <circle class="skeuo-dial-progress-halo" cx="40" cy="40" r="31" pathLength="60" id="skeuoClockSweepHalo"></circle>
-              <circle class="skeuo-dial-progress" cx="40" cy="40" r="31" pathLength="60" id="skeuoClockSweep"></circle>
-              <g class="skeuo-dial-hand hour" id="skeuoClockHour"><path d="M40 43V27"></path></g>
-              <g class="skeuo-dial-hand minute" id="skeuoClockMinute"><path d="M40 44V18"></path></g>
-              <g class="skeuo-dial-hand afterglow" id="skeuoClockAfterglow"><path d="M40 46V14"></path></g>
-              <g class="skeuo-dial-hand second" id="skeuoClockSecond"><path d="M40 46V14"></path></g>
+              <circle class="skeuo-dial-well" cx="40" cy="40" r="34"></circle>
+              <circle class="skeuo-dial-outer-halo" cx="40" cy="40" r="34"></circle>
+              <circle class="skeuo-dial-outer" cx="40" cy="40" r="34"></circle>
+              <circle class="skeuo-dial-inner" cx="40" cy="40" r="26"></circle>
+              <path class="skeuo-dial-guides" d="M40 17V63 M17 40H63"></path>
+              <g class="skeuo-dial-hand hour" id="skeuoClockHour"><path d="M40 44V30"></path></g>
+              <g class="skeuo-dial-hand minute" id="skeuoClockMinute"><path d="M40 46V19"></path></g>
+              <g class="skeuo-dial-hand afterglow" id="skeuoClockAfterglow"><path d="M40 49V11"></path></g>
+              <g class="skeuo-dial-hand second" id="skeuoClockSecond"><path d="M40 49V11"></path><circle cx="40" cy="11" r="1.4"></circle></g>
+              <circle class="skeuo-dial-hub-halo" cx="40" cy="40" r="4.2"></circle>
               <circle class="skeuo-dial-hub" cx="40" cy="40" r="2.5"></circle>
             </svg>
-            <div class="skeuo-chrono-digital">
-              <div class="skeuo-chrono-label">LOCAL / TPE</div>
-              <time id="skeuoClockDigital" datetime=""><span id="skeuoClockDigitalCore">--:--</span><small id="skeuoClockDigitalSeconds">:--</small></time>
-              <div class="skeuo-chrono-foot">24H <span>UTC +08</span></div>
-            </div>
           </div>
           <div class="skeuo-rtc-indicators">
             <div class="indicator"><i class="led" id="skeuoLiveLed"></i><span id="skeuoLiveState">LIVE</span></div>
@@ -5837,18 +5799,12 @@ h1{
 
 <script id="skeuo-analog-clock-runtime">
 (() => {
-  const chrono = document.querySelector('.skeuo-chrono');
+  const face = document.querySelector('.skeuo-chrono');
   const hourHand = document.getElementById('skeuoClockHour');
   const minuteHand = document.getElementById('skeuoClockMinute');
   const secondHand = document.getElementById('skeuoClockSecond');
   const ghost = document.getElementById('skeuoClockAfterglow');
-  const sweep = document.getElementById('skeuoClockSweep');
-  const sweepHalo = document.getElementById('skeuoClockSweepHalo');
-  const digital = document.getElementById('skeuoClockDigital');
-  const core = document.getElementById('skeuoClockDigitalCore');
-  const seconds = document.getElementById('skeuoClockDigitalSeconds');
-  if (![chrono,hourHand,minuteHand,secondHand,ghost,sweep,sweepHalo,digital,core,seconds].every(Boolean)) return;
-
+  if (![face,hourHand,minuteHand,secondHand,ghost].every(Boolean)) return;
   const formatter = new Intl.DateTimeFormat('en-GB', {
     timeZone:'Asia/Taipei',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'
   });
@@ -5857,29 +5813,21 @@ h1{
   const update = () => {
     const parts = formatter.formatToParts(new Date());
     const read = (type) => Number(parts.find((entry) => entry.type === type)?.value || 0);
-    const hour = read('hour'),minute = read('minute'),second = read('second');
+    const hour = read('hour'), minute = read('minute'), second = read('second');
     hourHand.setAttribute('transform','rotate(' + (((hour%12)+minute/60+second/3600)*30) + ' 40 40)');
     minuteHand.setAttribute('transform','rotate(' + ((minute+second/60)*6) + ' 40 40)');
     secondHand.setAttribute('transform','rotate(' + (second*6) + ' 40 40)');
     ghost.setAttribute('transform','rotate(' + ((second-1)*6) + ' 40 40)');
-    sweep.setAttribute('stroke-dasharray',second + ' 60');
-    sweepHalo.setAttribute('stroke-dasharray',second + ' 60');
-
-    const main = String(hour).padStart(2,'0')+':'+String(minute).padStart(2,'0');
-    const sec = ':'+String(second).padStart(2,'0');
-    if(core.textContent!==main)core.textContent=main;
-    if(seconds.textContent!==sec)seconds.textContent=sec;
-    digital.dateTime=main+sec;
-
+    face.setAttribute('aria-label','Taipei analog clock, '+String(hour).padStart(2,'0')+':'+String(minute).padStart(2,'0')+':'+String(second).padStart(2,'0'));
     if(!reducedMotion.matches && second%17===0){
-      chrono.classList.add('is-glitching');
+      face.classList.add('is-glitching');
       clearTimeout(glitchTimeout);
-      glitchTimeout=setTimeout(()=>chrono.classList.remove('is-glitching'),130);
+      glitchTimeout=setTimeout(()=>face.classList.remove('is-glitching'),130);
     }
   };
   update();
-  setInterval(()=>{if(!document.hidden)update();},1000);
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden)update();});
+  setInterval(()=>{if(!document.hidden)update()},1000);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)update()});
   window.addEventListener('pageshow',update);
 })();
 </script>
