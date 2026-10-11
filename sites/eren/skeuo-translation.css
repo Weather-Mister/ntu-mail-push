@@ -1,25 +1,51 @@
 /* Gemini translation is deliberately confined to the skeuomorphic mail reader. */
-.machine.mail-mode .mailx-translate-controls {
-  display:flex;align-items:center;gap:11px;flex-wrap:wrap;
-  margin:9px 0 13px;color:#aeb5a4;font:700 9px/1.4 "Courier New",monospace;
+/* The translation key lives beside the subject, never on its own row. */
+.machine.mail-mode .mailx-reader-title-row{
+  display:flex!important;align-items:center!important;gap:10px!important;
+  min-width:0;
 }
-.machine.mail-mode .mailx-translate-button {
-  min-height:31px;padding:0 12px;border:1px solid #716653;border-radius:5px;
-  color:#2e302b;background:linear-gradient(#ebe4d2,#c1b59c);
-  box-shadow:inset 0 1px 0 #f7f0e0,0 3px 0 #6a6152,0 4px 7px #080b0780;
-  font:800 10px/1 Arial,sans-serif;letter-spacing:.015em;
-  cursor:pointer;transition:transform .08s ease,box-shadow .08s ease;
+.machine.mail-mode .mailx-reader-title-row>.mailx-reader-subject{
+  flex:1 1 auto;min-width:0;margin:0!important;
 }
-.machine.mail-mode .mailx-translate-button:hover {
-  background:linear-gradient(#faf0d9,#d3c4a7);
+.machine.mail-mode .mailx-reader-title-row>.mailx-translate-button{
+  position:relative;isolation:isolate;display:inline-flex;justify-content:center;align-items:center;
+  gap:6px;flex:0 0 auto;min-width:0;height:27px;min-height:27px!important;
+  margin:0 0 0 auto!important;padding:0 11px!important;
+  border:1px solid #42774b!important;border-radius:4px!important;
+  color:#aaffab!important;
+  background:linear-gradient(180deg,#203a27 0%,#102318 52%,#07150d 100%)!important;
+  box-shadow:inset 0 1px 0 #699d6655,inset 0 0 10px #59f56a24,
+             0 2px 0 #070e09,0 0 10px #4ee36c4f!important;
+  text-shadow:0 0 4px #79ff91,0 0 9px #47d66a;
+  font:800 10px/1 "Courier New",monospace!important;
+  letter-spacing:.055em;white-space:nowrap;cursor:pointer;
+  transition:background .12s,box-shadow .12s,filter .12s,transform .08s;
 }
-.machine.mail-mode .mailx-translate-button:active,
-.machine.mail-mode .mailx-translate-button[aria-pressed="true"] {
-  transform:translateY(2px);
-  box-shadow:inset 0 2px 3px #63594a55,0 1px 0 #6a6152;
+.machine.mail-mode .mailx-reader-title-row>.mailx-translate-button::after{
+  content:"";position:absolute;inset:1px;border-radius:3px;pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent 0 3px,#79ff8520 3px 4px);
 }
-.machine.mail-mode .mailx-translate-button:disabled {
+.machine.mail-mode .mailx-translate-symbol{
+  font:800 14px/1 "Courier New",monospace;letter-spacing:0;
+}
+.machine.mail-mode .mailx-reader-title-row>.mailx-translate-button:hover:not(:disabled){
+  color:#deffe0!important;
+  background:linear-gradient(#31523a,#112d1b)!important;
+  box-shadow:inset 0 1px 0 #88bf8366,inset 0 0 13px #53fa723d,
+             0 2px 0 #07120a,0 0 15px #55fa7e91!important;
+}
+.machine.mail-mode .mailx-reader-title-row>.mailx-translate-button:active,
+.machine.mail-mode .mailx-reader-title-row>.mailx-translate-button[aria-pressed="true"]{
+  transform:translateY(1px);
+  border-color:#77b781!important;
+  box-shadow:inset 0 2px 7px #010a0680,inset 0 0 16px #6cffa14e,
+             0 0 10px #73f78b77!important;
+}
+.machine.mail-mode .mailx-reader-title-row>.mailx-translate-button:disabled{
   opacity:.7;cursor:progress;
+}
+.machine.mail-mode .mailx-reader-title-row>.mailx-translate-button:focus-visible{
+  outline:2px solid #b8ffc1!important;outline-offset:3px!important;
 }
 .machine.mail-mode .mailx-translation {
   padding:14px 16px;margin:0 0 13px;
@@ -42,6 +68,9 @@
 .machine.mail-mode .mailx-text-alternative[hidden],
 .machine.mail-mode .mailx-mail-body[hidden] { display:none!important; }
 @media(max-width:640px){
-  .machine.mail-mode .mailx-translate-controls{gap:6px}
-  .machine.mail-mode .mailx-translate-controls>span{font-size:8px}
+  .machine.mail-mode .mailx-reader-title-row{gap:6px!important}
+  .machine.mail-mode .mailx-reader-title-row>.mailx-translate-button{
+    height:25px;min-height:25px!important;padding:0 7px!important;
+    gap:3px;font-size:9px!important;
+  }
 }
