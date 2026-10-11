@@ -126,6 +126,69 @@
 }
 .machine.mail-mode .mailx-translation-body a{color:#a9d6a5;text-decoration:underline;text-underline-offset:2px}
 .machine.mail-mode .mailx-translation-body strong{color:#e0e0d3}
+/* Every HTML email shares the translated message's typography and dark CRT surface. */
+.machine.mail-mode .mailx-original-body{
+  display:block;
+  flex:0 0 auto!important;
+  min-height:0!important;
+  max-height:none!important;
+  margin:0 0 15px!important;
+  padding:12px 0 8px!important;
+  overflow-wrap:anywhere;
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  color:#cfd2c4!important;
+}
+.machine.mail-mode .mailx-original-body :is(div,span,center,font){
+  max-width:100%;
+  background:transparent!important;
+}
+.machine.mail-mode .mailx-original-body img{
+  display:block;
+  max-width:100%!important;
+  height:auto!important;
+  object-fit:contain;
+  margin:8px 0;
+}
+.machine.mail-mode .mailx-original-body :is(pre,code){
+  font:11px/1.5 "Courier New",monospace;
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
+}
+.machine.mail-mode .mailx-original-body :is(table,blockquote){
+  max-width:100%!important;
+}
+.machine.mail-mode .mailx-original-layout{
+  margin:8px 0 11px;
+  padding:8px 0 0;
+  border-top:1px solid #43493f;
+  color:#939b8d;
+}
+.machine.mail-mode .mailx-original-layout>summary{
+  display:list-item;
+  width:max-content;
+  max-width:100%;
+  cursor:pointer;
+  color:#939b8d;
+  font:700 10px/1.5 "Courier New",monospace;
+}
+.machine.mail-mode .mailx-original-layout>summary:hover{
+  color:#cdd2c0;
+}
+.machine.mail-mode .mailx-original-layout>.mailx-html-body{
+  display:block;
+  width:100%!important;
+  max-width:100%!important;
+  height:min(560px,65vh)!important;
+  min-height:320px!important;
+  margin:10px 0 0!important;
+  border:1px solid #596054!important;
+  border-radius:3px;
+  background:#fff;
+}
+.machine.mail-mode .mailx-original-body[hidden],
+.machine.mail-mode .mailx-original-layout[hidden]{display:none!important}
 .machine.mail-mode .mailx-html-body[hidden],
 .machine.mail-mode .mailx-text-alternative[hidden],
 .machine.mail-mode .mailx-mail-body[hidden] { display:none!important; }
