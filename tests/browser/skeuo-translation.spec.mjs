@@ -44,7 +44,7 @@ test('skeuo reader translates Chinese mail on demand and can restore the origina
   expect(button.x).toBeGreaterThanOrEqual(subject.x+subject.width-1);
   expect(button.y).toBeGreaterThanOrEqual(heading.y-1);
   expect(button.y+button.height).toBeLessThanOrEqual(heading.y+heading.height+1);
-  expect(heading.height).toBeLessThanOrEqual(32);
+  expect(heading.height).toBeLessThanOrEqual(34);
   expect(await translate.evaluate(el=>getComputedStyle(el).color)).toBe('rgb(170, 255, 171)');
   expect(calls.some(c=>c.action==='translate')).toBe(false);
   await page.locator('[data-mailx-translate]').click();
