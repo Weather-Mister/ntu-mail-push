@@ -5208,6 +5208,132 @@ h1{
 </style>
 <link rel="stylesheet" href="./slider-knob.css?v=4">\n<link rel="stylesheet" href="./skeuo-scrollbars.css?v=16">
 <link rel="stylesheet" href="./skeuo-compose-fix.css?v=1">
+
+<style id="skeuo-retro-rtc-clock">
+/* A tiny recessed phosphor clock sharing the Up Next CRT, not a separate widget. */
+.display > .display-right{
+  position:relative;
+  z-index:3;
+  box-sizing:border-box;
+  width:118px;
+  min-width:0;
+  height:63px!important;
+  margin-left:0!important;
+  padding-left:10px!important;
+  border-left:1px solid rgba(125,147,124,.27);
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:center!important;
+  align-items:stretch!important;
+  gap:4px!important;
+}
+.skeuo-rtc{
+  position:relative;
+  box-sizing:border-box;
+  width:100%;
+  padding:4px 7px 3px;
+  border:1px solid rgba(133,156,126,.28);
+  border-radius:4px;
+  overflow:hidden;
+  background:
+    linear-gradient(165deg,rgba(216,240,206,.075),transparent 40%),
+    linear-gradient(180deg,#18221a,#0f1812);
+  box-shadow:
+    inset 0 2px 6px rgba(0,0,0,.56),
+    inset 0 0 0 1px rgba(17,26,18,.72),
+    0 1px 0 rgba(154,174,147,.09);
+}
+.skeuo-rtc::after{
+  position:absolute;
+  content:"";
+  inset:0;
+  z-index:2;
+  pointer-events:none;
+  border-radius:inherit;
+  background:
+    linear-gradient(115deg,rgba(222,255,202,.09),transparent 34%,transparent 75%,rgba(0,0,0,.12)),
+    repeating-linear-gradient(0deg,transparent 0 2px,rgba(0,0,0,.10) 2px 3px);
+  opacity:.53;
+}
+.skeuo-rtc-head,.skeuo-rtc-foot{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  white-space:nowrap;
+  font:700 5px/1 "Courier New",monospace;
+  letter-spacing:.07em;
+  color:#738c70;
+}
+.skeuo-rtc-head i{
+  width:3px;
+  height:3px;
+  flex:none;
+  border-radius:50%;
+  background:#8eae79;
+  box-shadow:0 0 4px rgba(152,218,124,.38);
+}
+.skeuo-rtc-readout{
+  display:flex;
+  align-items:baseline;
+  justify-content:center;
+  height:22px;
+  white-space:nowrap;
+  color:#bfdcb3;
+  text-shadow:0 0 3px rgba(167,228,150,.47),0 0 10px rgba(129,201,117,.18);
+  font:700 19px/22px "Courier New",monospace;
+  letter-spacing:-.07em;
+  font-variant-numeric:tabular-nums;
+  font-feature-settings:"tnum";
+}
+.skeuo-rtc-readout time{color:inherit;font:inherit}
+.skeuo-rtc-seconds{
+  margin-left:1px;
+  font:700 10px/1 "Courier New",monospace;
+  letter-spacing:-.035em;
+  color:#b4c9a0;
+  text-shadow:0 0 4px rgba(161,215,140,.25);
+}
+.skeuo-rtc-foot{font-size:4.6px;color:#698168}
+.skeuo-rtc-indicators{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:14px;
+  min-height:9px;
+}
+.skeuo-rtc-indicators .indicator{
+  display:flex;
+  flex-direction:row;
+  align-items:center;
+  gap:4px;
+  color:#7e947a;
+  font:700 5.2px/1 "Courier New",monospace;
+  letter-spacing:.06em;
+}
+.skeuo-rtc-indicators .led{width:6px;height:6px;flex:none}
+@media (min-width:860px) and (max-width:1030px){
+  /* The monitor is progressive enhancement: protect the course title on narrow desktops. */
+  .display{grid-template-columns:minmax(0,1fr) 118px!important}
+  .display > .schedule-scope{display:none!important}
+}
+@media(max-width:859px){
+  .display{
+    grid-template-columns:minmax(0,1fr) 110px!important;
+    gap:8px!important;
+    padding-left:11px!important;
+    padding-right:11px!important;
+  }
+  .display > #nextClass{max-width:100%!important}
+  .display > .display-right{width:110px;padding-left:7px!important}
+}
+@media(max-width:380px){
+  .display{grid-template-columns:minmax(0,1fr) 98px!important;gap:6px!important}
+  .display > .display-right{width:98px;padding-left:5px!important}
+  .skeuo-rtc{padding-left:5px;padding-right:5px}
+  .skeuo-rtc-readout{font-size:17px}
+  .skeuo-rtc-seconds{font-size:9px}
+}
+</style>
 </head>
 <body>
 <div class="desk-stage">
@@ -5283,7 +5409,17 @@ h1{
           </svg>
           <div class="scope-foot"><span id="scheduleScopeMode">NEXT START</span><span id="scheduleScopeHint">λ ∝ ΔT</span></div>
         </div>
-        <div class="display-right"><div class="indicator"><i class="led" id="skeuoLiveLed"></i><span id="skeuoLiveState">LIVE</span></div><div class="indicator"><i class="led off"></i>ALRM</div></div>
+        <div class="display-right">
+          <div class="skeuo-rtc" role="group" aria-label="Live local time in Taipei">
+            <div class="skeuo-rtc-head"><span>LOCAL / TPE</span><i aria-hidden="true"></i><span>24H</span></div>
+            <div class="skeuo-rtc-readout"><time id="skeuoRtcTime" datetime="">--:--</time><span id="skeuoRtcSeconds" class="skeuo-rtc-seconds">:--</span></div>
+            <div class="skeuo-rtc-foot">TAIPEI <span>UTC +08</span></div>
+          </div>
+          <div class="skeuo-rtc-indicators">
+            <div class="indicator"><i class="led" id="skeuoLiveLed"></i><span id="skeuoLiveState">LIVE</span></div>
+            <div class="indicator"><i class="led off"></i>ALRM</div>
+          </div>
+        </div>
       </div>
       <div class="panel hanzi" id="hanziWidgetSlot">
         <div class="streak"><span class="micro">HANZI STEPS</span><b>12</b><span class="micro">DAY STREAK</span></div>
@@ -5611,6 +5747,33 @@ h1{
 <script src="./skeuo-runtime.js?v=29"></script>
 <script src="./mail-demo.js?v=27"></script>
 <script src="./skeuo-scrollbars.js?v=14"></script>
+
+
+<script id="skeuo-retro-rtc-runtime">
+/* Wall-clock time, explicitly pinned to Taipei regardless of the viewer's device timezone. */
+(() => {
+  const clock = document.getElementById('skeuoRtcTime');
+  const seconds = document.getElementById('skeuoRtcSeconds');
+  if (!clock || !seconds) return;
+  const formatter = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Taipei',
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23'
+  });
+  const update = () => {
+    const parts = formatter.formatToParts(new Date());
+    const part = (type) => parts.find((entry) => entry.type === type)?.value || '00';
+    const hhmm = part('hour') + ':' + part('minute');
+    const ss = part('second');
+    if (clock.textContent !== hhmm) clock.textContent = hhmm;
+    if (seconds.textContent !== ':' + ss) seconds.textContent = ':' + ss;
+    clock.dateTime = hhmm + ':' + ss;
+  };
+  update();
+  setInterval(() => { if (!document.hidden) update(); }, 1000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) update(); });
+  window.addEventListener('pageshow', update);
+})();
+</script>
 
 </body>
 </html>
