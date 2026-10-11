@@ -373,7 +373,7 @@
   /* Rebuild only harmless semantic elements. Never inject Gemini HTML directly into the reader. */
   function safeTranslationHtml(value,allowImages=false) {
     const template=document.createElement('template');
-    template.innerHTML=String(value||'').slice(0,60000);
+    template.innerHTML=String(value||'').slice(0,allowImages?1500000:60000);
     const allowed=new Set(['p','div','br','strong','b','em','i','u','ul','ol','li','blockquote','h1','h2','h3','h4','table','thead','tbody','tfoot','tr','td','th','hr','a']);
     const discard=new Set(['script','style','iframe','object','svg','math','form','template','noscript']);
     const render=node=>{
