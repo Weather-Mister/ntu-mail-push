@@ -368,7 +368,7 @@
   function translatedBlock(t,msg,i) {
     if(!wantsEnglish(t,msg))return '';
     const translation=translationCache.get(translationKey(t,msg));
-    return `<div class="mailx-translation" data-mailx-translation="${i}"><div class="mailx-translation-label">ENGLISH TRANSLATION · GEMINI</div>${hasChinese(msg.subject)?`<div class="mailx-translation-subject">${escapeHtml(translation.subject)}</div>`:''}<div class="mailx-translation-body">${escapeHtml(translation.body)}</div></div>`;
+    return `<div class="mailx-translation" data-mailx-translation="${i}"><div class="mailx-translation-label">ENGLISH TRANSLATION</div>${hasChinese(msg.subject)?`<div class="mailx-translation-subject">${escapeHtml(translation.subject)}</div>`:''}<div class="mailx-translation-body">${escapeHtml(translation.body)}</div></div>`;
   }
   function rerenderReaderPreservingPosition() {
     const previous=readerEl.querySelector('.mailx-reader-scroll'),position=previous?.scrollTop||0;
