@@ -5210,15 +5210,28 @@ h1{
 <link rel="stylesheet" href="./skeuo-compose-fix.css?v=1">
 
 <style id="skeuo-analog-clock-pass">
-/* Clean phosphor analog gauge: continuous luminous bezel and three clearly distinct hands. */
-@media(min-width:860px){
+/* The circular trace travels around the dial like the neighbouring oscilloscope trace. */
+@media(min-width:1101px){
   .display{
-    grid-template-columns:minmax(0,1fr) clamp(140px,14vw,184px) clamp(116px,11vw,140px)!important;
+    grid-template-columns:minmax(0,1fr) clamp(108px,11vw,130px) clamp(145px,14vw,190px)!important;
     align-items:center!important;
-    gap:8px!important;
+    gap:10px!important;
     padding-top:6px!important;
     padding-bottom:6px!important;
   }
+}
+@media(min-width:860px) and (max-width:1100px){
+  .display{
+    grid-template-columns:minmax(0,1fr) clamp(100px,11vw,116px) clamp(118px,14vw,140px)!important;
+    gap:6px!important;
+    align-items:center!important;
+    padding-top:6px!important;
+    padding-bottom:6px!important;
+  }
+  .display > #nextClass strong{font-size:clamp(14px,1.7vw,18px)!important}
+  .display > .schedule-scope{display:block!important}
+}
+@media(min-width:860px){
   .display > #nextClass{max-width:100%!important}
 }
 .display > .display-right{
@@ -5229,14 +5242,14 @@ h1{
   min-width:0;
   height:100%!important;
   min-height:0;
-  margin:0!important;
-  padding:0 0 0 5px!important;
   align-self:stretch!important;
-  border-left:1px solid rgba(124,145,123,.30);
+  margin:0!important;
+  padding:0 2px 0 5px!important;
   display:grid!important;
   grid-template-columns:minmax(0,1fr) 24px;
   align-items:center!important;
   column-gap:3px!important;
+  border-left:1px solid rgba(124,145,123,.30);
 }
 .skeuo-chrono{
   display:flex;
@@ -5258,38 +5271,68 @@ h1{
   aspect-ratio:1;
   overflow:visible;
   flex:0 1 auto;
-  filter:drop-shadow(0 0 2.5px rgba(130,193,119,.18));
+  filter:drop-shadow(0 0 2px rgba(120,185,115,.20));
 }
-.skeuo-dial-well{
-  fill:#152019;
-  fill-opacity:.27;
-}
+.skeuo-dial-well{fill:#152019;fill-opacity:.20}
 .skeuo-dial-outer{
   fill:none;
-  stroke:#a0c69a;
-  stroke-width:1.95;
-  opacity:.92;
+  stroke:#89aa87;
+  stroke-width:1;
+  opacity:.27;
   vector-effect:non-scaling-stroke;
 }
 .skeuo-dial-outer-halo{
   fill:none;
-  stroke:#8ec28a;
-  stroke-width:4.5;
-  opacity:.28;
-  filter:blur(1.75px);
+  stroke:#88b288;
+  stroke-width:3;
+  opacity:.10;
+  filter:blur(1.7px);
+}
+.skeuo-dial-ring-afterglow,
+.skeuo-dial-ring-glow,
+.skeuo-dial-ring-trace,
+.skeuo-dial-inner-trace{
+  fill:none;
+  stroke-linejoin:round;
+  stroke-linecap:round;
+  pointer-events:none;
+  vector-effect:non-scaling-stroke;
+}
+.skeuo-dial-ring-afterglow{
+  stroke:#94cfa2;
+  stroke-width:2.9;
+  opacity:.19;
+  filter:blur(1.15px);
+}
+.skeuo-dial-ring-glow{
+  stroke:#a0dca0;
+  stroke-width:4.2;
+  opacity:.26;
+  filter:blur(1.85px);
+}
+.skeuo-dial-ring-trace{
+  stroke:#a9d6a4;
+  stroke-width:1.9;
+  opacity:.94;
+  filter:drop-shadow(0 0 1.8px rgba(142,217,137,.55));
 }
 .skeuo-dial-inner{
   fill:none;
   stroke:#6e8f6a;
   stroke-width:.65;
-  opacity:.29;
+  opacity:.20;
   vector-effect:non-scaling-stroke;
+}
+.skeuo-dial-inner-trace{
+  stroke:#92b68e;
+  stroke-width:.70;
+  opacity:.25;
 }
 .skeuo-dial-guides{
   fill:none;
   stroke:#739575;
   stroke-width:.6;
-  opacity:.16;
+  opacity:.13;
   vector-effect:non-scaling-stroke;
 }
 .skeuo-dial-hand path{fill:none;stroke-linecap:round;vector-effect:non-scaling-stroke}
@@ -5315,7 +5358,6 @@ h1{
   opacity:.19;
   filter:blur(1.4px);
 }
-.skeuo-chrono.is-glitching .skeuo-dial-hand.afterglow path{opacity:.36}
 .skeuo-dial-hub-halo{fill:#afdfaa;opacity:.13}
 .skeuo-dial-hub{fill:#d7e7c5;stroke:#182a1d;stroke-width:1.2}
 .skeuo-rtc-indicators{
@@ -5329,7 +5371,7 @@ h1{
   gap:3px;
   border-left:1px solid rgba(124,145,123,.22);
   box-sizing:border-box;
-  padding-left:4px;
+  padding-left:3px;
 }
 .skeuo-rtc-indicators .indicator{
   display:flex;
@@ -5342,10 +5384,6 @@ h1{
   letter-spacing:.025em;
 }
 .skeuo-rtc-indicators .led{width:7px;height:7px;flex:none}
-@media(min-width:860px) and (max-width:1100px){
-  .display{grid-template-columns:minmax(0,1fr) clamp(116px,13vw,136px)!important}
-  .display > .schedule-scope{display:none!important}
-}
 @media(max-width:859px){
   .display{
     grid-template-columns:minmax(0,1fr) 112px!important;
@@ -5354,13 +5392,8 @@ h1{
     padding-right:11px!important;
   }
   .display > #nextClass{max-width:100%!important}
-  .display > .display-right{
-    grid-template-columns:minmax(0,1fr) 22px;
-    column-gap:3px!important;
-    padding-left:5px!important;
-  }
+  .display > .display-right{grid-template-columns:minmax(0,1fr) 22px;column-gap:3px!important;padding-left:5px!important}
   .skeuo-chrono-face{max-height:70px}
-  .skeuo-rtc-indicators{padding-left:3px}
   .skeuo-rtc-indicators .indicator{font-size:4.5px}
 }
 @media(max-width:380px){
@@ -5369,32 +5402,7 @@ h1{
   .skeuo-chrono-face{max-height:60px}
 }
 @media(prefers-reduced-motion:reduce){
-  .skeuo-chrono.is-glitching .skeuo-dial-hand.afterglow path{opacity:.19}
-}
-
-/* Instrument-quality phosphor persistence and a brief double image, never gaps in the bezel. */
-.skeuo-chrono-face{
-  transition:transform 75ms steps(2,end),filter 75ms linear;
-  transform-origin:center center;
-}
-.skeuo-chrono.is-glitching .skeuo-chrono-face{
-  transform:translate(var(--glitch-x,1px),var(--glitch-y,-1px)) scaleX(1.012);
-  filter:drop-shadow(1.4px 0 rgba(137,224,148,.35)) drop-shadow(-1px 0 rgba(225,216,148,.16)) drop-shadow(0 0 4px rgba(130,193,119,.30));
-}
-.skeuo-chrono.is-glitching .skeuo-dial-outer-halo{
-  opacity:.53;
-  transform:translate(.65px,-.35px);
-}
-.skeuo-dial-hand.afterglow path{
-  stroke-width:4.6;
-  filter:blur(1.6px);
-}
-.skeuo-chrono.is-glitching .skeuo-dial-hand.afterglow path{opacity:.58}
-@media(prefers-reduced-motion:reduce){
-  .skeuo-chrono-face{transition:none!important}
-  .skeuo-chrono.is-glitching .skeuo-chrono-face{transform:none;filter:drop-shadow(0 0 2.5px rgba(130,193,119,.18))}
-  .skeuo-chrono.is-glitching .skeuo-dial-outer-halo{transform:none;opacity:.28}
-  .skeuo-chrono.is-glitching .skeuo-dial-hand.afterglow path{opacity:.19}
+  .skeuo-dial-ring-afterglow,.skeuo-dial-ring-glow{opacity:.12}
 }
 </style>
 </head>
@@ -5463,22 +5471,17 @@ h1{
     <section class="statusrow">
       <div class="panel display">
         <div id="nextClass"><span class="eyebrow">HAPPENING NOW / CHANNEL 01</span><strong>Engineering Mathematics</strong><p>ROOM 114 · END 16:10 · 42 MIN REMAINING</p></div>
-        <div class="schedule-scope" id="scheduleScope" role="group" aria-label="Schedule interval monitor with optional PC audio">
-          <div class="scope-head"><span id="scheduleScopeLabel">ΔT / SCHED</span><button class="scope-source-toggle" id="scopeAudioToggle" type="button" aria-label="Connect Windows PC audio" aria-pressed="false" title="Connect Windows PC audio">AUX</button><b id="scheduleScopeValue">--</b></div>
-          <svg class="scope-wave" viewBox="0 0 200 42" preserveAspectRatio="none" aria-hidden="true">
-            <path class="scope-gridline" d="M0 7H200 M0 21H200 M0 35H200 M25 0V42 M75 0V42 M125 0V42 M175 0V42"></path>
-            <path class="scope-afterglow" id="scheduleScopeAfterglow" d=""></path>
-            <path class="scope-trace" id="scheduleScopeTrace" d="M0 21H200"></path>
-          </svg>
-          <div class="scope-foot"><span id="scheduleScopeMode">NEXT START</span><span id="scheduleScopeHint">λ ∝ ΔT</span></div>
-        </div>
         <div class="display-right">
           <div class="skeuo-chrono" role="img" aria-label="Analog clock showing Taipei local time">
             <svg class="skeuo-chrono-face" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
               <circle class="skeuo-dial-well" cx="40" cy="40" r="34"></circle>
               <circle class="skeuo-dial-outer-halo" cx="40" cy="40" r="34"></circle>
               <circle class="skeuo-dial-outer" cx="40" cy="40" r="34"></circle>
+              <path class="skeuo-dial-ring-afterglow" id="skeuoClockRingAfterglow" d=""></path>
+              <path class="skeuo-dial-ring-glow" id="skeuoClockRingGlow" d=""></path>
+              <path class="skeuo-dial-ring-trace" id="skeuoClockRingTrace" d=""></path>
               <circle class="skeuo-dial-inner" cx="40" cy="40" r="26"></circle>
+              <path class="skeuo-dial-inner-trace" id="skeuoClockInnerTrace" d=""></path>
               <path class="skeuo-dial-guides" d="M40 17V63 M17 40H63"></path>
               <g class="skeuo-dial-hand hour" id="skeuoClockHour"><path d="M40 44V30"></path></g>
               <g class="skeuo-dial-hand minute" id="skeuoClockMinute"><path d="M40 46V19"></path></g>
@@ -5492,7 +5495,16 @@ h1{
             <div class="indicator"><i class="led" id="skeuoLiveLed"></i><span id="skeuoLiveState">LIVE</span></div>
             <div class="indicator"><i class="led off"></i><span>ALRM</span></div>
           </div>
+        </div>        <div class="schedule-scope" id="scheduleScope" role="group" aria-label="Schedule interval monitor with optional PC audio">
+          <div class="scope-head"><span id="scheduleScopeLabel">ΔT / SCHED</span><button class="scope-source-toggle" id="scopeAudioToggle" type="button" aria-label="Connect Windows PC audio" aria-pressed="false" title="Connect Windows PC audio">AUX</button><b id="scheduleScopeValue">--</b></div>
+          <svg class="scope-wave" viewBox="0 0 200 42" preserveAspectRatio="none" aria-hidden="true">
+            <path class="scope-gridline" d="M0 7H200 M0 21H200 M0 35H200 M25 0V42 M75 0V42 M125 0V42 M175 0V42"></path>
+            <path class="scope-afterglow" id="scheduleScopeAfterglow" d=""></path>
+            <path class="scope-trace" id="scheduleScopeTrace" d="M0 21H200"></path>
+          </svg>
+          <div class="scope-foot"><span id="scheduleScopeMode">NEXT START</span><span id="scheduleScopeHint">λ ∝ ΔT</span></div>
         </div>
+
       </div>
       <div class="panel hanzi" id="hanziWidgetSlot">
         <div class="streak"><span class="micro">HANZI STEPS</span><b>12</b><span class="micro">DAY STREAK</span></div>
@@ -5824,40 +5836,80 @@ h1{
 
 <script id="skeuo-analog-clock-runtime">
 (() => {
-  const face = document.querySelector('.skeuo-chrono');
+  const chrono = document.querySelector('.skeuo-chrono');
   const hourHand = document.getElementById('skeuoClockHour');
   const minuteHand = document.getElementById('skeuoClockMinute');
   const secondHand = document.getElementById('skeuoClockSecond');
-  const ghost = document.getElementById('skeuoClockAfterglow');
-  if (![face,hourHand,minuteHand,secondHand,ghost].every(Boolean)) return;
+  const handAfterglow = document.getElementById('skeuoClockAfterglow');
+  const trace = document.getElementById('skeuoClockRingTrace');
+  const glow = document.getElementById('skeuoClockRingGlow');
+  const afterglow = document.getElementById('skeuoClockRingAfterglow');
+  const inner = document.getElementById('skeuoClockInnerTrace');
+  if (![chrono,hourHand,minuteHand,secondHand,handAfterglow,trace,glow,afterglow,inner].every(Boolean)) return;
+
   const formatter = new Intl.DateTimeFormat('en-GB', {
     timeZone:'Asia/Taipei',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'
   });
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-  let glitchTimeout;
-  const randomOffset = (span) => ((Math.random() * 2 - 1) * span).toFixed(2) + 'px';
-  const update = () => {
+  const tau = Math.PI * 2;
+  let lastFrame = -Infinity;
+
+  function updateHands() {
     const parts = formatter.formatToParts(new Date());
-    const read = (type) => Number(parts.find((entry) => entry.type === type)?.value || 0);
+    const read = (type) => Number(parts.find(entry => entry.type === type)?.value || 0);
     const hour = read('hour'), minute = read('minute'), second = read('second');
-    hourHand.setAttribute('transform','rotate(' + (((hour%12)+minute/60+second/3600)*30) + ' 40 40)');
-    minuteHand.setAttribute('transform','rotate(' + ((minute+second/60)*6) + ' 40 40)');
-    const secondJitter = reducedMotion.matches ? 0 : (second % 2 ? 1.35 : -1.35);
-    secondHand.setAttribute('transform','rotate(' + (second*6+secondJitter) + ' 40 40)');
-    ghost.setAttribute('transform','rotate(' + (second*6-5.2-secondJitter*.55) + ' 40 40)');
-    face.setAttribute('aria-label','Taipei analog clock, '+String(hour).padStart(2,'0')+':'+String(minute).padStart(2,'0')+':'+String(second).padStart(2,'0'));
-    if(!reducedMotion.matches && (Math.random()<.24 || second%13===0)){
-      face.style.setProperty('--glitch-x',randomOffset(1.65));
-      face.style.setProperty('--glitch-y',randomOffset(1.15));
-      face.classList.add('is-glitching');
-      clearTimeout(glitchTimeout);
-      glitchTimeout=setTimeout(()=>face.classList.remove('is-glitching'),120+Math.round(Math.random()*70));
+    hourHand.setAttribute('transform','rotate('+(((hour%12)+minute/60+second/3600)*30)+' 40 40)');
+    minuteHand.setAttribute('transform','rotate('+((minute+second/60)*6)+' 40 40)');
+    secondHand.setAttribute('transform','rotate('+(second*6)+' 40 40)');
+    handAfterglow.setAttribute('transform','rotate('+((second-1)*6)+' 40 40)');
+    chrono.setAttribute('aria-label','Taipei analog clock, '+String(hour).padStart(2,'0')+':'+String(minute).padStart(2,'0')+':'+String(second).padStart(2,'0'));
+  }
+
+  function ringPath(time, radius, strength) {
+    const steps = 120;
+    let d = '';
+    for(let i=0; i<steps; i++){
+      const angle = tau*i/steps;
+      // Integer harmonics join seamlessly at the top: an unbroken, wandering CRT trace.
+      const wave = Math.sin(angle*10-time*8.2)*.76
+                 + Math.sin(angle*17+time*12.5)*.34
+                 + Math.sin(angle*29-time*18.0)*.15;
+      const travellingGain = .56+.44*Math.pow(.5+.5*Math.sin(angle*4-time*2.4),2);
+      const surges = 1+.40*Math.pow(Math.max(0,Math.sin(time*2.15)),12);
+      const r = radius + wave*travellingGain*strength*surges;
+      const x = 40+Math.sin(angle)*r;
+      const y = 40-Math.cos(angle)*r;
+      d += (i?'L':'M')+x.toFixed(2)+' '+y.toFixed(2);
     }
-  };
-  update();
-  setInterval(()=>{if(!document.hidden)update()},1000);
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden)update()});
-  window.addEventListener('pageshow',update);
+    return d+'Z';
+  }
+
+  function updateRing(time) {
+    const previous=trace.getAttribute('d');
+    if(previous && !reducedMotion.matches) afterglow.setAttribute('d',previous);
+    else afterglow.setAttribute('d','');
+    const outline = ringPath(time,34,1.05);
+    trace.setAttribute('d',outline);
+    glow.setAttribute('d',outline);
+    inner.setAttribute('d',ringPath(time*.65,26,.30));
+  }
+
+  function animate(timestamp) {
+    if(!document.hidden && !reducedMotion.matches && chrono.offsetParent!==null && timestamp-lastFrame>=55){
+      lastFrame=timestamp;
+      updateRing(timestamp*.001);
+    }
+    requestAnimationFrame(animate);
+  }
+
+  updateHands();
+  updateRing(0);
+  setInterval(()=>{if(!document.hidden)updateHands();},1000);
+  document.addEventListener('visibilitychange',()=>{
+    if(!document.hidden){updateHands();lastFrame=-Infinity;}
+  });
+  window.addEventListener('pageshow',()=>{updateHands();lastFrame=-Infinity;});
+  requestAnimationFrame(animate);
 })();
 </script>
 
