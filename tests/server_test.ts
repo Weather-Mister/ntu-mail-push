@@ -8,7 +8,7 @@ const assert:any=Object.assign((ok:any,message='Assertion failed')=>{if(!ok)thro
 import { safeHtml, workspaceFor, siteFor, ownedAccount, hash, revise, translateMessage, threadMessageViews, fullThread, gmailClient, clearMailMemory, cachedOverviews } from '../supabase/functions/eren-mail/services.ts';
 import { inlineImages } from '../supabase/functions/eren-mail/render.ts';
 import { deliver, enqueue, reconcile, syncAccount } from '../supabase/functions/eren-mail/jobs.ts';
-import { oauthStart, oauthFinish } from '../supabase/functions/eren-mail/oauth.ts';
+import { oauthStart, oauthCallback, oauthFinish } from '../supabase/functions/eren-mail/oauth.ts';
 import { publicIPv4 } from '../supabase/functions/eren-mail/unsubscribe.ts';
 import { decodeBody, b64url } from '../supabase/functions/eren-mail/domain.mjs';
 class MemoryDB {
@@ -282,4 +282,23 @@ Deno.test('Gmail transient reads retry; sends and permission errors never retry'
  const {db,a}=setup();let requests=0;
  await fetching(async(url:any)=>{if(String(url).includes('oauth2'))return Response.json({access_token:'test',expires_in:3600});requests++;return requests===1?Response.json({error:{status:'UNAVAILABLE'}},{status:503}):Response.json({ok:true});},async()=>{assert((await (await gmailClient(db,a))('profile')).ok);assert.equal(requests,2);});
  for(const method of ['GET','POST']){requests=0;await fetching(async()=>{requests++;return Response.json({error:{errors:[{reason:method==='POST'?'backendError':'insufficientPermissions',message:'PRIVATE CONTENT'}]}},{status:method==='POST'?503:403});},async()=>{try{await (await gmailClient(db,a))('messages/send',method,method==='POST'?{raw:'test'}:undefined);throw new Error('Expected failure');}catch(e){assert(!e.message.includes('PRIVATE CONTENT'));assert.equal(e.reason,method==='POST'?'backendError':'insufficientPermissions');}assert.equal(requests,1);});}clearMailMemory();
+});
+
+Deno.test('OAuth callback returns to the authenticated initiating workspace on success and cancellation',async()=>{
+ Deno.env.set('SUPABASE_URL','https://test.supabase.co');
+ for(const app of ['eren','begum'])for(const cancelled of [false,true]){
+  const {db}=setup(),workspace=await hash(app+'-test-workspace');
+  db.tables.schedule_workspaces.push({workspace_hash:workspace,app_slug:app});
+  db.secrets['eren-mail:'+workspace+':config:GOOGLE_CLIENT_ID']='client';
+  db.secrets['eren-mail:'+workspace+':config:GOOGLE_CLIENT_SECRET']='secret-test';
+  const grant=await oauthStart(db,workspace,{challenge:await hash('browser-proof')});
+  const callback=new URL('https://test.supabase.co/functions/v1/eren-mail/oauth/callback');
+  callback.searchParams.set('state',grant.state);callback.searchParams.set(cancelled?'error':'code',cancelled?'access_denied':'fixture-code');
+  await fetching(async(url:any)=>String(url).includes('oauth2')?Response.json({refresh_token:'fixture-refresh',access_token:'fixture-access',scope:'https://www.googleapis.com/auth/gmail.modify'}):Response.json({emailAddress:'student@example.test'}),async()=>{
+   const response=await oauthCallback(db,callback);
+   assert.equal(response.status,303);
+   assert.equal(response.headers.get('Location'),'https://weather-mister.github.io/ntu-mail-push/'+(app==='begum'?'begum/':'')+'?open=mail&'+(cancelled?'connect_error=1':'connected=1'));
+   assert(!response.headers.get('Location')!.includes(grant.state));
+  });
+ }
 });

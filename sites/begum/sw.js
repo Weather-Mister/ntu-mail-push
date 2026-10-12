@@ -101,15 +101,12 @@ self.addEventListener('push', event => {
 
 self.addEventListener('notificationclick', event => {
   event.notification.close();
-  const targetUrl = new URL(event.notification.data?.url || self.registration.scope, self.registration.scope);
-  event.waitUntil(
-    clients.matchAll({ type:'window', includeUncontrolled:true }).then(list => {
-      if (targetUrl.origin !== self.location.origin) return clients.openWindow(targetUrl.href);
-      const existing = list.find(client => {
-        try { return new URL(client.url).pathname.startsWith(ROOT); } catch (error) { return false; }
-      });
-      if (existing){ existing.navigate(targetUrl.href); return existing.focus(); }
-      return clients.openWindow(targetUrl.href);
-    })
-  );
+  const appUrl = new URL(self.registration.scope);
+  event.waitUntil(clients.matchAll({type:'window',includeUncontrolled:true}).then(list=>{
+    const existing=list.find(client=>{
+      try { const url=new URL(client.url);return url.origin===appUrl.origin&&url.pathname.startsWith(ROOT); }
+      catch { return false; }
+    });
+    return existing?existing.focus().catch(()=>clients.openWindow(appUrl.href)):clients.openWindow(appUrl.href);
+  }));
 });

@@ -55,7 +55,7 @@ test('Begüm PWA assets remain scoped and version matched', () => {
     assert.ok(sw.includes(asset), 'cache includes ' + asset);
   }
   assert.match(sw, /const ROOT = new URL\(self.registration.scope\)\.pathname/);
-  assert.match(app, /serviceWorker\.register\('\.\/sw\.js\?v=13'/);
+  assert.match(app, /serviceWorker\.register\('\.\/sw\.js\?v=14'/);
   assert.match(app, /begum-ntu-manual-todos-v1/);
   assert.match(app, /ntu-schedule-begum-pairing-key-v1/);
 });
