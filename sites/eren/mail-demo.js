@@ -5,6 +5,7 @@
   const PREF='eren-mail-preferences-v1', DRAFT='eren-mail-draft-v1', OAUTH='eren-mail-oauth-v1', LAYOUT='eren-mail-layout-v2', FLOATING='eren-mail-floating-v1';
   const translationCache=new Map(),translatedOpen=new Set();
   const originalMailMarkupCache=new WeakMap();
+  const frameMailMarkupCache=new WeakMap();
   const isSkeuoDemo=()=>location.pathname.endsWith('/skeuo-demo.html');
   const hasChinese=text=>/[\u3400-\u9fff]/.test(String(text||''));
   const translationKey=(thread,msg)=>thread.accountId+':'+msg.id;
@@ -35,7 +36,7 @@
       if(t.messages.reduce((n,msg)=>n+(msg.html?.length||0)+(msg.text?.length||0),0)<2000000)putCache(threadCache,key,t,8);
       if(version===state.readVersion&&state.selected===key&&state.thread){
         state.thread=t;
-        $$('[data-body]').forEach(frame=>{const i=Number(frame.dataset.body);if(frame.dataset.loaded==='1'&&t.messages[i]?.html)frame.srcdoc=t.messages[i].html;});
+        $$('[data-body]').forEach(frame=>{const i=Number(frame.dataset.body);if(frame.dataset.loaded==='1'&&t.messages[i]?.html)frame.srcdoc=mailFrameHtml(t.messages[i]);});
         if(isSkeuoDemo())$$('[data-mailx-original]').forEach(el=>{
           const msg=t.messages[Number(el.dataset.mailxOriginal)];
           if(el.dataset.loaded==='1'&&msg?.html)el.innerHTML=terminalOriginalHtml(msg);
@@ -371,14 +372,39 @@
     const description=stored?(active?'Show original Chinese email':'Show English translation'):'Translate Chinese email to English';
     return `<button class="mailx-translate-button" type="button" data-mailx-translate="${i}" aria-label="${description}" aria-pressed="${active}" title="${description}"><span class="mailx-translate-symbol" aria-hidden="true">⇄</span>${label}</button>`;
   }
+  function safeMailHref(value){
+    const raw=String(value||'').trim();if(!raw||raw.length>4000||/[\u0000-\u0020\u007f]/.test(raw))return '';
+    try{const url=new URL(/^www\./i.test(raw)?'https://'+raw:raw);return ['https:','http:','mailto:'].includes(url.protocol)&&!url.username&&!url.password?url.href:'';}catch{return '';}
+  }
+  function linkedMailText(value){
+    const text=String(value||'');let out='',offset=0;
+    for(const match of text.matchAll(/(?:https?:\/\/|mailto:|www\.)[^\s<>"'\u0000-\u001f]+/gi)){
+      let label=match[0].replace(/[.,;!?]+$/,'');
+      for(const [open,close] of [['(',')'],['[',']'],['{','}']])while(label.endsWith(close)&&label.split(close).length>label.split(open).length)label=label.slice(0,-1);
+      const href=safeMailHref(label);out+=escapeHtml(text.slice(offset,match.index));
+      out+=href?'<a href="'+escapeHtml(href)+'" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer">'+escapeHtml(label)+'</a>':escapeHtml(label);
+      out+=escapeHtml(match[0].slice(label.length));offset=match.index+match[0].length;
+    }
+    return out+escapeHtml(text.slice(offset));
+  }
+  function mailFrameHtml(msg){
+    const cached=frameMailMarkupCache.get(msg);if(cached?.html===msg.html)return cached.content;
+    const doc=new DOMParser().parseFromString(String(msg.html||''),'text/html');
+    for(const link of doc.body.querySelectorAll('a')){const href=safeMailHref(link.getAttribute('href'));if(!href){link.removeAttribute('href');continue;}link.href=href;link.target='_blank';link.rel='noopener noreferrer';link.referrerPolicy='no-referrer';}
+    const walker=doc.createTreeWalker(doc.body,NodeFilter.SHOW_TEXT),nodes=[];let node;
+    while((node=walker.nextNode()))if(!node.parentElement?.closest('a,script,style,textarea,select'))nodes.push(node);
+    for(const node of nodes){const content=linkedMailText(node.textContent);if(!content.includes('<a '))continue;const template=doc.createElement('template');template.innerHTML=content;node.replaceWith(template.content);}
+    const style=doc.createElement('style');style.textContent='body a[href]{color:#3e7450;text-decoration:underline;text-underline-offset:2px;text-shadow:0 0 4px rgba(140,255,160,.18);overflow-wrap:anywhere}body a[href]:hover{color:#28603b;text-shadow:0 0 5px rgba(140,255,160,.3)}';doc.head.appendChild(style);
+    const content='<!doctype html>'+doc.documentElement.outerHTML;frameMailMarkupCache.set(msg,{html:msg.html,content});return content;
+  }
   /* Rebuild only harmless semantic elements. Never inject Gemini HTML directly into the reader. */
   function safeTranslationHtml(value,allowImages=false) {
     const template=document.createElement('template');
     template.innerHTML=String(value||'').slice(0,allowImages?1500000:60000);
     const allowed=new Set(['p','div','br','strong','b','em','i','u','ul','ol','li','blockquote','h1','h2','h3','h4','table','thead','tbody','tfoot','tr','td','th','hr','a']);
     const discard=new Set(['script','style','iframe','object','svg','math','form','template','noscript']);
-    const render=node=>{
-      if(node.nodeType===Node.TEXT_NODE)return escapeHtml(node.textContent||'');
+    const render=(node,inLink=false)=>{
+      if(node.nodeType===Node.TEXT_NODE)return inLink?escapeHtml(node.textContent||''):linkedMailText(node.textContent||'');
       if(node.nodeType!==Node.ELEMENT_NODE)return '';
       const tag=node.localName.toLowerCase();
       if(discard.has(tag))return '';
@@ -396,17 +422,13 @@
         if(!src)return '';
         return '<img src="'+escapeHtml(src)+'" alt="'+escapeHtml(node.getAttribute('alt')||'')+'" loading="lazy" decoding="async" referrerpolicy="no-referrer">';
       }
-      const content=Array.from(node.childNodes,render).join('');
+      const content=Array.from(node.childNodes,child=>render(child,inLink||tag==='a')).join('');
       if(!allowed.has(tag))return content;
       if(tag==='br'||tag==='hr')return '<'+tag+'>';
       let attrs='';
       if(tag==='a'){
-        const raw=node.getAttribute('href')||'';
-        try{
-          const url=new URL(raw);
-          if(['https:','http:','mailto:'].includes(url.protocol))
-            attrs=' href="'+escapeHtml(url.href)+'" target="_blank" rel="noopener noreferrer"';
-        }catch{}
+        const href=safeMailHref(node.getAttribute('href'));
+        if(href)attrs=' href="'+escapeHtml(href)+'" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer"';
       }
       if(tag==='td'||tag==='th'){
         for(const name of ['colspan','rowspan']){
@@ -416,7 +438,7 @@
       }
       return '<'+tag+attrs+'>'+content+'</'+tag+'>';
     };
-    return Array.from(template.content.childNodes,render).join('');
+    return Array.from(template.content.childNodes,node=>render(node)).join('');
   }
   function terminalOriginalHtml(msg) {
     const cached=originalMailMarkupCache.get(msg);
@@ -430,9 +452,9 @@
     return content;
   }
   function originalMessageMarkup(msg,i) {
-    if(!msg.html)return '<div class="mailx-mail-body">'+escapeHtml(msg.text||'(No text body)')+'</div>';
+    if(!msg.html)return '<div class="mailx-mail-body">'+linkedMailText(msg.text||'(No text body)')+'</div>';
     const originalFrame='<iframe class="mailx-html-body" data-body="'+i+'" sandbox="allow-popups allow-popups-to-escape-sandbox" referrerpolicy="no-referrer" title="Email body from '+escapeHtml(msg.sender)+'"></iframe>';
-    const alternative='<details class="mailx-text-alternative"><summary>Plain text / accessible view</summary><div class="mailx-mail-body">'+escapeHtml(msg.text)+'</div></details>';
+    const alternative='<details class="mailx-text-alternative"><summary>Plain text / accessible view</summary><div class="mailx-mail-body">'+linkedMailText(msg.text)+'</div></details>';
     if(!isSkeuoDemo())return originalFrame+alternative;
     // A consistent terminal-first reading surface; retain the untouched sender
     // layout in its original sandboxed iframe for complex branded emails.
@@ -445,10 +467,10 @@
       const lines=block.split('\n').map(l=>l.trim()).filter(Boolean);
       if(!lines.length)return '';
       if(lines.every(l=>/^[-*•]\s+/.test(l)))
-        return '<ul>'+lines.map(l=>'<li>'+escapeHtml(l.replace(/^[-*•]\s+/,''))+'</li>').join('')+'</ul>';
+        return '<ul>'+lines.map(l=>'<li>'+linkedMailText(l.replace(/^[-*•]\s+/,''))+'</li>').join('')+'</ul>';
       if(lines.every(l=>/^\d+[.)]\s+/.test(l)))
-        return '<ol>'+lines.map(l=>'<li>'+escapeHtml(l.replace(/^\d+[.)]\s+/,''))+'</li>').join('')+'</ol>';
-      return '<p>'+lines.map(escapeHtml).join('<br>')+'</p>';
+        return '<ol>'+lines.map(l=>'<li>'+linkedMailText(l.replace(/^\d+[.)]\s+/,''))+'</li>').join('')+'</ol>';
+      return '<p>'+lines.map(linkedMailText).join('<br>')+'</p>';
     }).join('');
   }
   function translatedBlock(t,msg,i) {
@@ -476,7 +498,7 @@
     const loadBody=details=>details.querySelectorAll('[data-body]').forEach(frame=>{
       const original=frame.closest('.mailx-original-layout');
       if(original&&!original.open)return; // Don't load external images until original layout is requested.
-      if(!frame.dataset.loaded){frame.srcdoc=t.messages[Number(frame.dataset.body)].html;frame.dataset.loaded='1';}
+      if(!frame.dataset.loaded){frame.srcdoc=mailFrameHtml(t.messages[Number(frame.dataset.body)]);frame.dataset.loaded='1';}
     });
     const loadTerminalBody=details=>{
       if(!isSkeuoDemo())return;
