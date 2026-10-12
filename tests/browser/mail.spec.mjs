@@ -1,11 +1,12 @@
 import {test,expect} from '@playwright/test';
+const garden=process.env.MAIL_TEST_WORKSPACE==='begum';
 const accounts=[{id:'a1',email:'first@example.org',display_name:'Personal',status:'active'},{id:'a2',email:'second@example.org',display_name:'University',status:'active'}];
 const classification={type:'University',context:'Engineering Mathematics',priority:'High',action:'Needs reply',code:null,blocked:false};
 const msg={id:'m1',threadId:'t1',accountId:'a1',sender:'Professor',from:'Professor <prof@example.org>',email:'prof@example.org',replyTo:'prof@example.org',to:'first@example.org',cc:'',subject:'Thursday meeting',timestamp:Date.now(),labels:['INBOX','UNREAD'],snippet:'Can you meet Thursday?',classification,unsubscribe:{web:null,mailto:null,listId:'',oneClick:false},text:'Can you meet Thursday?\nFull message content.',html:'',attachments:[],count:1};
 const composeButton=page=>page.locator('#mailxComposeMobile:visible, #mailxComposeMain:visible').first();
 async function boot(page,options={}){
  const calls=[],errors=[];page.on('pageerror',e=>{if(!e.message.includes("Failed to read the 'serviceWorker' property from 'Navigator'")||!e.message.includes('sandboxed'))errors.push(e.message);});
- await page.addInitScript(()=>{if(window===window.top)localStorage.setItem('ntu-schedule-pairing-key-v1','test-key-'.repeat(6));});
+ await page.addInitScript(garden=>{if(window===window.top){if(garden)localStorage.setItem('begum-mail-access-key-v1','b'.repeat(40));localStorage.setItem(garden?'ntu-schedule-begum-pairing-key-v1':'ntu-schedule-pairing-key-v1',garden?'begum':'test-key-'.repeat(6));}},garden);
  await page.route('https://**/*',async route=>{
   const req=route.request(),url=new URL(req.url()),r=url.searchParams.get('route');let body={};try{body=req.postDataJSON()||{};}catch{}calls.push({route:r,body,url});
   let data={};const first={...msg,...(options.oldTimestamp?{timestamp:options.oldTimestamp}:{}),...(options.attachments?{attachments:options.attachments}:{}),...(options.subject?{subject:options.subject}:{}),...(options.multiThread?{count:2}:{})};
@@ -40,9 +41,9 @@ async function boot(page,options={}){
  await page.goto('/');await page.locator('#mailDashboardButton').click();await expect(page.locator('#mailxList .mailx-message')).toHaveCount(2);return {calls,errors};
 }
 test('dashboard remains intact; live account selector combines and filters inbox',async({page},info)=>{
- const {calls,errors}=await boot(page);await expect(page.locator('.topbar-actions > #mailDashboardButton')).toHaveCount(1);await expect(page.locator('#ntuHubSection #mailDashboardButton')).toHaveCount(0);await expect(page.locator('#mailxConnection')).toBeHidden();const selector=page.locator('.mailx-top-account');await expect(selector.locator('option')).toHaveCount(3);await expect(selector).toBeVisible();await selector.selectOption('a2');await expect(page.locator('#mailxList .mailx-message')).toHaveCount(1);await expect(page.locator('#mailxList')).toContainText('Your receipt');await selector.selectOption('all');await expect(page.locator('#mailxList .mailx-message')).toHaveCount(2);
- await page.locator('#mailxClose').click();await page.locator('[data-day="1"]').click();await expect(page.locator('#scheduleList')).toContainText('Engineering Mathematics');
- await expect(page.locator('#todoList')).toContainText('Existing manual task');await expect(page.locator('#transferList')).toContainText('Existing transfer');await expect(page.locator('#coolDeadlines')).toContainText('Existing COOL assignment');await expect(page.locator('a[aria-label="Open NTU Mail"]')).toHaveAttribute('href','https://wmail1.cc.ntu.edu.tw/rc/index.php');expect(calls.some(c=>c.route==='hanzi-widget')).toBeTruthy();expect(errors).toEqual([]);
+ const {calls,errors}=await boot(page);await expect(page.locator(garden?'.week-actions > #mailDashboardButton':'.topbar-actions > #mailDashboardButton')).toHaveCount(1);await expect(page.locator('#ntuHubSection #mailDashboardButton')).toHaveCount(0);await expect(page.locator('#mailxConnection')).toBeHidden();const selector=page.locator('.mailx-top-account');await expect(selector.locator('option')).toHaveCount(3);await expect(selector).toBeVisible();await selector.selectOption('a2');await expect(page.locator('#mailxList .mailx-message')).toHaveCount(1);await expect(page.locator('#mailxList')).toContainText('Your receipt');await selector.selectOption('all');await expect(page.locator('#mailxList .mailx-message')).toHaveCount(2);
+ await page.locator('#mailxClose').click();await page.locator('[data-day="1"]').click();await expect(page.locator('#scheduleList')).toContainText(garden?'Essentials of Global Health':'Engineering Mathematics');
+ await expect(page.locator('#todoList')).toContainText('Existing manual task');if(!garden)await expect(page.locator('#transferList')).toContainText('Existing transfer');await expect(page.locator('#coolDeadlines')).toContainText('Existing COOL assignment');await expect(page.locator('a[aria-label="Open NTU Mail"]')).toHaveAttribute('href','https://wmail1.cc.ntu.edu.tw/rc/index.php');if(!garden)expect(calls.some(c=>c.route==='hanzi-widget')).toBeTruthy();expect(errors).toEqual([]);
 });
 test('full reader, mobile back, normal reply and safe controls',async({page},info)=>{
  await boot(page);await page.locator('#mailxList .mailx-message').first().click();await expect(page.locator('.mailx-mail-body')).toContainText('Full message content.');await expect(page.getByRole('button',{name:'Reply with AI',exact:true})).toHaveCount(0);await expect(page.locator('[data-action="unsubscribe"]')).toHaveCount(0);
@@ -137,7 +138,7 @@ test('desktop splitters resize panes and persist their widths',async({page},info
  expect(before).toBeTruthy();expect(handle).toBeTruthy();
  await page.mouse.move(handle.x+handle.width/2,handle.y+60);await page.mouse.down();await page.mouse.move(handle.x+handle.width/2+72,handle.y+60,{steps:5});await page.mouse.up();
  const after=await list.boundingBox();expect(after.width).toBeGreaterThan(before.width+40);
- const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('eren-mail-layout-v2')||'{}'));
+ const saved=await page.evaluate(garden=>JSON.parse(localStorage.getItem(garden?'begum-mail-layout-v2':'eren-mail-layout-v2')||'{}'),garden);
  expect(saved.list).toBeGreaterThan(before.width+40);
 });
 

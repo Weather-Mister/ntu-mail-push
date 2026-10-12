@@ -1,0 +1,65 @@
+/* Begüm's Garden mail. Shared reader/composer behavior; Garden palette only. */
+.garden-mail-shortcut{display:inline-flex;align-items:center;justify-content:center;gap:7px;text-decoration:none;flex-shrink:0;color:var(--forest);background:#f0f5e6;border:1px solid #ccdbc1}
+.garden-mail-shortcut .icon{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7}
+.garden-mail-shortcut:hover{background:#e3edda}
+.mailx-dialog{--mail-ink:#274f3b;--mail-muted:#748476;--mail-accent:#679d73;font-family:var(--sans);color:#253e31;background:#f6f8ee;border:1px solid #b9cba9;border-radius:24px;box-shadow:0 24px 72px #274f3b33}
+.mailx-dialog::backdrop{background:#1f47354d;backdrop-filter:blur(4px)}
+.mailx-dialog .mailx-topbar{background:linear-gradient(115deg,#fffef7,#edf3e3);border-color:#dde8cf}
+.mailx-dialog .mailx-title{font-family:var(--serif);font-weight:600;color:#274f3b}
+.mailx-dialog .mailx-brand-icon{background:#274f3b;border-radius:12px}
+.mailx-dialog .mailx-topbar>.mailx-search{background:#f1f5e9;border-color:#d9e3cd;color:#274f3b}
+.mailx-dialog .mailx-search:focus{border-color:#8aae94;box-shadow:0 0 0 3px #679d731c}
+.mailx-dialog .mailx-topbar .mailx-compose-main{background:#274f3b;border-radius:12px}
+.mailx-dialog .mailx-topbar .mailx-compose-main:hover{background:#1f4735}
+.mailx-dialog .mailx-account-switch{background:#ecd8dc;color:#8b5b6b}
+.mailx-dialog .mailx-main,.mailx-dialog .mailx-mobile-tabs{background:#f6f8ee}
+.mailx-dialog .mailx-nav{border-color:#dde8cf}
+.mailx-dialog .mailx-filter:hover{background:#eaf0df;color:#274f3b}
+.mailx-dialog .mailx-filter.is-active,.mailx-dialog .mailx-mobile-tab.is-active{background:#dce9d2;color:#274f3b}
+.mailx-dialog .mailx-rail-count,.mailx-dialog .mailx-unread-dot{background:#679d73}
+.mailx-dialog .mailx-list-pane,.mailx-dialog .mailx-reader,.mailx-dialog .mailx-reader-toolbar{background:#fffef7;border-color:#dde8cf}
+.mailx-dialog .mailx-message-wrap{border-color:#e8eddc}
+.mailx-dialog .mailx-message-wrap .mailx-message{background:#fffef7}
+.mailx-dialog .mailx-message-wrap .mailx-message:hover{background:#f3f7e9}
+.mailx-dialog .mailx-message-wrap .mailx-message.is-selected{background:#eaf2e1;box-shadow:inset 3px 0 #679d73}
+.mailx-dialog .mailx-avatar{background:#e4edd9;color:#52745a}
+.mailx-dialog .mailx-avatar.tone-1{background:#dfeadc;color:#4f7155}
+.mailx-dialog .mailx-avatar.tone-2{background:#f1dfe5;color:#956679}
+.mailx-dialog .mailx-avatar.tone-3{background:#f6e9c7;color:#937338}
+.mailx-dialog .mailx-avatar.tone-4{background:#e1e9f2;color:#597784}
+.mailx-dialog .mailx-reader-subject{font-family:var(--serif);font-weight:550;color:#274f3b}
+.mailx-dialog .mailx-toolbar-reply,.mailx-dialog .mailx-send{background:#274f3b;border-color:#274f3b;color:#fff}
+.mailx-dialog .mailx-toolbar-forward{background:#f3e4e8;border-color:#e9d6de;color:#8b5b6b}
+.mailx-dialog .mailx-chip.high{background:#f7ebcb;color:#8b6c39}
+.mailx-dialog .mailx-row-actions{background:#fffef7;border-color:#dde8cf}
+.mailx-dialog .mailx-action:hover{background:#eaf2e1;color:#274f3b}
+.mailx-dialog .mailx-compose,.mailx-dialog .mailx-sheet{font-family:var(--sans);background:#fffef7;border-color:#ccdbc1;box-shadow:0 12px 40px #274f3b24}
+.mailx-dialog .mailx-compose-head,.mailx-dialog .mailx-sheet-head{background:#f0f5e6;border-color:#dde8cf;color:#274f3b}
+.mailx-dialog .mailx-compose-title,.mailx-dialog .mailx-sheet-title{font-family:var(--serif);color:#274f3b}
+.mailx-dialog .mailx-compose-fields,.mailx-dialog .mailx-field-row,.mailx-dialog .mailx-compose-foot{border-color:#dde8cf}
+.mailx-dialog .mailx-ai-wrap{background:#f4ecec;border-color:#ead8de}
+.mailx-dialog .mailx-ai-label{color:#956679}
+.mailx-dialog .mailx-ai-generate{background:#274f3b;color:#fff}
+.mailx-dialog .mailx-ai-chip{background:#fff9f6;border-color:#ead8de;color:#8b5b6b}
+.mailx-dialog .mailx-format-toolbar{background:#f7f8ef;border-color:#e1e8d4}
+.mailx-dialog .mailx-email-body{color:#253e31;background:#fffef7}
+.mailx-dialog .mailx-schedule{background:#f7ebcb;color:#8b6c39;border-color:#ecd9a7}
+.mailx-dialog .mailx-translate-button{display:inline-flex;align-items:center;justify-content:center;gap:5px;flex:0 0 auto;min-height:36px;padding:0 11px;border:1px solid #cbd8c4;border-radius:999px;background:#eaf0e2;color:#4d705c;font-family:inherit;font-size:12px;font-weight:600;line-height:1.2;cursor:pointer;box-shadow:0 0 9px #679d731a;text-shadow:0 0 4px #6fa87729}
+.mailx-dialog .mailx-translate-button:hover{background:#e1ead7;color:#395c47}
+.mailx-dialog .mailx-translate-button[aria-pressed="true"]{background:#dce8d5;border-color:#adc5a5;color:#395c47}
+.mailx-dialog .mailx-translate-symbol{font-size:16px;line-height:1}
+.mailx-dialog .mailx-translation{flex:0 0 auto;padding:12px 0 20px;color:#253e31;overflow-wrap:anywhere}
+.mailx-dialog .mailx-translation-label{padding-bottom:8px;margin-bottom:13px;border-bottom:1px solid #dde8cf;color:#748476;font-size:10px;font-weight:650;letter-spacing:.08em}
+.mailx-dialog .mailx-translation-subject{margin:0 0 13px;font-family:var(--serif);font-size:20px;line-height:1.4;font-weight:550}
+.mailx-dialog .mailx-translation-body{font-size:15px;line-height:1.8;white-space:normal;overflow-x:auto;overflow-wrap:anywhere}
+.mailx-dialog .mailx-translation-body p{margin:0 0 13px}
+.mailx-dialog .mailx-translation-body :is(h1,h2,h3,h4){font-size:18px;line-height:1.4;margin:14px 0 9px}
+.mailx-dialog .mailx-translation-body table{width:100%;border-collapse:collapse;margin:10px 0 16px}
+.mailx-dialog .mailx-translation-body :is(td,th){padding:8px 10px;border-bottom:1px solid #dde8cf;text-align:left;vertical-align:top}
+.mailx-dialog .mailx-translation-body :is(ul,ol){padding-left:23px;margin:8px 0 14px}
+.mailx-dialog .mailx-thread-details :is(.mailx-html-body,.mailx-mail-body,.mailx-text-alternative)[hidden]{display:none!important}
+.mailx-dialog .mailx-translation-body a{color:#4d705c;text-decoration:underline;text-underline-offset:3px;text-shadow:0 0 5px #679d7333}
+.mailx-dialog :is(button,input,textarea,select,a):focus-visible{outline:2px solid #8aae94;outline-offset:2px}
+.mailx-peek{font-family:var(--sans);background:#fffef7;border-color:#dde8cf;box-shadow:0 8px 30px #274f3b24}
+#mailDashboardButton .mailx-launch-count{background:#679d73;box-shadow:0 0 0 2px #f6f8ee}
+@media(max-width:860px){.mailx-dialog{width:100vw;height:100dvh;border-radius:0}.garden-mail-shortcut{width:36px;padding:0;gap:0}.garden-mail-shortcut>span:not(.mailx-launch-count){display:none}}

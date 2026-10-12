@@ -139,6 +139,8 @@ test('Garden polish has stacked COOL dates, colorful lessons and no clipped day 
 
 test('Thursday courses remain readable, inside their cards, and need no schedule scrolling', async ({page})=>{
  await page.goto('/?pair=begum');
+ // Choose a regular Thursday explicitly; the current week can contain one-time Chatterbox lessons.
+ await page.locator('#weekDateJump').fill('2026-10-08');
  await page.locator('[data-day="4"]').click();
  await expect(page.locator('.lesson')).toHaveCount(3);
  const layout=await page.evaluate(()=>{
@@ -172,6 +174,8 @@ test('Thursday courses remain readable, inside their cards, and need no schedule
 
 test('COOL deadlines and honey-do tasks scroll independently while class cards stay visible', async ({page})=>{
  await page.goto('/?pair=begum');
+ // Choose a regular Thursday explicitly; the current week can contain one-time Chatterbox lessons.
+ await page.locator('#weekDateJump').fill('2026-10-08');
  await page.locator('[data-day="4"]').click();
  await expect(page.locator('.lesson')).toHaveCount(3);
  const result=await page.evaluate(()=>{

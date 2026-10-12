@@ -17,6 +17,9 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Fraunces:opsz,wght,SOFT,WONK@9..144,400..700,45,1&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="./styles.css?v=110">
 <link rel="stylesheet" href="./garden-theme.css?v=12">
+<link rel="stylesheet" href="./mail-demo.css?v=12">
+<link rel="stylesheet" href="./mail-modern.css?v=5">
+<link rel="stylesheet" href="./mail-garden.css?v=1">
 </head>
 <body>
 <svg class="sr-only" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
@@ -57,6 +60,7 @@
     <button type="button" class="nav-button" id="previousWeek" aria-label="Previous week">‹</button>
     <button type="button" class="nav-button today-button" id="jumpTodayButton">Today</button>
     <button type="button" class="nav-button" id="nextWeek" aria-label="Next week">›</button>
+    <a id="mailDashboardButton" class="nav-button garden-mail-shortcut" href="?open=mail" aria-label="Open Mail" title="Mail"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-mail"/></svg><span>Mail</span></a>
     <button id="pageRefreshButton" type="button" class="nav-button" aria-label="Refresh page" title="Refresh page">↻</button>
   </div>
 </div>
@@ -208,4 +212,5 @@
 <script src="./app.js?v=118"></script>
 <script src="./todo-realtime.js?v=1"></script>
 <script src="./garden-bees.js?v=2" defer></script>
+<script src="./mail-demo.js?v=31" data-workspace="begum"></script>
 </body></html>

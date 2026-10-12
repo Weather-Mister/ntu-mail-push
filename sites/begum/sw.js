@@ -1,4 +1,4 @@
-const CACHE_NAME = 'begum-schedule-github-v21';
+const CACHE_NAME = 'begum-schedule-github-v22';
 const NTU_MAIL_URL = 'https://wmail1.cc.ntu.edu.tw/rc/index.php';
 const ROOT = new URL(self.registration.scope).pathname;
 const asset = path => ROOT + (path.startsWith('/') ? path.slice(1) : path);
@@ -11,6 +11,10 @@ const APP_SHELL = [
   asset('app.js?v=118'),
   asset('todo-realtime.js?v=1'),
   asset('garden-bees.js?v=2'),
+  asset('mail-demo.js?v=31'),
+  asset('mail-demo.css?v=12'),
+  asset('mail-modern.css?v=5'),
+  asset('mail-garden.css?v=1'),
   asset('manifest.webmanifest?v=1'),
   asset('garden-favicon.svg'),
   asset('apple-touch-icon.png'),
@@ -50,7 +54,7 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  const freshShell = new Set([asset('styles.css'), asset('garden-theme.css'), asset('app.js'), asset('garden-bees.js'), asset('manifest.webmanifest')]);
+  const freshShell = new Set([asset('styles.css'), asset('garden-theme.css'), asset('app.js'), asset('garden-bees.js'), asset('mail-demo.js'), asset('mail-demo.css'), asset('mail-modern.css'), asset('mail-garden.css'), asset('manifest.webmanifest')]);
   if (freshShell.has(url.pathname)){
     event.respondWith(
       fetch(request, { cache:'no-store' })
@@ -91,21 +95,18 @@ self.addEventListener('push', event => {
     badge:ICON_URL,
     tag:data.tag || 'begum-ntu-mail',
     renotify:true,
-    data:{ url:NTU_MAIL_URL }
+    data:{ url:self.registration.scope }
   }));
 });
 
 self.addEventListener('notificationclick', event => {
   event.notification.close();
-  const targetUrl = new URL(event.notification.data?.url || self.registration.scope, self.registration.scope);
-  event.waitUntil(
-    clients.matchAll({ type:'window', includeUncontrolled:true }).then(list => {
-      if (targetUrl.origin !== self.location.origin) return clients.openWindow(targetUrl.href);
-      const existing = list.find(client => {
-        try { return new URL(client.url).pathname.startsWith(ROOT); } catch (error) { return false; }
-      });
-      if (existing){ existing.navigate(targetUrl.href); return existing.focus(); }
-      return clients.openWindow(targetUrl.href);
-    })
-  );
+  const appUrl = new URL(self.registration.scope);
+  event.waitUntil(clients.matchAll({type:'window',includeUncontrolled:true}).then(list=>{
+    const existing=list.find(client=>{
+      try { const url=new URL(client.url);return url.origin===appUrl.origin&&url.pathname.startsWith(ROOT); }
+      catch { return false; }
+    });
+    return existing?existing.focus().catch(()=>clients.openWindow(appUrl.href)):clients.openWindow(appUrl.href);
+  }));
 });

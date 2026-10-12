@@ -2,13 +2,23 @@
 (() => {
   'use strict';
   const API='https://evckshjtzikuusnkdnjn.supabase.co/functions/v1/eren-mail';
-  const PREF='eren-mail-preferences-v1', DRAFT='eren-mail-draft-v1', OAUTH='eren-mail-oauth-v1', LAYOUT='eren-mail-layout-v2', FLOATING='eren-mail-floating-v1';
+  const isGarden=document.currentScript?.dataset.workspace==='begum';
+  const namespace=isGarden?'begum':'eren';
+  const PAIRING_STORE=isGarden?'begum-mail-access-key-v1':'ntu-schedule-pairing-key-v1';
+  const PREF=namespace+'-mail-preferences-v1', DRAFT=namespace+'-mail-draft-v1', OAUTH=namespace+'-mail-oauth-v1', LAYOUT=namespace+'-mail-layout-v2', FLOATING=namespace+'-mail-floating-v1';
+  let unlockKey='';
+  function mailPairing(){
+    if(!isGarden)return typeof requirePairing==='function'?requirePairing():'';
+    const key=unlockKey||localStorage.getItem(PAIRING_STORE)||'';
+    if(key.length<32)throw new Error('Unlock Mail with your private access key.');
+    return key;
+  }
   const translationCache=new Map(),translatedOpen=new Set();
   const originalMailMarkupCache=new WeakMap();
   const frameMailMarkupCache=new WeakMap();
   const isSkeuoDemo=()=>location.pathname.endsWith('/skeuo-demo.html');
   const mobileMailLayout=matchMedia('(max-width:860px)');
-  const translationEnabled=()=>isSkeuoDemo()||mobileMailLayout.matches;
+  const translationEnabled=()=>isGarden||isSkeuoDemo()||mobileMailLayout.matches;
   const hasChinese=text=>/[\u3400-\u9fff]/.test(String(text||''));
   const translationKey=(thread,msg)=>thread.accountId+':'+msg.id;
   const wantsEnglish=(thread,msg)=>translatedOpen.has(translationKey(thread,msg))&&translationCache.has(translationKey(thread,msg));
@@ -21,7 +31,7 @@
   const viewKey=()=>JSON.stringify([state.account,state.filter,state.query]);
   const threadKey=m=>m.accountId+':'+m.threadId;
   function clearMailCache(){translationCache.clear();translatedOpen.clear();bootstrapRequest=null;cacheEpoch++;pageCache.clear();threadCache.clear();threadRequests.clear();threadImageRequests.clear();getRequests.clear();}
-  function ownCache(){const owner=typeof requirePairing==='function'?requirePairing():'';if(cacheOwner&&cacheOwner!==owner){clearMailCache();state.readVersion++;state.loadVersion++;initialized=false;state.accounts=[];state.messages=[];state.thread=null;}cacheOwner=owner;return owner;}
+  function ownCache(){const owner=mailPairing();if(cacheOwner&&cacheOwner!==owner){clearMailCache();state.readVersion++;state.loadVersion++;initialized=false;state.accounts=[];state.messages=[];state.thread=null;}cacheOwner=owner;return owner;}
   function putCache(cache,key,value,limit=20){cache.delete(key);cache.set(key,{value,at:Date.now()});while(cache.size>limit)cache.delete(cache.keys().next().value);}
   async function fetchThread(m,force=false){
     const key=threadKey(m),cached=threadCache.get(key);if(!force&&cached&&Date.now()-cached.at<45000)return cached.value;
@@ -169,14 +179,14 @@
     window.addEventListener('resize',()=>{if(ce().pane.classList.contains('is-open'))placeFloating(ce().pane,'compose');const sheet=$('#mailxSheet');if(sheet)placeFloating(sheet,'sheet');});
   }
   async function api(route,body=null,params={}) {
-    let key;try{key=typeof requirePairing==='function'?requirePairing():'';}catch(e){dialog.close();throw e;}
+    let key;try{key=mailPairing();}catch(e){dialog.close();throw e;}
     const url=new URL(API);url.searchParams.set('route',route);Object.entries(params).forEach(([k,v])=>{if(v!==undefined&&v!==null)url.searchParams.set(k,String(v));});
     const requestKey=body===null?url.toString():'';
     if(requestKey&&getRequests.has(requestKey))return getRequests.get(requestKey);
     const pending=(async()=>{
       let r;try{r=await fetch(url,{method:body===null?'GET':'POST',headers:{'x-schedule-key':key,...(body===null?{}:{'Content-Type':'application/json'})},body:body===null?undefined:JSON.stringify(body),cache:'no-store',signal:AbortSignal.timeout(['ai','translate'].includes(route)?65000:['send','drafts/attachment'].includes(route)?90000:30000)});}catch{throw new Error('Connection interrupted. Your draft is safe. For sends, check Outbox before trying again.');}
       const data=await r.json().catch(()=>({error:'Mail service is unavailable.'}));
-      if(!r.ok)throw new Error(data.error||'Mail request failed.');return data;
+      if(!r.ok){if(isGarden&&r.status===401&&route==='bootstrap')try{localStorage.removeItem(PAIRING_STORE);}catch{}throw new Error(data.error||'Mail request failed.');}return data;
     })();
     if(requestKey)getRequests.set(requestKey,pending);
     try{return await pending;}finally{if(requestKey&&getRequests.get(requestKey)===pending)getRequests.delete(requestKey);}
@@ -845,8 +855,19 @@
     });
   }
   async function refreshAccounts(){const before=state.accounts.map(a=>a.id).join(','),data=await api('accounts');state.accounts=data.accounts;if(state.account!=='all'&&!state.accounts.some(a=>a.id===state.account))state.account='all';state.messages=state.messages.filter(m=>state.accounts.some(a=>a.id===m.accountId));if(['drafts','outbox'].includes(state.filter))renderFilters();else renderList();if(before!==state.accounts.map(a=>a.id).join(',')){clearMailCache();loadMail(false,true);}}
+  function unlockGardenMail(){
+    sheet('Unlock your mail',`<p>Enter your private Mail access key once on this device.</p><form id="mailxUnlockForm"><label>Mail access key<input id="mailxAccessKey" type="password" minlength="32" maxlength="200" required autocomplete="off" spellcheck="false" autocapitalize="off"></label><button class="mailx-send" type="submit">Unlock Mail</button></form>`,panel=>{
+      panel.querySelector('form').onsubmit=sheetGuard(async event=>{
+        event.preventDefault();const form=event.target;if(!form.reportValidity())return;
+        const button=form.querySelector('button');button.disabled=true;
+        try{unlockKey=form.querySelector('input').value.trim();await api('status');localStorage.setItem(PAIRING_STORE,unlockKey);panel.remove();unlockKey='';clearMailCache();await openDialog();}
+        finally{unlockKey='';if(button.isConnected)button.disabled=false;}
+      });
+    });
+  }
   async function openDialog(){
     if(!dialog.open)dialog.showModal();shell.classList.remove('is-reading','is-reader-focused');
+    if(isGarden&&!localStorage.getItem(PAIRING_STORE)){unlockGardenMail();return;}
     if(matchMedia('(min-width:861px)').matches){
       const main=$('.mailx-main'),v=clampLayout(parseFloat(getComputedStyle(main).getPropertyValue('--mailx-nav-w')),parseFloat(getComputedStyle(main).getPropertyValue('--mailx-list-w')));
       applyLayout(v.nav,v.list);
@@ -864,7 +885,7 @@
       const params=new URLSearchParams(location.search);if(params.has('connect_error'))showToast('Google connection was not completed. Try connecting again.');
       if(params.has('connected')&&!readStore(OAUTH,null)&&!state.accounts.length)notice('Return to the browser or PWA where you started connecting to complete account pairing.');
       if(params.has('connected')||params.has('connect_error')){params.delete('connected');params.delete('connect_error');history.replaceState({},'',location.pathname+'?'+params.toString());}
-    }catch(e){notice(e.message);}
+    }catch(e){notice(e.message);if(isGarden&&!localStorage.getItem(PAIRING_STORE))unlockGardenMail();}
   }
   function modernChrome(){
     const top=$('.mailx-topbar'),nav=$('.mailx-nav'),search=$('#mailxSearch'),refresh=$('#mailxRefresh'),compose=$('#mailxComposeMain');
@@ -934,7 +955,7 @@
     dialog.addEventListener('cancel',e=>{if($('#mailxSheet')){e.preventDefault();$('#mailxSheet').remove();}else if(ce().pane.classList.contains('is-open')){e.preventDefault();closeComposer();}else keepDraft();});
     window.addEventListener('pagehide',keepDraft);window.addEventListener('focus',()=>{if(dialog.open)guarded(finishConnection)();});
     document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&dialog.open&&!ce().pane.classList.contains('is-open'))guarded(()=>loadMail())();});
-    blankReader();renderFilters();setTimeout(()=>{if(!dialog.open&&localStorage.getItem('ntu-schedule-pairing-key-v1')){ownCache();bootstrap().then(data=>{if(!initialized){state.accounts=data.accounts;state.messages=data.messages||[];updateUnread();}}).catch(()=>{});}},1500);const open=new URLSearchParams(location.search).get('open');if(open==='mail'||open==='mail-demo')setTimeout(openDialog,80);
+    blankReader();renderFilters();setTimeout(()=>{if(!dialog.open&&localStorage.getItem(PAIRING_STORE)){ownCache();bootstrap().then(data=>{if(!initialized){state.accounts=data.accounts;state.messages=data.messages||[];updateUnread();}}).catch(()=>{});}},1500);const open=new URLSearchParams(location.search).get('open');if(open==='mail'||open==='mail-demo')setTimeout(openDialog,80);
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount);else mount();
 })();

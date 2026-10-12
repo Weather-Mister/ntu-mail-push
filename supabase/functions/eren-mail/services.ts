@@ -26,13 +26,22 @@ export const SCOPES='https://www.googleapis.com/auth/gmail.modify';
 export async function rate(admin:any,bucket:string,limit=120,seconds=60) {
  if(!check(await admin.rpc('eren_mail_rate',{p_bucket:bucket,p_limit:limit,p_seconds:seconds}))) throw new MailError(429,'Too many requests. Please try again shortly.');
 }
+/** Mail never grants access through the publicly documented Garden schedule word. */
 export async function workspaceFor(req:Request,admin:any) {
  const key=req.headers.get('x-schedule-key') || '';
- if(key.length<32 || key.length>200) throw new MailError(401,'Pair this device with your Eren schedule first.');
- const workspace=hash(key);
- const row=check(await admin.from('schedule_workspaces').select('workspace_hash,app_slug').eq('workspace_hash',await workspace).eq('app_slug','eren').maybeSingle());
- if(!row) throw new MailError(401,'This key cannot access Eren Mail.');
- return row.workspace_hash;
+ if(key.length<32||key.length>200)throw new MailError(401,'Pair this device with your private Mail access key first.');
+ const keyHash=await hash(key);
+ const row=check(await admin.from('schedule_workspaces').select('workspace_hash,app_slug').eq('workspace_hash',keyHash).in('app_slug',['eren','begum']).maybeSingle());
+ if(row)return row.workspace_hash;
+ const garden=check(await admin.from('schedule_workspaces').select('workspace_hash').eq('app_slug','begum').maybeSingle());
+ const expected=garden?await secret(admin,'eren-mail:'+garden.workspace_hash+':access-key-hash'):null;
+ if(!expected||expected!==keyHash)throw new MailError(401,'This key cannot access Mail.');
+ return garden.workspace_hash;
+}
+export async function siteFor(admin:any,workspace:string) {
+ const row=check(await admin.from('schedule_workspaces').select('app_slug').eq('workspace_hash',workspace).in('app_slug',['eren','begum']).maybeSingle());
+ if(!row)throw new MailError(401,'Unknown mail workspace.');
+ return SITE+(row.app_slug==='begum'?'begum/':'');
 }
 export async function ownedAccount(admin:any,workspace:string,id:string) {
  if(!/^[a-f0-9-]{36}$/i.test(id||'')) throw new MailError(400,'Select a connected account.');
