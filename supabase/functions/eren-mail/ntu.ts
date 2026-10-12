@@ -126,7 +126,7 @@ class Roundcube {
   // candidates (including reply References); compare the actual root header so
   // reconciliation can never mistake a different message for this queued send.
   const matches=[];let page=1;
-  do{const list=await this.list(folder,page,JSON.stringify(expected),'','base','text');for(const row of list.rows){if(!/^\d{1,15}$/.test(row.uid))continue;const bytes=await this.raw({mailbox:folder,uid:row.uid});if(rawMessageId(bytes)===expected)matches.push(row);}if(!list.hasMore)break;}while(++page<=5);
+  do{const list=await this.list(folder,page,expected,'','base','text');for(const row of list.rows){if(!/^\d{1,15}$/.test(row.uid))continue;const bytes=await this.raw({mailbox:folder,uid:row.uid});if(rawMessageId(bytes)===expected)matches.push(row);}if(!list.hasMore)break;}while(++page<=5);
   return matches;
  }
  async ensureFolder(folder:string){
