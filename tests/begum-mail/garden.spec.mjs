@@ -1,3 +1,4 @@
+import '../browser/skeuo-unified-mail.spec.mjs';
 import '../browser/mail.spec.mjs';
 import {test,expect} from '@playwright/test';
 
@@ -36,7 +37,7 @@ for(const format of ['text','html'])test(`modern mobile ${format} mail uses styl
  expect(appearance.radius).toBe('999px');expect(appearance.background).toBe('rgb(234, 240, 226)');expect(appearance.color).toBe('rgb(77, 112, 92)');expect(appearance.height).toBeGreaterThanOrEqual(36);expect(appearance.right).toBeLessThanOrEqual(page.viewportSize().width);
  await button.click();const translation=page.locator('.mailx-translation');await expect(translation).toBeVisible();await expect(translation.locator('table')).toContainText('October 12');await expect(translation.locator('strong')).toHaveText('October 12');
  await expect(translation.locator('script,img')).toHaveCount(0);await expect(translation.locator('a')).toHaveAttribute('target','_blank');expect(await page.evaluate(()=>window.translationInjected)).toBeUndefined();
- const original=page.locator(format==='html'?'.mailx-thread-details.is-current > .mailx-html-body':'.mailx-thread-details.is-current > .mailx-mail-body');await expect(original).toBeHidden();await expect(button).toHaveAttribute('aria-pressed','true');await expect(button).toContainText('Original');
+ const original=page.locator(format==='html'?'.mailx-thread-details.is-current > .mailx-original-body':'.mailx-thread-details.is-current > .mailx-mail-body');await expect(original).toBeHidden();await expect(button).toHaveAttribute('aria-pressed','true');await expect(button).toContainText('Original');
  expect(calls).toEqual([{accountId:'modern-account',messageId:'modern-chinese'}]);
  await button.click();await expect(original).toBeVisible();await expect(translation).toHaveCount(0);await expect(button).toContainText('English');await button.click();await expect(translation).toBeVisible();expect(calls).toHaveLength(1);expect(errors).toEqual([]);
 });

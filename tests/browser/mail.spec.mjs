@@ -74,7 +74,9 @@ test('styled newsletter images load by default without a notice',async({page})=>
  const html=`${head}<table bgcolor="#ccddff" width="600"><tr><td style="text-align:center;padding:24px"><h1>Less searching. More saving.</h1><span data-external-image="blocked">[Honey illustration]</span><a href="https://example.org" style="background:#4066ff;color:#fff;border-radius:20px;padding:10px 20px">Start shopping</a></td></tr></table>`;
  const imagesHtml=html.replace('data:;', 'data: https:;').replace('<span data-external-image="blocked">[Honey illustration]</span>','<img src="https://images.example.org/banner.png" alt="Honey illustration">');
  const {calls,errors}=await boot(page,{html,imagesHtml});await page.locator('#mailxList .mailx-message').first().click();
- const frame=page.frameLocator('.mailx-html-body');await expect(frame.locator('h1')).toHaveCSS('font-size','32px');await expect(frame.locator('td')).toHaveCSS('text-align','center');await expect(frame.locator('a')).toHaveCSS('background-color','rgb(64, 102, 255)');
+ const frame=garden?page.locator('.mailx-original-body'):page.frameLocator('.mailx-html-body');
+ if(garden){await expect(frame.locator('h1')).toContainText('Less searching. More saving.');await expect(frame.locator('[style],style,script')).toHaveCount(0);await expect(page.locator('.mailx-original-layout')).not.toHaveAttribute('open');}
+ else{await expect(frame.locator('h1')).toHaveCSS('font-size','32px');await expect(frame.locator('td')).toHaveCSS('text-align','center');await expect(frame.locator('a')).toHaveCSS('background-color','rgb(64, 102, 255)');}
  await expect(page.locator('.mailx-image-notice')).toHaveCount(0);await expect(page.getByRole('button',{name:'Show external images',exact:true})).toHaveCount(0);await expect(frame.locator('img')).toHaveAttribute('src','https://images.example.org/banner.png');
  expect(calls.filter(c=>c.route==='thread').some(c=>c.url.searchParams.has('externalMessageId'))).toBe(false);await expect(page.locator('.mailx-html-body')).toHaveAttribute('sandbox','allow-popups allow-popups-to-escape-sandbox');expect(errors).toEqual([]);
 });
@@ -126,8 +128,8 @@ test('HTML mail body expands beyond the old fixed-height box',async({page},info)
  test.skip(info.project.name!=='desktop','desktop layout');
  await boot(page,{html:'<div style="height:900px">Tall message</div>',imagesHtml:'<div style="height:900px">Tall message</div>'});
  await page.locator('[data-row="0"]').click();
- const box=await page.locator('.mailx-thread-details.is-current > .mailx-html-body').boundingBox();
- expect(box).toBeTruthy();expect(box.height).toBeGreaterThan(440);
+ if(garden){await expect(page.locator('.mailx-original-body')).toContainText('Tall message');await expect(page.locator('.mailx-original-body')).toBeVisible();await expect(page.locator('.mailx-html-body')).not.toHaveAttribute('srcdoc',/Tall message/);}
+ else{const box=await page.locator('.mailx-thread-details.is-current > .mailx-html-body').boundingBox();expect(box).toBeTruthy();expect(box.height).toBeGreaterThan(440);}
 });
 
 test('desktop splitters resize panes and persist their widths',async({page},info)=>{
@@ -267,7 +269,7 @@ test('forward keeps an existing prefix',async({page})=>{
 });
 
 test('collapsed older messages load their HTML only when expanded',async({page})=>{
- await boot(page,{multiThread:true});await page.locator('[data-row="0"]').click();const old=page.locator('.mailx-thread-details').first();await expect(old).not.toHaveAttribute('open','');await expect(old.locator('iframe')).not.toHaveAttribute('srcdoc',/Earlier body/);await expect(page.locator('.mailx-thread-details').last()).toHaveAttribute('open','');await old.locator('summary').first().click();await expect(old.locator('iframe')).toHaveAttribute('srcdoc',/<p>Earlier body<\/p>/);
+ await boot(page,{multiThread:true});await page.locator('[data-row="0"]').click();const old=page.locator('.mailx-thread-details').first();await expect(old).not.toHaveAttribute('open','');await expect(old.locator('iframe')).not.toHaveAttribute('srcdoc',/Earlier body/);await expect(page.locator('.mailx-thread-details').last()).toHaveAttribute('open','');await old.locator('summary').first().click();if(garden){await expect(old.locator('.mailx-original-body')).toContainText('Earlier body');await expect(old.locator('iframe')).not.toHaveAttribute('srcdoc',/<p>Earlier body<\/p>/);}else await expect(old.locator('iframe')).toHaveAttribute('srcdoc',/<p>Earlier body<\/p>/);
 });
 
 test('star and reversible trash actions work without opening the reader',async({page})=>{
