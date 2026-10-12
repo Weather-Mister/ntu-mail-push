@@ -77,7 +77,7 @@ export async function deliver(admin:any,job:any) {
  } catch(e) {
   const definitive=started && e instanceof MailError && ['gmail_error','mail_delivery_rejected'].includes(e.code) && [400,401,403,404,413,429].includes(e.status);
   const transient=!started && (!(e instanceof MailError)||e.status>=500||e.status===429) && job.attempts<5;
-  check(await admin.from('eren_mail_outbox').update({status:started&&!definitive?'uncertain':transient?'pending':'failed',send_at:transient?new Date(Date.now()+Math.min(30,2**job.attempts)*60000).toISOString():job.send_at,error:started&&!definitive?'The mail provider may have accepted this message. Check status; it will not be resent automatically.':transient?'Temporary service issue; retry scheduled.':'Send failed. Open Outbox to recover the draft.',locked_until:null}).eq('id',job.id).eq('attempts',job.attempts).eq('status',started?'sending':'processing'));
+  check(await admin.from('eren_mail_outbox').update({status:started&&!definitive?'uncertain':transient?'pending':'failed',send_at:transient?new Date(Date.now()+Math.min(30,2**job.attempts)*60000).toISOString():job.send_at,error:started&&!definitive?'The mail provider may have accepted this message. Check status; it will not be resent automatically.':transient?'Temporary service issue; retry scheduled.':(e instanceof MailError?e.message+' Open Outbox to recover the draft.':'Send failed. Open Outbox to recover the draft.'),locked_until:null}).eq('id',job.id).eq('attempts',job.attempts).eq('status',started?'sending':'processing'));
  }
 }
 export async function reconcile(admin:any,job:any) {

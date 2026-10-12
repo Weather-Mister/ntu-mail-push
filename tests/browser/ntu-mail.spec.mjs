@@ -2,7 +2,7 @@ import {test,expect} from '@playwright/test';
 const ntuId='22222222-2222-4222-8222-222222222222',gmailId='11111111-1111-4111-8111-111111111111';
 const classification={type:'University',priority:'Normal',action:'FYI',blocked:false,ruleIds:[]};
 for(const path of ['/','/skeuo-demo.html']){
- test(`${path} NTU and Gmail share account selection, reader actions, attachments and reply sender`,async({page})=>{
+ test(`${path} NTU and Gmail share account selection, reader actions, attachments and reply sender`,async({page},info)=>{
   const calls=[],errors=[];page.on('pageerror',e=>{if(!e.message.includes('serviceWorker'))errors.push(e.message);});
   await page.addInitScript(()=>localStorage.setItem('ntu-schedule-pairing-key-v1','test-key-'.repeat(6)));
   const accounts=[{id:gmailId,email:'me@gmail.com',display_name:'Personal',provider:'gmail',status:'active'},{id:ntuId,email:'b15999999@ntu.edu.tw',display_name:'NTU Mail',provider:'ntu',status:'active'}];
@@ -31,6 +31,7 @@ for(const path of ['/','/skeuo-demo.html']){
   await page.locator('[data-action="reply"]').click();await expect(page.locator('#mailxFrom')).toHaveValue(ntuId);await expect(page.locator('#mailxFrom')).toBeDisabled();await expect(page.locator('#mailxTo')).toHaveValue('teacher@ntu.edu.tw');
   await page.locator('#mailxBody').fill('Thank you.');await page.locator('#mailxSend').click();await expect.poll(()=>calls.some(c=>c.r==='send'&&c.body.accountId===ntuId&&c.body.threadId===ntu.threadId&&c.body.body==='Thank you.')).toBeTruthy();
   await expect(page.locator('#mailxToast')).toContainText('Sent through NTU Mail');
+  if(info.project.name==='iphone'&&await page.locator('[data-action="back"]').isVisible())await page.locator('[data-action="back"]').click();
   await page.locator('#mailxSettings').click();await page.locator('#mailxConnectNtu').click();await expect(page.locator('#mailxNtuConnect')).toBeVisible();await expect(page.locator('#mailxNtuConnect input[name="password"]')).toHaveAttribute('type','password');
   expect(errors).toEqual([]);
  });

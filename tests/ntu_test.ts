@@ -13,6 +13,7 @@ Deno.test('Roundcube login environment is JSON only; malformed or executable val
 Deno.test('NTU metadata timestamps interpret provider local time in Taipei',()=>{
  const time=ntuDate('<span title="2026-10-12 11:38:00">Today 11:38</span>');assert(time===Date.parse('2026-10-12T03:38:00Z'));
  assert(ntuDate('Today 11:38',Date.parse('2026-10-12T03:50:00Z'))===time);
+ assert(ntuDate('Fri 06:01',Date.parse('2026-10-12T03:50:00Z'))===Date.parse('2026-10-09T06:01:00+08:00'));
  assert(ntuDate('not a date')===0);
 });
 Deno.test('NTU metadata refresh preserves previously learned classification and applies current explicit rules',()=>{

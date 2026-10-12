@@ -1,10 +1,10 @@
 name: Eren Mail checks
 on:
   pull_request:
-    paths: ['sites/eren/**', 'supabase/**', 'tests/**', 'package*.json', 'playwright.config.mjs', '.github/workflows/eren-mail-check.yml']
+    paths: ['sites/eren/**', 'supabase/**', 'tests/**', 'package*.json', 'deno.json', 'playwright.config.mjs', '.github/workflows/eren-mail-check.yml']
   push:
     branches: [main]
-    paths: ['sites/eren/**', 'supabase/**', 'tests/**', 'package*.json', 'playwright.config.mjs', '.github/workflows/eren-mail-check.yml']
+    paths: ['sites/eren/**', 'supabase/**', 'tests/**', 'package*.json', 'deno.json', 'playwright.config.mjs', '.github/workflows/eren-mail-check.yml']
   workflow_dispatch:
 permissions:
   contents: read

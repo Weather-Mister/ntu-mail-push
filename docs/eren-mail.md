@@ -17,6 +17,20 @@ For unattended daily use, account for Google’s OAuth publishing status. Extern
 
 Optional operator alternative: set Supabase Edge Function secrets `MAIL_GOOGLE_CLIENT_ID`, `MAIL_GOOGLE_CLIENT_SECRET`, `MAIL_GEMINI_API_KEY`, `MAIL_GEMINI_MODEL`. Environment values take precedence over the secure setup form. These are backend secrets, never GitHub Pages values. Do not put them in Git, chat, public URLs, or client JavaScript.
 
+## NTU Mail accounts
+
+The normal site and `skeuo-demo.html` use the same `mail-demo.js` and the same mail backend. NTU appears beside Gmail in both account selectors, and both use the same reader, actions, classification rules, composer, attachments, translation, app drafts and scheduled-send queue.
+
+Open **Mail → Settings → Connect NTU Mail**, then use the student ID (with or without `@ntu.edu.tw`) and mailbox password. Reconnecting the same address retains its account identity and display name. Passwords are verified against NTU before being saved in Vault; they are never returned to the browser or stored in its local/session storage.
+
+Receiving uses authenticated Roundcube requests, including actual server read/unread and star flags. Roundcube responses are parsed as JSON command arguments, never evaluated as JavaScript. A bounded server-memory cookie session serializes requests so searches and folder state cannot interfere. Full MIME is fetched only for the reader, reply context and downloads, with a streaming size limit and the existing HTML sanitizer.
+
+Sending uses NTU SMTP over TLS on port 465, with the queue's exact MIME, Message-ID, reply headers and attachments. The accepted message is then imported into NTU Sent. Failure to confirm a Sent copy is reported as a warning on a delivered message, never retried as another send. An uncertain SMTP result remains uncertain until checked; no automatic duplicate send is attempted.
+
+NTU exposes individual messages rather than Gmail's thread API. Stable logical references retain reader/Undo identity when this client moves a message between Inbox, Archive and Trash. Existing NTU notifications and the separate webmail shortcut retain their original behavior.
+
+For this account's initial operator setup, an expiring, private provisioning approval allows only a pinned repository/ref/workflow GitHub OIDC proof. The runner sends existing NTU Secrets directly to the protected backend over HTTPS, and the approval is removed after import. The workflow prints only status and account ID; passwords and tokens never enter source or logs. Routine connections use the paired-device form above.
+
 ## Architecture and isolation
 
 - The original `ntu-schedule-api` function is unchanged. Pairing, schedules, COOL, Manual Tasks, PC Transfer and Hanzi remain on their existing paths.
@@ -24,7 +38,7 @@ Optional operator alternative: set Supabase Edge Function secrets `MAIL_GOOGLE_C
 - All `eren_mail_*` tables have RLS enabled with no browser policies; all privileges for `PUBLIC`, `anon`, and `authenticated` are revoked. Only the backend service role accesses them. Vault definer code is in `eren_mail_private`, with fixed search paths and service-only grants; exposed wrappers are invoker functions.
 - Google refresh tokens, provider configuration, saved drafts and queued send bodies are encrypted with Supabase Vault. Message bodies are fetched from Gmail on demand. The database stores only metadata, labels, classifications, extracted codes, rules, cursors, and send state as needed.
 - OAuth has an expiring single-use state, PKCE and a separate browser proof. Pending grants are attached only after authenticated completion on the initiating device. Expired pending secrets are removed by the worker.
-- The existing NTU Mail tile still links to Roundcube. It is not a Gmail account. `check_mail.py`, both notification workflows, POP3 state, push destinations, subscriptions, and `sites/begum/` are untouched.
+- The existing NTU Mail tile still links to Roundcube. It is separate from the optional integrated NTU provider account. `check_mail.py`, both notification workflows, POP3 state, push destinations, subscriptions, and `sites/begum/` are untouched.
 - Service worker cache `ntu-schedule-github-v8` includes the new mail assets. API responses use `no-store`; the service worker does not cache cross-origin mail responses.
 
 ## Background processing and sends

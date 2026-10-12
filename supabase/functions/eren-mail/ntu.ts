@@ -53,6 +53,7 @@ export function ntuDate(value:any,now=Date.now()) {
  if(/^today\b/i.test(s))s=s.replace(/^today\s*,?\s*/i,local+' ');
  if(/^yesterday\b/i.test(s))s=s.replace(/^yesterday\s*,?\s*/i,new Date(now+8*3600000-86400000).toISOString().slice(0,10)+' ');
  if(/^\d\d?:\d\d/.test(s))s=local+' '+s;
+ const weekday=s.match(/^(Sun|Mon|Tue|Wed|Thu|Fri|Sat)\s+(\d{1,2}:\d{2}(?::\d{2})?)/i);if(weekday){const names=['sun','mon','tue','wed','thu','fri','sat'],today=new Date(now+8*3600000).getUTCDay(),delta=(today-names.indexOf(weekday[1].toLowerCase())+7)%7;s=new Date(now+8*3600000-delta*86400000).toISOString().slice(0,10)+' '+weekday[2];}
  const iso=s.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})\s+(\d{1,2}):(\d{2})(?::(\d{2}))?/);
  if(iso)s=`${iso[1]}-${iso[2].padStart(2,'0')}-${iso[3].padStart(2,'0')}T${iso[4].padStart(2,'0')}:${iso[5]}:${iso[6]||'00'}+08:00`;
  const parsed=Date.parse(s);return Number.isFinite(parsed)?parsed:0;
@@ -121,7 +122,8 @@ class Roundcube {
   // Settings' create-folder action refuses an existing folder; first check the
   // provider's folder list rather than treating every provider error as success.
   const names=Object.keys(this.env.mailboxes||{});if(names.includes(folder)||folder===this.folders.sent||folder===this.folders.trash)return;
-  try{await this.ajax('save-folder',{_name:folder,_parent:'',_mbox:'',_type:'mail'},true,'settings');}catch(e){if(e.code!=='ntu_action_failed')throw e;await this.list(folder);}
+  try{await this.ajax('save-folder',{_name:folder,_parent:'',_mbox:'',_type:'mail'},true,'settings');}catch(e){if(e.status<500)throw e;await this.list(folder);}
+  this.env.mailboxes={...this.env.mailboxes,[folder]:{name:folder}};
  }
 }
 export async function ntuSession(admin:any,account:any):Promise<Roundcube>{
@@ -141,7 +143,7 @@ async function metadata(admin:any,account:any,s:Roundcube,rows:any[],folder:stri
 export async function ntuList(admin:any,account:any,filter='inbox',query='',cursor=''){
  const s=await ntuSession(admin,account);return await s.serial(async()=>{
   let page=1,index=0;try{if(cursor){const parsed=JSON.parse(decodeBody(cursor));page=parsed.page;index=parsed.index;if(!Number.isInteger(page)||page<1||page>1000||!Number.isInteger(index)||index<0)throw new Error();}}catch{throw new MailError(400,'Invalid NTU mail page.');}
-  const all=['all','starred','codes','low','blocked'].includes(filter);const folders=all?['INBOX',s.folders.sent,s.folders.archive]:filter==='sent'?[s.folders.sent]:filter==='trash'?[s.folders.trash]:filter==='archived'?[s.folders.archive]:filter==='gmail-drafts'?[s.folders.drafts]:['INBOX'];
+  const all=['all','starred','codes','low','blocked'].includes(filter);const folders=(all?['INBOX',s.folders.sent,s.folders.archive]:filter==='sent'?[s.folders.sent]:filter==='trash'?[s.folders.trash]:filter==='archived'?[s.folders.archive]:filter==='gmail-drafts'?[s.folders.drafts]:['INBOX']).filter(f=>f!=='Archive'||Object.hasOwn(s.env.mailboxes||{},f));
   if(index>=folders.length)return {messages:[],next:null};const folder=folders[index],flag=filter==='unread'?'UNSEEN':filter==='starred'?'FLAGGED':'';
   const listing=await s.list(folder,page,query,flag),messages=await metadata(admin,account,s,listing.rows,folder);
   const next=listing.hasMore?b64url(JSON.stringify({index,page:page+1})):index+1<folders.length?b64url(JSON.stringify({index:index+1,page:1})):null;
@@ -171,7 +173,7 @@ export async function ntuSend(admin:any,account:any,s:Roundcube,rawEncoded:strin
  const raw=Uint8Array.from(atob(rawEncoded.replace(/-/g,'+').replace(/_/g,'/')),c=>c.charCodeAt(0)),email=await PostalMime.parse(raw),recipients=email.to?.flatMap(a=>'address'in a&&a.address?[a.address]:[])||[];
  if(address(email.from?.address||'')!==account.email||!recipients.length)throw new MailError(400,'Invalid NTU sender or recipients.','mail_delivery_rejected');
  const transport=nodemailer.createTransport({host:'smtps.ntu.edu.tw',port:465,secure:true,auth:{user:s.credentials.username,pass:s.credentials.password},connectionTimeout:15000,greetingTimeout:15000,socketTimeout:25000,disableFileAccess:true,disableUrlAccess:true});
- let sent:any;try{sent=await transport.sendMail({envelope:{from:account.email,to:recipients},raw:new TextDecoder().decode(raw)});}catch(e){if(e.responseCode||e.code==='EAUTH')throw new MailError(400,'NTU rejected this send. Check the account and recipient addresses.','mail_delivery_rejected');throw new MailError(502,'NTU delivery could not be confirmed. Check Outbox before sending again.','ntu_send_uncertain');}finally{transport.close();}
+ let sent:any;try{sent=await transport.sendMail({envelope:{from:account.email,to:recipients},raw:new TextDecoder().decode(raw)});}catch(e){if(e.responseCode||e.code==='EAUTH')throw new MailError(400,'NTU rejected this send ('+String(e.responseCode||e.code||'unknown')+'; '+String(e.command||'SMTP').split(' ')[0]+'). Check the account and recipient addresses.','mail_delivery_rejected');throw new MailError(502,'NTU delivery could not be confirmed. Check Outbox before sending again.','ntu_send_uncertain');}finally{transport.close();}
  let warning='';
  try{
   const form=new FormData();for(const [key,value] of Object.entries({_task:'mail',_action:'import',_mbox:s.folders.sent,_remote:'1',_token:s.env.request_token}))form.append(key,value);form.append('_file[]',new Blob([raw.buffer as ArrayBuffer],{type:'message/rfc822'}),'sent.eml');
