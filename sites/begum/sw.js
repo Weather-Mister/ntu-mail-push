@@ -14,7 +14,7 @@ const APP_SHELL = [
   asset('mail-demo.js?v=34'),
   asset('mail-demo.css?v=12'),
   asset('mail-modern.css?v=5'),
-  asset('mail-garden.css?v=3'),
+  asset('mail-garden.css?v=4'),
   asset('manifest.webmanifest?v=1'),
   asset('garden-favicon.svg'),
   asset('apple-touch-icon.png'),
