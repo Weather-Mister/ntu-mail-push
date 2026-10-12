@@ -83,8 +83,7 @@ jobs:
                       except Exception:
                           pass
           
-          # Do not try an alternate port after an authentication rejection.
-          # Probe TLS directly first, and then STARTTLS only when port 993 cannot connect.
+          # The initial diagnostic found port 993 refused; now check port 143 with mandatory STARTTLS.
           class SameOriginRedirect(urllib.request.HTTPRedirectHandler):
               def redirect_request(self, req, fp, code, msg, headers, newurl):
                   parsed = urllib.parse.urlsplit(newurl)
@@ -100,6 +99,31 @@ jobs:
                   attrs = dict(attrs)
                   if tag == "input" and attrs.get("type") == "hidden" and attrs.get("name"):
                       self.fields[attrs["name"]] = attrs.get("value", "")
+          
+          
+          def parse_message_flags(execution):
+              decoder = json.JSONDecoder()
+              flags = []
+              for match in re.finditer(r"add_message_row\(", execution):
+                  position = match.end()
+                  arguments = []
+                  try:
+                      for index in range(3):
+                          while position < len(execution) and execution[position].isspace():
+                              position += 1
+                          value, position = decoder.raw_decode(execution, position)
+                          arguments.append(value)
+                          if index < 2:
+                              while position < len(execution) and execution[position].isspace():
+                                  position += 1
+                              if execution[position] != ",":
+                                  raise ValueError("Unexpected argument separator")
+                              position += 1
+                      if isinstance(arguments[2], dict):
+                          flags.append(arguments[2])
+                  except (ValueError, IndexError):
+                      continue
+              return flags
           
           def roundcube_probe():
               cookies = http.cookiejar.CookieJar()
@@ -139,7 +163,9 @@ jobs:
                   match = re.search(r'"request_token"\s*:\s*("(?:\\.|[^"\\])*")', page)
                   if match:
                       request_token = json.loads(match.group(1))
-                  report("roundcube", result="authenticated_mail_page_verified")
+                  report("roundcube", result="authenticated_mail_page_verified",
+                         folder_settings_present=all(re.search(r'"' + key + r'"\s*:', page) for key in
+                                                      ("sent_mailbox", "drafts_mailbox", "trash_mailbox")))
                   for action in ("list", "getunread"):
                       query = {"_task": "mail", "_action": action, "_mbox": "INBOX", "_remote": "1"}
                       status, body = request(BASE + "?" + urllib.parse.urlencode(query), ajax=True, token=request_token)
@@ -155,11 +181,15 @@ jobs:
                           continue
                       # Parse only metadata; never execute the response's JavaScript.
                       if action == "list":
+                          flags = parse_message_flags(execution)
                           report("roundcube_list", result="authenticated_json_response_verified",
                                  response_action_matches=response.get("action") == action,
                                  message_count=env.get("messagecount") if isinstance(env.get("messagecount"), int) else None,
                                  listed_message_rows=len(re.findall(r"add_message_row", execution)),
-                                 unread_flags_present=bool(re.search(r'"unread"\s*:', execution)))
+                                 parsed_flag_rows=len(flags),
+                                 flag_field_names=sorted({key for item in flags for key in item}),
+                                 seen_rows=sum(bool(item.get("seen")) for item in flags),
+                                 unseen_rows=sum(not bool(item.get("seen")) for item in flags))
                       else:
                           match = re.search(r'set_unread_count\(\s*"INBOX"\s*,\s*(\d+)', execution)
                           report("roundcube_getunread", result="authenticated_json_response_verified",
@@ -185,8 +215,7 @@ jobs:
           # Socket checks do not touch message bodies or flags.
           # Webmail checks use only login, metadata GETs, and logout.
           with concurrent.futures.ThreadPoolExecutor(max_workers=3) as pool:
-              futures = [pool.submit(imap_probe, ("msa.ntu.edu.tw", 993)),
-                         pool.submit(imap_probe, ("wmail1.cc.ntu.edu.tw", 993)),
+              futures = [pool.submit(imap_probe, ("msa.ntu.edu.tw", 143)),
                          pool.submit(roundcube_probe)]
               for future in futures:
                   future.result()
