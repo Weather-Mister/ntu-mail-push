@@ -370,7 +370,7 @@ test('checked Chatterbox dates appear only in their exact weeks without yellow h
 });
 
 test('mobile garden aligns Taipei time with the university label', async ({page}) => {
-  for (const width of [320,375,390,443,610]) {
+  for (const width of [320,375,390,430,480]) {
     await page.setViewportSize({width, height:844});
     await page.goto('/?pair=begum');
     const result = await page.evaluate(() => {
@@ -520,7 +520,7 @@ test('Garden phone shortcuts have no emoji, no dead space and usable buttons',as
 test('Mobile hero positions the clock inline and pins subdued scenery flush right',async({page},testInfo)=>{
  if(testInfo.project.name==='mac-1440'||testInfo.project.name==='mac-1000')return;
  await page.goto('/?pair=begum');
- for(const width of [390,320,610,768]){
+ for(const width of [320,390,430,480]){
    await page.setViewportSize({width,height:844});
    const result=await page.evaluate(()=>{
      const rect=selector=>document.querySelector(selector)?.getBoundingClientRect();
@@ -541,12 +541,39 @@ test('Mobile hero positions the clock inline and pins subdued scenery flush righ
        alignedLeft:Math.abs(copy.left-upnext.left)<3,
        artFullBleed:Math.abs(art.left-hero.left)<3&&Math.abs(art.right-hero.right)<3,
        svgAtRight:Math.abs(svg.right-hero.right)<3,
-       artSmaller:art.height<=(innerWidth<=610?98:105),
+       artSmaller:art.height<=98,
        artFainter:parseFloat(getComputedStyle(document.querySelector('.garden .hero .hero-art')).opacity)<=.75,
        headingInBounds:heading.right<=hero.right+1,
        noHorizontalOverflow:document.documentElement.scrollWidth<=innerWidth+2
      };
    });
    for(const [key,value] of Object.entries(result))expect(value, width+'px: '+key).toBe(true);
+ }
+});
+
+
+test('Tablet and resized desktop keep the previous responsive header instead of phone composition',async({page},testInfo)=>{
+ if(testInfo.project.name==='mac-1440'||testInfo.project.name==='mac-1000')return;
+ await page.goto('/?pair=begum');
+ for(const width of [481,540,610,768,900]){
+   await page.setViewportSize({width,height:844});
+   const metrics=await page.evaluate(()=>{
+     const hero=document.querySelector('.garden .hero');
+     const clock=document.querySelector('#desktopClock');
+     const clockDate=document.querySelector('#desktopClock > span');
+     const art=document.querySelector('.garden .hero-art');
+     return {
+       heroLayout:getComputedStyle(hero).display,
+       sceneryLayout:getComputedStyle(art).position,
+       clockDateVisible:getComputedStyle(clockDate).display!=='none',
+       phoneGridActive:getComputedStyle(hero).gridTemplateAreas.includes('"scenery"'),
+       viewportFits:document.documentElement.scrollWidth<=innerWidth+2
+     };
+   });
+   expect(metrics.heroLayout,width+'px retains pre-phone header').not.toBe('grid');
+   expect(metrics.sceneryLayout,width+'px retains old artwork placement').toBe('absolute');
+   expect(metrics.clockDateVisible,width+'px retains full clock').toBe(true);
+   expect(metrics.phoneGridActive,width+'px no phone grid').toBe(false);
+   expect(metrics.viewportFits,width+'px no horizontal overflow').toBe(true);
  }
 });
