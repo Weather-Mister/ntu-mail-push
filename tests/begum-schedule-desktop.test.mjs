@@ -50,7 +50,7 @@ test('Begüm removes transfer and Hanzi UI, code and heavy FFmpeg preloading', (
 });
 
 test('Begüm PWA assets remain scoped and version matched', () => {
-  for (const asset of ['app.js?v=118','todo-realtime.js?v=1','garden-theme.css?v=12','garden-bees.js?v=2']) {
+  for (const asset of ['app.js?v=118','todo-realtime.js?v=1','garden-theme.css?v=12','garden-bees.js?v=3']) {
     assert.ok(html.includes(asset), 'HTML references ' + asset);
     assert.ok(sw.includes(asset), 'cache includes ' + asset);
   }
@@ -111,8 +111,8 @@ test('the 2026 date navigation is reachable on desktop and mobile', () => {
 test('Begüm decorative bee script loads and respects motion preferences', () => {
   assert.doesNotThrow(() => new Script(bees,{filename:'begum/garden-bees.js'}));
   assert.ok(html.includes('garden-floral-corners'));
-  assert.ok(html.includes('garden-bees.js?v=2'));
-  assert.ok(sw.includes('garden-bees.js?v=2'));
+  assert.ok(html.includes('garden-bees.js?v=3'));
+  assert.ok(sw.includes('garden-bees.js?v=3'));
   assert.ok(css.includes('.garden-flight-layer'));
   assert.ok(css.includes('.garden-flyer'));
   assert.ok(css.includes('.garden-pollen'));
