@@ -514,3 +514,34 @@ test('Garden phone shortcuts have no emoji, no dead space and usable buttons',as
   expect(metrics.overflow).toBe(false);
  }
 });
+
+
+test('Mobile hero positions the clock, text, Up Next and scenery in separate aligned rows',async({page},testInfo)=>{
+ if(testInfo.project.name==='mac-1440'||testInfo.project.name==='mac-1000')return;
+ await page.goto('/?pair=begum');
+ for(const width of [390,320,610,768]){
+   await page.setViewportSize({width,height:844});
+   const result=await page.evaluate(()=>{
+     const rect=selector=>document.querySelector(selector)?.getBoundingClientRect();
+     const hero=rect('.garden .hero');
+     const clock=rect('.garden #desktopClock');
+     const copy=rect('.garden .hero .hero-copy');
+     const upnext=rect('.garden .hero .hero-next-class');
+     const art=rect('.garden .hero .hero-art');
+     const heading=rect('.garden .hero h1');
+     return {
+       clockAboveCopy:clock.bottom<=copy.top+1,
+       copyAboveUpnext:copy.bottom<=upnext.top+1,
+       upnextAboveArt:upnext.bottom<=art.top+1,
+       artAtBottom:Math.abs(art.bottom-hero.bottom)<4,
+       artIsInFlow:getComputedStyle(document.querySelector('.garden .hero .hero-art')).position==='relative',
+       alignedLeft:Math.abs(copy.left-upnext.left)<3,
+       artFullBleed:Math.abs(art.left-hero.left)<3&&Math.abs(art.right-hero.right)<3,
+       headingInBounds:heading.right<=hero.right+1,
+       noHorizontalOverflow:document.documentElement.scrollWidth<=innerWidth+2
+     };
+   });
+   for(const [key,value] of Object.entries(result))expect(value, width+'px: '+key).toBe(true);
+ }
+});
+
