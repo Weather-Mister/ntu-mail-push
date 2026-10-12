@@ -105,11 +105,11 @@
 /* A little procession fills the spare space in the mail header. */
 .mailx-garden .mailx-bee-parade{display:block;flex:1 1 180px;min-width:100px;max-width:420px;height:44px;margin:0 6px;pointer-events:none;overflow:hidden}
 .mailx-garden .mailx-bee-parade>svg{display:block;width:100%;height:100%;max-width:none;fill:none;stroke:none}
-.mailx-garden .mailx-bee-trail{fill:none;stroke:#b4aa7c;stroke-width:1.6;stroke-linecap:round;stroke-dasharray:1 7;opacity:.65}
-.mailx-garden .mailx-parade-bee{offset-path:none;animation:none}
+.mailx-garden .mailx-bee-trail{fill:none;stroke:#bccaaa;stroke-width:1.5;stroke-linecap:round;stroke-dasharray:1 12;opacity:.46}
+.mailx-garden .mailx-parade-bee{opacity:.73;animation:none;offset-path:none}
 @media(max-width:1250px){.mailx-garden .mailx-bee-parade{flex-basis:120px;margin:0;min-width:65px}}
 @media(max-width:1100px) and (min-width:861px){.mailx-garden .mailx-bee-parade{flex:1 1 70px;min-width:55px}}
-@media(max-width:860px){.mailx-garden .mailx-bee-parade{order:5;flex:1 0 100%;max-width:none;height:32px;min-width:0;margin:0}}
+@media(max-width:860px){.mailx-garden .mailx-bee-parade{order:5;flex:1 0 100%;max-width:none;height:42px;min-width:0;margin:0}}
 
 /* Give the count its own measured SVG baseline, independent of the flower. */
 .garden #mailDashboardButton .mailx-launch-count>svg.mailx-flower-number,.mailx-garden .mailx-rail-count>svg.mailx-flower-number{display:block;position:absolute;inset:0;width:100%;height:100%;margin:0;fill:currentColor;stroke:none;overflow:visible}
