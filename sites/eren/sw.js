@@ -1,5 +1,4 @@
-const CACHE_NAME = 'ntu-schedule-github-v73';
-const NTU_MAIL_URL = 'https://wmail1.cc.ntu.edu.tw/rc/index.php';
+const CACHE_NAME = 'ntu-schedule-github-v74';
 const ROOT = new URL(self.registration.scope).pathname;
 const asset = path => ROOT + (path.startsWith('/') ? path.slice(1) : path);
 const ICON_URL = new URL('schedule-icon-180.png', self.registration.scope).href;
@@ -100,33 +99,31 @@ self.addEventListener('push', event => {
     badge:ICON_URL,
     tag:data.tag || 'ntu-mail',
     renotify:true,
-    data:{ url:NTU_MAIL_URL }
+    data:{ url:self.registration.scope }
   }));
 });
 
 self.addEventListener('notificationclick', event => {
   event.notification.close();
-  const requestedTarget = event.notification.data?.url || self.registration.scope;
-  const target = requestedTarget === '/?open=ntu-mail' ? NTU_MAIL_URL : requestedTarget;
-  const targetUrl = new URL(target, self.registration.scope);
+  // Always enter this PWA, including notifications queued by the old worker.
+  const appUrl = new URL(self.registration.scope);
 
   event.waitUntil(
     clients.matchAll({ type:'window', includeUncontrolled:true }).then(list => {
-      if (targetUrl.origin !== self.location.origin){
-        return clients.openWindow(targetUrl.href);
-      }
-
       const existing = list.find(client => {
-        try { return new URL(client.url).origin === targetUrl.origin; }
+        try {
+          const url = new URL(client.url);
+          return url.origin === appUrl.origin && url.pathname.startsWith(ROOT) &&
+            url.pathname !== ROOT + 'begum' && !url.pathname.startsWith(ROOT + 'begum/');
+        }
         catch (error) { return false; }
       });
 
       if (existing){
-        existing.navigate(targetUrl.href);
-        return existing.focus();
+        return existing.focus().catch(() => clients.openWindow(appUrl.href));
       }
 
-      return clients.openWindow(targetUrl.href);
+      return clients.openWindow(appUrl.href);
     })
   );
 });
