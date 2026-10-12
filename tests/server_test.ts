@@ -93,12 +93,14 @@ Deno.test('reader retrieves inline Gmail attachments with limits; image failure 
  const t=await fullThread(api,'thread1',true);assert.equal(t.messages.length,1);assert(calls.some(x=>x.endsWith('/logo')));assert(calls.some(x=>x.endsWith('/broken')));assert(!calls.some(x=>x.endsWith('/large')));
 });
 Deno.test('SSRF filters reject private and special ranges',()=>{for(const ip of ['127.0.0.1','10.1.2.3','172.16.0.1','172.31.2.3','192.168.1.1','169.254.169.254','100.64.0.1','224.0.0.1','198.18.0.1','203.0.113.1','192.0.2.1','0.0.0.0','::1'])assert.equal(publicIPv4(ip),false,ip);assert.equal(publicIPv4('8.8.8.8'),true);});
-Deno.test('Mail recognizes both paired schedules and denies unknown or weak Eren keys',async()=>{
- const {db}=setup(),eren='e'.repeat(40),begum='begum';
- db.tables.schedule_workspaces=[{workspace_hash:await hash(eren),app_slug:'eren'},{workspace_hash:await hash(begum),app_slug:'begum'},{workspace_hash:await hash('short'),app_slug:'eren'}];
- for(const key of [eren,begum])assert.equal(await workspaceFor(new Request('https://test.org',{headers:{'x-schedule-key':key}}),db),await hash(key));
- for(const key of ['wrong','short','x'.repeat(40)])await assert.rejects(()=>workspaceFor(new Request('https://test.org',{headers:{'x-schedule-key':key}}),db));
- assert.equal(await siteFor(db,await hash(begum)),'https://weather-mister.github.io/ntu-mail-push/begum/');
+Deno.test('Mail recognizes private keys and denies the public Begüm schedule word',async()=>{
+ const {db}=setup(),eren='e'.repeat(40),begum='b'.repeat(40),gardenHash=await hash('begum');
+ db.tables.schedule_workspaces=[{workspace_hash:await hash(eren),app_slug:'eren'},{workspace_hash:gardenHash,app_slug:'begum'},{workspace_hash:await hash('short'),app_slug:'eren'}];
+ db.secrets['eren-mail:'+gardenHash+':access-key-hash']=await hash(begum);
+ assert.equal(await workspaceFor(new Request('https://test.org',{headers:{'x-schedule-key':eren}}),db),await hash(eren));
+ assert.equal(await workspaceFor(new Request('https://test.org',{headers:{'x-schedule-key':begum}}),db),gardenHash);
+ for(const key of ['begum','wrong','short','x'.repeat(40)])await assert.rejects(()=>workspaceFor(new Request('https://test.org',{headers:{'x-schedule-key':key}}),db));
+ assert.equal(await siteFor(db,gardenHash),'https://weather-mister.github.io/ntu-mail-push/begum/');
  assert.equal(await siteFor(db,await hash(eren)),'https://weather-mister.github.io/ntu-mail-push/');
  await assert.rejects(()=>siteFor(db,'unknown'));
 });

@@ -28,7 +28,7 @@ jobs:
               result=request_json('https://evckshjtzikuusnkdnjn.supabase.co/functions/v1/eren-mail?route=ntu/import',{'Authorization':'Bearer '+oidc,'Content-Type':'application/json'},{'email':os.environ['NTU_EMAIL'],'password':os.environ['NTU_PASSWORD']})
               print(json.dumps({'connected':result.get('connected',False),'accountId':result.get('accountId')}))
               base='https://evckshjtzikuusnkdnjn.supabase.co/functions/v1/eren-mail?route='
-              headers={'x-schedule-key':'begum'}
+              headers={'x-schedule-key':os.environ.get('BEGUM_MAIL_ACCESS_KEY','')}
               status=request_json(base+'status',headers)
               bootstrap=request_json(base+'bootstrap',headers)
               assert status.get('configured') and status.get('aiConfigured')

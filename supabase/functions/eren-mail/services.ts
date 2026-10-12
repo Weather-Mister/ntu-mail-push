@@ -26,15 +26,17 @@ export const SCOPES='https://www.googleapis.com/auth/gmail.modify';
 export async function rate(admin:any,bucket:string,limit=120,seconds=60) {
  if(!check(await admin.rpc('eren_mail_rate',{p_bucket:bucket,p_limit:limit,p_seconds:seconds}))) throw new MailError(429,'Too many requests. Please try again shortly.');
 }
-/** Mail uses the schedule's verified workspace, never a client-selected account owner. */
+/** Mail never grants access through the publicly documented Garden schedule word. */
 export async function workspaceFor(req:Request,admin:any) {
  const key=req.headers.get('x-schedule-key') || '';
- // Begüm's existing schedule pairing is the literal word; Eren retains its strong key requirement.
- if((key.length<32&&key!=='begum')||key.length>200)throw new MailError(401,'Pair this device with your schedule first.');
- const workspace=await hash(key);
- const row=check(await admin.from('schedule_workspaces').select('workspace_hash,app_slug').eq('workspace_hash',workspace).in('app_slug',['eren','begum']).maybeSingle());
- if(!row||(row.app_slug==='eren'&&key.length<32)||(key==='begum'&&row.app_slug!=='begum'))throw new MailError(401,'This key cannot access Mail.');
- return row.workspace_hash;
+ if(key.length<32||key.length>200)throw new MailError(401,'Pair this device with your private Mail access key first.');
+ const keyHash=await hash(key);
+ const row=check(await admin.from('schedule_workspaces').select('workspace_hash,app_slug').eq('workspace_hash',keyHash).in('app_slug',['eren','begum']).maybeSingle());
+ if(row)return row.workspace_hash;
+ const garden=check(await admin.from('schedule_workspaces').select('workspace_hash').eq('app_slug','begum').maybeSingle());
+ const expected=garden?await secret(admin,'eren-mail:'+garden.workspace_hash+':access-key-hash'):null;
+ if(!expected||expected!==keyHash)throw new MailError(401,'This key cannot access Mail.');
+ return garden.workspace_hash;
 }
 export async function siteFor(admin:any,workspace:string) {
  const row=check(await admin.from('schedule_workspaces').select('app_slug').eq('workspace_hash',workspace).in('app_slug',['eren','begum']).maybeSingle());

@@ -6,7 +6,7 @@ const msg={id:'m1',threadId:'t1',accountId:'a1',sender:'Professor',from:'Profess
 const composeButton=page=>page.locator('#mailxComposeMobile:visible, #mailxComposeMain:visible').first();
 async function boot(page,options={}){
  const calls=[],errors=[];page.on('pageerror',e=>{if(!e.message.includes("Failed to read the 'serviceWorker' property from 'Navigator'")||!e.message.includes('sandboxed'))errors.push(e.message);});
- await page.addInitScript(garden=>{if(window===window.top)localStorage.setItem(garden?'ntu-schedule-begum-pairing-key-v1':'ntu-schedule-pairing-key-v1',garden?'begum':'test-key-'.repeat(6));},garden);
+ await page.addInitScript(garden=>{if(window===window.top){if(garden)localStorage.setItem('begum-mail-access-key-v1','b'.repeat(40));localStorage.setItem(garden?'ntu-schedule-begum-pairing-key-v1':'ntu-schedule-pairing-key-v1',garden?'begum':'test-key-'.repeat(6));}},garden);
  await page.route('https://**/*',async route=>{
   const req=route.request(),url=new URL(req.url()),r=url.searchParams.get('route');let body={};try{body=req.postDataJSON()||{};}catch{}calls.push({route:r,body,url});
   let data={};const first={...msg,...(options.oldTimestamp?{timestamp:options.oldTimestamp}:{}),...(options.attachments?{attachments:options.attachments}:{}),...(options.subject?{subject:options.subject}:{}),...(options.multiThread?{count:2}:{})};

@@ -6,7 +6,7 @@ async function setup(page,{format='html',failOnce=false,provider='ntu'}={}){
  const message={id:'modern-chinese',threadId:'modern-thread',accountId:'modern-account',sender:'NTU COOL',email:'teacher@ntu.edu.tw',from:'NTU COOL <teacher@ntu.edu.tw>',to:'student@example.test',subject:'作業提醒：請確認繳交日期',timestamp:Date.now(),labels:['INBOX'],classification:{type:'University',priority:'Normal',action:'FYI',blocked:false,ruleIds:[]},snippet:'請在10月12日前繳交作業。',text:'請在10月12日前繳交作業。',html:format==='html'?'<p>請在10月12日前繳交作業。</p>':'',attachments:[],unsubscribe:{}};
  const accounts=[{id:message.accountId,email:'student@example.test',display_name:'Student',provider,status:'active'}];
  let attempts=0;
- await page.addInitScript(()=>{if(window.top===window.self)localStorage.setItem('ntu-schedule-begum-pairing-key-v1','begum');});
+ await page.addInitScript(()=>{if(window.top===window.self){localStorage.setItem('ntu-schedule-begum-pairing-key-v1','begum');localStorage.setItem('begum-mail-access-key-v1','b'.repeat(40));}});
  await page.route('https://**/*',async route=>{
   const req=route.request(),url=new URL(req.url()),action=url.searchParams.get('route');let body={};try{body=req.postDataJSON()||{};}catch{}
   let data={},status=200;
@@ -55,4 +55,14 @@ test('Garden desktop translation preserves Chinese original and uses isolated de
  expect(state).toEqual({begum:'begum',eren:null,bodyScroll:false});
  await page.locator('#mailxSettings').click();await expect(page.locator('#mailxConnect')).toBeVisible();await expect(page.locator('#mailxConnectNtu')).toBeVisible();
  await page.screenshot({path:'test-results/begum-mail-desktop.png',fullPage:true});
+});
+
+test('Garden Mail requires its private key even when the public schedule word is paired',async({page})=>{
+ await page.addInitScript(()=>{localStorage.setItem('ntu-schedule-begum-pairing-key-v1','begum');localStorage.removeItem('begum-mail-access-key-v1');});
+ const keys=[];await page.route('**/functions/v1/eren-mail**',route=>{keys.push(route.request().headers()['x-schedule-key']);const r=new URL(route.request().url()).searchParams.get('route');return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(r==='bootstrap'?{accounts:[],messages:[],preferences:{}}:r==='mail'||r==='cached-mail'?{messages:[],cursor:{},hasMore:false}:r==='accounts'?{accounts:[]}:{configured:true,aiConfigured:true})});});
+ await page.route('**/functions/v1/ntu-schedule-api**',route=>route.fulfill({status:200,contentType:'application/json',body:'{"tasks":[],"events":[],"ok":true}'}));
+ await page.goto('/');await page.locator('#mailDashboardButton').click();await expect(page.locator('#mailxUnlockForm')).toBeVisible();expect(keys).toHaveLength(0);
+ await page.locator('#mailxAccessKey').fill('b'.repeat(40));await page.locator('#mailxUnlockForm button').click();await expect(page.locator('#mailxUnlockForm')).toHaveCount(0);
+ expect(keys.length).toBeGreaterThan(0);expect(keys.every(k=>k==='b'.repeat(40))).toBeTruthy();
+ expect(await page.evaluate(()=>localStorage.getItem('begum-mail-access-key-v1'))).toBe('b'.repeat(40));
 });
