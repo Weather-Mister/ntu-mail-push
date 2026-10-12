@@ -9,7 +9,7 @@ async function boot(page,options={}){
  await page.addInitScript(garden=>{if(window===window.top){if(garden)localStorage.setItem('begum-mail-access-key-v1','b'.repeat(40));localStorage.setItem(garden?'ntu-schedule-begum-pairing-key-v1':'ntu-schedule-pairing-key-v1',garden?'begum':'test-key-'.repeat(6));}},garden);
  await page.route('https://**/*',async route=>{
   const req=route.request(),url=new URL(req.url()),r=url.searchParams.get('route');let body={};try{body=req.postDataJSON()||{};}catch{}calls.push({route:r,body,url});
-  let data={};const first={...msg,...(options.oldTimestamp?{timestamp:options.oldTimestamp}:{}),...(options.attachments?{attachments:options.attachments}:{}),...(options.subject?{subject:options.subject}:{}),...(options.multiThread?{count:2}:{})};
+  let data={};const first={...msg,...(options.unsubscribe?{unsubscribe:options.unsubscribe}:{}),...(options.oldTimestamp?{timestamp:options.oldTimestamp}:{}),...(options.attachments?{attachments:options.attachments}:{}),...(options.subject?{subject:options.subject}:{}),...(options.multiThread?{count:2}:{})};
   if(url.pathname.includes('/eren-mail')){
    if(r==='status')data={configured:true,aiConfigured:true,types:['University','Promotion','Receipt / Order','Other'],priorities:['High','Normal','Low','Muted'],actions:['Needs reply','Deadline','Waiting','FYI','No action'],health:{last_finished_at:new Date().toISOString()},redirectUri:'https://api.example.org/callback'};
    if(r==='bootstrap')data={accounts,preferences:{},messages:[first,{...msg,id:'m2',threadId:'t2',accountId:'a2',sender:'Bank',subject:'Your receipt',classification:{...classification,type:'Receipt / Order',priority:'Normal',action:'FYI'}}]};if(r==='accounts')data={accounts};if(r==='preferences')data={preferences:{}};if(r==='rules')data={rules:[]};if(r==='outbox')data={jobs:[]};if(r==='drafts')data={drafts:[]};
@@ -316,4 +316,19 @@ test('unread preview opens only on mouse hover and stays closed after focus rest
  await page.mouse.move(0,0);await launch.hover();await expect(peek).toBeVisible();
  await page.mouse.move(0,0);await expect(peek).toBeHidden();
  await launch.hover();await expect(peek).toBeVisible();await page.keyboard.press('Escape');await expect(peek).toBeHidden();
+});
+
+test('Garden exposes available unsubscribe beside the reader actions',async({page})=>{
+ test.skip(!garden,'Garden toolbar placement');
+ await boot(page,{unsubscribe:{web:'https://example.org/unsubscribe',mailto:null,listId:'letters.example.org',oneClick:false}});
+ await page.locator('#mailxList .mailx-message').first().click();
+ const button=page.locator('.mailx-reader-toolbar>[data-action="unsubscribe"]');
+ await expect(button).toBeVisible();
+ await expect(page.locator('.mailx-reader-more [data-action="unsubscribe"]')).toHaveCount(0);
+ const toolbar=await page.locator('.mailx-reader-toolbar').boundingBox(),bounds=await button.boundingBox();
+ expect(bounds.x).toBeGreaterThanOrEqual(toolbar.x);
+ expect(bounds.x+bounds.width).toBeLessThanOrEqual(toolbar.x+toolbar.width+1);
+ expect(bounds.y+bounds.height).toBeLessThanOrEqual(toolbar.y+toolbar.height+1);
+ await button.click();
+ await expect(page.locator('#mailxSheet')).toContainText('Open sender’s unsubscribe page');
 });
