@@ -1266,8 +1266,8 @@ body{min-width:320px}
 
 /* Mobile hero: the university label and Taipei time share the first line.
    Heading and Up Next stay in flow, with a small, softly rendered illustration
-   pinned to the bottom-right without empty SVG margins. Desktop is unchanged. */
-@media(max-width:900px){
+   pinned to the bottom-right without empty SVG margins. Only phone-sized viewports (480px and below) use this composition. */
+@media(max-width:480px){
   .garden .hero{
     display:grid;
     grid-template-columns:minmax(0,1fr);
@@ -1439,7 +1439,7 @@ body{min-width:320px}
   .garden .hero .hero-art .hero-bee.bee-b{display:none}
   .garden-floral-corners{display:none}
 }
-@media(max-width:610px){
+@media(max-width:480px){
   .garden .hero{
     padding:12px 19px 0;
   }
