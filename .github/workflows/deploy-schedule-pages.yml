@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "sites/**"
+      - "tests/begum-schedule-desktop.test.mjs"
       - ".github/workflows/deploy-schedule-pages.yml"
   workflow_dispatch:
 
