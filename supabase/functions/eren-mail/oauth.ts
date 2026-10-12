@@ -48,12 +48,13 @@ export async function oauthFinish(admin:any,workspace:string,input:any) {
  const claimed=check(await admin.from('eren_mail_oauth').update({status:'saving'}).eq('state_hash',stateHash).eq('status','ready').select('state_hash').maybeSingle());
  if(!claimed) return {pending:true};
  try {
-  const existing=check(await admin.from('eren_mail_accounts').select('id,display_name').eq('workspace_hash',workspace).eq('email',row.email).maybeSingle());
+  const existing=check(await admin.from('eren_mail_accounts').select('id,display_name,provider').eq('workspace_hash',workspace).eq('email',row.email).maybeSingle());
+  if(existing?.provider==='ntu')throw new MailError(409,'This address is already connected as NTU Mail.');
   const id=existing?.id||crypto.randomUUID(),name=`eren-mail:${workspace}:account:${id}`;
   const refresh=await secret(admin,row.pending_secret);
   if(!refresh) throw new MailError(400,'Connection expired. Reconnect.');
   await secret(admin,name,refresh);
-  check(await admin.from('eren_mail_accounts').upsert({id,workspace_hash:workspace,email:row.email,display_name:existing?.display_name||row.email,secret_name:name,status:'active',sync_error:null},{onConflict:'workspace_hash,email'}));
+  check(await admin.from('eren_mail_accounts').upsert({id,workspace_hash:workspace,provider:'gmail',email:row.email,display_name:existing?.display_name||row.email,secret_name:name,status:'active',sync_error:null},{onConflict:'workspace_hash,email'}));
   check(await admin.from('eren_mail_oauth').update({status:'done'}).eq('state_hash',stateHash));
   await secret(admin,row.pending_secret,null,true);
   return {connected:true,email:row.email};

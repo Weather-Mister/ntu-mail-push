@@ -1,0 +1,39 @@
+name: Provision authorized NTU mail account
+on:
+  push:
+    branches: [feat/ntu-mail-roundcube]
+    paths: [.github/workflows/provision-ntu-mail.yml]
+permissions:
+  contents: read
+  id-token: write
+jobs:
+  connect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Connect existing NTU credentials directly to the protected mail backend
+        env:
+          NTU_EMAIL: ${{ secrets.NTU_EMAIL }}
+          NTU_PASSWORD: ${{ secrets.NTU_PASSWORD }}
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json, os, urllib.request, urllib.error
+          def request_json(url, headers, body=None):
+              data=None if body is None else json.dumps(body).encode()
+              with urllib.request.urlopen(urllib.request.Request(url,data=data,headers=headers),timeout=90) as r:
+                  return json.load(r)
+          try:
+              oidc=request_json(os.environ['ACTIONS_ID_TOKEN_REQUEST_URL']+'&audience=eren-mail-ntu-import',{'Authorization':'Bearer '+os.environ['ACTIONS_ID_TOKEN_REQUEST_TOKEN']})['value']
+              result=request_json('https://evckshjtzikuusnkdnjn.supabase.co/functions/v1/eren-mail?route=ntu/import',{'Authorization':'Bearer '+oidc,'Content-Type':'application/json'},{'email':os.environ['NTU_EMAIL'],'password':os.environ['NTU_PASSWORD']})
+              print(json.dumps({'connected':result.get('connected',False),'accountId':result.get('accountId')}))
+              if not result.get('connected'): raise SystemExit(1)
+          except urllib.error.HTTPError as e:
+              try: message=json.loads(e.read()).get('error','Request rejected')
+              except Exception: message='Request rejected'
+              print(json.dumps({'connected':False,'status':e.code,'error':message}))
+              raise SystemExit(1)
+          except Exception as e:
+              print(json.dumps({'connected':False,'error_type':type(e).__name__}))
+              raise SystemExit(1)
+          PY

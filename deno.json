@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "strict": false,
+    "types": [
+      "npm:@types/node@24.10.1"
+    ]
+  },
+  "importMap": "./supabase/functions/eren-mail/deno.json"
+}

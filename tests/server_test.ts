@@ -41,6 +41,7 @@ class MemoryDB {
  rpc(name:string,args:any){if(name==='eren_mail_secret'){if(args.p_delete)delete this.secrets[args.p_name];else if(args.p_value!==null&&args.p_value!==undefined)this.secrets[args.p_name]=args.p_value;return Promise.resolve({data:args.p_value?null:this.secrets[args.p_name]||null,error:null});}throw new Error(name);}
 }
 function setup(){clearMailMemory();const db=new MemoryDB(),a:any={id:'11111111-1111-4111-8111-111111111111',workspace_hash:'workspace',email:'me@example.org',secret_name:'eren-mail:workspace:account:1',status:'active'};db.tables.eren_mail_accounts.push(a);db.secrets[a.secret_name]='refresh-test';db.secrets['eren-mail:workspace:config:GOOGLE_CLIENT_ID']='client';db.secrets['eren-mail:workspace:config:GOOGLE_CLIENT_SECRET']='secret-test';return {db,a};}
+function claim(db:any,job:any){const row=db.tables.eren_mail_outbox.find((r:any)=>r.id===job.id);Object.assign(row,{status:'processing',attempts:1,locked_until:new Date(Date.now()+120000).toISOString()});return {...row};}
 async function fetching(fn:any,run:any){const old=globalThis.fetch;globalThis.fetch=fn;try{await run();}finally{globalThis.fetch=old;}}
 Deno.test('Gmail concurrent clients refresh once and reuse an unexpired server-only token',async()=>{
  const {db,a}=setup();let refreshes=0,gmail=0,clock=Date.now();const now=Date.now;Date.now=()=>clock;
@@ -113,7 +114,7 @@ Deno.test('real send constructs selected From and Gmail thread; repeated enqueue
   const job=await enqueue(db,a,input);assert.equal(db.tables.eren_mail_outbox.length,1);
   assert.equal((await enqueue(db,a,input)).id,job.id);assert.equal(db.tables.eren_mail_outbox.length,1);
   await assert.rejects(()=>enqueue(db,a,{...input,body:'Changed text'}));
-  db.tables.eren_mail_outbox[0].status='processing';await deliver(db,{...job,attempts:1});
+  db.tables.eren_mail_outbox[0].status='processing';await deliver(db,claim(db,job));
   assert.equal(sent.threadId,'t1');const raw=decodeBody(sent.raw);assert.match(raw,/From: me@example.org/);assert.match(raw,/In-Reply-To: <source@example.org>/);assert.equal(db.tables.eren_mail_outbox[0].status,'sent');assert.equal(db.secrets[job.secret_name],undefined);
  });
 });
@@ -124,7 +125,7 @@ Deno.test('queued send resolves durable draft attachments and emits mixed MIME',
  await fetching(async(url:any,init:any)=>{const u=String(url);if(u.includes('oauth2'))return Response.json({access_token:'access-test'});if(u.endsWith('messages/send')){sent=JSON.parse(init.body);return Response.json({id:'sent2',threadId:'new-thread'});}throw new Error(u);},async()=>{
   const input={id:crypto.randomUUID(),draftId,to:'friend@example.org',subject:'Report',body:'See attached.',bodyHtml:'<p>See <strong>attached</strong>.</p>',attachments:[{id:attId,name:'report.txt',type:'text/plain',size:16}]};
   const job=await enqueue(db,a,input);const stored=JSON.parse(db.secrets[job.secret_name]);assert.equal(stored.attachments[0].data,undefined);assert([...db.storageObjects.keys()].some(k=>k.includes('/outbox/'+job.id+'/'+attId)));
-  db.tables.eren_mail_outbox[0].status='processing';await deliver(db,{...job,attempts:1});
+  db.tables.eren_mail_outbox[0].status='processing';await deliver(db,claim(db,job));
   const raw=decodeBody(sent.raw);assert.match(raw,/Content-Type: multipart\/mixed/);assert.match(raw,/Content-Disposition: attachment/);assert.match(raw,/report\.txt/);assert.match(raw,/Content-Type: text\/html/);
  });
 });
@@ -139,7 +140,7 @@ Deno.test('legacy Vault draft attachments still migrate into outbox storage',asy
 Deno.test('uncertain sends are not blindly retried and can reconcile by Message-ID',async()=>{
  const {db,a}=setup();let sends=0,found=false;
  await fetching(async(url:any)=>{const u=String(url);if(u.includes('oauth2'))return Response.json({access_token:'access-test'});if(u.endsWith('messages/send')){sends++;throw new TypeError('network lost');}if(u.includes('rfc822msgid'))return Response.json({messages:found?[{id:'actually-sent'}]:[]});throw new Error(u);},async()=>{
-  const j=await enqueue(db,a,{id:crypto.randomUUID(),to:'friend@example.org',subject:'Hi',body:'Body'});db.tables.eren_mail_outbox[0].status='processing';await deliver(db,{...j,attempts:1});const job=db.tables.eren_mail_outbox[0];assert.equal(job.status,'uncertain');
+  const j=await enqueue(db,a,{id:crypto.randomUUID(),to:'friend@example.org',subject:'Hi',body:'Body'});db.tables.eren_mail_outbox[0].status='processing';await deliver(db,claim(db,j));const job=db.tables.eren_mail_outbox[0];assert.equal(job.status,'uncertain');
   await deliver(db,{...job,attempts:2});assert.equal(sends,1);
   assert.equal((await reconcile(db,job)).status,'uncertain');found=true;assert.equal((await reconcile(db,job)).status,'sent');assert.equal(sends,1);
  });
