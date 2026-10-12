@@ -15,7 +15,7 @@ const APP_SHELL = [
   asset('app.js?v=111'),
   asset('todo-realtime.js?v=1'),
   asset('mail-demo.js?v=28'),
-  asset('skeuo-translation.css?v=5'),
+  asset('skeuo-translation.css?v=6'),
   asset('skeuo-compose-fix.css?v=1'),
   asset('skeuo-demo.html'),
   asset('scope-audio-bridge.js?v=2'),
