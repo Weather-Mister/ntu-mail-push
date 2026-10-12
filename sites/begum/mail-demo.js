@@ -50,7 +50,7 @@
       if(version===state.readVersion&&state.selected===key&&state.thread){
         state.thread=t;
         $$('[data-body]').forEach(frame=>{const i=Number(frame.dataset.body);if(frame.dataset.loaded==='1'&&t.messages[i]?.html)frame.srcdoc=mailFrameHtml(t.messages[i]);});
-        if(inlineMailReader())$('[data-mailx-original]').forEach(el=>{
+        if(inlineMailReader())$$('[data-mailx-original]').forEach(el=>{
           const msg=t.messages[Number(el.dataset.mailxOriginal)];
           if(el.dataset.loaded==='1'&&msg?.html)el.innerHTML=terminalOriginalHtml(msg);
         });
