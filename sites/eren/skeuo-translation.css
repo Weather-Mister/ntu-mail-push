@@ -125,7 +125,9 @@
 .machine.mail-mode .mailx-translation-body th{
   font-weight:750;color:#a8bea0;
 }
-.machine.mail-mode .mailx-translation-body a{color:#a9d6a5;text-decoration:underline;text-underline-offset:2px}
+.machine.mail-mode :is(.mailx-mail-body,.mailx-original-body,.mailx-translation-body) a[href]{color:#a9d6a5;text-decoration:underline;text-underline-offset:2px;text-shadow:0 0 4px rgba(140,255,160,.18);overflow-wrap:anywhere;cursor:pointer}
+.machine.mail-mode :is(.mailx-mail-body,.mailx-original-body,.mailx-translation-body) a[href]:hover{color:#c9f5c4;text-shadow:0 0 5px rgba(140,255,160,.3)}
+.machine.mail-mode :is(.mailx-mail-body,.mailx-original-body,.mailx-translation-body) a[href]:focus-visible{outline:1px solid #8fcb8c;outline-offset:2px}
 .machine.mail-mode .mailx-translation-body strong{color:#e0e0d3}
 /* Every HTML email shares the translated message's typography and dark CRT surface. */
 .machine.mail-mode .mailx-original-body{
