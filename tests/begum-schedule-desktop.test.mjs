@@ -50,8 +50,11 @@ test('Begüm removes transfer and Hanzi UI, code and heavy FFmpeg preloading', (
 });
 
 test('Begüm PWA assets remain scoped and version matched', () => {
-  for (const asset of ['app.js?v=118','todo-realtime.js?v=1','garden-theme.css?v=12','garden-bees.js?v=4']) {
-    assert.ok(html.includes(asset), 'HTML references ' + asset);
+  // Compare the asset URLs the page actually uses with the offline shell.
+  // Asset revision bumps must not silently prevent a Pages deployment.
+  for (const filename of ['app.js','todo-realtime.js','garden-theme.css','garden-bees.js']) {
+    const asset = html.match(new RegExp(filename.replace('.', '\\.') + '\\?v=\\d+'))?.[0];
+    assert.ok(asset, 'HTML references ' + filename + ' with a version');
     assert.ok(sw.includes(asset), 'cache includes ' + asset);
   }
   assert.match(sw, /const ROOT = new URL\(self.registration.scope\)\.pathname/);
@@ -111,8 +114,9 @@ test('the 2026 date navigation is reachable on desktop and mobile', () => {
 test('Begüm decorative bee script loads and respects motion preferences', () => {
   assert.doesNotThrow(() => new Script(bees,{filename:'begum/garden-bees.js'}));
   assert.ok(html.includes('garden-floral-corners'));
-  assert.ok(html.includes('garden-bees.js?v=4'));
-  assert.ok(sw.includes('garden-bees.js?v=4'));
+  const beeScriptVersion = html.match(/garden-bees\\.js\\?v=\\d+/)?.[0];
+  assert.ok(beeScriptVersion, 'garden bees script is included');
+  assert.ok(sw.includes(beeScriptVersion), 'garden bees script is included in offline cache');
   assert.ok(css.includes('.garden-flight-layer'));
   assert.ok(css.includes('.garden-flyer'));
   assert.ok(css.includes('.garden-pollen'));
