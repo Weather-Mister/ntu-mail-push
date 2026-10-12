@@ -31,7 +31,7 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - name: Up Next and mobile hero regressions on direct pushes
         if: github.event_name == 'push'
-        run: npx playwright test --config playwright.begum.config.mjs --grep "desktop Up Next does not clip|Mobile hero positions"
+        run: npx playwright test --config playwright.begum.config.mjs --grep "desktop Up Next does not clip|Mobile hero positions|mobile garden aligns Taipei time"
       - name: Full Begüm browser suite on PR or manual request
         if: github.event_name != 'push'
         run: npx playwright test --config playwright.begum.config.mjs
