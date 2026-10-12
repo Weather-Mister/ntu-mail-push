@@ -1,4 +1,4 @@
-import { parseRoundcubeCommands, roundcubeEnvironment, ntuDate, verifyNtuRunner } from '../supabase/functions/eren-mail/ntu.ts';
+import { parseRoundcubeCommands, roundcubeEnvironment, ntuDate, verifyNtuRunner, roundcubeSendResult, roundcubeFormInputs } from '../supabase/functions/eren-mail/ntu.ts';
 import { messageView, cacheMessages, clearMailMemory } from '../supabase/functions/eren-mail/services.ts';
 const assert=(value:any,label='Assertion failed')=>{if(!value)throw new Error(label);};
 Deno.test('Roundcube command parser accepts JSON data and never interprets email text as commands',()=>{
@@ -25,4 +25,12 @@ Deno.test('NTU runner provisioning rejects another repo, ref, audience, expiry, 
  const base={iss:'https://token.actions.githubusercontent.com',aud:'eren-mail-ntu-import',repository:'Weather-Mister/ntu-mail-push',repository_id:'1373793193',ref:'refs/heads/test',workflow_ref:'test-workflow',event_name:'push',exp:Math.floor(Date.now()/1000)+300,iat:Math.floor(Date.now()/1000)};
  const encode=(v:any)=>btoa(JSON.stringify(v)).replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
  for(const change of [{repository:'someone/mail'},{ref:'refs/heads/other'},{aud:'other'},{exp:1}]){let rejected=false;try{await verifyNtuRunner(encode({alg:'RS256',kid:'test'})+'.'+encode({...base,...change})+'.fake',{ref:base.ref,workflow:base.workflow_ref});}catch{rejected=true;}assert(rejected);}
+});
+
+Deno.test('Roundcube send results read JSON confirmation without executing frame scripts',()=>{
+ const success=roundcubeSendResult('<script>parent.rcmail.sent_successfully("confirmation","Sent",["Sent"],false);</script>');assert(success.accepted&&!success.rejected);
+ assert(roundcubeSendResult('<script>parent.rcmail.display_message("Bad address","error");</script>').rejected);
+ assert(!roundcubeSendResult('<script>parent.rcmail.sent_successfully(alert(1));</script>').accepted);
+ assert(!roundcubeSendResult('<p>parent.rcmail.sent_successfully("confirmation");</p>').accepted);
+ const fields=roundcubeFormInputs('<input type="hidden" name="_token" value="csrf"><input type="hidden" name="_id" value="compose"><input type="checkbox" name="_dsn" value="1">');assert(fields._token==='csrf'&&fields._id==='compose'&&!fields._dsn);
 });

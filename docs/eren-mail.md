@@ -25,7 +25,7 @@ Open **Mail → Settings → Connect NTU Mail**, then use the student ID (with o
 
 Receiving uses authenticated Roundcube requests, including actual server read/unread and star flags. Roundcube responses are parsed as JSON command arguments, never evaluated as JavaScript. A bounded server-memory cookie session serializes requests so searches and folder state cannot interfere. Full MIME is fetched only for the reader, reply context and downloads, with a streaming size limit and the existing HTML sanitizer.
 
-Sending uses NTU SMTP over TLS on port 465, with the queue's exact MIME, Message-ID, reply headers and attachments. The accepted message is then imported into NTU Sent. Failure to confirm a Sent copy is reported as a warning on a delivered message, never retried as another send. An uncertain SMTP result remains uncertain until checked; no automatic duplicate send is attempted.
+Sending uses the authenticated NTU Roundcube compose/send route, because direct SMTP rejects the hosting server's IP. The queued MIME is imported into Drafts and opened for composition, retaining its stable Message-ID, reply headers, and attachments. Roundcube sends it and saves its own Sent copy. A missing confirmation leaves the send uncertain until a Message-ID lookup confirms it; no automatic duplicate send is attempted.
 
 NTU exposes individual messages rather than Gmail's thread API. Stable logical references retain reader/Undo identity when this client moves a message between Inbox, Archive and Trash. Existing NTU notifications and the separate webmail shortcut retain their original behavior.
 

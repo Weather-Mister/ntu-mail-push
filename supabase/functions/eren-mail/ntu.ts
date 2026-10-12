@@ -1,5 +1,4 @@
 import PostalMime from 'postal-mime';
-import nodemailer from 'nodemailer';
 import { MailError, secret, check, hash, cacheMessages, accountRules, messageView, mapLimit } from './services.ts';
 import { b64url, decodeBody, plainText, header, address } from './domain.mjs';
 
@@ -119,11 +118,15 @@ class Roundcube {
  async raw(ref:any){const params=new URLSearchParams({_task:'mail',_action:'viewsource',_mbox:validFolder(ref.mailbox),_uid:ref.uid,_save:'1',_token:this.env.request_token});const r=await this.fetch('?'+params,{},MAX_RAW);const bytes=new Uint8Array(await r.arrayBuffer());const head=new TextDecoder().decode(bytes.subarray(0,4000));if(!/^[A-Za-z][\w-]*\s*:/m.test(head)||/rcmail\.set_env\(/.test(head))throw new MailError(404,'Message no longer exists in NTU Mail.');return bytes;}
  async find(folder:string,messageId:string){const list=await this.list(folder,1,messageId,'','base','message-id');return list.rows.filter(r=>/^\d{1,15}$/.test(r.uid));}
  async ensureFolder(folder:string){
-  // Settings' create-folder action refuses an existing folder; first check the
-  // provider's folder list rather than treating every provider error as success.
-  const names=Object.keys(this.env.mailboxes||{});if(names.includes(folder)||folder===this.folders.sent||folder===this.folders.trash)return;
-  try{await this.ajax('save-folder',{_name:folder,_parent:'',_mbox:'',_type:'mail'},true,'settings');}catch(e){if(e.status<500)throw e;await this.list(folder);}
-  this.env.mailboxes={...this.env.mailboxes,[folder]:{name:folder}};
+  if(Object.hasOwn(this.env.mailboxes||{},folder))return;
+  // Folder saving is a framed form action, not a remote AJAX action. Refresh the
+  // actual mailbox environment afterwards; never assume creation succeeded.
+  const fields={_task:'settings',_action:'save-folder',_name:folder,_parent:'',_mbox:'',_type:'mail',_framed:'1',_token:this.env.request_token};
+  await this.fetch('?_task=settings&_action=save-folder',{method:'POST',body:new URLSearchParams(fields),headers:{'Content-Type':'application/x-www-form-urlencoded'}});
+  const html=await(await this.fetch('?_task=mail')).text(),env=roundcubeEnvironment(html);
+  if(env.task!=='mail'||!Object.hasOwn(env.mailboxes||{},folder))throw new MailError(502,'NTU could not create the destination folder. Please retry.','ntu_action_failed');
+  this.env={...this.env,...env};
+
  }
 }
 export async function ntuSession(admin:any,account:any):Promise<Roundcube>{
@@ -169,19 +172,50 @@ async function mutate(admin:any,account:any,s:Roundcube,id:string,action:string)
  const matches=(await s.find(target,messageId)).filter(r=>!before.has(r.uid));if(matches.length!==1)throw new MailError(409,'NTU moved the message, but its new location needs a mailbox refresh.');
  check(await admin.from('eren_mail_messages').update({provider_ref:{...message.providerRef,mailbox:target,uid:matches[0].uid}}).eq('account_id',account.id).eq('id',id));
 }
+export function roundcubeFormInputs(html:string){
+ const inputs:Record<string,string>={};
+ for(const tag of html.matchAll(/<input\b[^>]*>/gi)){const attrs=Object.fromEntries([...tag[0].matchAll(/([\w-]+)\s*=\s*["']([^"']*)["']/g)].map(m=>[m[1].toLowerCase(),cleanText(m[2])]));if(attrs.name&&attrs.type==='hidden')inputs[attrs.name]=attrs.value||'';}
+ return inputs;
+}
+export function roundcubeSendResult(html:string){
+ // Framed sends contain only provider-generated commands. Consume JSON data,
+ // never execute the frame's scripts. A Sent lookup independently confirms it.
+ const commands=[];
+ for(const script of html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)){
+  const source=script[1];const pattern=/(?:parent\.)?rcmail\.(sent_successfully|display_message)\(/g;let m;
+  while((m=pattern.exec(source))){let p=pattern.lastIndex,quoted=false,escaped=false,depth=0;
+   for(;p<source.length;p++){const c=source[p];if(quoted){if(escaped)escaped=false;else if(c==='\\')escaped=true;else if(c==='"')quoted=false;continue;}if(c==='"')quoted=true;else if(c==='{'||c==='['||c==='(')depth++;else if(c==='}'||c===']')depth--;else if(c===')'){if(depth===0)break;depth--;}}
+   if(source[p]!==')'||source[p+1]!==';')continue;
+   try{commands.push(...parseRoundcubeCommands('this.'+m[1]+'('+source.slice(pattern.lastIndex,p)+');'));}catch{}
+   pattern.lastIndex=p+2;
+  }
+ }
+ return {accepted:commands.some(c=>c.name==='sent_successfully'&&c.args[0]==='confirmation'),rejected:commands.some(c=>c.name==='display_message'&&c.args[1]==='error'),warning:commands.some(c=>c.name==='sent_successfully'&&c.args[4])};
+}
 export async function ntuSend(admin:any,account:any,s:Roundcube,rawEncoded:string){
  const raw=Uint8Array.from(atob(rawEncoded.replace(/-/g,'+').replace(/_/g,'/')),c=>c.charCodeAt(0)),email=await PostalMime.parse(raw),recipients=email.to?.flatMap(a=>'address'in a&&a.address?[a.address]:[])||[];
- if(address(email.from?.address||'')!==account.email||!recipients.length)throw new MailError(400,'Invalid NTU sender or recipients.','mail_delivery_rejected');
- const transport=nodemailer.createTransport({host:'smtps.ntu.edu.tw',port:465,secure:true,auth:{user:s.credentials.username,pass:s.credentials.password},connectionTimeout:15000,greetingTimeout:15000,socketTimeout:25000,disableFileAccess:true,disableUrlAccess:true});
- let sent:any;try{sent=await transport.sendMail({envelope:{from:account.email,to:recipients},raw:new TextDecoder().decode(raw)});}catch(e){if(e.responseCode||e.code==='EAUTH')throw new MailError(400,'NTU rejected this send ('+String(e.responseCode||e.code||'unknown')+'; '+String(e.command||'SMTP').split(' ')[0]+'). Check the account and recipient addresses.','mail_delivery_rejected');throw new MailError(502,'NTU delivery could not be confirmed. Check Outbox before sending again.','ntu_send_uncertain');}finally{transport.close();}
- let warning='';
- try{
-  const form=new FormData();for(const [key,value] of Object.entries({_task:'mail',_action:'import',_mbox:s.folders.sent,_remote:'1',_token:s.env.request_token}))form.append(key,value);form.append('_file[]',new Blob([raw.buffer as ArrayBuffer],{type:'message/rfc822'}),'sent.eml');
-  await s.fetch('?_task=mail&_action=import&_mbox='+encodeURIComponent(s.folders.sent),{method:'POST',body:form,headers:{'X-Requested-With':'XMLHttpRequest','X-Roundcube-Request':s.env.request_token}},4*1024*1024);
-  const found=await s.find(s.folders.sent,email.messageId||'');if(!found.length)throw new Error('Sent copy not found');await s.ajax('mark',{_mbox:s.folders.sent,_uid:found.at(-1)!.uid,_flag:'read'},true);
- }catch{warning='Delivered to NTU SMTP, but saving the Sent copy was not confirmed.';}
- if(sent.rejected?.length)warning+=(warning?' ':'')+'Some recipient addresses were rejected. Check delivery before resending.';
- return {id:'smtp_'+b64url(email.messageId||''),warning};
+ if(address(email.from?.address||'')!==account.email||!recipients.length||!email.messageId)throw new MailError(400,'Invalid NTU sender or recipients.','mail_delivery_rejected');
+ // Import the queued MIME as a draft so Roundcube preserves the stable Message-ID,
+ // reply headers and uploaded attachments, and saves its own Sent copy.
+ if((await s.find(s.folders.sent,email.messageId)).length)return {id:'ntu_sent_'+b64url(email.messageId)};
+ let drafts=await s.find(s.folders.drafts,email.messageId);
+ if(!drafts.length){
+  const form=new FormData();for(const [key,value] of Object.entries({_task:'mail',_action:'import',_mbox:s.folders.drafts,_remote:'1',_token:s.env.request_token}))form.append(key,value);form.append('_file[]',new Blob([raw.buffer as ArrayBuffer],{type:'message/rfc822'}),'queued.eml');
+  await s.fetch('?_task=mail&_action=import&_mbox='+encodeURIComponent(s.folders.drafts),{method:'POST',body:form,headers:{'X-Requested-With':'XMLHttpRequest','X-Roundcube-Request':s.env.request_token}},4*1024*1024);
+  drafts=await s.find(s.folders.drafts,email.messageId);
+ }
+ if(drafts.length!==1)throw new MailError(400,'NTU could not prepare this message. Restore the draft and retry.','mail_delivery_rejected');
+ const uid=drafts[0].uid,compose=await(await s.fetch('?'+new URLSearchParams({_task:'mail',_action:'compose',_draft_uid:uid,_mbox:s.folders.drafts,_token:s.env.request_token}))).text(),env=roundcubeEnvironment(compose),fields=roundcubeFormInputs(compose);
+ if(!env.compose_id||String(env.draft_id)!==uid||!fields._token)throw new MailError(400,'NTU could not prepare this draft. Restore it and retry.','mail_delivery_rejected');
+ const attachments=Object.values(env.attachments||{}) as any[];
+ if(attachments.length!==email.attachments.length||email.attachments.some(a=>!attachments.some(b=>b.name===a.filename)))throw new MailError(400,'NTU did not load every attachment. Restore the draft and retry.','mail_delivery_rejected');
+ Object.assign(fields,{_task:'mail',_action:'send',_id:String(env.compose_id),_from:account.email,_to:recipients.join(', '),_cc:'',_bcc:'',_subject:email.subject||'',_message:email.html||email.text||'',_is_html:email.html?'1':'0',_draft:'',_draft_saveid:uid,_framed:'1',_charset:'UTF-8',_dsn:'',_mdn:''});
+ let result;try{const response=await(await s.fetch('?_task=mail&_action=send',{method:'POST',body:new URLSearchParams(fields),headers:{'Content-Type':'application/x-www-form-urlencoded'}},4*1024*1024)).text();result=roundcubeSendResult(response);}catch{throw new MailError(502,'NTU delivery could not be confirmed. Check Outbox before sending again.','ntu_send_uncertain');}
+ // A transport failure never triggers another send. Queue reconciliation uses the
+ // preserved Message-ID to locate a later Sent copy without duplicating delivery.
+ let confirmed=false;try{confirmed=(await s.find(s.folders.sent,email.messageId)).length>0;}catch{}
+ if(!confirmed&&!result.accepted){if(result.rejected)throw new MailError(400,'NTU webmail rejected this send. Restore the draft and check its recipients.','mail_delivery_rejected');throw new MailError(502,'NTU delivery could not be confirmed. Check Outbox before sending again.','ntu_send_uncertain');}
+ return {id:'ntu_sent_'+b64url(email.messageId),warning:confirmed?'':'Delivered through NTU webmail, but saving the Sent copy was not confirmed.'};
 }
 export async function ntuClient(admin:any,account:any){
  const s=await ntuSession(admin,account);
