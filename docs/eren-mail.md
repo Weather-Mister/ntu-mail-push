@@ -27,7 +27,7 @@ Receiving uses authenticated Roundcube requests, including actual server read/un
 
 Sending uses the authenticated NTU Roundcube compose/send route, because direct SMTP rejects the hosting server's IP. The queued MIME is imported into Drafts and opened for composition, retaining its stable Message-ID, reply headers, and attachments. Roundcube sends it and saves its own Sent copy. A missing confirmation leaves the send uncertain until a Message-ID lookup confirms it; no automatic duplicate send is attempted.
 
-NTU exposes individual messages rather than Gmail's thread API. Stable logical references retain reader/Undo identity when this client moves a message between Inbox, Archive and Trash. Existing NTU notifications and the separate webmail shortcut retain their original behavior.
+NTU exposes individual messages rather than Gmail's thread API. Stable logical references retain reader/Undo identity when this client moves a message between Inbox, Archive and Trash. Moves snapshot the destination's highest IMAP UID, then verify the copied message's exact MIME fingerprint among newly assigned UIDs. This supports incoming mail without a Message-ID and distinguishes existing identical copies without changing webmail sorting. Existing NTU notifications and the separate webmail shortcut retain their original behavior.
 
 For this account's initial operator setup, an expiring, private provisioning approval allows only a pinned repository/ref/workflow GitHub OIDC proof. The runner sends existing NTU Secrets directly to the protected backend over HTTPS, and the approval is removed after import. The workflow prints only status and account ID; passwords and tokens never enter source or logs. Routine connections use the paired-device form above.
 

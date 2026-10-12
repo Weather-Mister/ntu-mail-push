@@ -1,4 +1,4 @@
-import { parseRoundcubeCommands, roundcubeEnvironment, ntuDate, verifyNtuRunner, roundcubeSendResult, roundcubeFormInputs, rawMessageId } from '../supabase/functions/eren-mail/ntu.ts';
+import { parseRoundcubeCommands, roundcubeEnvironment, ntuDate, verifyNtuRunner, roundcubeSendResult, roundcubeFormInputs, rawMessageId, ntuRawFingerprint, moveNtuMessage } from '../supabase/functions/eren-mail/ntu.ts';
 import { messageView, cacheMessages, clearMailMemory } from '../supabase/functions/eren-mail/services.ts';
 const assert=(value:any,label='Assertion failed')=>{if(!value)throw new Error(label);};
 Deno.test('Roundcube command parser accepts JSON data and never interprets email text as commands',()=>{
@@ -40,4 +40,42 @@ Deno.test('Sent reconciliation matches the root Message-ID, never body or reply 
  assert(rawMessageId(encode('Message-ID: <actual@example.test>\r\nReferences: <other@example.test>\r\n\r\nMessage-ID: <fake@example.test>'))==='actual@example.test');
  assert(rawMessageId(encode('Subject: x\nMessage-ID:\n <folded@example.test>\n\nbody'))==='folded@example.test');
  assert(rawMessageId(encode('Subject: x\n\nMessage-ID: <fake@example.test>'))==='');
+});
+
+const headerlessMail=new TextEncoder().encode('From: teacher@example.test\r\nSubject: 課程通知\r\nDate: Thu, 01 Jan 2020 01:00:00 +0800\r\n\r\nExact lesson notice.');
+function moveTransport(options:{ambiguous?:boolean;mismatch?:boolean;fail?:boolean}={}){
+ const folders=new Map<string,Map<string,Uint8Array<ArrayBuffer>>>([['INBOX',new Map([['7',headerlessMail]])],['Archive',new Map([['100',headerlessMail]])],['Trash',new Map()]]),events:any[]=[];
+ const s={
+  raw:async(ref:any)=>{const bytes=folders.get(ref.mailbox)?.get(ref.uid);if(!bytes)throw new Error('Missing source');return bytes;},
+  ensureFolder:async(folder:string)=>{if(!folders.has(folder))folders.set(folder,new Map());},
+  newestUid:async(folder:string)=>Math.max(0,...[...folders.get(folder)!.keys()].map(Number)),
+  newerMessages:async(folder:string,after:number)=>[...folders.get(folder)!.keys()].filter(uid=>+uid>after).map(uid=>({uid})),
+  ajax:async(action:string,fields:any,post:boolean)=>{
+   events.push({action,fields,post});assert(action==='move'&&post);if(options.fail)throw new Error('Provider rejected move');
+   const source=folders.get(fields._mbox)!,target=folders.get(fields._target_mbox)!,uid=String(Math.max(0,...[...target.keys()].map(Number))+1),raw=source.get(fields._uid)!;
+   target.set(uid,options.mismatch?new TextEncoder().encode('Different email'):raw);source.delete(fields._uid);
+   if(options.ambiguous)target.set(String(+uid+1),raw);
+  }
+ };
+ return {s,folders,events};
+}
+Deno.test('NTU content fingerprint covers exact bytes and respects byte-view offsets',async()=>{
+ assert(!rawMessageId(headerlessMail));const padded=new Uint8Array(headerlessMail.length+8);padded.set(headerlessMail,4);
+ assert(await ntuRawFingerprint(padded.subarray(4,-4))===await ntuRawFingerprint(headerlessMail));
+ assert(await ntuRawFingerprint(new TextEncoder().encode('Different email'))!==await ntuRawFingerprint(headerlessMail));
+});
+Deno.test('NTU headerless move ignores an older identical copy and keeps a stable logical reference through Archive/Trash Undo',async()=>{
+ const {s,folders,events}=moveTransport();let ref:any={mailbox:'INBOX',uid:'7',labels:['INBOX','UNREAD'],logical_marker:'same-message'};
+ for(const target of ['Archive','INBOX','Trash','INBOX']){
+  ref=await moveNtuMessage(s,ref,target);assert(ref.mailbox===target);assert(ref.logical_marker==='same-message');assert(!ref.labels);assert(ref.raw_hash===await ntuRawFingerprint(headerlessMail));assert(folders.get(target)!.has(ref.uid));
+ }
+ assert(folders.get('Archive')!.has('100'),'Existing identical mail was changed');assert(events.length===4);assert(folders.get('INBOX')!.size===1);
+});
+Deno.test('NTU move refuses to identify a wrong or ambiguous newly copied message',async()=>{
+ for(const options of [{ambiguous:true},{mismatch:true}]){const {s}=moveTransport(options);let error:any;try{await moveNtuMessage(s,{mailbox:'INBOX',uid:'7'},'Archive');}catch(e){error=e;}assert(error?.status===409);}
+});
+Deno.test('NTU rejected moves leave the source intact; invalid UIDs never reach the provider',async()=>{
+ const {s,folders,events}=moveTransport({fail:true});let failed=false;try{await moveNtuMessage(s,{mailbox:'INBOX',uid:'7'},'Archive');}catch{failed=true;}assert(failed&&folders.get('INBOX')!.has('7'));
+ for(const uid of ['*','7,8','7\r\nDELETE INBOX','4294967296']){let rejected=false;try{await moveNtuMessage(s,{mailbox:'INBOX',uid},'Archive');}catch{rejected=true;}assert(rejected);}
+ assert(events.length===1);
 });
