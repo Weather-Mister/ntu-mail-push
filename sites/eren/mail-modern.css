@@ -1,4 +1,21 @@
 /* Compact mail workspace. Uses the schedule's warm paper and charcoal palette. */
+@media(max-width:860px){
+ .mailx-dialog .mailx-translate-button{display:inline-flex;align-items:center;justify-content:center;gap:5px;flex:0 0 auto;min-height:36px;padding:0 11px;border:1px solid #cbd8c4;border-radius:999px;background:#eaf0e2;color:#4d705c;font-family:inherit;font-size:12px;font-weight:600;line-height:1.2;cursor:pointer;text-shadow:0 0 4px rgba(111,168,119,.16)}
+ .mailx-dialog .mailx-translate-button:hover{background:#e1ead7;color:#395c47}
+ .mailx-dialog .mailx-translate-button[aria-pressed="true"]{background:#dce8d5;border-color:#adc5a5;color:#395c47}
+ .mailx-dialog .mailx-translate-button:focus-visible{outline:2px solid #8ba584;outline-offset:2px}
+ .mailx-dialog .mailx-translate-symbol{font-size:16px;font-weight:500;line-height:1}
+ .mailx-dialog .mailx-translation{flex:0 0 auto;padding:12px 0 20px;color:#30352d;overflow-wrap:anywhere}
+ .mailx-dialog .mailx-translation-label{padding-bottom:8px;margin-bottom:13px;border-bottom:1px solid #e1e5d9;color:#718167;font-size:10px;font-weight:650;letter-spacing:.08em}
+ .mailx-dialog .mailx-translation-subject{margin:0 0 13px;font-size:18px;line-height:1.4;font-weight:650}
+ .mailx-dialog .mailx-translation-body{font-size:15px;line-height:1.8;white-space:normal;overflow-x:auto;overflow-wrap:anywhere}
+ .mailx-dialog .mailx-translation-body p{margin:0 0 13px}
+ .mailx-dialog .mailx-translation-body :is(h1,h2,h3,h4){font-size:18px;line-height:1.4;margin:14px 0 9px}
+ .mailx-dialog .mailx-translation-body table{width:100%;border-collapse:collapse;margin:10px 0 16px}
+ .mailx-dialog .mailx-translation-body :is(td,th){padding:8px 10px;border-bottom:1px solid #e1e5d9;text-align:left;vertical-align:top;overflow-wrap:anywhere}
+ .mailx-dialog .mailx-translation-body :is(ul,ol){padding-left:23px;margin:8px 0 14px}
+ .mailx-dialog .mailx-thread-details :is(.mailx-html-body,.mailx-mail-body,.mailx-text-alternative)[hidden]{display:none!important}
+}
 .mailx-dialog{--mail-ink:#292c30;--mail-muted:#797975;--mail-accent:#557568;width:min(1440px,calc(100vw - 32px));height:min(900px,calc(100dvh - 32px));background:#f6f5f1;border-radius:18px;box-shadow:0 12px 48px #222a321f}
 .mailx-dialog::backdrop{background:#20273052;backdrop-filter:blur(3px)}
 .mailx-dialog svg,.mailx-peek svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
