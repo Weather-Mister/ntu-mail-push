@@ -7,6 +7,8 @@
   const originalMailMarkupCache=new WeakMap();
   const frameMailMarkupCache=new WeakMap();
   const isSkeuoDemo=()=>location.pathname.endsWith('/skeuo-demo.html');
+  const mobileMailLayout=matchMedia('(max-width:860px)');
+  const translationEnabled=()=>isSkeuoDemo()||mobileMailLayout.matches;
   const hasChinese=text=>/[\u3400-\u9fff]/.test(String(text||''));
   const translationKey=(thread,msg)=>thread.accountId+':'+msg.id;
   const wantsEnglish=(thread,msg)=>translatedOpen.has(translationKey(thread,msg))&&translationCache.has(translationKey(thread,msg));
@@ -366,9 +368,9 @@
   }
   function currentMessage(){return state.thread?.messages.at(-1);}
   function translationControls(t,msg,i) {
-    if(!isSkeuoDemo()||!hasChinese(msg.subject+' '+msg.text+' '+msg.snippet))return '';
+    if(!translationEnabled()||!hasChinese(msg.subject+' '+msg.text+' '+msg.snippet))return '';
     const stored=translationCache.has(translationKey(t,msg)),active=wantsEnglish(t,msg);
-    const label=stored?(active?'ORIGINAL':'ENGLISH'):'TRANSLATE';
+    const rawLabel=stored?(active?'Original':'English'):'Translate',label=isSkeuoDemo()?rawLabel.toUpperCase():rawLabel;
     const description=stored?(active?'Show original Chinese email':'Show English translation'):'Translate Chinese email to English';
     return `<button class="mailx-translate-button" type="button" data-mailx-translate="${i}" aria-label="${description}" aria-pressed="${active}" title="${description}"><span class="mailx-translate-symbol" aria-hidden="true">⇄</span>${label}</button>`;
   }
@@ -474,7 +476,7 @@
     }).join('');
   }
   function translatedBlock(t,msg,i) {
-    if(!wantsEnglish(t,msg))return '';
+    if(!translationEnabled()||!wantsEnglish(t,msg))return '';
     const translation=translationCache.get(translationKey(t,msg));
     const html=translation.bodyHtml?safeTranslationHtml(translation.bodyHtml):'';
     const content=html.trim()?html:plainTranslationHtml(translation.body);
@@ -485,17 +487,19 @@
     renderReader();
     const current=readerEl.querySelector('.mailx-reader-scroll');if(current)current.scrollTop=position;
   }
+  mobileMailLayout.addEventListener('change',()=>{if(!isSkeuoDemo()&&state.thread)rerenderReaderPreservingPosition();});
   function renderReader(){
     const t=state.thread;if(!t)return blankReader();const m=currentMessage(),account=state.accounts.find(a=>a.id===t.accountId),incoming=[...t.messages].reverse().find(x=>address(x.email)!==address(account?.email))||m;
     const c=incoming.classification,unsub=incoming.unsubscribe,archived=!t.messages.some(x=>x.labels.includes('INBOX'));
     const focused=shell.classList.contains('is-reader-focused');
     readerEl.innerHTML=`<div class="mailx-reader-toolbar"><button class="mailx-action mailx-reader-back" data-action="back" aria-label="Back to mail list">←</button><button class="mailx-action" data-action="archive">${archived?'Unarchive':'Archive'}</button><button class="mailx-action" data-action="mute">Mute</button><button class="mailx-action danger" data-action="block">Block</button>${unsub.web||unsub.mailto?'<button class="mailx-action good" data-action="unsubscribe">Unsubscribe</button>':''}<button class="mailx-action" data-action="unread">Unread</button><button class="mailx-action mailx-toolbar-reply" data-action="reply">Reply</button><button class="mailx-action mailx-toolbar-forward" data-action="forward">Forward</button>${isEmbedded()?'<button class="mailx-action" data-action="classify">Rule</button><button class="mailx-action" data-action="sender">Sender</button>':''}<span class="mailx-toolbar-spacer"></span><button class="mailx-action mailx-focus-action" data-action="focus" aria-pressed="${focused?'true':'false'}">${focused?'Exit focus':'Focus'}</button></div><div class="mailx-reader-scroll"><div class="mailx-reader-head"><div class="mailx-reader-title-row"><h2 class="mailx-reader-subject">${escapeHtml(m.subject)}</h2>${translationControls(t,m,t.messages.length-1)}${isEmbedded()?'':'<div class="mailx-reader-head-actions"><button class="mailx-action" data-action="classify">Rule</button><button class="mailx-action" data-action="sender">Sender</button></div>'}</div><div class="mailx-reader-tags"><span class="mailx-account">${escapeHtml(accountName(t.accountId))}</span><span class="mailx-chip">${escapeHtml(c.type)}</span><span class="mailx-chip">${escapeHtml(c.context||'No context')}</span>${chipsFor(incoming)}</div></div>${t.messages.map((msg,i)=>`<article class="mailx-thread-message${i===t.messages.length-1?' is-current':''}"><details class="mailx-thread-details${i===t.messages.length-1?' is-current':''}" ${i===t.messages.length-1?'open':''}><summary>${avatar(msg.sender)}<span class="mailx-thread-summary"><strong>${escapeHtml(msg.sender)}</strong><span>${escapeHtml(msg.snippet||msg.text?.slice(0,110))}</span></span><time>${escapeHtml(time(msg.timestamp))}</time></summary><details class="mailx-message-meta"><summary>Message details</summary><div class="mailx-sender-row"><div class="mailx-sender-details"><div class="mailx-sender-email">From: ${escapeHtml(msg.from)}</div><div class="mailx-recipient-line">To: ${escapeHtml(msg.to)}${msg.cc?' · Cc: '+escapeHtml(msg.cc):''}</div><div class="mailx-recipient-line">Date: ${escapeHtml(time(msg.timestamp))} · ${escapeHtml(accountName(t.accountId))}</div></div></div></details>${msg.classification.code?`<div class="mailx-login-card ${Date.now()-msg.timestamp>3600000?'is-old-code':''}"><div class="mailx-login-label">${Date.now()-msg.timestamp>3600000?'OLDER CODE · MAY HAVE EXPIRED':'VERIFICATION CODE'}</div><div class="mailx-login-code">${escapeHtml(msg.classification.code)}</div><button class="mailx-copy-code" data-copy="${i}">Copy code</button></div>`:''}${originalMessageMarkup(msg,i)}${translatedBlock(t,msg,i)}${msg.attachments.length?`<div class="mailx-attachments">${msg.attachments.map((a,j)=>`<button class="mailx-attachment-download" data-attachment="${i}:${j}" title="Download ${escapeHtml(a.filename)}"><span class="mailx-file-type">${escapeHtml(a.filename.split('.').pop().slice(0,5).toUpperCase())}</span><span><strong>${escapeHtml(a.filename)}</strong><small>${formatBytes(a.size)} · Download ↓</small></span></button>`).join('')}</div>`:''}</details></article>`).join('')}</div>`;
     // Keep the original mail body as a direct child; hide it only while viewing the English translation.
-    if(isSkeuoDemo())$$('.mailx-thread-details').forEach((details,i)=>{
+    if(translationEnabled())$$('.mailx-thread-details').forEach((details,i)=>{
       if(wantsEnglish(t,t.messages[i]))details.querySelectorAll('.mailx-html-body,.mailx-text-alternative,.mailx-mail-body,.mailx-original-body,.mailx-original-layout').forEach(el=>{el.hidden=true;});
     });
     const toolbar=$('.mailx-reader-toolbar'),more=document.createElement('details');more.className='mailx-reader-more';more.innerHTML='<summary aria-label="More message actions" title="More message actions">'+icon('more')+'</summary><div></div>';toolbar.insertBefore(more,$('.mailx-toolbar-spacer'));for(const action of (isEmbedded()?['mute','block','unsubscribe']:['mute','block','unsubscribe','classify','sender'])){const button=$('[data-action="'+action+'"]');if(button)more.querySelector('div').appendChild(button);}
     const loadBody=details=>details.querySelectorAll('[data-body]').forEach(frame=>{
+      if(frame.hidden)return;
       const original=frame.closest('.mailx-original-layout');
       if(original&&!original.open)return; // Don't load external images until original layout is requested.
       if(!frame.dataset.loaded){frame.srcdoc=mailFrameHtml(t.messages[Number(frame.dataset.body)]);frame.dataset.loaded='1';}
@@ -520,7 +524,7 @@
         if(translatedOpen.has(key))translatedOpen.delete(key);else translatedOpen.add(key);
         return rerenderReaderPreservingPosition();
       }
-      b.disabled=true;b.textContent='WORKING…';
+      b.disabled=true;b.textContent=isSkeuoDemo()?'WORKING…':'Translating…';
       try {
         const result=await api('translate',{accountId:t.accountId,messageId:msg.id});
         if(typeof result.body!=='string'||!result.body.trim())throw new Error('Gemini returned no readable text.');
@@ -529,7 +533,7 @@
         translatedOpen.add(key);
         if(state.thread===t)rerenderReaderPreservingPosition();
       }catch(e){
-        if(state.thread===t){b.disabled=false;b.innerHTML='<span class="mailx-translate-symbol" aria-hidden="true">⇄</span>TRANSLATE';showToast('Translation failed: '+e.message);}
+        if(state.thread===t){b.disabled=false;b.innerHTML='<span class="mailx-translate-symbol" aria-hidden="true">⇄</span>'+(isSkeuoDemo()?'TRANSLATE':'Translate');showToast('Translation failed: '+e.message);}
       }
     }));
     $$('[data-copy]').forEach(b=>b.onclick=guarded(async()=>{await navigator.clipboard.writeText(t.messages[+b.dataset.copy].classification.code);showToast('Code copied');}));
