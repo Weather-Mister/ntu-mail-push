@@ -86,10 +86,6 @@
 .mailx-dialog .mailx-thread-message .mailx-mail-body{color:#253e31;font-family:var(--sans);font-size:15px;line-height:1.8}
 
 /* Blooming Mail: the Garden's own little post office. */
-.mailx-garden .mailx-brand-icon{background:#f2e3e7;border:1px solid #e2c8d3;box-shadow:inset 0 1px 0 #fff8f5;border-radius:12px}
-.mailx-garden .mailx-brand-icon svg{width:26px;height:26px;stroke:none}
-.mailx-garden .bloom-petals{fill:#d996ae}
-.mailx-garden .bloom-center{fill:#f4d78b}
 .mailx-garden .mailx-title{font-size:22px;letter-spacing:-.035em;font-weight:550}
 .mailx-garden .mailx-reader-empty.mailx-bloom-empty{gap:0;padding:28px 20px;background:radial-gradient(ellipse at 50% 46%,#f5f2e4 0,transparent 67%);overflow:hidden}
 .mailx-garden .mailx-bloom-scene{display:block;width:min(390px,90%);height:auto;min-height:0;flex:0 1 auto;fill:none;stroke:none;margin:-10px 0 17px;overflow:visible}
@@ -99,7 +95,9 @@
 .mailx-garden .mailx-reader,.mailx-garden .mailx-list-pane{border-color:#dce6cf}
 .mailx-garden .mailx-topbar{background:linear-gradient(110deg,#fffaf4,#f2f5e8 70%,#f6e8ed)}
 .mailx-garden .mailx-compose-head{background:linear-gradient(110deg,#f3f6e7,#f6e8ed)}
-.garden #mailDashboardButton .mailx-launch-count,.mailx-garden .mailx-rail-count{isolation:isolate;z-index:2;min-width:26px;width:26px;height:26px;padding:0;border-radius:0;background:transparent;color:#795263;font-size:8px;font-weight:850;top:-8px;right:-8px;box-shadow:none;filter:drop-shadow(0 1px 1px #bd92a133)}
-.garden #mailDashboardButton .mailx-launch-count::before,.mailx-garden .mailx-rail-count::before{content:"";position:absolute;inset:0;z-index:-1;background:center/contain no-repeat url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2040%2040%22%3E%3Cg%20fill%3D%22%23e8a3bb%22%3E%3Cellipse%20cx%3D%2220%22%20cy%3D%229%22%20rx%3D%227%22%20ry%3D%229%22%2F%3E%3Cellipse%20cx%3D%2220%22%20cy%3D%2231%22%20rx%3D%227%22%20ry%3D%229%22%2F%3E%3Cellipse%20cx%3D%229%22%20cy%3D%2220%22%20rx%3D%229%22%20ry%3D%227%22%2F%3E%3Cellipse%20cx%3D%2231%22%20cy%3D%2220%22%20rx%3D%229%22%20ry%3D%227%22%2F%3E%3C%2Fg%3E%3Ccircle%20cx%3D%2220%22%20cy%3D%2220%22%20r%3D%2210%22%20fill%3D%22%23fff1d3%22%2F%3E%3C%2Fsvg%3E");pointer-events:none}
-.mailx-garden .mailx-rail-count{top:-7px;right:-7px}
-@media(max-width:860px){.mailx-garden .mailx-title{max-width:78px;white-space:normal;font-size:15px;line-height:1.05;letter-spacing:-.025em}.mailx-garden .mailx-brand-icon svg{width:23px;height:23px}.mailx-garden .mailx-bloom-scene{width:min(290px,86%)}}
+.garden #mailDashboardButton .mailx-launch-count,.mailx-garden .mailx-rail-count{isolation:isolate;z-index:2;min-width:18px;width:18px;height:18px;padding:0;border-radius:0;background:transparent;color:#6b4f36;font-size:7px;font-weight:850;top:-4px;right:-4px;box-shadow:none;filter:drop-shadow(0 1px 1px #bd92a133)}
+.garden #mailDashboardButton .mailx-launch-count::before,.mailx-garden .mailx-rail-count::before{content:"";position:absolute;inset:0;z-index:-1;background:center/contain no-repeat url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2040%2040%22%3E%3Cg%20fill%3D%22%23e9a5bb%22%3E%3Ccircle%20cx%3D%2220.00%22%20cy%3D%228.00%22%20r%3D%227.5%22%2F%3E%3Ccircle%20cx%3D%2228.49%22%20cy%3D%2211.51%22%20r%3D%227.5%22%2F%3E%3Ccircle%20cx%3D%2232.00%22%20cy%3D%2220.00%22%20r%3D%227.5%22%2F%3E%3Ccircle%20cx%3D%2228.49%22%20cy%3D%2228.49%22%20r%3D%227.5%22%2F%3E%3Ccircle%20cx%3D%2220.00%22%20cy%3D%2232.00%22%20r%3D%227.5%22%2F%3E%3Ccircle%20cx%3D%2211.51%22%20cy%3D%2228.49%22%20r%3D%227.5%22%2F%3E%3Ccircle%20cx%3D%228.00%22%20cy%3D%2220.00%22%20r%3D%227.5%22%2F%3E%3Ccircle%20cx%3D%2211.51%22%20cy%3D%2211.51%22%20r%3D%227.5%22%2F%3E%3C%2Fg%3E%3Ccircle%20cx%3D%2220%22%20cy%3D%2220%22%20r%3D%2210%22%20fill%3D%22%23eec56e%22%2F%3E%3C%2Fsvg%3E");pointer-events:none}
+.mailx-garden .mailx-rail-count{min-width:17px;width:17px;height:17px;top:-3px;right:-3px}
+@media(max-width:860px){.mailx-garden .mailx-title{max-width:78px;white-space:normal;font-size:15px;line-height:1.05;letter-spacing:-.025em}.mailx-garden .mailx-bloom-scene{width:min(290px,86%)}}
+
+.mailx-garden .mailx-reader-toolbar{flex-wrap:wrap}
