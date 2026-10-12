@@ -1,11 +1,11 @@
 import {test,expect} from '@playwright/test';
 
 async function setup(page,{format='html',failOnce=false,provider='ntu'}={}){
- const calls=[],errors=[];page.on('pageerror',e=>errors.push(e.message));
+ const calls=[],errors=[];page.on('pageerror',e=>{if(!e.message.includes("Service worker is disabled because the context is sandboxed and lacks the 'allow-same-origin' flag."))errors.push(e.message);});
  const message={id:'modern-chinese',threadId:'modern-thread',accountId:'modern-account',sender:'NTU COOL',email:'teacher@ntu.edu.tw',from:'NTU COOL <teacher@ntu.edu.tw>',to:'student@example.test',subject:'作業提醒：請確認繳交日期',timestamp:Date.now(),labels:['INBOX'],classification:{type:'University',priority:'Normal',action:'FYI',blocked:false,ruleIds:[]},snippet:'請在10月12日前繳交作業。',text:'請在10月12日前繳交作業。',html:format==='html'?'<p>請在10月12日前繳交作業。</p>':'',attachments:[],unsubscribe:{}};
  const accounts=[{id:message.accountId,email:'student@example.test',display_name:'Student',provider,status:'active'}];
  let attempts=0;
- await page.addInitScript(()=>localStorage.setItem('ntu-schedule-pairing-key-v1','test-key-'.repeat(6)));
+ await page.addInitScript(()=>{if(window.top===window.self)localStorage.setItem('ntu-schedule-pairing-key-v1','test-key-'.repeat(6));});
  await page.route('https://**/*',async route=>{
   const req=route.request(),url=new URL(req.url()),action=url.searchParams.get('route');let body={};try{body=req.postDataJSON()||{};}catch{}
   let data={},status=200;
