@@ -924,6 +924,7 @@
       dialog.close=()=>{try{keepDraft();}catch{}dialog.querySelector('#mailxCompose')?.classList.remove('is-open');dialog.querySelector('#mailxSheet')?.remove();setEmbeddedMode(false);};
       dialog.querySelector('#mailxListResizer')?.setAttribute('data-mailx-resizer','list');
     }
+    if(isGarden)$('.mailx-ai-chips')?.remove();
     shell=$('#mailxShell');listEl=$('#mailxList');readerEl=$('#mailxReader');searchEl=$('#mailxSearch');accountEls=[...dialog.querySelectorAll('[data-mailx-account-filter]')];if(!accountEls.length&&$('#mailxAccount'))accountEls=[$('#mailxAccount')];initMailWorkspaceInteractions();
     if($('#mailxClose'))$('#mailxClose').onclick=()=>{keepDraft();dialog.close();};$('#mailxSettings').onclick=guarded(settings);
     $('#mailxComposeMain').onclick=guarded(()=>openComposer());$('#mailxComposeMobile').onclick=guarded(()=>openComposer());$('#mailxComposeClose').onclick=closeComposer;

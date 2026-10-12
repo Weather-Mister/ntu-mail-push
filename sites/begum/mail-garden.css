@@ -63,3 +63,11 @@
 .mailx-peek{font-family:var(--sans);background:#fffef7;border-color:#dde8cf;box-shadow:0 8px 30px #274f3b24}
 #mailDashboardButton .mailx-launch-count{background:#679d73;box-shadow:0 0 0 2px #f6f8ee}
 @media(max-width:860px){.mailx-dialog{width:100vw;height:100dvh;border-radius:0}.garden-mail-shortcut{width:36px;padding:0;gap:0}.garden-mail-shortcut>span:not(.mailx-launch-count){display:none}}
+
+/* Keep the shortcut, envelope and count in one compact control. */
+.garden .week-actions #mailDashboardButton{display:inline-flex;align-items:center;justify-content:center;position:relative;flex:0 0 36px;width:36px;height:32px;min-height:32px;min-width:36px;padding:0;border-radius:10px;background:linear-gradient(145deg,#f8fbf0,#e5eed9);border:1px solid #c6d8bb;color:#41694a;box-shadow:inset 0 1px 0 #ffffffb3;overflow:visible}
+.garden .week-actions #mailDashboardButton:hover{background:#e3eed7;color:#274f3b}
+.garden .week-actions #mailDashboardButton .garden-mail-icon{display:block;width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.65;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
+#mailDashboardButton .mailx-launch-count,.mailx-dialog .mailx-rail-count{display:flex;align-items:center;justify-content:center;position:absolute;top:-5px;right:-5px;width:auto;min-width:17px;height:17px;padding:0 4px;border:0;border-radius:999px;background:#527c58;color:#fff;font:700 9px/1 var(--sans);letter-spacing:0;white-space:nowrap;box-shadow:0 0 0 2px #f6f8ee;pointer-events:none}
+.mailx-dialog .mailx-rail-count{top:-2px;right:-2px;min-width:16px;height:16px;padding:0 3px;font-size:8px;box-shadow:0 0 0 2px #f6f8ee}
+#mailDashboardButton .mailx-launch-count[hidden],.mailx-dialog .mailx-rail-count:empty{display:none!important}
