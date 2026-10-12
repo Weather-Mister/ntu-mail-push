@@ -170,3 +170,14 @@
 
   scheduleVisit(random(1800, 4200));
 })();
+
+/* Garden-only mail decoration; the shared mail client stays identical. */
+(() => {
+  function decorateMailBar() {
+    const bar=document.querySelector('.mailx-garden .mailx-topbar');
+    const refresh=bar?.querySelector('#mailxRefresh');
+    if(refresh&&!bar.querySelector('.mailx-bee-parade'))refresh.insertAdjacentHTML('beforebegin',"<span class=\"mailx-bee-parade\" aria-hidden=\"true\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 360 48\"><path class=\"mailx-bee-trail\" d=\"M 14 28 C 72 2 105 44 160 24 S 244 3 284 24 S 324 40 346 17\"/><g class=\"mailx-parade-bee\"><ellipse cx=\"-2\" cy=\"-7\" rx=\"4.5\" ry=\"6\" fill=\"#fffef7\" stroke=\"#a3bead\" stroke-width=\".9\" transform=\"rotate(-25 -2 -7)\"/><ellipse cx=\"4\" cy=\"-7\" rx=\"4\" ry=\"5.5\" fill=\"#fffef7\" stroke=\"#a3bead\" stroke-width=\".9\" transform=\"rotate(25 4 -7)\"/><path d=\"m-12 0 4-2v4Z\" fill=\"#385542\"/><ellipse rx=\"10\" ry=\"6\" fill=\"#edbd55\" stroke=\"#385542\" stroke-width=\"1\"/><path d=\"M-4-5v10M2-5v10\" stroke=\"#385542\" stroke-width=\"2.8\"/><circle cx=\"10\" cy=\"-1\" r=\"4.7\" fill=\"#385542\"/><circle cx=\"11.5\" cy=\"-2\" r=\"1\" fill=\"#fffef7\"/><path d=\"m10-5 1-4m2 4 3-3\" stroke=\"#385542\" stroke-width=\"1\" stroke-linecap=\"round\"/></g><g class=\"mailx-parade-bee\"><ellipse cx=\"-2\" cy=\"-7\" rx=\"4.5\" ry=\"6\" fill=\"#fffef7\" stroke=\"#a3bead\" stroke-width=\".9\" transform=\"rotate(-25 -2 -7)\"/><ellipse cx=\"4\" cy=\"-7\" rx=\"4\" ry=\"5.5\" fill=\"#fffef7\" stroke=\"#a3bead\" stroke-width=\".9\" transform=\"rotate(25 4 -7)\"/><path d=\"m-12 0 4-2v4Z\" fill=\"#385542\"/><ellipse rx=\"10\" ry=\"6\" fill=\"#edbd55\" stroke=\"#385542\" stroke-width=\"1\"/><path d=\"M-4-5v10M2-5v10\" stroke=\"#385542\" stroke-width=\"2.8\"/><circle cx=\"10\" cy=\"-1\" r=\"4.7\" fill=\"#385542\"/><circle cx=\"11.5\" cy=\"-2\" r=\"1\" fill=\"#fffef7\"/><path d=\"m10-5 1-4m2 4 3-3\" stroke=\"#385542\" stroke-width=\"1\" stroke-linecap=\"round\"/></g><g class=\"mailx-parade-bee\"><ellipse cx=\"-2\" cy=\"-7\" rx=\"4.5\" ry=\"6\" fill=\"#fffef7\" stroke=\"#a3bead\" stroke-width=\".9\" transform=\"rotate(-25 -2 -7)\"/><ellipse cx=\"4\" cy=\"-7\" rx=\"4\" ry=\"5.5\" fill=\"#fffef7\" stroke=\"#a3bead\" stroke-width=\".9\" transform=\"rotate(25 4 -7)\"/><path d=\"m-12 0 4-2v4Z\" fill=\"#385542\"/><ellipse rx=\"10\" ry=\"6\" fill=\"#edbd55\" stroke=\"#385542\" stroke-width=\"1\"/><path d=\"M-4-5v10M2-5v10\" stroke=\"#385542\" stroke-width=\"2.8\"/><circle cx=\"10\" cy=\"-1\" r=\"4.7\" fill=\"#385542\"/><circle cx=\"11.5\" cy=\"-2\" r=\"1\" fill=\"#fffef7\"/><path d=\"m10-5 1-4m2 4 3-3\" stroke=\"#385542\" stroke-width=\"1\" stroke-linecap=\"round\"/></g></svg></span>");
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',decorateMailBar,{once:true});
+  else decorateMailBar();
+})();
