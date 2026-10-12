@@ -1177,3 +1177,88 @@ body{min-width:320px}
     font-size:clamp(16px,1.55vw,19px);
   }
 }
+
+
+/* Campus shortcuts on phones: size the card to its actual links rather than
+   preserving the desktop minimum height / obsolete right-side control space. */
+@media(max-width:900px){
+  .garden .links-panel{
+    flex:0 0 auto;
+    height:auto;
+    min-height:0;
+    padding:14px 16px 16px;
+    overflow:visible;
+  }
+  .garden .links-panel .side-heading{
+    padding-right:0;
+    margin:0 0 10px;
+    align-items:flex-start;
+  }
+  .garden .links-panel .side-heading h2{
+    font-size:clamp(21px,5.5vw,25px);
+    line-height:1.16;
+  }
+  .garden .links-panel #quickAccessRow{
+    display:flex;
+    flex-direction:column;
+    width:100%;
+    min-width:0;
+    gap:9px;
+    margin:0;
+    padding:0;
+    border:0;
+  }
+  .garden .links-panel #quickAccessRow>.study-hub{
+    flex:none;
+    width:100%;
+    min-height:0;
+    margin:0;
+  }
+  .garden .links-panel #quickAccessRow .ntu-hub-grid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    align-items:stretch;
+    gap:8px;
+    width:100%;
+    margin:0;
+  }
+  .garden .links-panel #quickAccessRow .ntu-hub-grid .hub-app{
+    min-height:48px;
+    padding:8px 5px;
+    gap:5px;
+    overflow:hidden;
+  }
+  .garden .links-panel #quickAccessRow .ntu-hub-grid .hub-icon{
+    flex:0 0 19px;
+    width:19px;
+    min-width:19px;
+    height:19px;
+    min-height:19px;
+  }
+  .garden .links-panel #quickAccessRow .ntu-hub-grid .hub-icon svg{
+    width:19px;
+    height:19px;
+  }
+  .garden .links-panel #quickAccessRow .ntu-hub-grid .hub-label{
+    min-width:0;
+    font-size:clamp(10px,2.9vw,12px);
+    line-height:1.2;
+    white-space:normal;
+    overflow-wrap:normal;
+  }
+  .garden .links-panel #mailAlertButton{
+    top:-27px;
+    right:8px;
+  }
+}
+@media(max-width:380px){
+  .garden .links-panel #quickAccessRow .ntu-hub-grid .hub-app{
+    flex-direction:column;
+    min-height:58px;
+    padding:7px 3px;
+    gap:3px;
+  }
+  .garden .links-panel #quickAccessRow .ntu-hub-grid .hub-label{
+    font-size:10px;
+  }
+}
