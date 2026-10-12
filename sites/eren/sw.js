@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ntu-schedule-github-v75';
+const CACHE_NAME = 'ntu-schedule-github-v76';
 const ROOT = new URL(self.registration.scope).pathname;
 const asset = path => ROOT + (path.startsWith('/') ? path.slice(1) : path);
 const ICON_URL = new URL('schedule-icon-180.png', self.registration.scope).href;
@@ -13,7 +13,7 @@ const APP_SHELL = [
   asset('vendor/ffmpeg/814.ffmpeg.js'),
   asset('app.js?v=111'),
   asset('todo-realtime.js?v=1'),
-  asset('mail-demo.js?v=31'),
+  asset('mail-demo.js?v=34'),
   asset('skeuo-translation.css?v=7'),
   asset('skeuo-compose-fix.css?v=1'),
   asset('skeuo-demo.html'),

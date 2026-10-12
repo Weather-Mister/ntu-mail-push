@@ -303,3 +303,17 @@ test('modern reader fits the viewport and keeps Reply and Forward available',asy
  await page.screenshot({path:'test-results/'+info.project.name+'-modern-reader.png'});
 });
 
+
+test('unread preview opens only on mouse hover and stays closed after focus restoration',async({page},info)=>{
+ test.skip(info.project.name!=='desktop','Mouse hover behavior');
+ await boot(page);await page.locator('#mailxClose').click();await page.mouse.move(0,0);
+ const launch=page.locator('#mailDashboardButton'),peek=page.locator('#mailxPeek');
+ await launch.focus();await expect(peek).toBeHidden();
+ await page.evaluate(()=>window.dispatchEvent(new Event('focus')));await expect(peek).toBeHidden();
+ await launch.hover();await expect(peek).toBeVisible();
+ await page.evaluate(()=>window.dispatchEvent(new Event('blur')));await expect(peek).toBeHidden();
+ await page.evaluate(()=>{window.dispatchEvent(new Event('focus'));document.dispatchEvent(new Event('visibilitychange'));});await expect(peek).toBeHidden();
+ await page.mouse.move(0,0);await launch.hover();await expect(peek).toBeVisible();
+ await page.mouse.move(0,0);await expect(peek).toBeHidden();
+ await launch.hover();await expect(peek).toBeVisible();await page.keyboard.press('Escape');await expect(peek).toBeHidden();
+});

@@ -899,8 +899,20 @@
     $('.mailx-mobile-tabs').innerHTML=['inbox','unread','starred','sent','drafts','trash'].map(k=>'<button class="mailx-mobile-tab" data-mailx-mobile-filter="'+k+'">'+categoryLabel(k)+'</button>').join('');
     const launch=document.querySelector('#mailDashboardButton');launch.insertAdjacentHTML('beforeend','<span class="mailx-launch-count" hidden></span>');
     const peek=document.createElement('section');peek.id='mailxPeek';peek.className='mailx-peek';peek.hidden=true;peek.setAttribute('aria-label','Latest unread mail');document.body.appendChild(peek);
-    let timer;const hide=()=>{timer=setTimeout(()=>peek.hidden=true,200);},show=()=>{if(!peek.innerHTML||dialog.open)return;clearTimeout(timer);const r=launch.getBoundingClientRect();peek.style.top=(r.bottom+8)+'px';peek.style.right=Math.max(12,innerWidth-r.right)+'px';peek.hidden=false;};
-    launch.addEventListener('pointerenter',e=>{if(e.pointerType==='mouse')show();});launch.addEventListener('focus',show);launch.addEventListener('pointerleave',hide);launch.addEventListener('blur',hide);peek.addEventListener('pointerenter',()=>clearTimeout(timer));peek.addEventListener('pointerleave',hide);peek.addEventListener('focusin',()=>clearTimeout(timer));peek.addEventListener('focusout',hide);launch.addEventListener('click',()=>peek.hidden=true);
+    let timer;
+    const closePreview=()=>{clearTimeout(timer);peek.hidden=true;};
+    const hide=()=>{clearTimeout(timer);timer=setTimeout(closePreview,200);};
+    const show=()=>{if(!peek.innerHTML||dialog.open||document.visibilityState!=='visible')return;clearTimeout(timer);const r=launch.getBoundingClientRect();peek.style.top=(r.bottom+8)+'px';peek.style.right=Math.max(12,innerWidth-r.right)+'px';peek.hidden=false;};
+    // Only an actual mouse hover on Mail can open this preview. Focus restoration cannot.
+    launch.addEventListener('pointerenter',e=>{if(e.pointerType==='mouse'&&matchMedia('(hover:hover)').matches)show();});
+    launch.addEventListener('pointerleave',hide);
+    peek.addEventListener('pointerenter',()=>{if(!peek.hidden)clearTimeout(timer);});
+    peek.addEventListener('pointerleave',hide);
+    launch.addEventListener('click',closePreview);
+    window.addEventListener('blur',closePreview);
+    window.addEventListener('pagehide',closePreview);
+    document.addEventListener('visibilitychange',closePreview);
+    document.addEventListener('keydown',e=>{if(e.key==='Escape')closePreview();});
   }
   function mount(){
     const launch=document.querySelector('#mailDashboardButton');if(!launch)return;
