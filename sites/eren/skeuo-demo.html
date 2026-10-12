@@ -7,9 +7,9 @@
 <meta name="theme-color" content="#4b2b18">
 <title>NTU Schedule — Desk Keyboard Study</title>
 <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="./mail-demo.css?v=10">
+<link rel="stylesheet" href="./mail-demo.css?v=11">
 <link rel="stylesheet" href="./mail-modern.css?v=4">
-<link rel="stylesheet" href="./skeuo-translation.css?v=5">
+<link rel="stylesheet" href="./skeuo-translation.css?v=6">
 
 <style>
 :root{
@@ -2598,8 +2598,10 @@ h1{
 }
 .machine.mail-mode .mailx-reader-subject{
   min-width:0;
-  overflow:hidden;
-  text-overflow:ellipsis;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  overflow:visible;
+  text-overflow:clip;
 }
 .machine.mail-mode .mailx-reader-head-actions{
   flex:0 0 auto;

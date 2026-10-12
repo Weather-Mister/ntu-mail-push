@@ -51,7 +51,7 @@
 .mailx-action{min-height:30px;padding:0 7px;font-size:10.5px;border-radius:8px}
 .mailx-reader-head{padding:13px 18px 8px;flex:0 0 auto}
 .mailx-reader-title-row{display:flex;align-items:flex-start;gap:10px;min-width:0}
-.mailx-reader-subject{font-size:22px;line-height:1.12;margin:0;flex:1;min-width:0}
+.mailx-reader-subject{font-size:22px;line-height:1.12;margin:0;flex:1;min-width:0;white-space:normal;overflow-wrap:anywhere;overflow:visible;text-overflow:clip}
 .mailx-reader-head-actions{display:flex;gap:5px;flex:0 0 auto}
 .mailx-reader-tags{gap:5px;margin:7px 0 0}
 .mailx-reader-tags .mailx-chip,.mailx-reader-tags .mailx-account{padding-top:3px;padding-bottom:3px}
