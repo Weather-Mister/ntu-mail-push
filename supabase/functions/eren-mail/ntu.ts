@@ -61,6 +61,23 @@ export function rawMessageId(raw:Uint8Array){
  const text=new TextDecoder().decode(raw.subarray(0,65536)).split(/\r?\n\r?\n/,1)[0].replace(/\r?\n[ \t]+/g,' ');
  return (text.match(/^Message-ID:[ \t]*([^\r\n]*)/mi)?.[1]||'').trim().replace(/^<|>$/g,'');
 }
+export async function ntuRawFingerprint(raw:Uint8Array<ArrayBuffer>){
+ return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',raw)),b=>b.toString(16).padStart(2,'0')).join('');
+}
+function ntuUid(value:any){const uid=Number(value);if(!/^[1-9]\d{0,9}$/.test(String(value))||!Number.isSafeInteger(uid)||uid>4294967295)throw new MailError(502,'NTU returned an invalid message identifier.');return uid;}
+export async function moveNtuMessage(s:any,ref:any,target:string){
+ validFolder(ref.mailbox);validFolder(target);ntuUid(ref.uid);
+ const raw=await s.raw(ref),fingerprint=await ntuRawFingerprint(raw);
+ await s.ensureFolder(target);
+ const floor=await s.newestUid(target);
+ if(floor>=4294967295)throw new MailError(409,'NTU needs to refresh this folder before moving messages.');
+ await s.ajax('move',{_mbox:ref.mailbox,_uid:ref.uid,_target_mbox:target},true);
+ const candidates=await s.newerMessages(target,floor),matches=[];
+ for(const row of candidates)if(await ntuRawFingerprint(await s.raw({mailbox:target,uid:row.uid}))===fingerprint)matches.push(row);
+ if(matches.length!==1)throw new MailError(409,'NTU moved the message, but its new location needs a mailbox refresh.');
+ const {labels,...original}=ref;
+ return {...original,mailbox:target,uid:matches[0].uid,raw_hash:fingerprint,...(rawMessageId(raw)?{message_id:rawMessageId(raw)}:{})};
+}
 function validFolder(folder:any){if(typeof folder!=='string'||!folder||folder.length>200||/[\r\n\0]/.test(folder))throw new MailError(400,'Invalid NTU folder.');return folder;}
 function logicalId(folder:string,uid:string){if(!/^\d{1,15}$/.test(uid))throw new MailError(502,'NTU returned an invalid message identifier.');return 'ntu_'+b64url(JSON.stringify([folder,uid]));}
 function initialRef(id:string){try{const [mailbox,uid]=JSON.parse(decodeBody(id.slice(4)));validFolder(mailbox);if(!id.startsWith('ntu_')||!/^\d{1,15}$/.test(uid))throw new Error();return {mailbox,uid};}catch{throw new MailError(400,'Invalid NTU message.');}}
@@ -129,6 +146,18 @@ class Roundcube {
   do{const list=await this.list(folder,page,expected,'','base','text');for(const row of list.rows){if(!/^\d{1,15}$/.test(row.uid))continue;const bytes=await this.raw({mailbox:folder,uid:row.uid});if(rawMessageId(bytes)===expected)matches.push(row);}if(!list.hasMore)break;}while(++page<=5);
   return matches;
  }
+ async newestUid(folder:string){
+  // IMAP's * denotes the highest UID. The reversed MAX:* range selects that
+  // message without changing the user's date sorting or webmail preferences.
+  const list=await this.list(folder,1,'','UID 4294967295:*','base','');
+  return list.rows.reduce((highest,row)=>Math.max(highest,ntuUid(row.uid)),0);
+ }
+ async newerMessages(folder:string,after:number){
+  if(!Number.isInteger(after)||after<0||after>=4294967295)throw new MailError(400,'Invalid NTU folder position.');
+  const rows=[];let page=1;
+  do{const list=await this.list(folder,page,'',`UID ${after+1}:*`,'base','');rows.push(...list.rows.filter(row=>ntuUid(row.uid)>after));if(!list.hasMore)return rows;}while(++page<=10);
+  throw new MailError(409,'NTU received many new messages. Refresh to confirm this move.');
+ }
  async ensureFolder(folder:string){
   if(Object.hasOwn(this.env.mailboxes||{},folder))return;
   // Folder saving is a framed form action, not a remote AJAX action. Refresh the
@@ -178,11 +207,8 @@ async function mutate(admin:any,account:any,s:Roundcube,id:string,action:string)
  const ref=await reference(admin,account,id);const flags:any={read:'read',unread:'unread',star:'flagged',unstar:'unflagged'};
  if(flags[action]){await s.ajax('mark',{_mbox:ref.mailbox,_uid:ref.uid,_flag:flags[action]},true);return;}
  const target=action==='archive'?s.folders.archive:action==='trash'?s.folders.trash:action==='unarchive'||action==='untrash'?'INBOX':null;if(!target)throw new MailError(400,'Unsupported NTU mail action.');if(target===ref.mailbox)return;
- const message=await fullMessage(admin,account,s,id),messageId=header(message,'Message-ID');if(!messageId)throw new MailError(409,'This message has no stable Message-ID. Move it in NTU webmail instead.');
- await s.ensureFolder(target);const before=new Set((await s.find(target,messageId)).map(r=>r.uid));
- await s.ajax('move',{_mbox:ref.mailbox,_uid:ref.uid,_target_mbox:target},true);
- const matches=(await s.find(target,messageId)).filter(r=>!before.has(r.uid));if(matches.length!==1)throw new MailError(409,'NTU moved the message, but its new location needs a mailbox refresh.');
- check(await admin.from('eren_mail_messages').update({provider_ref:{...message.providerRef,mailbox:target,uid:matches[0].uid}}).eq('account_id',account.id).eq('id',id));
+ const providerRef=await moveNtuMessage(s,ref,target);
+ check(await admin.from('eren_mail_messages').update({provider_ref:providerRef}).eq('account_id',account.id).eq('id',id));
 }
 export function roundcubeFormInputs(html:string){
  const inputs:Record<string,string>={};
