@@ -1,0 +1,194 @@
+name: Read-only NTU connection diagnostic
+
+on:
+  push:
+    branches: ["diagnostic/ntu-connection-20261012"]
+    paths: [".github/workflows/ntu-connection-diagnostic.yml"]
+
+permissions: {}
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Verify student mailbox and Roundcube connections without changing mail
+        env:
+          NTU_EMAIL: ${{ secrets.NTU_EMAIL }}
+          NTU_PASSWORD: ${{ secrets.NTU_PASSWORD }}
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import concurrent.futures
+          import http.cookiejar
+          import imaplib
+          import json
+          import os
+          import re
+          import ssl
+          import urllib.error
+          import urllib.parse
+          import urllib.request
+          from html.parser import HTMLParser
+          
+          EMAIL = os.environ.get("NTU_EMAIL", "").strip()
+          PASSWORD = os.environ.get("NTU_PASSWORD", "")
+          USER = EMAIL.split("@", 1)[0]
+          BASE = "https://wmail1.cc.ntu.edu.tw/rc/"
+          CONTEXT = ssl.create_default_context()
+          
+          def report(check, **fields):
+              print(json.dumps({"check": check, **fields}, sort_keys=True), flush=True)
+          
+          if not USER or not PASSWORD:
+              report("configuration", result="missing_existing_mail_credentials")
+              raise SystemExit(1)
+          
+          def imap_probe(host_port):
+              host, port = host_port
+              client = None
+              try:
+                  if port == 993:
+                      client = imaplib.IMAP4_SSL(host, port, ssl_context=CONTEXT, timeout=8)
+                  else:
+                      client = imaplib.IMAP4(host, port, timeout=8)
+                      if b"STARTTLS" not in client.capabilities:
+                          report("imap", host=host, port=port, result="no_starttls_authentication_skipped")
+                          return
+                      client.starttls(ssl_context=CONTEXT)
+                  report("imap", host=host, port=port, result="tls_capability_verified")
+                  # One login only, on the documented student mailbox host.
+                  if host != "msa.ntu.edu.tw":
+                      return
+                  try:
+                      client.login(USER, PASSWORD)
+                  except imaplib.IMAP4.error:
+                      report("imap", host=host, port=port, result="account_login_rejected")
+                      return
+                  status, counts = client.select("INBOX", readonly=True)
+                  if status != "OK":
+                      report("imap", host=host, port=port, result="login_ok_readonly_inbox_failed")
+                      return
+                  status, unseen = client.search(None, "UNSEEN")
+                  count = int(counts[0]) if counts and counts[0].isdigit() else None
+                  unread = len(unseen[0].split()) if status == "OK" and unseen else None
+                  report("imap", host=host, port=port, result="authenticated_readonly_inbox_verified",
+                         message_count=count, unread_count=unread)
+              except Exception as exc:
+                  report("imap", host=host, port=port, result="connection_failed", error_type=type(exc).__name__)
+              finally:
+                  if client:
+                      try:
+                          client.logout()
+                      except Exception:
+                          pass
+          
+          # Do not try an alternate port after an authentication rejection.
+          # Probe TLS directly first, and then STARTTLS only when port 993 cannot connect.
+          class SameOriginRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self, req, fp, code, msg, headers, newurl):
+                  parsed = urllib.parse.urlsplit(newurl)
+                  if parsed.scheme != "https" or parsed.netloc != "wmail1.cc.ntu.edu.tw" or not parsed.path.startswith("/rc/"):
+                      raise RuntimeError("Unexpected redirect refused")
+                  return super().redirect_request(req, fp, code, msg, headers, newurl)
+          
+          class LoginInputs(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.fields = {}
+              def handle_starttag(self, tag, attrs):
+                  attrs = dict(attrs)
+                  if tag == "input" and attrs.get("type") == "hidden" and attrs.get("name"):
+                      self.fields[attrs["name"]] = attrs.get("value", "")
+          
+          def roundcube_probe():
+              cookies = http.cookiejar.CookieJar()
+              opener = urllib.request.build_opener(
+                  SameOriginRedirect(), urllib.request.HTTPCookieProcessor(cookies),
+                  urllib.request.HTTPSHandler(context=CONTEXT))
+              opener.addheaders = [("User-Agent", "NTU-Mail-Connection-Diagnostic/1.0")]
+              authenticated = False
+              request_token = None
+              def request(url, data=None, ajax=False, token=None):
+                  headers = {}
+                  if ajax:
+                      headers["X-Requested-With"] = "XMLHttpRequest"
+                  if token:
+                      headers["X-Roundcube-Request"] = token
+                  req = urllib.request.Request(url, data=data, headers=headers)
+                  with opener.open(req, timeout=15) as response:
+                      # Metadata stays in process memory; never print response bodies/cookies.
+                      return response.status, response.read(2_000_001).decode("utf-8", "replace")
+              try:
+                  status, page = request(BASE + "index.php")
+                  parser = LoginInputs()
+                  parser.feed(page)
+                  if not parser.fields.get("_token"):
+                      report("roundcube", result="login_form_not_verified", http_status=status)
+                      return
+                  fields = parser.fields
+                  fields.update({"_task": "login", "_action": "login", "_user": USER,
+                                 "_pass": PASSWORD, "_timezone": "Asia/Taipei", "_url": ""})
+                  status, page = request(BASE + "?_task=login", urllib.parse.urlencode(fields).encode())
+                  authenticated = bool(re.search(r'"task"\s*:\s*"mail"', page)
+                                       and re.search(r'"request_token"\s*:', page)
+                                       and 'name="_pass"' not in page)
+                  if not authenticated:
+                      report("roundcube", result="authenticated_mail_page_not_verified", http_status=status)
+                      return
+                  match = re.search(r'"request_token"\s*:\s*("(?:\\.|[^"\\])*")', page)
+                  if match:
+                      request_token = json.loads(match.group(1))
+                  report("roundcube", result="authenticated_mail_page_verified")
+                  for action in ("list", "getunread"):
+                      query = {"_task": "mail", "_action": action, "_mbox": "INBOX", "_remote": "1"}
+                      status, body = request(BASE + "?" + urllib.parse.urlencode(query), ajax=True, token=request_token)
+                      try:
+                          response = json.loads(body)
+                      except ValueError:
+                          report("roundcube_" + action, result="json_response_not_verified", http_status=status)
+                          continue
+                      execution = response.get("exec", "")
+                      env = response.get("env", {})
+                      if not isinstance(execution, str) or not isinstance(env, dict):
+                          report("roundcube_" + action, result="unexpected_response_shape")
+                          continue
+                      # Parse only metadata; never execute the response's JavaScript.
+                      if action == "list":
+                          report("roundcube_list", result="authenticated_json_response_verified",
+                                 response_action_matches=response.get("action") == action,
+                                 message_count=env.get("messagecount") if isinstance(env.get("messagecount"), int) else None,
+                                 listed_message_rows=len(re.findall(r"add_message_row", execution)),
+                                 unread_flags_present=bool(re.search(r'"unread"\s*:', execution)))
+                      else:
+                          match = re.search(r'set_unread_count\(\s*"INBOX"\s*,\s*(\d+)', execution)
+                          report("roundcube_getunread", result="authenticated_json_response_verified",
+                                 response_action_matches=response.get("action") == action,
+                                 inbox_unread_count=int(match.group(1)) if match else None,
+                                 unread_count_commands_present="set_unread_count" in execution)
+              except urllib.error.HTTPError as exc:
+                  report("roundcube", result="http_error", http_status=exc.code)
+              except Exception as exc:
+                  report("roundcube", result="connection_failed", error_type=type(exc).__name__)
+              finally:
+                  if authenticated:
+                      try:
+                          query = {"_task": "logout"}
+                          if request_token:
+                              query["_token"] = request_token
+                          request(BASE + "?" + urllib.parse.urlencode(query))
+                          report("roundcube_logout", result="session_closed")
+                      except Exception:
+                          report("roundcube_logout", result="not_verified")
+                  cookies.clear()
+          
+          # Socket checks do not touch message bodies or flags.
+          # Webmail checks use only login, metadata GETs, and logout.
+          with concurrent.futures.ThreadPoolExecutor(max_workers=3) as pool:
+              futures = [pool.submit(imap_probe, ("msa.ntu.edu.tw", 993)),
+                         pool.submit(imap_probe, ("wmail1.cc.ntu.edu.tw", 993)),
+                         pool.submit(roundcube_probe)]
+              for future in futures:
+                  future.result()
+          report("diagnostic", result="completed", message_flags_changed=False, message_bodies_requested=False)
+          PY
