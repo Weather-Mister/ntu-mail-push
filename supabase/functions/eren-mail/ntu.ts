@@ -57,6 +57,10 @@ export function ntuDate(value:any,now=Date.now()) {
  if(iso)s=`${iso[1]}-${iso[2].padStart(2,'0')}-${iso[3].padStart(2,'0')}T${iso[4].padStart(2,'0')}:${iso[5]}:${iso[6]||'00'}+08:00`;
  const parsed=Date.parse(s);return Number.isFinite(parsed)?parsed:0;
 }
+export function rawMessageId(raw:Uint8Array){
+ const text=new TextDecoder().decode(raw.subarray(0,65536)).split(/\r?\n\r?\n/,1)[0].replace(/\r?\n[ \t]+/g,' ');
+ return (text.match(/^Message-ID:[ \t]*([^\r\n]*)/mi)?.[1]||'').trim().replace(/^<|>$/g,'');
+}
 function validFolder(folder:any){if(typeof folder!=='string'||!folder||folder.length>200||/[\r\n\0]/.test(folder))throw new MailError(400,'Invalid NTU folder.');return folder;}
 function logicalId(folder:string,uid:string){if(!/^\d{1,15}$/.test(uid))throw new MailError(502,'NTU returned an invalid message identifier.');return 'ntu_'+b64url(JSON.stringify([folder,uid]));}
 function initialRef(id:string){try{const [mailbox,uid]=JSON.parse(decodeBody(id.slice(4)));validFolder(mailbox);if(!id.startsWith('ntu_')||!/^\d{1,15}$/.test(uid))throw new Error();return {mailbox,uid};}catch{throw new MailError(400,'Invalid NTU message.');}}
@@ -116,7 +120,15 @@ class Roundcube {
   return {rows,hasMore:page<Number(result.env.pagecount||this.env.pagecount||1),count:Number(result.env.messagecount??this.env.messagecount??0)};
  }
  async raw(ref:any){const params=new URLSearchParams({_task:'mail',_action:'viewsource',_mbox:validFolder(ref.mailbox),_uid:ref.uid,_save:'1',_token:this.env.request_token});const r=await this.fetch('?'+params,{},MAX_RAW);const bytes=new Uint8Array(await r.arrayBuffer());const head=new TextDecoder().decode(bytes.subarray(0,4000));if(!/^[A-Za-z][\w-]*\s*:/m.test(head)||/rcmail\.set_env\(/.test(head))throw new MailError(404,'Message no longer exists in NTU Mail.');return bytes;}
- async find(folder:string,messageId:string){const list=await this.list(folder,1,messageId,'','base','message-id');return list.rows.filter(r=>/^\d{1,15}$/.test(r.uid));}
+ async find(folder:string,messageId:string){
+  const expected=String(messageId||'').trim().replace(/^<|>$/g,'');if(!expected||expected.length>1000||/[\r\n\0]/.test(expected))return [];
+  // Roundcube does not support searching a Message-ID header directly. TEXT finds
+  // candidates (including reply References); compare the actual root header so
+  // reconciliation can never mistake a different message for this queued send.
+  const matches=[];let page=1;
+  do{const list=await this.list(folder,page,JSON.stringify(expected),'','base','text');for(const row of list.rows){if(!/^\d{1,15}$/.test(row.uid))continue;const bytes=await this.raw({mailbox:folder,uid:row.uid});if(rawMessageId(bytes)===expected)matches.push(row);}if(!list.hasMore)break;}while(++page<=5);
+  return matches;
+ }
  async ensureFolder(folder:string){
   if(Object.hasOwn(this.env.mailboxes||{},folder))return;
   // Folder saving is a framed form action, not a remote AJAX action. Refresh the
@@ -190,7 +202,7 @@ export function roundcubeSendResult(html:string){
    pattern.lastIndex=p+2;
   }
  }
- return {accepted:commands.some(c=>c.name==='sent_successfully'&&c.args[0]==='confirmation'),rejected:commands.some(c=>c.name==='display_message'&&c.args[1]==='error'),warning:commands.some(c=>c.name==='sent_successfully'&&c.args[4])};
+ return {accepted:commands.some(c=>c.name==='sent_successfully'&&c.args[0]==='confirmation'),rejected:commands.some(c=>c.name==='display_message'&&c.args[1]==='error'),warning:commands.some(c=>c.name==='sent_successfully'&&c.args[3])};
 }
 export async function ntuSend(admin:any,account:any,s:Roundcube,rawEncoded:string){
  const raw=Uint8Array.from(atob(rawEncoded.replace(/-/g,'+').replace(/_/g,'/')),c=>c.charCodeAt(0)),email=await PostalMime.parse(raw),recipients=email.to?.flatMap(a=>'address'in a&&a.address?[a.address]:[])||[];

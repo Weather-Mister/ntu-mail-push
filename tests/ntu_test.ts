@@ -1,4 +1,4 @@
-import { parseRoundcubeCommands, roundcubeEnvironment, ntuDate, verifyNtuRunner, roundcubeSendResult, roundcubeFormInputs } from '../supabase/functions/eren-mail/ntu.ts';
+import { parseRoundcubeCommands, roundcubeEnvironment, ntuDate, verifyNtuRunner, roundcubeSendResult, roundcubeFormInputs, rawMessageId } from '../supabase/functions/eren-mail/ntu.ts';
 import { messageView, cacheMessages, clearMailMemory } from '../supabase/functions/eren-mail/services.ts';
 const assert=(value:any,label='Assertion failed')=>{if(!value)throw new Error(label);};
 Deno.test('Roundcube command parser accepts JSON data and never interprets email text as commands',()=>{
@@ -33,4 +33,11 @@ Deno.test('Roundcube send results read JSON confirmation without executing frame
  assert(!roundcubeSendResult('<script>parent.rcmail.sent_successfully(alert(1));</script>').accepted);
  assert(!roundcubeSendResult('<p>parent.rcmail.sent_successfully("confirmation");</p>').accepted);
  const fields=roundcubeFormInputs('<input type="hidden" name="_token" value="csrf"><input type="hidden" name="_id" value="compose"><input type="checkbox" name="_dsn" value="1">');assert(fields._token==='csrf'&&fields._id==='compose'&&!fields._dsn);
+});
+
+Deno.test('Sent reconciliation matches the root Message-ID, never body or reply References',()=>{
+ const encode=(s:string)=>new TextEncoder().encode(s);
+ assert(rawMessageId(encode('Message-ID: <actual@example.test>\r\nReferences: <other@example.test>\r\n\r\nMessage-ID: <fake@example.test>'))==='actual@example.test');
+ assert(rawMessageId(encode('Subject: x\nMessage-ID:\n <folded@example.test>\n\nbody'))==='folded@example.test');
+ assert(rawMessageId(encode('Subject: x\n\nMessage-ID: <fake@example.test>'))==='');
 });
