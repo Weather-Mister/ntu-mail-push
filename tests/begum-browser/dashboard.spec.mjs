@@ -369,7 +369,7 @@ test('checked Chatterbox dates appear only in their exact weeks without yellow h
   expect(errors).toEqual([]);
 });
 
-test('mobile garden reserves a separate row for Taipei time', async ({page}) => {
+test('mobile garden aligns Taipei time with the university label', async ({page}) => {
   for (const width of [320,375,390,443,610]) {
     await page.setViewportSize({width, height:844});
     await page.goto('/?pair=begum');
@@ -379,23 +379,24 @@ test('mobile garden reserves a separate row for Taipei time', async ({page}) => 
       const eyebrow = rect('.hero-copy .eyebrow');
       const headline = rect('.hero-copy h1');
       const header = rect('.garden .hero');
+      const padding = parseFloat(getComputedStyle(document.querySelector('.hero-copy .eyebrow')).paddingRight);
       return {
-        clockClear: clock.bottom + 3 <= eyebrow.top,
+        sameLine: Math.abs(clock.top-eyebrow.top) < 5,
+        reservedForClock: clock.left >= eyebrow.right - padding - 3,
         titleClear: eyebrow.bottom <= headline.top + 1,
         headlineFits: headline.right <= innerWidth + 2,
         headerFits: headline.bottom <= header.bottom,
+        noSemester: !document.querySelector('.hero-copy .eyebrow').textContent.includes('FALL 2026'),
+        abbreviatedClock: getComputedStyle(document.querySelector('#desktopClock > span')).display==='none',
         noFloatingEmoji: getComputedStyle(document.querySelector('.garden-floral-corners')).display === 'none',
         noFooterDingbat: !document.querySelector('.foot').textContent.includes('✿'),
         clockPosition: getComputedStyle(document.querySelector('#desktopClock')).position
       };
     });
-    expect(result.clockClear, 'clock/eyebrow overlap at ' + width).toBe(true);
-    expect(result.titleClear, 'eyebrow/title overlap at ' + width).toBe(true);
-    expect(result.headlineFits, 'headline overflow at ' + width).toBe(true);
-    expect(result.headerFits, 'headline outside header at ' + width).toBe(true);
-    expect(result.clockPosition, 'clock positioning at ' + width).toBe('static');
-    expect(result.noFloatingEmoji).toBe(true);
-    expect(result.noFooterDingbat).toBe(true);
+    for(const [key,value] of Object.entries(result)){
+      if(key==='clockPosition')expect(value, width+'px: '+key).toBe('absolute');
+      else expect(value, width+'px: '+key).toBe(true);
+    }
   }
 });
 
@@ -516,7 +517,7 @@ test('Garden phone shortcuts have no emoji, no dead space and usable buttons',as
 });
 
 
-test('Mobile hero positions the clock, text, Up Next and scenery in separate aligned rows',async({page},testInfo)=>{
+test('Mobile hero positions the clock inline and pins subdued scenery flush right',async({page},testInfo)=>{
  if(testInfo.project.name==='mac-1440'||testInfo.project.name==='mac-1000')return;
  await page.goto('/?pair=begum');
  for(const width of [390,320,610,768]){
@@ -525,18 +526,23 @@ test('Mobile hero positions the clock, text, Up Next and scenery in separate ali
      const rect=selector=>document.querySelector(selector)?.getBoundingClientRect();
      const hero=rect('.garden .hero');
      const clock=rect('.garden #desktopClock');
+     const eyebrow=rect('.garden .hero .eyebrow');
      const copy=rect('.garden .hero .hero-copy');
      const upnext=rect('.garden .hero .hero-next-class');
      const art=rect('.garden .hero .hero-art');
+     const svg=rect('.garden .hero .hero-art>svg');
      const heading=rect('.garden .hero h1');
      return {
-       clockAboveCopy:clock.bottom<=copy.top+1,
+       clockInline:Math.abs(clock.top-eyebrow.top)<5,
        copyAboveUpnext:copy.bottom<=upnext.top+1,
        upnextAboveArt:upnext.bottom<=art.top+1,
        artAtBottom:Math.abs(art.bottom-hero.bottom)<4,
        artIsInFlow:getComputedStyle(document.querySelector('.garden .hero .hero-art')).position==='relative',
        alignedLeft:Math.abs(copy.left-upnext.left)<3,
        artFullBleed:Math.abs(art.left-hero.left)<3&&Math.abs(art.right-hero.right)<3,
+       svgAtRight:Math.abs(svg.right-hero.right)<3,
+       artSmaller:art.height<=(innerWidth<=610?98:105),
+       artFainter:parseFloat(getComputedStyle(document.querySelector('.garden .hero .hero-art')).opacity)<=.75,
        headingInBounds:heading.right<=hero.right+1,
        noHorizontalOverflow:document.documentElement.scrollWidth<=innerWidth+2
      };
@@ -544,4 +550,3 @@ test('Mobile hero positions the clock, text, Up Next and scenery in separate ali
    for(const [key,value] of Object.entries(result))expect(value, width+'px: '+key).toBe(true);
  }
 });
-
