@@ -173,11 +173,74 @@
 
 /* Garden-only mail decoration; the shared mail client stays identical. */
 (() => {
-  function decorateMailBar() {
+  const svgNS='http://www.w3.org/2000/svg';
+  const canvas=document.createElement('canvas'),measure=canvas.getContext('2d');
+  let fontRevision=0,queued=false,ready=false;
+  function centerCounts(){
+    document.querySelectorAll('.garden #mailDashboardButton .mailx-launch-count,.mailx-garden .mailx-rail-count').forEach(badge=>{
+      const value=badge.textContent.trim();
+      if(!/^\d+\+?$/.test(value))return;
+      if(badge.querySelector('.mailx-flower-number')&&badge.dataset.flowerValue===value&&badge.dataset.flowerFont===String(fontRevision))return;
+      const size=badge.classList.contains('mailx-rail-count')?17:18;
+      let fontSize=12;
+      measure.font='700 '+fontSize+'px Caveat, "Segoe Print", cursive';
+      let bounds=measure.measureText(value);
+      const inkWidth=bounds.actualBoundingBoxLeft+bounds.actualBoundingBoxRight;
+      if(inkWidth>size-4){
+        fontSize*= (size-4)/inkWidth;
+        measure.font='700 '+fontSize+'px Caveat, "Segoe Print", cursive';
+        bounds=measure.measureText(value);
+      }
+      const svg=document.createElementNS(svgNS,'svg');
+      svg.setAttribute('viewBox','0 0 '+size+' '+size);
+      svg.setAttribute('class','mailx-flower-number');
+      const text=document.createElementNS(svgNS,'text');
+      text.textContent=value;
+      text.setAttribute('x',String(size/2-(bounds.actualBoundingBoxRight-bounds.actualBoundingBoxLeft)/2));
+      text.setAttribute('y',String(size/2+(bounds.actualBoundingBoxAscent-bounds.actualBoundingBoxDescent)/2));
+      text.setAttribute('style','font:700 '+fontSize+'px Caveat, "Segoe Print", cursive;fill:currentColor;stroke:none');
+      svg.append(text);badge.replaceChildren(svg);
+      badge.dataset.flowerValue=value;badge.dataset.flowerFont=String(fontRevision);
+    });
+  }
+  function queueCounts(){
+    if(queued)return;queued=true;
+    requestAnimationFrame(()=>{queued=false;centerCounts();});
+  }
+  function install(){
     const bar=document.querySelector('.mailx-garden .mailx-topbar');
     const refresh=bar?.querySelector('#mailxRefresh');
-    if(refresh&&!bar.querySelector('.mailx-bee-parade'))refresh.insertAdjacentHTML('beforebegin',"<span class=\"mailx-bee-parade\" aria-hidden=\"true\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 360 48\"><path class=\"mailx-bee-trail\" d=\"M 14 28 C 72 2 105 44 160 24 S 244 3 284 24 S 324 40 346 17\"/><g class=\"mailx-parade-bee\"><ellipse cx=\"-2\" cy=\"-7\" rx=\"4.5\" ry=\"6\" fill=\"#fffef7\" stroke=\"#a3bead\" stroke-width=\".9\" transform=\"rotate(-25 -2 -7)\"/><ellipse cx=\"4\" cy=\"-7\" rx=\"4\" ry=\"5.5\" fill=\"#fffef7\" stroke=\"#a3bead\" stroke-width=\".9\" transform=\"rotate(25 4 -7)\"/><path d=\"m-12 0 4-2v4Z\" fill=\"#385542\"/><ellipse rx=\"10\" ry=\"6\" fill=\"#edbd55\" stroke=\"#385542\" stroke-width=\"1\"/><path d=\"M-4-5v10M2-5v10\" stroke=\"#385542\" stroke-width=\"2.8\"/><circle cx=\"10\" cy=\"-1\" r=\"4.7\" fill=\"#385542\"/><circle cx=\"11.5\" cy=\"-2\" r=\"1\" fill=\"#fffef7\"/><path d=\"m10-5 1-4m2 4 3-3\" stroke=\"#385542\" stroke-width=\"1\" stroke-linecap=\"round\"/></g><g class=\"mailx-parade-bee\"><ellipse cx=\"-2\" cy=\"-7\" rx=\"4.5\" ry=\"6\" fill=\"#fffef7\" stroke=\"#a3bead\" stroke-width=\".9\" transform=\"rotate(-25 -2 -7)\"/><ellipse cx=\"4\" cy=\"-7\" rx=\"4\" ry=\"5.5\" fill=\"#fffef7\" stroke=\"#a3bead\" stroke-width=\".9\" transform=\"rotate(25 4 -7)\"/><path d=\"m-12 0 4-2v4Z\" fill=\"#385542\"/><ellipse rx=\"10\" ry=\"6\" fill=\"#edbd55\" stroke=\"#385542\" stroke-width=\"1\"/><path d=\"M-4-5v10M2-5v10\" stroke=\"#385542\" stroke-width=\"2.8\"/><circle cx=\"10\" cy=\"-1\" r=\"4.7\" fill=\"#385542\"/><circle cx=\"11.5\" cy=\"-2\" r=\"1\" fill=\"#fffef7\"/><path d=\"m10-5 1-4m2 4 3-3\" stroke=\"#385542\" stroke-width=\"1\" stroke-linecap=\"round\"/></g><g class=\"mailx-parade-bee\"><ellipse cx=\"-2\" cy=\"-7\" rx=\"4.5\" ry=\"6\" fill=\"#fffef7\" stroke=\"#a3bead\" stroke-width=\".9\" transform=\"rotate(-25 -2 -7)\"/><ellipse cx=\"4\" cy=\"-7\" rx=\"4\" ry=\"5.5\" fill=\"#fffef7\" stroke=\"#a3bead\" stroke-width=\".9\" transform=\"rotate(25 4 -7)\"/><path d=\"m-12 0 4-2v4Z\" fill=\"#385542\"/><ellipse rx=\"10\" ry=\"6\" fill=\"#edbd55\" stroke=\"#385542\" stroke-width=\"1\"/><path d=\"M-4-5v10M2-5v10\" stroke=\"#385542\" stroke-width=\"2.8\"/><circle cx=\"10\" cy=\"-1\" r=\"4.7\" fill=\"#385542\"/><circle cx=\"11.5\" cy=\"-2\" r=\"1\" fill=\"#fffef7\"/><path d=\"m10-5 1-4m2 4 3-3\" stroke=\"#385542\" stroke-width=\"1\" stroke-linecap=\"round\"/></g></svg></span>");
+    if(!refresh)return;
+    if(!bar.querySelector('.mailx-bee-parade'))refresh.insertAdjacentHTML('beforebegin',"<span class=\"mailx-bee-parade\" aria-hidden=\"true\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 360 48\"><path class=\"mailx-bee-trail\" d=\"M 14 28 C 72 2 105 44 160 24 S 244 3 284 24 S 324 40 346 17\"/><g class=\"mailx-parade-bee\"><ellipse cx=\"-2\" cy=\"-7\" rx=\"4.5\" ry=\"6\" fill=\"#fffef7\" stroke=\"#a3bead\" stroke-width=\".9\" transform=\"rotate(-25 -2 -7)\"/><ellipse cx=\"4\" cy=\"-7\" rx=\"4\" ry=\"5.5\" fill=\"#fffef7\" stroke=\"#a3bead\" stroke-width=\".9\" transform=\"rotate(25 4 -7)\"/><path d=\"m-12 0 4-2v4Z\" fill=\"#385542\"/><ellipse rx=\"10\" ry=\"6\" fill=\"#edbd55\" stroke=\"#385542\" stroke-width=\"1\"/><path d=\"M-4-5v10M2-5v10\" stroke=\"#385542\" stroke-width=\"2.8\"/><circle cx=\"10\" cy=\"-1\" r=\"4.7\" fill=\"#385542\"/><circle cx=\"11.5\" cy=\"-2\" r=\"1\" fill=\"#fffef7\"/><path d=\"m10-5 1-4m2 4 3-3\" stroke=\"#385542\" stroke-width=\"1\" stroke-linecap=\"round\"/></g><g class=\"mailx-parade-bee\"><ellipse cx=\"-2\" cy=\"-7\" rx=\"4.5\" ry=\"6\" fill=\"#fffef7\" stroke=\"#a3bead\" stroke-width=\".9\" transform=\"rotate(-25 -2 -7)\"/><ellipse cx=\"4\" cy=\"-7\" rx=\"4\" ry=\"5.5\" fill=\"#fffef7\" stroke=\"#a3bead\" stroke-width=\".9\" transform=\"rotate(25 4 -7)\"/><path d=\"m-12 0 4-2v4Z\" fill=\"#385542\"/><ellipse rx=\"10\" ry=\"6\" fill=\"#edbd55\" stroke=\"#385542\" stroke-width=\"1\"/><path d=\"M-4-5v10M2-5v10\" stroke=\"#385542\" stroke-width=\"2.8\"/><circle cx=\"10\" cy=\"-1\" r=\"4.7\" fill=\"#385542\"/><circle cx=\"11.5\" cy=\"-2\" r=\"1\" fill=\"#fffef7\"/><path d=\"m10-5 1-4m2 4 3-3\" stroke=\"#385542\" stroke-width=\"1\" stroke-linecap=\"round\"/></g><g class=\"mailx-parade-bee\"><ellipse cx=\"-2\" cy=\"-7\" rx=\"4.5\" ry=\"6\" fill=\"#fffef7\" stroke=\"#a3bead\" stroke-width=\".9\" transform=\"rotate(-25 -2 -7)\"/><ellipse cx=\"4\" cy=\"-7\" rx=\"4\" ry=\"5.5\" fill=\"#fffef7\" stroke=\"#a3bead\" stroke-width=\".9\" transform=\"rotate(25 4 -7)\"/><path d=\"m-12 0 4-2v4Z\" fill=\"#385542\"/><ellipse rx=\"10\" ry=\"6\" fill=\"#edbd55\" stroke=\"#385542\" stroke-width=\"1\"/><path d=\"M-4-5v10M2-5v10\" stroke=\"#385542\" stroke-width=\"2.8\"/><circle cx=\"10\" cy=\"-1\" r=\"4.7\" fill=\"#385542\"/><circle cx=\"11.5\" cy=\"-2\" r=\"1\" fill=\"#fffef7\"/><path d=\"m10-5 1-4m2 4 3-3\" stroke=\"#385542\" stroke-width=\"1\" stroke-linecap=\"round\"/></g></svg></span>");
+    const flight=bar.querySelector('.mailx-bee-parade svg');
+    const reduced=matchMedia('(prefers-reduced-motion: reduce)');
+    function setFlight(){
+      flight.querySelectorAll('.mailx-parade-bee').forEach((bee,index)=>{
+        bee.querySelector('animateMotion')?.remove();
+        if(reduced.matches){
+          bee.setAttribute('transform','translate('+[80,180,280][index]+' '+[22,18,25][index]+')');
+        }else{
+          bee.removeAttribute('transform');
+          const motion=document.createElementNS(svgNS,'animateMotion');
+          motion.setAttribute('path','M 14 28 C 72 2 105 44 160 24 S 244 3 284 24 S 324 40 346 17');
+          motion.setAttribute('dur','24s');motion.setAttribute('repeatCount','indefinite');
+          motion.setAttribute('rotate','auto');motion.setAttribute('begin',String(-index*8)+'s');
+          bee.append(motion);
+        }
+      });
+    }
+    if(ready)return;ready=true;discovery.disconnect();setFlight();
+    reduced.addEventListener('change',setFlight);
+    const counts=new MutationObserver(queueCounts);
+    for(const target of [document.querySelector('#mailDashboardButton'),document.querySelector('.mailx-garden .mailx-nav')]){
+      if(target)counts.observe(target,{childList:true,subtree:true,characterData:true});
+    }
+    queueCounts();
+    document.fonts?.load('700 12px Caveat').then(()=>{fontRevision++;queueCounts();}).catch(()=>{});
   }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',decorateMailBar,{once:true});
-  else decorateMailBar();
+  // The deferred garden script can execute before the shared client mounts.
+  const discovery=new MutationObserver(install);
+  discovery.observe(document.body,{childList:true,subtree:true});
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});
+  install();
 })();
