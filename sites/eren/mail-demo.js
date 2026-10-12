@@ -17,6 +17,7 @@
   const originalMailMarkupCache=new WeakMap();
   const frameMailMarkupCache=new WeakMap();
   const isSkeuoDemo=()=>location.pathname.endsWith('/skeuo-demo.html');
+  const inlineMailReader=()=>isGarden||isSkeuoDemo();
   const mobileMailLayout=matchMedia('(max-width:860px)');
   const translationEnabled=()=>isGarden||isSkeuoDemo()||mobileMailLayout.matches;
   const hasChinese=text=>/[\u3400-\u9fff]/.test(String(text||''));
@@ -49,7 +50,7 @@
       if(version===state.readVersion&&state.selected===key&&state.thread){
         state.thread=t;
         $$('[data-body]').forEach(frame=>{const i=Number(frame.dataset.body);if(frame.dataset.loaded==='1'&&t.messages[i]?.html)frame.srcdoc=mailFrameHtml(t.messages[i]);});
-        if(isSkeuoDemo())$$('[data-mailx-original]').forEach(el=>{
+        if(inlineMailReader())$$('[data-mailx-original]').forEach(el=>{
           const msg=t.messages[Number(el.dataset.mailxOriginal)];
           if(el.dataset.loaded==='1'&&msg?.html)el.innerHTML=terminalOriginalHtml(msg);
         });
@@ -456,7 +457,7 @@
     const cached=originalMailMarkupCache.get(msg);
     if(cached&&cached.html===msg.html)return cached.content;
     // The returned message HTML is a complete, server-sanitized iframe document.
-    // Extract just its body; sender CSS and background colors never reach the CRT.
+    // Extract just its body; sender CSS and background colors never reach the page.
     const doc=new DOMParser().parseFromString(String(msg.html||''),'text/html');
     const rendered=safeTranslationHtml(doc.body.innerHTML,true);
     const content=rendered.trim()?rendered:plainTranslationHtml(msg.text||'');
@@ -467,8 +468,8 @@
     if(!msg.html)return '<div class="mailx-mail-body">'+linkedMailText(msg.text||'(No text body)')+'</div>';
     const originalFrame='<iframe class="mailx-html-body" data-body="'+i+'" sandbox="allow-popups allow-popups-to-escape-sandbox" referrerpolicy="no-referrer" title="Email body from '+escapeHtml(msg.sender)+'"></iframe>';
     const alternative='<details class="mailx-text-alternative"><summary>Plain text / accessible view</summary><div class="mailx-mail-body">'+linkedMailText(msg.text)+'</div></details>';
-    if(!isSkeuoDemo())return originalFrame+alternative;
-    // A consistent terminal-first reading surface; retain the untouched sender
+    if(!inlineMailReader())return originalFrame+alternative;
+    // A consistent inline reading surface; retain the untouched sender
     // layout in its original sandboxed iframe for complex branded emails.
     return '<div class="mailx-original-body mailx-translation-body" data-mailx-original="'+i+'" aria-label="Email content"></div>'+
       '<details class="mailx-original-layout"><summary>View original email layout</summary>'+originalFrame+'</details>'+alternative;
@@ -515,7 +516,7 @@
       if(!frame.dataset.loaded){frame.srcdoc=mailFrameHtml(t.messages[Number(frame.dataset.body)]);frame.dataset.loaded='1';}
     });
     const loadTerminalBody=details=>{
-      if(!isSkeuoDemo())return;
+      if(!inlineMailReader())return;
       details.querySelectorAll('[data-mailx-original]').forEach(el=>{
         if(el.dataset.loaded==='1'||el.hidden)return;
         const msg=t.messages[Number(el.dataset.mailxOriginal)];

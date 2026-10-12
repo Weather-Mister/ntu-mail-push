@@ -1,5 +1,6 @@
 import {test,expect} from '@playwright/test';
 
+const garden=process.env.MAIL_TEST_WORKSPACE==='begum';
 const classification={type:'Account Notification',context:'',priority:'Normal',action:'FYI',code:null,blocked:false};
 const gif='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
 const html='<!doctype html><html><head><style>body{background:white;color:#000}p{color:blue;font-size:30px}</style></head>'+
@@ -24,7 +25,7 @@ function mockMessage({htmlBody=html,subject='華南銀行通知',text='交易金
 async function setup(page,message) {
   const errors=[],actions=[];
   page.on('pageerror',error=>errors.push(error.message));
-  await page.addInitScript(()=>{if(window.top===window.self)localStorage.setItem('ntu-schedule-pairing-key-v1','test-key-'.repeat(6));});
+  await page.addInitScript(garden=>{if(window.top===window.self){localStorage.setItem(garden?'ntu-schedule-begum-pairing-key-v1':'ntu-schedule-pairing-key-v1',garden?'begum':'test-key-'.repeat(6));if(garden)localStorage.setItem('begum-mail-access-key-v1','b'.repeat(40));}},garden);
   await page.route('https://**/*',async route=>{
     const req=route.request(),url=new URL(req.url()),action=url.searchParams.get('route');
     actions.push(action);
@@ -40,7 +41,7 @@ async function setup(page,message) {
     }
     await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(data)});
   });
-  await page.goto('/skeuo-demo.html');
+  await page.goto(garden?'/':'/skeuo-demo.html');
   await page.locator('#mailDashboardButton').click();
   await expect(page.locator('#mailxList .mailx-message')).toHaveCount(1);
   await page.locator('#mailxList .mailx-message').first().click();
@@ -70,9 +71,9 @@ test('HTML mail defaults to native CRT typography, retains tables/images/links, 
     };
   });
   expect(appearance.background).toBe('rgba(0, 0, 0, 0)');
-  expect(appearance.color).toBe('rgb(207, 210, 196)');
-  expect(appearance.fontSize).toBe('12px');
-  expect(appearance.textColor).toBe('rgb(207, 210, 196)');
+  expect(appearance.color).toBe(garden?'rgb(37, 62, 49)':'rgb(207, 210, 196)');
+  expect(appearance.fontSize).toBe(garden?'15px':'12px');
+  expect(appearance.textColor).toBe(garden?'rgb(37, 62, 49)':'rgb(207, 210, 196)');
   expect(appearance.tableBackground).toBe('rgba(0, 0, 0, 0)');
   expect(appearance.hasInlineStyle).toBe(false);
   expect(await page.evaluate(()=>window.injectedByEmail)).toBeUndefined();
@@ -103,7 +104,7 @@ test('plain text mail keeps the same dark, readable terminal presentation',async
   const body=page.locator('.mailx-thread-details.is-current > .mailx-mail-body');
   await expect(body).toBeVisible();
   await expect(body).toContainText('Your account is ready.');
-  expect(await body.evaluate(el=>getComputedStyle(el).color)).toBe('rgb(207, 210, 196)');
+  expect(await body.evaluate(el=>getComputedStyle(el).color)).toBe(garden?'rgb(37, 62, 49)':'rgb(207, 210, 196)');
   expect(actions.filter(action=>action==='translate')).toHaveLength(0);
   expect(errors).toEqual([]);
 });
