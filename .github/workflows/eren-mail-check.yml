@@ -1,10 +1,10 @@
 name: Eren Mail checks
 on:
   pull_request:
-    paths: ['sites/eren/**', 'supabase/**', 'tests/**', 'package*.json', 'deno.json', 'playwright.config.mjs', '.github/workflows/eren-mail-check.yml']
+    paths: ['sites/eren/**', 'sites/begum/**', 'playwright.begum-mail.config.mjs', 'supabase/**', 'tests/**', 'package*.json', 'deno.json', 'playwright.config.mjs', '.github/workflows/eren-mail-check.yml']
   push:
     branches: [main]
-    paths: ['sites/eren/**', 'supabase/**', 'tests/**', 'package*.json', 'deno.json', 'playwright.config.mjs', '.github/workflows/eren-mail-check.yml']
+    paths: ['sites/eren/**', 'sites/begum/**', 'playwright.begum-mail.config.mjs', 'supabase/**', 'tests/**', 'package*.json', 'deno.json', 'playwright.config.mjs', '.github/workflows/eren-mail-check.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -31,3 +31,20 @@ jobs:
           cp -R sites/begum/. _site/begum/
           test ! -e _site/supabase
           diff -qr sites/begum _site/begum
+  garden-mail:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test --config playwright.begum-mail.config.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: begum-mail-browser-results
+          path: test-results/

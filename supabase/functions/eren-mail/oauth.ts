@@ -1,4 +1,4 @@
-import { check, config, secret, hash, random, REDIRECT, SCOPES, SITE, tokenRequest, MailError } from './services.ts';
+import { check, config, secret, hash, random, REDIRECT, SCOPES, siteFor, tokenRequest, MailError } from './services.ts';
 import { b64url } from './domain.mjs';
 export async function oauthStart(admin:any,workspace:string,input:any) {
  if(!/^[a-f0-9]{64}$/.test(input.challenge||'')) throw new MailError(400,'Invalid browser proof.');
@@ -18,6 +18,7 @@ export async function oauthCallback(admin:any,url:URL) {
  // Consume the callback atomically; duplicate callbacks cannot exchange the code twice.
  const row=check(await admin.from('eren_mail_oauth').update({status:'exchanging'}).eq('state_hash',stateHash).eq('status','waiting').gt('expires_at',new Date().toISOString()).select('*').maybeSingle());
  if(!row) throw new MailError(400,'OAuth request expired. Return to Mail and connect again.');
+ const site=await siteFor(admin,row.workspace_hash);
  try {
   if(url.searchParams.has('error')) throw new MailError(400,'Google authorization was cancelled.');
   const code=url.searchParams.get('code');if(!code) throw new MailError(400,'Missing authorization code.');
@@ -31,10 +32,10 @@ export async function oauthCallback(admin:any,url:URL) {
   await secret(admin,name,token.refresh_token);
   check(await admin.from('eren_mail_oauth').update({status:'ready',pending_secret:name,email:String(profile.emailAddress).toLowerCase(),scopes:token.scope,verifier:''}).eq('state_hash',stateHash));
   // No OAuth code, token, pairing key or browser proof reaches the return URL.
-  return Response.redirect(SITE+'?open=mail&connected=1',303);
+  return Response.redirect(site+'?open=mail&connected=1',303);
  } catch(e) {
   check(await admin.from('eren_mail_oauth').update({status:'failed',verifier:''}).eq('state_hash',stateHash));
-  return Response.redirect(SITE+'?open=mail&connect_error=1',303);
+  return Response.redirect(site+'?open=mail&connect_error=1',303);
  }
 }
 export async function oauthFinish(admin:any,workspace:string,input:any) {

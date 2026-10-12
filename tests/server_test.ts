@@ -5,7 +5,7 @@ const assert:any=Object.assign((ok:any,message='Assertion failed')=>{if(!ok)thro
  deepEqual:(a:any,b:any)=>{if(JSON.stringify(a)!==JSON.stringify(b))throw new Error('Not deeply equal');},
  rejects:async(fn:any)=>{let rejected=false;try{await fn();}catch{rejected=true;}if(!rejected)throw new Error('Expected rejection');}
 });
-import { safeHtml, workspaceFor, hash, revise, translateMessage, threadMessageViews, fullThread, gmailClient, clearMailMemory, cachedOverviews } from '../supabase/functions/eren-mail/services.ts';
+import { safeHtml, workspaceFor, siteFor, ownedAccount, hash, revise, translateMessage, threadMessageViews, fullThread, gmailClient, clearMailMemory, cachedOverviews } from '../supabase/functions/eren-mail/services.ts';
 import { inlineImages } from '../supabase/functions/eren-mail/render.ts';
 import { deliver, enqueue, reconcile, syncAccount } from '../supabase/functions/eren-mail/jobs.ts';
 import { oauthStart, oauthFinish } from '../supabase/functions/eren-mail/oauth.ts';
@@ -93,10 +93,21 @@ Deno.test('reader retrieves inline Gmail attachments with limits; image failure 
  const t=await fullThread(api,'thread1',true);assert.equal(t.messages.length,1);assert(calls.some(x=>x.endsWith('/logo')));assert(calls.some(x=>x.endsWith('/broken')));assert(!calls.some(x=>x.endsWith('/large')));
 });
 Deno.test('SSRF filters reject private and special ranges',()=>{for(const ip of ['127.0.0.1','10.1.2.3','172.16.0.1','172.31.2.3','192.168.1.1','169.254.169.254','100.64.0.1','224.0.0.1','198.18.0.1','203.0.113.1','192.0.2.1','0.0.0.0','::1'])assert.equal(publicIPv4(ip),false,ip);assert.equal(publicIPv4('8.8.8.8'),true);});
-Deno.test('Eren workspace owns access; Begum and unknown keys cannot access Mail',async()=>{
- const {db}=setup(),eren='e'.repeat(40),begum='b'.repeat(40);db.tables.schedule_workspaces=[{workspace_hash:await hash(eren),app_slug:'eren'},{workspace_hash:await hash(begum),app_slug:'begum'}];
- assert.equal(await workspaceFor(new Request('https://test.org',{headers:{'x-schedule-key':eren}}),db),await hash(eren));
- for(const key of [begum,'wrong','x'.repeat(40)])await assert.rejects(()=>workspaceFor(new Request('https://test.org',{headers:{'x-schedule-key':key}}),db));
+Deno.test('Mail recognizes both paired schedules and denies unknown or weak Eren keys',async()=>{
+ const {db}=setup(),eren='e'.repeat(40),begum='begum';
+ db.tables.schedule_workspaces=[{workspace_hash:await hash(eren),app_slug:'eren'},{workspace_hash:await hash(begum),app_slug:'begum'},{workspace_hash:await hash('short'),app_slug:'eren'}];
+ for(const key of [eren,begum])assert.equal(await workspaceFor(new Request('https://test.org',{headers:{'x-schedule-key':key}}),db),await hash(key));
+ for(const key of ['wrong','short','x'.repeat(40)])await assert.rejects(()=>workspaceFor(new Request('https://test.org',{headers:{'x-schedule-key':key}}),db));
+ assert.equal(await siteFor(db,await hash(begum)),'https://weather-mister.github.io/ntu-mail-push/begum/');
+ assert.equal(await siteFor(db,await hash(eren)),'https://weather-mister.github.io/ntu-mail-push/');
+ await assert.rejects(()=>siteFor(db,'unknown'));
+});
+Deno.test('Begüm cannot read Eren accounts and Eren cannot read Begüm accounts',async()=>{
+ const {db,a}=setup(),begum='begum-workspace';
+ const other={...a,id:'22222222-2222-4222-8222-222222222222',workspace_hash:begum};db.tables.eren_mail_accounts.push(other);
+ assert.equal((await ownedAccount(db,begum,other.id)).workspace_hash,begum);
+ await assert.rejects(()=>ownedAccount(db,begum,a.id));
+ await assert.rejects(()=>ownedAccount(db,a.workspace_hash,other.id));
 });
 Deno.test('OAuth is one account per grant with PKCE and browser-bound finish',async()=>{
  Deno.env.set('SUPABASE_URL','https://test.supabase.co');const {db}=setup();

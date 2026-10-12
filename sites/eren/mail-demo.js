@@ -2,13 +2,16 @@
 (() => {
   'use strict';
   const API='https://evckshjtzikuusnkdnjn.supabase.co/functions/v1/eren-mail';
-  const PREF='eren-mail-preferences-v1', DRAFT='eren-mail-draft-v1', OAUTH='eren-mail-oauth-v1', LAYOUT='eren-mail-layout-v2', FLOATING='eren-mail-floating-v1';
+  const isGarden=document.currentScript?.dataset.workspace==='begum';
+  const namespace=isGarden?'begum':'eren';
+  const PAIRING_STORE=isGarden?'ntu-schedule-begum-pairing-key-v1':'ntu-schedule-pairing-key-v1';
+  const PREF=namespace+'-mail-preferences-v1', DRAFT=namespace+'-mail-draft-v1', OAUTH=namespace+'-mail-oauth-v1', LAYOUT=namespace+'-mail-layout-v2', FLOATING=namespace+'-mail-floating-v1';
   const translationCache=new Map(),translatedOpen=new Set();
   const originalMailMarkupCache=new WeakMap();
   const frameMailMarkupCache=new WeakMap();
   const isSkeuoDemo=()=>location.pathname.endsWith('/skeuo-demo.html');
   const mobileMailLayout=matchMedia('(max-width:860px)');
-  const translationEnabled=()=>isSkeuoDemo()||mobileMailLayout.matches;
+  const translationEnabled=()=>isGarden||isSkeuoDemo()||mobileMailLayout.matches;
   const hasChinese=text=>/[\u3400-\u9fff]/.test(String(text||''));
   const translationKey=(thread,msg)=>thread.accountId+':'+msg.id;
   const wantsEnglish=(thread,msg)=>translatedOpen.has(translationKey(thread,msg))&&translationCache.has(translationKey(thread,msg));
@@ -934,7 +937,7 @@
     dialog.addEventListener('cancel',e=>{if($('#mailxSheet')){e.preventDefault();$('#mailxSheet').remove();}else if(ce().pane.classList.contains('is-open')){e.preventDefault();closeComposer();}else keepDraft();});
     window.addEventListener('pagehide',keepDraft);window.addEventListener('focus',()=>{if(dialog.open)guarded(finishConnection)();});
     document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&dialog.open&&!ce().pane.classList.contains('is-open'))guarded(()=>loadMail())();});
-    blankReader();renderFilters();setTimeout(()=>{if(!dialog.open&&localStorage.getItem('ntu-schedule-pairing-key-v1')){ownCache();bootstrap().then(data=>{if(!initialized){state.accounts=data.accounts;state.messages=data.messages||[];updateUnread();}}).catch(()=>{});}},1500);const open=new URLSearchParams(location.search).get('open');if(open==='mail'||open==='mail-demo')setTimeout(openDialog,80);
+    blankReader();renderFilters();setTimeout(()=>{if(!dialog.open&&localStorage.getItem(PAIRING_STORE)){ownCache();bootstrap().then(data=>{if(!initialized){state.accounts=data.accounts;state.messages=data.messages||[];updateUnread();}}).catch(()=>{});}},1500);const open=new URLSearchParams(location.search).get('open');if(open==='mail'||open==='mail-demo')setTimeout(openDialog,80);
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount);else mount();
 })();

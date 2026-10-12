@@ -26,13 +26,20 @@ export const SCOPES='https://www.googleapis.com/auth/gmail.modify';
 export async function rate(admin:any,bucket:string,limit=120,seconds=60) {
  if(!check(await admin.rpc('eren_mail_rate',{p_bucket:bucket,p_limit:limit,p_seconds:seconds}))) throw new MailError(429,'Too many requests. Please try again shortly.');
 }
+/** Mail uses the schedule's verified workspace, never a client-selected account owner. */
 export async function workspaceFor(req:Request,admin:any) {
  const key=req.headers.get('x-schedule-key') || '';
- if(key.length<32 || key.length>200) throw new MailError(401,'Pair this device with your Eren schedule first.');
- const workspace=hash(key);
- const row=check(await admin.from('schedule_workspaces').select('workspace_hash,app_slug').eq('workspace_hash',await workspace).eq('app_slug','eren').maybeSingle());
- if(!row) throw new MailError(401,'This key cannot access Eren Mail.');
+ // Begüm's existing schedule pairing is the literal word; Eren retains its strong key requirement.
+ if((key.length<32&&key!=='begum')||key.length>200)throw new MailError(401,'Pair this device with your schedule first.');
+ const workspace=await hash(key);
+ const row=check(await admin.from('schedule_workspaces').select('workspace_hash,app_slug').eq('workspace_hash',workspace).in('app_slug',['eren','begum']).maybeSingle());
+ if(!row||(row.app_slug==='eren'&&key.length<32)||(key==='begum'&&row.app_slug!=='begum'))throw new MailError(401,'This key cannot access Mail.');
  return row.workspace_hash;
+}
+export async function siteFor(admin:any,workspace:string) {
+ const row=check(await admin.from('schedule_workspaces').select('app_slug').eq('workspace_hash',workspace).in('app_slug',['eren','begum']).maybeSingle());
+ if(!row)throw new MailError(401,'Unknown mail workspace.');
+ return SITE+(row.app_slug==='begum'?'begum/':'');
 }
 export async function ownedAccount(admin:any,workspace:string,id:string) {
  if(!/^[a-f0-9-]{36}$/i.test(id||'')) throw new MailError(400,'Select a connected account.');

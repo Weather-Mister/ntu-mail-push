@@ -310,7 +310,7 @@ export async function importNtuFromRunner(admin:any,req:Request){
  const saved=await secret(admin,'eren-mail:ntu-import');let expected:any;try{expected=JSON.parse(saved);}catch{}
  if(!expected?.workspace||!expected?.ref||!expected?.workflow||Date.parse(expected.expires)<Date.now())throw new MailError(403,'NTU provisioning is not enabled.');
  const token=req.headers.get('Authorization')?.replace(/^Bearer /,'')||'',claims=await verifyNtuRunner(token,expected);const raw=await req.text();if(raw.length>5000)throw new MailError(413,'Provisioning request is too large.');let input:any;try{input=JSON.parse(raw);}catch{throw new MailError(400,'Invalid provisioning request.');}
- const workspace=check(await admin.from('schedule_workspaces').select('workspace_hash').eq('workspace_hash',expected.workspace).eq('app_slug','eren').maybeSingle());if(!workspace)throw new MailError(403,'Invalid provisioning workspace.');
+ const workspace=check(await admin.from('schedule_workspaces').select('workspace_hash').eq('workspace_hash',expected.workspace).eq('app_slug',expected.appSlug||'eren').maybeSingle());if(!workspace)throw new MailError(403,'Invalid provisioning workspace.');
  const lease='ntu-import:'+expected.workspace+':'+String(claims.jti||await hash(token));if(!check(await admin.rpc('eren_mail_rate',{p_bucket:lease,p_limit:1,p_seconds:600})))throw new MailError(409,'Provisioning proof was already used.');
  const result=await connectNtu(admin,expected.workspace,input);await secret(admin,'eren-mail:ntu-import',null,true);return result;
 }
