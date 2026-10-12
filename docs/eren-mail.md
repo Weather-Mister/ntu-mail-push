@@ -34,11 +34,11 @@ For this account's initial operator setup, an expiring, private provisioning app
 ## Architecture and isolation
 
 - The original `ntu-schedule-api` function is unchanged. Pairing, schedules, COOL, Manual Tasks, PC Transfer and Hanzi remain on their existing paths.
-- The separate `eren-mail` function validates a high-entropy pairing key against `schedule_workspaces`, requires `app_slug = eren`, and validates account ownership on every account-scoped operation. Begüm’s key is rejected even though the existing backend shares a database project.
+- The separate `eren-mail` function validates a private key against `schedule_workspaces` or Begüm's Vault-held mail access digest, accepts the verified Eren or Begüm workspace, and validates account ownership on every account-scoped operation. The public Begüm schedule word is rejected; mail data and provider settings remain isolated by workspace.
 - All `eren_mail_*` tables have RLS enabled with no browser policies; all privileges for `PUBLIC`, `anon`, and `authenticated` are revoked. Only the backend service role accesses them. Vault definer code is in `eren_mail_private`, with fixed search paths and service-only grants; exposed wrappers are invoker functions.
 - Google refresh tokens, provider configuration, saved drafts and queued send bodies are encrypted with Supabase Vault. Message bodies are fetched from Gmail on demand. The database stores only metadata, labels, classifications, extracted codes, rules, cursors, and send state as needed.
 - OAuth has an expiring single-use state, PKCE and a separate browser proof. Pending grants are attached only after authenticated completion on the initiating device. Expired pending secrets are removed by the worker.
-- The existing NTU Mail tile still links to Roundcube. It is separate from the optional integrated NTU provider account. `check_mail.py`, both notification workflows, POP3 state, push destinations, subscriptions, and `sites/begum/` are untouched.
+- The existing NTU Mail tile still links to Roundcube. It is separate from the optional integrated NTU provider account. `check_mail.py`, both notification workflows, POP3 state, push destinations, subscriptions, and Begüm's separately configured mail client shares the same implementation and requires its own private key.
 - Service worker cache `ntu-schedule-github-v8` includes the new mail assets. API responses use `no-store`; the service worker does not cache cross-origin mail responses.
 
 ## Background processing and sends
