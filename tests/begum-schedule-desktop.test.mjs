@@ -114,7 +114,7 @@ test('the 2026 date navigation is reachable on desktop and mobile', () => {
 test('Begüm decorative bee script loads and respects motion preferences', () => {
   assert.doesNotThrow(() => new Script(bees,{filename:'begum/garden-bees.js'}));
   assert.ok(html.includes('garden-floral-corners'));
-  const beeScriptVersion = html.match(/garden-bees\\.js\\?v=\\d+/)?.[0];
+  const beeScriptVersion = html.match(/garden-bees\.js\?v=\d+/)?.[0];
   assert.ok(beeScriptVersion, 'garden bees script is included');
   assert.ok(sw.includes(beeScriptVersion), 'garden bees script is included in offline cache');
   assert.ok(css.includes('.garden-flight-layer'));
