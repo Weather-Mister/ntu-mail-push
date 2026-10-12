@@ -1262,3 +1262,187 @@ body{min-width:320px}
     font-size:10px;
   }
 }
+
+
+/* Mobile hero has one layout owner: clock, copy, Up Next, then grounded scenery.
+   Keeping the SVG as an in-flow final row makes changing class names/long titles
+   resize the header naturally instead of overlapping a floating illustration. */
+@media(max-width:900px){
+  .garden .hero{
+    display:grid;
+    grid-template-columns:minmax(0,1fr);
+    grid-template-areas:"clock" "content" "scenery";
+    align-items:start;
+    justify-content:stretch;
+    column-gap:0;
+    row-gap:0;
+    width:100%;
+    height:auto;
+    min-height:0;
+    max-height:none;
+    padding:13px 20px 0;
+    overflow:hidden;
+  }
+  .garden #desktopClock{
+    grid-area:clock;
+    position:static;
+    top:auto;right:auto;bottom:auto;left:auto;
+    order:initial;
+    justify-self:end;
+    align-self:start;
+    flex:none;
+    z-index:3;
+    margin:0 0 14px;
+    padding:0;
+    line-height:1.3;
+    white-space:nowrap;
+  }
+  .garden .hero .hero-info{
+    grid-area:content;
+    position:relative;
+    z-index:2;
+    display:flex;
+    flex-direction:column;
+    align-items:stretch;
+    justify-content:flex-start;
+    gap:17px;
+    width:100%;
+    max-width:100%;
+    min-width:0;
+    height:auto;
+    min-height:0;
+    margin:0;
+    padding:0;
+  }
+  .garden .hero .hero-info .hero-copy{
+    flex:0 0 auto;
+    width:100%;
+    max-width:100%;
+    min-width:0;
+    margin:0;
+  }
+  .garden .hero .hero-copy .eyebrow{
+    margin:0 0 10px;
+    max-width:100%;
+    font-size:clamp(9px,2.45vw,11px);
+    line-height:1.35;
+    letter-spacing:.13em;
+    white-space:normal;
+    overflow-wrap:normal;
+  }
+  .garden .hero h1{
+    max-width:100%;
+    margin:0 0 10px;
+    font-size:clamp(31px,8.4vw,40px);
+    line-height:1.065;
+  }
+  .garden .hero .hero-tagline,
+  .garden .hero .hero-copy>p:last-child{
+    width:100%;
+    max-width:100%;
+    margin:0;
+    font-size:clamp(11px,3vw,13px);
+    line-height:1.45;
+  }
+  .garden .hero .hero-next-class{
+    position:relative;
+    inset:auto;
+    flex:0 0 auto;
+    display:flex;
+    align-items:flex-start;
+    width:100%;
+    max-width:100%;
+    min-width:0;
+    height:auto;
+    min-height:0;
+    max-height:none;
+    margin:0;
+    padding:1px 0 2px 13px;
+    border:0;
+    border-left:2px solid #afc5a4;
+    overflow:visible;
+  }
+  .garden .hero .hero-next-class .next-copy{
+    width:100%;
+    max-width:100%;
+    min-width:0;
+    height:auto;
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    gap:5px;
+    overflow:visible;
+  }
+  .garden .hero .hero-next-class .next-title{
+    display:block;
+    width:100%;
+    max-width:100%;
+    height:auto;
+    margin:0;
+    padding:1px 0 3px;
+    font-size:clamp(16px,4.7vw,20px);
+    line-height:1.33;
+    white-space:normal;
+    overflow:visible;
+    overflow-wrap:break-word;
+    -webkit-line-clamp:unset;
+    line-clamp:unset;
+    text-overflow:clip;
+  }
+  .garden .hero .hero-next-class .next-countdown{
+    position:static;
+    height:auto;
+    margin:0;
+    padding:0 0 2px;
+    line-height:1.4;
+    overflow:visible;
+  }
+  .garden .hero .hero-art{
+    grid-area:scenery;
+    position:relative;
+    inset:auto;
+    z-index:1;
+    display:block;
+    width:calc(100% + 40px);
+    max-width:none;
+    height:122px;
+    margin:9px -20px 0;
+    overflow:hidden;
+    opacity:.90;
+    pointer-events:none;
+  }
+  .garden .hero .hero-art>svg{
+    display:block;
+    width:100%;
+    height:100%;
+    max-width:none;
+    margin:0;
+  }
+  .garden .hero .hero-art .hero-bee.bee-a{
+    left:auto;
+    right:13%;
+    top:8px;
+    width:53px;
+    height:39px;
+  }
+  .garden .hero .hero-art .hero-bee.bee-b{display:none}
+  .garden-floral-corners{display:none}
+}
+@media(max-width:610px){
+  .garden .hero{
+    padding:12px 19px 0;
+  }
+  .garden #desktopClock{margin-bottom:12px}
+  .garden .hero .hero-info{gap:15px}
+  .garden .hero h1{font-size:clamp(30px,9.2vw,37px)}
+  .garden .hero .hero-art{
+    width:calc(100% + 38px);
+    height:116px;
+    margin:7px -19px 0;
+  }
+}
+@media(max-width:350px){
+  .garden .hero{padding-right:15px;padding-left:15px}
+  .garden .hero h1{font-size:30px}
+  .garden .hero .hero-art{width:calc(100% + 30px);margin-right:-15px;margin-left:-15px}
+}
