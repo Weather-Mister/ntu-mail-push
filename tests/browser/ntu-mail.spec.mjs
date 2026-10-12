@@ -7,6 +7,7 @@ for(const path of ['/','/skeuo-demo.html']){
   await page.addInitScript(()=>localStorage.setItem('ntu-schedule-pairing-key-v1','test-key-'.repeat(6)));
   const accounts=[{id:gmailId,email:'me@gmail.com',display_name:'Personal',provider:'gmail',status:'active'},{id:ntuId,email:'b15999999@ntu.edu.tw',display_name:'NTU Mail',provider:'ntu',status:'active'}];
   const ntu={id:'ntu_SU5CT1g_1',threadId:'ntu_SU5CT1g_1',accountId:ntuId,accountName:'NTU Mail',sender:'Professor',from:'Professor <teacher@ntu.edu.tw>',email:'teacher@ntu.edu.tw',replyTo:'teacher@ntu.edu.tw',to:accounts[1].email,subject:'NTU class notice',timestamp:Date.now(),labels:['INBOX','UNREAD'],classification,snippet:'Class begins at 10.',text:'Class begins at 10.',html:'',unsubscribe:{},attachments:[{id:'att0',partId:'att0',filename:'agenda.txt',mimeType:'text/plain',size:5}],count:1};
+  ntu.subject+=' — Homework instructions, classroom changes and important dates for the coming semester '+ 'LongReference'.repeat(8);
   const gmail={...ntu,id:'gmail-one',threadId:'gmail-thread',accountId:gmailId,accountName:'Personal',subject:'Personal mail',attachments:[]};
   await page.route('https://**/*',async route=>{const req=route.request(),url=new URL(req.url()),r=url.searchParams.get('route');let body={};try{body=req.postDataJSON()||{};}catch{}let data={};
    if(url.pathname.includes('/eren-mail')){calls.push({r,body});
@@ -26,6 +27,9 @@ for(const path of ['/','/skeuo-demo.html']){
   await page.goto(path);await page.locator('#mailDashboardButton').click();await expect(page.locator('#mailxList .mailx-message')).toHaveCount(2);
   const selector=page.locator('.mailx-top-account');await selector.selectOption(ntuId);await expect(page.locator('#mailxList .mailx-message')).toHaveCount(1);await expect(page.locator('#mailxList')).toContainText('NTU class notice');
   await page.locator('#mailxList .mailx-message').first().click();await expect(page.locator('#mailxReader')).toContainText('Class begins at 10.');
+  const title=page.locator('#mailxReader .mailx-reader-subject');await expect(title).toHaveText(ntu.subject);
+  const layout=await title.evaluate(el=>{const s=getComputedStyle(el);return {whiteSpace:s.whiteSpace,overflow:s.overflow,textOverflow:s.textOverflow,height:el.getBoundingClientRect().height,lineHeight:parseFloat(s.lineHeight),width:el.clientWidth,contentWidth:el.scrollWidth};});
+  expect(layout.whiteSpace).toBe('normal');expect(layout.overflow).toBe('visible');expect(layout.textOverflow).toBe('clip');expect(layout.height).toBeGreaterThan(layout.lineHeight*1.5);expect(layout.contentWidth).toBeLessThanOrEqual(layout.width+1);
   await expect.poll(()=>calls.some(c=>c.r==='modify-batch'&&c.body.operations.some(op=>op.accountId===ntuId&&op.action==='read'))).toBeTruthy();
   await expect(page.locator('#mailxReader')).toContainText('agenda.txt');
   await page.locator('[data-action="reply"]').click();await expect(page.locator('#mailxFrom')).toHaveValue(ntuId);await expect(page.locator('#mailxFrom')).toBeDisabled();await expect(page.locator('#mailxTo')).toHaveValue('teacher@ntu.edu.tw');
