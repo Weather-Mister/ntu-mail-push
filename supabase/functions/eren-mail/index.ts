@@ -1,11 +1,12 @@
+import { connectNtu, ntuList, ntuMarkAllRead, importNtuFromRunner } from './ntu.ts';
 import { defer } from './memory.ts';
-import { db, check, secret, hash, config, workspaceFor, ownedAccount, gmailClient, accountRules, cacheMessages, messageView, threadMessageViews, fullThread, mapLimit, revise, translateMessage, MailError, rate, REDIRECT, SITE, clearMailMemory, invalidateThread, cachedOverviews } from './services.ts';
+import { db, check, secret, hash, config, workspaceFor, ownedAccount, mailClient, accountRules, cacheMessages, messageView, threadMessageViews, fullThread, mapLimit, revise, translateMessage, MailError, rate, REDIRECT, SITE, clearMailMemory, invalidateThread, cachedOverviews } from './services.ts';
 import { oauthStart, oauthCallback, oauthFinish } from './oauth.ts';
 import { enqueue, deliver, reconcile, tick, syncAccount } from './jobs.ts';
 import { oneClickUnsubscribe } from './unsubscribe.ts';
 import { TYPES, PRIORITIES, ACTIONS, validateEffects, validateAttachmentRefs, sanitizeRichBody, MAX_ATTACHMENT_BYTES, header, address, unsubscribeInfo, bodies, decodeBody, resolveAttachmentPart } from './domain.mjs';
 import { draftAttachmentPath, outboxAttachmentPath, putAttachmentObject, getAttachmentObject, removeAttachmentObjects, decodeAttachmentData, encodeAttachmentData } from './attachments.ts';
-const ACCOUNT_FIELDS='id,email,display_name,status,last_sync_at,sync_error';
+const ACCOUNT_FIELDS='id,email,display_name,provider,status,last_sync_at,sync_error';
 const OUTBOX_FIELDS='id,account_id,to_address,subject,send_at,status,error,gmail_id,created_at,sent_at';
 const origin=new URL(SITE).origin;
 function response(data:any,status=200) {return Response.json(data,{status,headers:{'Access-Control-Allow-Origin':origin,'Access-Control-Allow-Headers':'content-type,x-schedule-key','Access-Control-Allow-Methods':'GET,POST,OPTIONS','Cache-Control':'no-store','Vary':'Origin','Referrer-Policy':'no-referrer','X-Content-Type-Options':'nosniff'}});}
@@ -60,6 +61,7 @@ export async function handle(req:Request) {
  if(req.method==='OPTIONS')return response({ok:true});
  const admin=db(),url=new URL(req.url),route=url.searchParams.get('route')||url.pathname.split('/eren-mail/')[1]||'';
  try {
+  if(route==='ntu/import'){mustPost(req);return response(await importNtuFromRunner(admin,req));}
   if(route==='oauth/callback'&&req.method==='GET')return await oauthCallback(admin,url);
   if(route==='worker') {
    mustPost(req);
@@ -101,6 +103,7 @@ export async function handle(req:Request) {
    }
    clearMailMemory(workspace);return response({ok:true});
   }
+  if(route==='ntu/connect'){mustPost(req);await rate(admin,workspace+':ntu-connect',5,300);const result=await connectNtu(admin,workspace,input);clearMailMemory(workspace);return response(result);}
   if(route==='oauth/start'){mustPost(req);await rate(admin,workspace+':oauth',10);return response(await oauthStart(admin,workspace,input));}
   if(route==='oauth/finish'){mustPost(req);const result=await oauthFinish(admin,workspace,input);clearMailMemory(workspace);return response(result);}
   if(route==='accounts'&&req.method==='GET')return response({accounts:check(await admin.from('eren_mail_accounts').select(ACCOUNT_FIELDS).eq('workspace_hash',workspace).neq('status','disconnecting').order('created_at'))});
@@ -113,7 +116,7 @@ export async function handle(req:Request) {
    check(await admin.from('eren_mail_accounts').update({status:'disconnecting'}).eq('id',a.id));
    clearMailMemory(workspace);const token=await secret(admin,a.secret_name);
    let revoked=false;
-   try{const r=await fetch('https://oauth2.googleapis.com/revoke',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({token}),signal:AbortSignal.timeout(10000)});revoked=r.ok;await r.body?.cancel();}catch{}
+   try{if(a.provider==='ntu'){revoked=true;}else{const r=await fetch('https://oauth2.googleapis.com/revoke',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({token}),signal:AbortSignal.timeout(10000)});revoked=r.ok;await r.body?.cancel();}}catch{}
    const jobs=check(await admin.from('eren_mail_outbox').select('id,secret_name').eq('account_id',a.id));
    const drafts=check(await admin.from('eren_mail_drafts').select('id,secret_name').eq('account_id',a.id));
    for(const row of drafts){const stored=await secret(admin,row.secret_name);if(stored){try{const refs=JSON.parse(stored).attachments||[];await removeAttachmentObjects(admin,refs.map((att:any)=>draftAttachmentPath(workspace,row.id,att.id))).catch(()=>{});for(const att of refs)await secret(admin,attachmentSecret(workspace,row.id,att.id),null,true).catch(()=>{});}catch{}}}
@@ -135,6 +138,15 @@ export async function handle(req:Request) {
    let cursors:any={};try{cursors=JSON.parse(String(get('cursor')||'{}'));}catch{throw new MailError(400,'Invalid mail page.');}
    if(!cursors||typeof cursors!=='object'||Array.isArray(cursors))throw new MailError(400,'Invalid cursor.');
    const rows=accounts.length?check(await admin.from('eren_mail_messages').select('id,account_id,thread_id,sender,sender_name,subject,snippet,internal_date,labels,classification').in('account_id',accounts.map((a:any)=>a.id)).order('internal_date',{ascending:false}).limit(1000)):[];
+   const ntuAccounts=accounts.filter((a:any)=>a.provider==='ntu');
+   if(ntuAccounts.length){
+    const gmailAccounts=accounts.filter((a:any)=>a.provider!=='ntu'),offset=Math.max(0,Math.min(5000,Number(cursors.cache)||0));
+    let saved=cachedOverviews(rows,gmailAccounts,true,filter==='sent'?'SENT':filter==='trash'?'TRASH':'INBOX').filter(m=>visible(m,filter));
+    if(query){const terms=query.toLocaleLowerCase().split(/\s+/).filter(Boolean);saved=saved.filter(m=>terms.every(t=>[m.sender,m.email,m.subject,m.snippet].join(' ').toLocaleLowerCase().includes(t)));}
+    const page=saved.slice(offset,offset+40),next:any={cache:offset+page.length<saved.length?offset+page.length:null},errors:any[]=[];
+    for(const a of ntuAccounts){if(cursors[a.id]===null){next[a.id]=null;continue;}try{const owned=await ownedAccount(admin,workspace,a.id),rules=await accountRules(admin,owned),result=await ntuList(admin,owned,filter,query,cursors[a.id]||'');defer(cacheMessages(admin,owned,result.messages,rules));page.push(...result.messages.map(m=>({...messageView(m,rules,{},true,true),accountId:a.id,accountName:a.display_name,count:1,hasAttachments:m.hasAttachments})).filter(m=>visible(m,filter)));next[a.id]=result.next;}catch(e){next[a.id]=cursors[a.id]||'';errors.push({accountId:a.id,error:e instanceof MailError?e.message:'Could not reach NTU Mail.'});}}
+    return response({messages:page.sort((a,b)=>b.timestamp-a.timestamp),cursor:next,hasMore:Object.values(next).some(v=>v!==null),errors,cached:false});
+   }
    const preferred=filter==='sent'?'SENT':filter==='trash'?'TRASH':'INBOX';
    let messages=cachedOverviews(rows,accounts,true,preferred).filter(m=>visible(m,filter));
    if(query){
@@ -153,7 +165,8 @@ export async function handle(req:Request) {
    const results=await mapLimit(accounts,async(a:any)=>{
     if(cursors[a.id]===null)return {messages:[],next:null,accountId:a.id};
     try {
-     const [api,rules]=await Promise.all([gmailClient(admin,a),accountRules(admin,a)]);
+     if(a.provider==='ntu'){const rules=await accountRules(admin,a),result=await ntuList(admin,a,filter,query,cursors[a.id]||'');defer(cacheMessages(admin,a,result.messages,rules));return {accountId:a.id,messages:result.messages.map(m=>({...messageView(m,rules,{},true,true),accountId:a.id,accountName:a.display_name,count:1,hasAttachments:m.hasAttachments})).filter(m=>visible(m,filter)),next:result.next};}
+     const [api,rules]=await Promise.all([mailClient(admin,a),accountRules(admin,a)]);
      const base=({starred:'is:starred',unread:'in:inbox is:unread',trash:'in:trash',inbox:'in:inbox',important:'in:inbox',reply:'in:inbox',codes:'',low:'',blocked:'',archived:'-in:inbox -in:drafts',sent:'in:sent','gmail-drafts':'in:drafts',all:''} as any)[filter]??'in:inbox';
      const params=new URLSearchParams({maxResults:'12',q:`${base} ${query} ${filter==='trash'?'':'-in:trash'} -in:spam`.trim(),...(filter==='trash'?{includeSpamTrash:'true'}:{})});
      if(cursors[a.id]) params.set('pageToken',String(cursors[a.id]).slice(0,2000));
@@ -185,12 +198,12 @@ export async function handle(req:Request) {
   }
   if(route==='thread'&&req.method==='GET') {
    const a=await ownedAccount(admin,workspace,get('accountId')),images=String(get('images')||'')==='1';
-   const [api,rules]=await Promise.all([gmailClient(admin,a),accountRules(admin,a)]),t=await fullThread(api,id(get('threadId')),images);
+   const [api,rules]=await Promise.all([mailClient(admin,a),accountRules(admin,a)]),t=await fullThread(api,id(get('threadId')),images);
    defer(cacheMessages(admin,a,t.messages||[],rules));
    return response({threadId:t.id,accountId:a.id,imagesLoaded:images,messages:threadMessageViews(t.messages||[],rules)});
   }
   if(route==='attachment'&&req.method==='GET') {
-   const a=await ownedAccount(admin,workspace,get('accountId')),api=await gmailClient(admin,a),m=await api('messages/'+id(get('messageId'))+'?format=full');
+   const a=await ownedAccount(admin,workspace,get('accountId')),api=await mailClient(admin,a),m=await api('messages/'+id(get('messageId'))+'?format=full');
    const part=resolveAttachmentPart(m.payload,String(get('attachmentId')||''),String(get('partId')||''));
    if(!part)throw new MailError(404,'Attachment not found.');if(part.size>20*1024*1024)throw new MailError(413,'This attachment is over the 20 MB download limit.');
    let data;
@@ -208,7 +221,7 @@ export async function handle(req:Request) {
    const results:any[]=new Array(operations.length),successful:any[]=[];
    await mapLimit([...groups.entries()],async([accountId,ops]:any)=>{
     try{
-     const a=await ownedAccount(admin,workspace,accountId),api=await gmailClient(admin,a);
+     const a=await ownedAccount(admin,workspace,accountId),api=await mailClient(admin,a);
      await mapLimit(ops,async(op:any)=>{
       try{await mutateThread(api,op.threadId,op.action);invalidateThread(workspace,a.id,op.threadId);successful.push({accountId:a.id,threadId:op.threadId,action:op.action});results[op.index]={ok:true};}
       catch(e){results[op.index]={ok:false,error:e instanceof MailError?e.message:'Mail action failed.'};}
@@ -219,7 +232,7 @@ export async function handle(req:Request) {
    return response({results});
   }
   if(route==='modify') {
-   mustPost(req);const a=await ownedAccount(admin,workspace,input.accountId),api=await gmailClient(admin,a),action=String(input.action||''),threadId=id(input.threadId);
+   mustPost(req);const a=await ownedAccount(admin,workspace,input.accountId),api=await mailClient(admin,a),action=String(input.action||''),threadId=id(input.threadId);
    await mutateThread(api,threadId,action);invalidateThread(workspace,a.id,threadId);await syncCachedActions(admin,[{accountId:a.id,threadId,action}]);return response({ok:true});
   }
   if(route==='mark-all-read') {
@@ -228,7 +241,8 @@ export async function handle(req:Request) {
    const accounts=which&&which!=='all'?[await ownedAccount(admin,workspace,which)]:check(await admin.from('eren_mail_accounts').select('*').eq('workspace_hash',workspace).neq('status','disconnecting').order('created_at'));
    let total=0;
    const results=await mapLimit(accounts,async(a:any)=>{
-    const api=await gmailClient(admin,a),ids:string[]=[];let token='';
+    if(a.provider==='ntu'){const count=await ntuMarkAllRead(admin,a);total+=count;clearMailMemory(workspace);return {accountId:a.id,count};}
+    const api=await mailClient(admin,a),ids:string[]=[];let token='';
     for(let pageNo=0;pageNo<20;pageNo++){
      const params=new URLSearchParams({maxResults:'500',q:'in:inbox is:unread -in:spam -in:trash'});
      if(token)params.set('pageToken',token);
@@ -253,7 +267,7 @@ export async function handle(req:Request) {
   }
   if(route==='rules/delete'){mustPost(req);check(await admin.from('eren_mail_rules').delete().eq('id',input.id).eq('workspace_hash',workspace));return response({ok:true});}
   if(route==='unsubscribe') {
-   mustPost(req);const a=await ownedAccount(admin,workspace,input.accountId),api=await gmailClient(admin,a),m=await api('messages/'+id(input.messageId)+'?format=metadata&metadataHeaders=List-Unsubscribe&metadataHeaders=List-Unsubscribe-Post&metadataHeaders=List-ID');
+   mustPost(req);const a=await ownedAccount(admin,workspace,input.accountId),api=await mailClient(admin,a),m=await api('messages/'+id(input.messageId)+'?format=metadata&metadataHeaders=List-Unsubscribe&metadataHeaders=List-Unsubscribe-Post&metadataHeaders=List-ID');
    const info=unsubscribeInfo(m);
    if(input.confirm!==true||!info.oneClick)throw new MailError(400,'This message does not support confirmed one-click unsubscribe.');
    const result=await oneClickUnsubscribe(info.web);

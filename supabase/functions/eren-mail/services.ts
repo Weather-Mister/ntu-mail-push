@@ -1,3 +1,4 @@
+import { ntuClient, clearNtuMemory } from './ntu.ts';
 import { createClient } from '@supabase/supabase-js';
 import sanitizeHtml from 'sanitize-html';
 import { safeHtml, inlineImages } from './render.ts';
@@ -5,7 +6,7 @@ export { safeHtml } from './render.ts';
 import { threadCache } from './memory.ts';
 let memoryEpoch=0;
 const accessTokens=new Map<string,{value:string;until:number}>(),tokenRequests=new Map<string,Promise<any>>();
-export function clearMailMemory(workspace='') {memoryEpoch++;for(const key of accessTokens.keys())if(key.startsWith(workspace))accessTokens.delete(key);for(const key of tokenRequests.keys())if(key.startsWith(workspace))tokenRequests.delete(key);threadCache.deletePrefix(workspace);}
+export function clearMailMemory(workspace='') {memoryEpoch++;clearNtuMemory(workspace);for(const key of accessTokens.keys())if(key.startsWith(workspace))accessTokens.delete(key);for(const key of tokenRequests.keys())if(key.startsWith(workspace))tokenRequests.delete(key);threadCache.deletePrefix(workspace);}
 export function invalidateThread(workspace:string,accountId:string,threadId:string) {threadCache.deletePrefix(`${workspace}:${accountId}:${threadId}:`);}
 import { header, address, senderName, bodies, plainText, classify, unsubscribeInfo, b64url, AI_SYSTEM, sanitizeRichBody, normalizeAiRevision } from './domain.mjs';
 export class MailError extends Error { constructor(public status:number, message:string, public code='mail_error') { super(message); } }
@@ -45,6 +46,7 @@ export async function tokenRequest(params:Record<string,string>) {
  if(!r.ok) throw new MailError(r.status===400?401:502,r.status===400?'Google authorization expired. Reconnect this account.':'Google authorization is temporarily unavailable.',data.error==='invalid_grant'?'reauthorize':'oauth_error');
  return data;
 }
+export async function mailClient(admin:any,account:any) {return account.provider==='ntu'?ntuClient(admin,account):gmailClient(admin,account);}
 export async function gmailClient(admin:any,account:any) {
  const key=account.workspace_hash+':'+account.id+':'+account.secret_name;
  let token=accessTokens.get(key);
@@ -106,8 +108,8 @@ export function cachedOverviews(rows:any[],accounts:any[],includeHidden=false,pr
  }).filter(m=>includeHidden||!m.labels.includes('TRASH')&&!m.labels.includes('SPAM')).sort((a,b)=>b.timestamp-a.timestamp);
 }
 export function messageView(m:any,rules:any[],inherited:any={},externalImages=true,summaryOnly=false) {
- const content=bodies(m.payload), c=classify(m,rules,inherited), hasInlineImages=/\bsrc\s*=\s*["']?cid:/i.test(content.html||''), html=!summaryOnly&&content.html?safeHtml(content.html,{externalImages,inlineImages:inlineImages(m.payload)}):'';
- return {id:m.id,threadId:m.threadId,from:header(m,'From'),sender:senderName(header(m,'From')),email:address(header(m,'From')),to:header(m,'To'),cc:header(m,'Cc'),replyTo:header(m,'Reply-To')||header(m,'From'),subject:header(m,'Subject')||'(no subject)',timestamp:Number(m.internalDate),labels:m.labelIds||[],snippet:m.snippet||'',classification:c,unsubscribe:unsubscribeInfo(m),text:content.text||plainText(content.html),html,hasExternalImages:html.includes('data-external-image'),hasInlineImages,externalImages,attachments:content.attachments};
+ const content=bodies(m.payload), inferred=classify(m,rules,inherited), c=m.metadataOnly&&m.cachedClassification?{...m.cachedClassification,...Object.assign({},...rules.filter(r=>inferred.ruleIds.includes(r.id)).map(r=>r.effects)),ruleIds:inferred.ruleIds}:inferred, hasInlineImages=/\bsrc\s*=\s*["']?cid:/i.test(content.html||''), html=!summaryOnly&&content.html?safeHtml(content.html,{externalImages,inlineImages:inlineImages(m.payload)}):'';
+ return {id:m.id,threadId:m.threadId,from:header(m,'From'),sender:senderName(header(m,'From')),email:address(header(m,'From')),to:header(m,'To'),cc:header(m,'Cc'),replyTo:header(m,'Reply-To')||header(m,'From'),subject:header(m,'Subject')||'(no subject)',timestamp:Number(m.internalDate),labels:m.labelIds||[],snippet:m.snippet||m.cachedSnippet||'',classification:c,unsubscribe:unsubscribeInfo(m),text:content.text||plainText(content.html),html,hasExternalImages:html.includes('data-external-image'),hasInlineImages,externalImages,attachments:content.attachments};
 }
 export function threadMessageViews(messages:any[],rules:any[],summaryOnly=false) {
  const views=messages.map(m=>messageView(m,rules,{},true,summaryOnly));
@@ -122,8 +124,9 @@ export function threadMessageViews(messages:any[],rules:any[],summaryOnly=false)
 }
 export async function cacheMessages(admin:any,account:any,messages:any[],rules:any[]) {
  if(!messages.length) return;
+ const old=account.provider==='ntu'?check(await admin.from('eren_mail_messages').select('*').eq('account_id',account.id).in('id',messages.map(m=>m.id))):[];const previous=new Map<string,any>(old.map(r=>[r.id,r]));
  // Thread rules are the authoritative context inheritance; inferred context stays conservative.
- const rows=messages.map(m=>{const v=messageView(m,rules,{},false,true);return {account_id:account.id,id:m.id,thread_id:m.threadId,sender:v.email,sender_name:v.sender,subject:v.subject,snippet:v.snippet,internal_date:v.timestamp,labels:v.labels,classification:v.classification,list_id:v.unsubscribe.listId,updated_at:new Date().toISOString()};});
+ const rows=messages.map(m=>{const v=messageView(m,rules,{},false,true);const prior=previous.get(m.id);return {...(m.metadataOnly&&prior?prior:{}),account_id:account.id,id:m.id,thread_id:m.threadId,sender:v.email,sender_name:v.sender,subject:v.subject,snippet:m.metadataOnly&&prior?prior.snippet:v.snippet,internal_date:v.timestamp||prior?.internal_date||0,labels:v.labels,classification:m.metadataOnly&&prior?{...prior.classification,...Object.assign({},...rules.filter(r=>v.classification.ruleIds.includes(r.id)).map(r=>r.effects))}:v.classification,list_id:m.metadataOnly&&prior?prior.list_id:v.unsubscribe.listId,updated_at:new Date().toISOString(),...(m.providerRef?{provider_ref:m.providerRef}:{})};});
  check(await admin.from('eren_mail_messages').upsert(rows,{onConflict:'account_id,id'}));
 }
 export async function mapLimit(items:any[],fn:(v:any)=>Promise<any>,n=4) {
@@ -165,7 +168,7 @@ export async function revise(admin:any,account:any,input:any) {
  if(!/^[a-zA-Z0-9._-]+$/.test(cfg.GEMINI_MODEL)) throw new MailError(503,'Configure a valid Gemini model name.');
  let context:any[]=[];
  if(input.threadId) {
-  const api=await gmailClient(admin,account),t=await fullThread(api,input.threadId);
+  const api=await mailClient(admin,account),t=await fullThread(api,input.threadId);
   context=(t.messages||[]).slice(-6).map((m:any)=>{const c=bodies(m.payload);return {from:header(m,'From'),to:header(m,'To'),subject:header(m,'Subject'),body:(c.text||plainText(c.html)).slice(0,6000)};});
  }
  let currentHtml='';try{currentHtml=sanitizeRichBody(String(input.bodyHtml||''));}catch{currentHtml='';}
@@ -196,7 +199,7 @@ function safeTranslationMarkup(html:string) {
 export async function translateMessage(admin:any,account:any,input:any) {
   const messageId=String(input.messageId||'');
   if(!/^[a-zA-Z0-9_-]{1,200}$/.test(messageId))throw new MailError(400,'Invalid message ID.');
-  const [cfg,api]=await Promise.all([config(admin,account.workspace_hash,['GEMINI_API_KEY','GEMINI_MODEL']),gmailClient(admin,account)]);
+  const [cfg,api]=await Promise.all([config(admin,account.workspace_hash,['GEMINI_API_KEY','GEMINI_MODEL']),mailClient(admin,account)]);
   if(!cfg.GEMINI_API_KEY||!cfg.GEMINI_MODEL||!/^[a-zA-Z0-9._-]+$/.test(cfg.GEMINI_MODEL))throw new MailError(503,'Gemini translation is not configured in Mail settings.');
   const message=await api('messages/'+messageId+'?format=full');
   const decoded=bodies(message.payload||{}),subject=String(header(message,'Subject')||'').slice(0,500);

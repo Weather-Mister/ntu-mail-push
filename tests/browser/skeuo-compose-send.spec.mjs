@@ -15,6 +15,7 @@ async function setup(page){
     const request=route.request(),url=new URL(request.url()),action=url.searchParams.get('route');
     let body={};try{body=request.postDataJSON()||{};}catch{}
     calls.push({action,body});
+    if(url.pathname.includes('ntu-schedule-api'))return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({ok:true,events:[],tasks:[],items:[]})});
     if(!url.pathname.includes('eren-mail'))return route.continue();
     if(action==='send'&&sendError)return route.fulfill({status:422,contentType:'application/json',body:JSON.stringify({error:'Mail sending is temporarily unavailable for this account.'})});
     let data={ok:true};

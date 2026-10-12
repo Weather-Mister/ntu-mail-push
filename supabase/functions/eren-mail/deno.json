@@ -1,10 +1,14 @@
 {
   "compilerOptions": {
-    "strict": false
+    "strict": false,
+    "types": [
+      "npm:@types/node@24.10.1"
+    ]
   },
   "imports": {
     "@supabase/supabase-js": "npm:@supabase/supabase-js@2.117.2",
     "sanitize-html": "npm:sanitize-html@2.18.0",
-    "postcss": "npm:postcss@8.5.28"
+    "postcss": "npm:postcss@8.5.28",
+    "postal-mime": "npm:postal-mime@4.0.5"
   }
 }

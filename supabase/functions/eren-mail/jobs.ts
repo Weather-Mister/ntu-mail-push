@@ -1,4 +1,5 @@
-import { check, secret, ownedAccount, gmailClient, cacheMessages, accountRules, mapLimit, fullThread, MailError, hash, invalidateThread } from './services.ts';
+import { syncNtu } from './ntu.ts';
+import { check, secret, ownedAccount, mailClient, cacheMessages, accountRules, mapLimit, fullThread, MailError, hash, invalidateThread } from './services.ts';
 import { buildMime, validateDraft, header, MAX_ATTACHMENT_BYTES } from './domain.mjs';
 import { draftAttachmentPath, outboxAttachmentPath, getAttachmentObject, putAttachmentObject, removeAttachmentObjects, encodeAttachmentData, decodeAttachmentData } from './attachments.ts';
 export async function enqueue(admin:any,account:any,input:any) {
@@ -8,7 +9,7 @@ export async function enqueue(admin:any,account:any,input:any) {
  if(!Number.isFinite(sendAt.getTime())||sendAt.getTime()>Date.now()+366*86400000 || input.sendAt && sendAt.getTime()<Date.now()+30000) throw new MailError(400,'Schedule at least one minute in the future (up to one year).');
  let parent=null;
  if(input.threadId) {
-  const api=await gmailClient(admin,account),t=await fullThread(api,input.threadId);
+  const api=await mailClient(admin,account),t=await fullThread(api,input.threadId);
   const m=(t.messages||[]).find((m:any)=>m.id===input.replyMessageId);
   if(!m) throw new MailError(400,'The original reply message could not be found. Reopen the thread.');
   if(!header(m,'Message-ID')) throw new MailError(400,'The original has no Message-ID; compose a new message instead.');
@@ -52,7 +53,9 @@ export async function enqueue(admin:any,account:any,input:any) {
 export async function deliver(admin:any,job:any) {
  let started=false;
  try {
-  const account=await ownedAccount(admin,job.workspace_hash,job.account_id),api=await gmailClient(admin,account);
+  const active=check(await admin.from('eren_mail_outbox').select('id').eq('id',job.id).eq('status','processing').eq('attempts',job.attempts).gt('locked_until',new Date().toISOString()).maybeSingle());
+  if(!active)return;
+  const account=await ownedAccount(admin,job.workspace_hash,job.account_id),api=await mailClient(admin,account);
   const stored=await secret(admin,job.secret_name);if(!stored) throw new MailError(400,'Send payload missing. Restore your draft and try again.');
   const payload=JSON.parse(stored),loaded=[];let total=0;
   for(const ref of payload.attachments||[]) {
@@ -63,30 +66,30 @@ export async function deliver(admin:any,job:any) {
    loaded.push({...ref,data:encodeAttachmentData(bytes)});
   }
   const raw=buildMime({...payload,attachments:loaded},account.email,job.rfc_message_id,payload.parent);
-  const ready=check(await admin.from('eren_mail_outbox').update({status:'sending',locked_until:new Date(Date.now()+120000).toISOString()}).eq('id',job.id).eq('status','processing').select('id').maybeSingle());
+  const ready=check(await admin.from('eren_mail_outbox').update({status:'sending',locked_until:new Date(Date.now()+120000).toISOString()}).eq('id',job.id).eq('status','processing').eq('attempts',job.attempts).gt('locked_until',new Date().toISOString()).select('id').maybeSingle());
   if(!ready) return;
   started=true;
   const sent=await api('messages/send','POST',{raw,...(payload.threadId?{threadId:payload.threadId}:{})});
   if(sent.threadId||payload.threadId)invalidateThread(account.workspace_hash,account.id,sent.threadId||payload.threadId);
-  check(await admin.from('eren_mail_outbox').update({status:'sent',gmail_id:sent.id,sent_at:new Date().toISOString(),error:null,locked_until:null}).eq('id',job.id));
+  check(await admin.from('eren_mail_outbox').update({status:'sent',gmail_id:sent.id,sent_at:new Date().toISOString(),error:sent.warning||null,locked_until:null}).eq('id',job.id));
   await secret(admin,job.secret_name,null,true);
   try{await removeAttachmentObjects(admin,(payload.attachments||[]).map((a:any)=>outboxAttachmentPath(job.workspace_hash,job.id,a.id)));}catch{}
  } catch(e) {
-  const definitive=started && e instanceof MailError && e.code==='gmail_error' && [400,401,403,404,413,429].includes(e.status);
+  const definitive=started && e instanceof MailError && ['gmail_error','mail_delivery_rejected'].includes(e.code) && [400,401,403,404,413,429].includes(e.status);
   const transient=!started && (!(e instanceof MailError)||e.status>=500||e.status===429) && job.attempts<5;
-  check(await admin.from('eren_mail_outbox').update({status:started&&!definitive?'uncertain':transient?'pending':'failed',send_at:transient?new Date(Date.now()+Math.min(30,2**job.attempts)*60000).toISOString():job.send_at,error:started&&!definitive?'Gmail may have accepted this message. Check status; it will not be resent automatically.':transient?'Temporary service issue; retry scheduled.':'Send failed. Open Outbox to recover the draft.',locked_until:null}).eq('id',job.id).eq('status',started?'sending':'processing'));
+  check(await admin.from('eren_mail_outbox').update({status:started&&!definitive?'uncertain':transient?'pending':'failed',send_at:transient?new Date(Date.now()+Math.min(30,2**job.attempts)*60000).toISOString():job.send_at,error:started&&!definitive?'The mail provider may have accepted this message. Check status; it will not be resent automatically.':transient?'Temporary service issue; retry scheduled.':(e instanceof MailError?e.message+' Open Outbox to recover the draft.':'Send failed. Open Outbox to recover the draft.'),locked_until:null}).eq('id',job.id).eq('attempts',job.attempts).eq('status',started?'sending':'processing'));
  }
 }
 export async function reconcile(admin:any,job:any) {
  if(!['sending','uncertain'].includes(job.status)) return job;
- const account=await ownedAccount(admin,job.workspace_hash,job.account_id),api=await gmailClient(admin,account);
+ const account=await ownedAccount(admin,job.workspace_hash,job.account_id),api=await mailClient(admin,account);
  const found=await api('messages?q='+encodeURIComponent('in:sent rfc822msgid:'+job.rfc_message_id));
  if(found.messages?.length) {
   check(await admin.from('eren_mail_outbox').update({status:'sent',gmail_id:found.messages[0].id,sent_at:new Date().toISOString(),error:null}).eq('id',job.id));
   const stored=await secret(admin,job.secret_name);if(stored){try{const payload=JSON.parse(stored);await removeAttachmentObjects(admin,(payload.attachments||[]).map((a:any)=>outboxAttachmentPath(job.workspace_hash,job.id,a.id)));}catch{}}
   await secret(admin,job.secret_name,null,true);return {...job,status:'sent'};
  }
- return {...job,error:'Not found in Sent yet. Gmail indexing can take time. Check again before composing a replacement.'};
+ return {...job,error:'Not found in Sent yet. Provider indexing can take time. Check again before composing a replacement.'};
 }
 const SYNC_BATCH_SIZE=3;
 const BACKFILL_BATCH_SIZE=3;
@@ -96,7 +99,8 @@ export async function syncAccount(admin:any,account:any) {
  if(!locked) return {busy:true};
  account=locked;
  try {
-  const api=await gmailClient(admin,account),rules=await accountRules(admin,account);
+  if(account.provider==='ntu'){const result=await syncNtu(admin,account);check(await admin.from('eren_mail_accounts').update({provider_state:result.provider_state,last_sync_at:new Date().toISOString(),sync_error:null,status:'active'}).eq('id',account.id).eq('sync_lock_id',lease));return {synced:result.synced};}
+  const api=await mailClient(admin,account),rules=await accountRules(admin,account);
   let ids:string[]=[],next:any={},history:any;
   if(account.history_id && !account.sync_pending) {
    try {history=await api('history?'+new URLSearchParams({startHistoryId:account.history_id,maxResults:'30',...(account.sync_page?{pageToken:account.sync_page}:{})}));}
