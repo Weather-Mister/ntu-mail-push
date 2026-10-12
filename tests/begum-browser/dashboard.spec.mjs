@@ -485,3 +485,32 @@ test('desktop Up Next does not clip long titles or the countdown', async ({page}
     expect(result.countdownVisible,'countdown hidden at '+width).toBe(true);
   }
 });
+
+
+test('Garden phone shortcuts have no emoji, no dead space and usable buttons',async({page})=>{
+ await page.goto('/?pair=begum');
+ for(const width of [390,320]){
+  await page.setViewportSize({width,height:844});
+  await expect(page.locator('.links-panel .side-heading > span')).toHaveCount(0);
+  await expect(page.locator('#quickAccessRow .hub-stats')).toBeVisible();
+  const buttons=page.locator('#quickAccessRow .ntu-hub-grid .hub-app');
+  await expect(buttons).toHaveCount(3);
+  const metrics=await page.evaluate(()=>{
+   const rect=el=>el.getBoundingClientRect();
+   const panel=rect(document.querySelector('.links-panel'));
+   const buttons=[...document.querySelectorAll('#quickAccessRow .ntu-hub-grid .hub-app')].map(rect);
+   return {
+    blankSpace:panel.bottom-Math.max(...buttons.map(r=>r.bottom)),
+    minimumHeight:getComputedStyle(document.querySelector('.links-panel')).minHeight,
+    buttonsOnOneRow:Math.max(...buttons.map(r=>r.top))-Math.min(...buttons.map(r=>r.top))<2,
+    buttonsInside:buttons.every(r=>r.left>=panel.left&&r.right<=panel.right),
+    overflow:document.documentElement.scrollWidth>innerWidth+2
+   };
+  });
+  expect(metrics.minimumHeight).toBe('0px');
+  expect(metrics.blankSpace).toBeLessThan(30);
+  expect(metrics.buttonsOnOneRow).toBe(true);
+  expect(metrics.buttonsInside).toBe(true);
+  expect(metrics.overflow).toBe(false);
+ }
+});
