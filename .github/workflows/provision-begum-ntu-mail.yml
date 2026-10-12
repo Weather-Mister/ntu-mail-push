@@ -1,0 +1,49 @@
+name: Provision Begüm NTU Mail
+on:
+  push:
+    branches: [feat/begum-garden-mail]
+    paths: [.github/workflows/provision-begum-ntu-mail.yml]
+permissions:
+  contents: read
+  id-token: write
+jobs:
+  connect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Connect existing NTU credentials directly to the protected mail backend
+        env:
+          NTU_EMAIL: ${{ secrets.BEGUM_NTU_EMAIL }}
+          NTU_PASSWORD: ${{ secrets.BEGUM_NTU_PASSWORD }}
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json, os, urllib.request, urllib.error
+          def request_json(url, headers, body=None):
+              data=None if body is None else json.dumps(body).encode()
+              with urllib.request.urlopen(urllib.request.Request(url,data=data,headers=headers),timeout=90) as r:
+                  return json.load(r)
+          try:
+              oidc=request_json(os.environ['ACTIONS_ID_TOKEN_REQUEST_URL']+'&audience=eren-mail-ntu-import',{'Authorization':'Bearer '+os.environ['ACTIONS_ID_TOKEN_REQUEST_TOKEN']})['value']
+              result=request_json('https://evckshjtzikuusnkdnjn.supabase.co/functions/v1/eren-mail?route=ntu/import',{'Authorization':'Bearer '+oidc,'Content-Type':'application/json'},{'email':os.environ['NTU_EMAIL'],'password':os.environ['NTU_PASSWORD']})
+              print(json.dumps({'connected':result.get('connected',False),'accountId':result.get('accountId')}))
+              base='https://evckshjtzikuusnkdnjn.supabase.co/functions/v1/eren-mail?route='
+              headers={'x-schedule-key':'begum'}
+              status=request_json(base+'status',headers)
+              bootstrap=request_json(base+'bootstrap',headers)
+              assert status.get('configured') and status.get('aiConfigured')
+              assert all(a.get('provider')=='ntu' for a in bootstrap.get('accounts',[]))
+              print(json.dumps({'google_configured':status['configured'],'gemini_configured':status['aiConfigured'],'isolated_accounts':len(bootstrap.get('accounts',[]))}))
+              listing=request_json(base+'mail&accountId='+result['accountId']+'&filter=inbox',headers)
+              assert not listing.get('errors'), 'NTU inbox check failed'
+              print(json.dumps({'ntu_inbox_checked':True,'visible_messages':len(listing.get('messages',[]))}))
+              if not result.get('connected'): raise SystemExit(1)
+          except urllib.error.HTTPError as e:
+              try: message=json.loads(e.read()).get('error','Request rejected')
+              except Exception: message='Request rejected'
+              print(json.dumps({'connected':False,'status':e.code,'error':message}))
+              raise SystemExit(1)
+          except Exception as e:
+              print(json.dumps({'connected':False,'error_type':type(e).__name__}))
+              raise SystemExit(1)
+          PY
