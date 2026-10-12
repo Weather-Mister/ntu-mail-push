@@ -82,3 +82,5 @@
 .mailx-dialog .mailx-original-layout>summary{display:list-item;width:max-content;max-width:100%;cursor:pointer;font-size:11px;line-height:1.5}
 .mailx-dialog .mailx-original-layout>.mailx-html-body{display:block;width:100%;max-width:100%;height:min(560px,65dvh);min-height:260px;max-height:none;margin:10px 0 0;border:1px solid #dde8cf;border-radius:8px;background:#fff}
 .mailx-dialog .mailx-original-body[hidden],.mailx-dialog .mailx-original-layout[hidden]{display:none!important}
+
+.mailx-dialog .mailx-thread-message .mailx-mail-body{color:#253e31;font-family:var(--sans);font-size:15px;line-height:1.8}
