@@ -46,6 +46,25 @@ test('modern mobile Gemini failure preserves original mail and permits retry',as
  const button=page.locator('[data-mailx-translate]');await button.click();await expect(page.locator('#mailxToast')).toContainText('Translation failed');await expect(button).toBeEnabled();await expect(page.locator('.mailx-thread-details.is-current > .mailx-mail-body')).toBeVisible();await expect(page.locator('.mailx-translation')).toHaveCount(0);
  await button.click();await expect(page.locator('.mailx-translation')).toBeVisible();expect(calls).toHaveLength(2);
 });
+test('Garden mobile Translate cannot squeeze long message subjects',async({page},info)=>{
+ test.skip(info.project.name!=='iphone','Mobile subject layout regression');
+ const {errors}=await setup(page,{format:'text'});
+ const metrics=await page.evaluate(()=>{
+   const title=document.querySelector('.mailx-reader-title-row');
+   const subject=title?.querySelector('.mailx-reader-subject');
+   const button=title?.querySelector('[data-mailx-translate]');
+   if(!title||!subject||!button)return null;
+   const row=title.getBoundingClientRect(),heading=subject.getBoundingClientRect(),translate=button.getBoundingClientRect();
+   return {rowWidth:row.width,subjectWidth:heading.width,subjectBottom:heading.bottom,translateTop:translate.top,translateRight:translate.right,rowRight:row.right,viewportWidth:innerWidth,docWidth:document.documentElement.scrollWidth};
+ });
+ expect(metrics).not.toBeNull();
+ expect(metrics.subjectWidth).toBeGreaterThanOrEqual(metrics.rowWidth-2);
+ expect(metrics.translateTop).toBeGreaterThanOrEqual(metrics.subjectBottom-1);
+ expect(metrics.translateRight).toBeLessThanOrEqual(metrics.rowRight+1);
+ expect(metrics.docWidth).toBeLessThanOrEqual(metrics.viewportWidth);
+ expect(errors).toEqual([]);
+});
+
 test('Garden desktop translation preserves Chinese original and uses isolated device state',async({page})=>{
  await page.setViewportSize({width:1440,height:900});const {calls}=await setup(page,{format:'text'});
  await expect(page.locator('[data-mailx-translate]')).toBeVisible();
