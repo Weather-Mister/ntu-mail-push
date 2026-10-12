@@ -211,26 +211,29 @@
     const bar=document.querySelector('.mailx-garden .mailx-topbar');
     const refresh=bar?.querySelector('#mailxRefresh');
     if(!refresh)return;
-    if(!bar.querySelector('.mailx-bee-parade'))refresh.insertAdjacentHTML('beforebegin',"<span class=\"mailx-bee-parade\" aria-hidden=\"true\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 360 48\"><path class=\"mailx-bee-trail\" d=\"M 14 28 C 72 2 105 44 160 24 S 244 3 284 24 S 324 40 346 17\"/><g class=\"mailx-parade-bee\"><ellipse cx=\"-2\" cy=\"-7\" rx=\"4.5\" ry=\"6\" fill=\"#fffef7\" stroke=\"#a3bead\" stroke-width=\".9\" transform=\"rotate(-25 -2 -7)\"/><ellipse cx=\"4\" cy=\"-7\" rx=\"4\" ry=\"5.5\" fill=\"#fffef7\" stroke=\"#a3bead\" stroke-width=\".9\" transform=\"rotate(25 4 -7)\"/><path d=\"m-12 0 4-2v4Z\" fill=\"#385542\"/><ellipse rx=\"10\" ry=\"6\" fill=\"#edbd55\" stroke=\"#385542\" stroke-width=\"1\"/><path d=\"M-4-5v10M2-5v10\" stroke=\"#385542\" stroke-width=\"2.8\"/><circle cx=\"10\" cy=\"-1\" r=\"4.7\" fill=\"#385542\"/><circle cx=\"11.5\" cy=\"-2\" r=\"1\" fill=\"#fffef7\"/><path d=\"m10-5 1-4m2 4 3-3\" stroke=\"#385542\" stroke-width=\"1\" stroke-linecap=\"round\"/></g><g class=\"mailx-parade-bee\"><ellipse cx=\"-2\" cy=\"-7\" rx=\"4.5\" ry=\"6\" fill=\"#fffef7\" stroke=\"#a3bead\" stroke-width=\".9\" transform=\"rotate(-25 -2 -7)\"/><ellipse cx=\"4\" cy=\"-7\" rx=\"4\" ry=\"5.5\" fill=\"#fffef7\" stroke=\"#a3bead\" stroke-width=\".9\" transform=\"rotate(25 4 -7)\"/><path d=\"m-12 0 4-2v4Z\" fill=\"#385542\"/><ellipse rx=\"10\" ry=\"6\" fill=\"#edbd55\" stroke=\"#385542\" stroke-width=\"1\"/><path d=\"M-4-5v10M2-5v10\" stroke=\"#385542\" stroke-width=\"2.8\"/><circle cx=\"10\" cy=\"-1\" r=\"4.7\" fill=\"#385542\"/><circle cx=\"11.5\" cy=\"-2\" r=\"1\" fill=\"#fffef7\"/><path d=\"m10-5 1-4m2 4 3-3\" stroke=\"#385542\" stroke-width=\"1\" stroke-linecap=\"round\"/></g><g class=\"mailx-parade-bee\"><ellipse cx=\"-2\" cy=\"-7\" rx=\"4.5\" ry=\"6\" fill=\"#fffef7\" stroke=\"#a3bead\" stroke-width=\".9\" transform=\"rotate(-25 -2 -7)\"/><ellipse cx=\"4\" cy=\"-7\" rx=\"4\" ry=\"5.5\" fill=\"#fffef7\" stroke=\"#a3bead\" stroke-width=\".9\" transform=\"rotate(25 4 -7)\"/><path d=\"m-12 0 4-2v4Z\" fill=\"#385542\"/><ellipse rx=\"10\" ry=\"6\" fill=\"#edbd55\" stroke=\"#385542\" stroke-width=\"1\"/><path d=\"M-4-5v10M2-5v10\" stroke=\"#385542\" stroke-width=\"2.8\"/><circle cx=\"10\" cy=\"-1\" r=\"4.7\" fill=\"#385542\"/><circle cx=\"11.5\" cy=\"-2\" r=\"1\" fill=\"#fffef7\"/><path d=\"m10-5 1-4m2 4 3-3\" stroke=\"#385542\" stroke-width=\"1\" stroke-linecap=\"round\"/></g></svg></span>");
-    const flight=bar.querySelector('.mailx-bee-parade svg');
-    const reduced=matchMedia('(prefers-reduced-motion: reduce)');
-    function setFlight(){
-      flight.querySelectorAll('.mailx-parade-bee').forEach((bee,index)=>{
-        bee.querySelector('animateMotion')?.remove();
-        if(reduced.matches){
-          bee.setAttribute('transform','translate('+[80,180,280][index]+' '+[22,18,25][index]+')');
-        }else{
-          bee.removeAttribute('transform');
-          const motion=document.createElementNS(svgNS,'animateMotion');
-          motion.setAttribute('path','M 14 28 C 72 2 105 44 160 24 S 244 3 284 24 S 324 40 346 17');
-          motion.setAttribute('dur','24s');motion.setAttribute('repeatCount','indefinite');
-          motion.setAttribute('rotate','auto');motion.setAttribute('begin',String(-index*8)+'s');
-          bee.append(motion);
-        }
-      });
+    // Stationary, softly colored bees matching the "Pick a letter" illustration.
+    // Keep them separate from the Garden's decorative flyover animation.
+    if(!bar.querySelector('.mailx-bee-parade')){
+      refresh.insertAdjacentHTML('beforebegin', `
+        <span class="mailx-bee-parade" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 48" preserveAspectRatio="xMidYMid meet">
+            <defs>
+              <g id="mailx-parade-bee-shape">
+                <ellipse cx="-4" cy="-8" rx="7" ry="9" fill="#f7faf0" stroke="#dbe4cf"/>
+                <ellipse cx="6" cy="-8" rx="7" ry="9" fill="#f7faf0" stroke="#dbe4cf"/>
+                <ellipse rx="13" ry="8" fill="#edc775"/>
+                <path d="M-4-7v14M3-7v14" stroke="#7a714c" stroke-width="3"/>
+                <circle cx="12" cy="0" r="6" fill="#7a714c"/>
+              </g>
+            </defs>
+            <path class="mailx-bee-trail" d="M18 27 C68 12 109 13 148 25 S230 35 268 23 S320 13 348 25"/>
+            <g class="mailx-parade-bee" transform="translate(82 22) rotate(8) scale(1.18)"><use href="#mailx-parade-bee-shape"/></g>
+            <g class="mailx-parade-bee" transform="translate(205 32) rotate(-8) scale(1.16)"><use href="#mailx-parade-bee-shape"/></g>
+            <g class="mailx-parade-bee" transform="translate(312 21) rotate(7) scale(1.18)"><use href="#mailx-parade-bee-shape"/></g>
+          </svg>
+        </span>`);
     }
-    if(ready)return;ready=true;discovery.disconnect();setFlight();
-    reduced.addEventListener('change',setFlight);
+    if(ready)return;ready=true;discovery.disconnect();
     const counts=new MutationObserver(queueCounts);
     for(const target of [document.querySelector('#mailDashboardButton'),document.querySelector('.mailx-garden .mailx-nav')]){
       if(target)counts.observe(target,{childList:true,subtree:true,characterData:true});
