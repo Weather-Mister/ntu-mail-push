@@ -31,6 +31,7 @@ const meetingLinks = {
 const NTU_MAIL_URL = 'https://wmail1.cc.ntu.edu.tw/rc/index.php';
 
 const SCHEDULE_API_URL = 'https://evckshjtzikuusnkdnjn.supabase.co/functions/v1/ntu-schedule-api';
+const HANZI_WIDGET_URL = 'https://hanzi-steps-api.weatherisgood06.workers.dev/widget?username=eren';
 const SCHEDULE_PAIRING_KEY = 'ntu-schedule-pairing-key-v1';
 let schedulePairingKey = '';
 
@@ -1359,7 +1360,7 @@ async function loadHanziWidget(){
   if (hanziWidgetLoading) return;
   hanziWidgetLoading = true;
   try {
-    const response = await scheduleFetch('hanzi-widget', { cache:'no-store' });
+    const response = await fetch(HANZI_WIDGET_URL, { cache:'no-store' });
     if (!response.ok) throw new Error('Hanzi widget request failed');
     const data = await response.json();
     if (!data || typeof data.streak !== 'number') throw new Error('Invalid Hanzi widget payload');
