@@ -6,6 +6,8 @@ on:
     paths:
       - "sites/**"
       - "tests/begum-schedule-desktop.test.mjs"
+      - "tests/hanzi-cloudflare-widget.test.mjs"
+      - "scripts/check-hanzi-cloudflare.mjs"
       - ".github/workflows/deploy-schedule-pages.yml"
   workflow_dispatch:
 
@@ -42,6 +44,9 @@ jobs:
           npm run check:mail
           npm run test:server
           node --check sites/eren/mail-demo.js
+
+      - name: Verify live Hanzi Cloudflare widget and GitHub Pages CORS
+        run: node scripts/check-hanzi-cloudflare.mjs
 
       - name: Build isolated Pages artifact
         run: |
