@@ -36,6 +36,7 @@ async function boot(page,options={}){
    if(r==='hanzi-widget')data={streak:7,practiceToday:3,practiceGoal:10,username:'eren',nextCharacter:'學'};
    if(r==='status')data={ok:true,app:'eren'};
   }
+  if(url.origin==='https://hanzi-steps-api.weatherisgood06.workers.dev'&&url.pathname==='/widget')data={version:2,username:'eren',streak:7,todayProgress:3,todayGoal:10,nextCharacters:[],unitColor:'#59a66b'};
   await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(data)});
  });
  await page.goto('/');await page.locator('#mailDashboardButton').click();await expect(page.locator('#mailxList .mailx-message')).toHaveCount(2);return {calls,errors};
@@ -43,7 +44,7 @@ async function boot(page,options={}){
 test('dashboard remains intact; live account selector combines and filters inbox',async({page},info)=>{
  const {calls,errors}=await boot(page);await expect(page.locator(garden?'.week-actions > #mailDashboardButton':'.topbar-actions > #mailDashboardButton')).toHaveCount(1);await expect(page.locator('#ntuHubSection #mailDashboardButton')).toHaveCount(0);await expect(page.locator('#mailxConnection')).toBeHidden();const selector=page.locator('.mailx-top-account');await expect(selector.locator('option')).toHaveCount(3);await expect(selector).toBeVisible();await selector.selectOption('a2');await expect(page.locator('#mailxList .mailx-message')).toHaveCount(1);await expect(page.locator('#mailxList')).toContainText('Your receipt');await selector.selectOption('all');await expect(page.locator('#mailxList .mailx-message')).toHaveCount(2);
  await page.locator('#mailxClose').click();await page.locator('[data-day="1"]').click();await expect(page.locator('#scheduleList')).toContainText(garden?'Essentials of Global Health':'Engineering Mathematics');
- await expect(page.locator('#todoList')).toContainText('Existing manual task');if(!garden)await expect(page.locator('#transferList')).toContainText('Existing transfer');await expect(page.locator('#coolDeadlines')).toContainText('Existing COOL assignment');await expect(page.locator('a[aria-label="Open NTU Mail"]')).toHaveAttribute('href','https://wmail1.cc.ntu.edu.tw/rc/index.php');if(!garden)expect(calls.some(c=>c.route==='hanzi-widget')).toBeTruthy();expect(errors).toEqual([]);
+ await expect(page.locator('#todoList')).toContainText('Existing manual task');if(!garden)await expect(page.locator('#transferList')).toContainText('Existing transfer');await expect(page.locator('#coolDeadlines')).toContainText('Existing COOL assignment');await expect(page.locator('a[aria-label="Open NTU Mail"]')).toHaveAttribute('href','https://wmail1.cc.ntu.edu.tw/rc/index.php');if(!garden)expect(calls.some(c=>c.url.origin==='https://hanzi-steps-api.weatherisgood06.workers.dev'&&c.url.pathname==='/widget'&&c.url.searchParams.get('username')==='eren')).toBeTruthy();expect(errors).toEqual([]);
 });
 test('full reader, mobile back, normal reply and safe controls',async({page},info)=>{
  await boot(page);await page.locator('#mailxList .mailx-message').first().click();await expect(page.locator('.mailx-mail-body')).toContainText('Full message content.');await expect(page.getByRole('button',{name:'Reply with AI',exact:true})).toHaveCount(0);await expect(page.locator('[data-action="unsubscribe"]')).toHaveCount(0);
