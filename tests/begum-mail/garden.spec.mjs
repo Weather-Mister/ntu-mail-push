@@ -27,6 +27,7 @@ async function setup(page,{format='html',failOnce=false,provider='ntu'}={}){
   await route.fulfill({status,contentType:'application/json',body:JSON.stringify(data)});
  });
  await page.goto('/');await page.locator('#mailDashboardButton').click();await page.locator('#mailxList .mailx-message').first().click();
+ await expect(page.locator('.mailx-reader-title-row')).toBeVisible();
  return {calls,errors};
 }
 for(const format of ['text','html'])test(`modern mobile ${format} mail uses styled Gemini translation with cached Original/English toggle`,async({page},info)=>{
