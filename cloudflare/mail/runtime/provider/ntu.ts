@@ -105,7 +105,7 @@ class Roundcube {
     const target=new URL(location,url);if(target.origin!==new URL(ROOT).origin||!target.pathname.startsWith('/rc/'))throw new MailError(502,'NTU returned an unexpected redirect.');
     url=target;if(r.status===303||[301,302].includes(r.status)&&method==='POST'){method='GET';body=undefined;}continue;
    }
-   if(!r.ok){await r.body?.cancel();throw new MailError(r.status===404?404:502,r.status===404?'Message no longer exists in NTU Mail.':'NTU Mail is temporarily unavailable.','ntu_unavailable');}
+   if(!r.ok){await r.body?.cancel();const failure=new MailError(r.status===404?404:502,r.status===404?'Message no longer exists in NTU Mail.':'NTU Mail is temporarily unavailable.','ntu_unavailable');(failure as any).providerStatus=r.status;throw failure;}
    const length=Number(r.headers.get('content-length'));if(length>limit){await r.body?.cancel();throw new MailError(413,'This NTU message is over the download limit.');}
    // A stream limit is necessary when the provider omits Content-Length.
    const reader=r.body?.getReader(),chunks:Uint8Array[]=[];let size=0;
@@ -294,6 +294,12 @@ export async function syncNtu(admin:any,account:any){
  // Always refresh the inbox's live flags, then advance one bounded backfill page.
  const latest=await ntuList(admin,account);await cacheMessages(admin,account,latest.messages,rules);
  const cursor=state.backfill??latest.next;if(cursor){const page=await ntuList(admin,account,'all','',cursor);await cacheMessages(admin,account,page.messages,rules);state.backfill=page.next||null;}else state.backfill=latest.next;
+ // Prime at most one recent reader per scheduled cycle on the separate sync
+ // connection. Interactive refresh never starts speculative MIME downloads.
+ if(environment().MAIL_NTU_BACKGROUND===true){
+  const candidate=latest.messages.slice(0,4).find(m=>!messageMemory.has(messageMemory.key(account,m.id,m.providerRef)));
+  if(candidate)try{const session=await ntuSession(admin,account);await session.serial(()=>fullMessage(admin,account,session,candidate.id));}catch{/* Body caching is reconstructible; metadata sync remains successful. */}
+ }
  return {synced:latest.messages.length,provider_state:state};
 }
 

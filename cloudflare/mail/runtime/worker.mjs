@@ -109,7 +109,7 @@ export class MailStore {
   if(routeOf(req)==='migration/ntu-read-check')return withMailContext({env:requestEnv,state:this.state,admin:this.admin,origin:''},async()=>{
    const account=this.sql.exec("SELECT * FROM eren_mail_accounts WHERE provider='ntu'").toArray()[0];if(!account)return Response.json({present:false},{status:404});
    try{let cursor='',counts=[];for(let page=0;page<3;page++){const result=await ntuList(this.admin,{...account,provider_state:JSON.parse(account.provider_state||'{}')},'inbox','',cursor);counts.push(result.messages.length);cursor=result.next||'';if(!cursor)break;}return Response.json({passed:true,provider:'ntu',accountStatus:account.status,inboxCount:counts[0],paginationCounts:counts,hasNext:!!cursor,readOnly:true,emailsSent:0});}
-   catch(error){return Response.json({passed:false,provider:'ntu',accountStatus:account.status,code:error instanceof MailError?error.code:'internal_error',error:error instanceof MailError?error.message:'NTU read failed.',readOnly:true,emailsSent:0},{status:error instanceof MailError?error.status:503});}
+   catch(error){return Response.json({passed:false,provider:'ntu',accountStatus:account.status,code:error instanceof MailError?error.code:'internal_error',error:error instanceof MailError?error.message:'NTU read failed.',providerStatus:error?.providerStatus,readOnly:true,emailsSent:0},{status:error instanceof MailError?error.status:503});}
   });
   if(routeOf(req)==='migration/live-health'){
    const health=this.sql.exec("SELECT last_started_at,last_finished_at,result FROM eren_mail_health WHERE id='worker'").toArray()[0]||null;

@@ -26,10 +26,11 @@ function fixture(){
  class MailError extends Error{constructor(status,message,code='mail_error'){super(message);this.status=status;this.code=code;}}
  const b64url=v=>Buffer.from(typeof v==='string'?v:v.buffer,v.byteOffset||0,v.byteLength).toString('base64url');
  const session={serial:fn=>fn(),chain:Promise.resolve(),folders:{trash:'Trash',archive:'Archive'},close(){},async raw(){downloads++;return new TextEncoder().encode('From: fixture@example.invalid\r\n\r\nBody');}};
- const context={NtuMessageMemory,messageWithoutAttachmentData,readNtuWithFreshSession,retireNtuSessionWhenIdle,ntuSessionKey,environment:()=>({}),MailError,TextDecoder,TextEncoder,Response,Buffer,URL,URLSearchParams,structuredClone,Date,crypto,atob,b64url,decodeBody:v=>Buffer.from(v,'base64url').toString(),header:()=>'',plainText:v=>v.replace(/<[^>]+>/g,''),check:r=>r.data,PostalMime:{async parse(){parses++;return {headers:[],subject:'Synthetic',date:'2026-10-14T00:00:00Z',messageId:'fixture-id',text:'Hello',html:'<p>Hello</p><img src="cid:img">',attachments:[{filename:'image.png',mimeType:'image/png',contentId:'img',content:new Uint8Array([1,2,3])},{filename:'doc.pdf',mimeType:'application/pdf',content:new Uint8Array([4,5])}]};}}};
+ const env={};
+ const context={NtuMessageMemory,messageWithoutAttachmentData,readNtuWithFreshSession,retireNtuSessionWhenIdle,ntuSessionKey,environment:()=>env,accountRules:async()=>[],cacheMessages:async()=>{},MailError,TextDecoder,TextEncoder,Response,Buffer,URL,URLSearchParams,structuredClone,Date,crypto,atob,b64url,decodeBody:v=>Buffer.from(v,'base64url').toString(),header:()=>'',plainText:v=>v.replace(/<[^>]+>/g,''),check:r=>r.data,PostalMime:{async parse(){parses++;return {headers:[],subject:'Synthetic',date:'2026-10-14T00:00:00Z',messageId:'fixture-id',text:'Hello',html:'<p>Hello</p><img src="cid:img">',attachments:[{filename:'image.png',mimeType:'image/png',contentId:'img',content:new Uint8Array([1,2,3])},{filename:'doc.pdf',mimeType:'application/pdf',content:new Uint8Array([4,5])}]};}}};
  const source=stripTypeScriptTypes(readFileSync(new URL('../cloudflare/mail/runtime/provider/ntu.ts',import.meta.url),'utf8'),{mode:'transform'}).replace(/^import[^;]*;\s*/gm,'').replaceAll('export async function','async function').replaceAll('export function','function');
- runInNewContext(source+'\nthis.hooks={fullMessage,Roundcube,ntuClient,setSession(fn){ntuSession=fn;}};',context);
- return {context,admin,session,setRow(value){row=value;},stats:()=>({downloads,parses})};
+ runInNewContext(source+'\nthis.hooks={fullMessage,Roundcube,ntuClient,syncNtu,setSession(fn){ntuSession=fn;},setList(fn){ntuList=fn;}};',context);
+ return {context,admin,session,env,setRow(value){row=value;},stats:()=>({downloads,parses})};
 }
 test('Large attachment data is parsed once across initial read, image hydration and attachment download; labels stay current',async()=>{
  const f=fixture();const first=await f.context.hooks.fullMessage(f.admin,account,f.session,'mail-a');assert(first.payload.parts.every(p=>!p.body.attachmentId||!p.body.data));
@@ -49,4 +50,12 @@ test('NTU source reader distinguishes an expired login page from missing mail an
  s.fetch=async()=>new Response('<!doctype html><html><script>rcmail.set_env({"task":"login"});</script>');await assert.rejects(()=>s.raw(ref),{code:'ntu_session_expired'});
  s.fetch=async()=>new Response('<!doctype html><html><script>rcmail.set_env({"task":"mail"});</script>');await assert.rejects(()=>s.raw(ref),{code:'ntu_message_missing'});
  s.fetch=async()=>new Response('From: fixture@example.invalid\r\nSubject: Synthetic\r\n\r\nrcmail.set_env({"task":"login"});');assert((await s.raw(ref)).length>0);
+});
+test('Scheduled sync primes only one uncached recent reader per cycle; interactive refresh never downloads speculative bodies',async()=>{
+ const f=fixture();f.context.hooks.setSession(async()=>f.session);f.context.hooks.setList(async()=>({messages:[{id:'mail-a',providerRef:ref},{id:'mail-b',providerRef:ref}],next:null}));
+ await f.context.hooks.syncNtu(f.admin,account);assert.equal(f.stats().downloads,0);
+ f.env.MAIL_NTU_BACKGROUND=true;await f.context.hooks.syncNtu(f.admin,account);assert.equal(f.stats().downloads,1);
+ await f.context.hooks.syncNtu(f.admin,account);assert.equal(f.stats().downloads,2);
+ await f.context.hooks.syncNtu(f.admin,account);assert.equal(f.stats().downloads,2);
+ await f.context.hooks.fullMessage(f.admin,account,f.session,'mail-b');assert.equal(f.stats().downloads,2);
 });
