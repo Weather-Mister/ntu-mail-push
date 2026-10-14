@@ -52,7 +52,7 @@ test('Begüm removes transfer and Hanzi UI, code and heavy FFmpeg preloading', (
 test('Begüm PWA assets remain scoped and version matched', () => {
   // Compare the asset URLs the page actually uses with the offline shell.
   // Asset revision bumps must not silently prevent a Pages deployment.
-  for (const filename of ['app.js','todo-realtime.js','garden-theme.css','garden-bees.js']) {
+  for (const filename of ['app.js','migration-bridge.js','migration-task-sync.js','garden-theme.css','garden-bees.js']) {
     const asset = html.match(new RegExp(filename.replace('.', '\\.') + '\\?v=\\d+'))?.[0];
     assert.ok(asset, 'HTML references ' + filename + ' with a version');
     assert.ok(sw.includes(asset), 'cache includes ' + asset);

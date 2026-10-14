@@ -2,7 +2,19 @@ import { test, expect } from '@playwright/test';
 
 test.beforeEach(async ({ page }) => {
   const tasks = [];
-  await page.route('**/functions/v1/ntu-schedule-api**', route => {
+  await page.addInitScript(() => {
+    const NativeSocket=window.WebSocket;
+    window.WebSocket=class {
+      static OPEN=1;
+      constructor(url){
+        if(!String(url).includes('begum-schedule-api.begum-schedule-fb773613.workers.dev'))return new NativeSocket(url);
+        this.readyState=1;setTimeout(()=>this.onopen?.(),0);
+      }
+      send(raw){if(JSON.parse(raw).event==='pair')setTimeout(()=>this.onmessage?.({data:JSON.stringify({event:'ready'})}),0);}
+      close(){this.readyState=3;this.onclose?.({code:1008});}
+    };
+  });
+  await page.route(url => url.pathname.includes('/functions/v1/ntu-schedule-api') || url.origin==='https://begum-schedule-api.begum-schedule-fb773613.workers.dev', route => {
     const u = new URL(route.request().url());
     const path = u.searchParams.get('route') || '';
     const request = route.request();

@@ -5,12 +5,13 @@ import {runInNewContext} from 'node:vm';
 const root=new URL('../',import.meta.url);
 test('Begüm adapter moves tasks and calendar while preserving every mail and notification request',async()=>{
   const calls=[];
-  const window={location:{href:'https://weather-mister.github.io/ntu-mail-push/begum/'},SCHEDULE_MIGRATION:{enabled:true,app:'begum',apiUrl:'https://begum-schedule-api.preview-validation.workers.dev',transferEnabled:true},fetch:async(input,init)=>{const request=new Request(input,init);calls.push(request);return Response.json({ok:true});}};
+  const apiUrl='https://begum-schedule-api.begum-schedule-fb773613.workers.dev';
+  const window={location:{href:'https://weather-mister.github.io/ntu-mail-push/begum/'},SCHEDULE_MIGRATION:{enabled:true,app:'begum',apiUrl,transferEnabled:true},fetch:async(input,init)=>{const request=new Request(input,init);calls.push(request);return Response.json({ok:true});}};
   runInNewContext(readFileSync(new URL('artifacts/frontend/migration-bridge.js',root),'utf8'),{window,URL,Request,Headers});
   const legacy='https://evckshjtzikuusnkdnjn.supabase.co/functions/v1/';
   for(const route of ['status','todos/list','todos/create','todos/update','todos/delete','todos/import','cool-calendar','transfer/upload']){
     await window.fetch(legacy+'ntu-schedule-api?route='+route,{method:'POST',headers:{'x-schedule-key':'begum'},body:'original-body'});
-    assert.equal(new URL(calls.at(-1).url).hostname,'begum-schedule-api.preview-validation.workers.dev');
+    assert.equal(new URL(calls.at(-1).url).hostname,new URL(apiUrl).hostname);
     assert.equal(calls.at(-1).headers.get('x-schedule-key'),'begum');assert.equal(await calls.at(-1).text(),'original-body');
   }
   for(const route of ['bootstrap','mail','thread','sync','send','ntu/connect','drafts','ai','translate']){

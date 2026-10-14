@@ -1,0 +1,10 @@
+import {readFileSync} from 'node:fs';
+import {resolve} from 'node:path';
+import {tokenForBegum} from './connection.mjs';
+import {ACCOUNT_ID} from './deploy-begum.mjs';
+const root=resolve(import.meta.dirname,'..'),resources=JSON.parse(readFileSync(resolve(root,'evidence/resources.json'),'utf8')),token=tokenForBegum();
+const api=async path=>{const r=await fetch('https://api.cloudflare.com/client/v4/accounts/'+ACCOUNT_ID+path,{headers:{Authorization:'Bearer '+token}});const d=await r.json();if(!r.ok||!d.success)throw new Error('Remote read failed '+r.status);return d.result;};
+const subdomain=await api('/workers/scripts/begum-schedule-api/subdomain');
+const settings=await api('/workers/scripts/begum-schedule-api/settings');
+const db=await fetch(`https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/d1/database/${resources.databaseId}/query`,{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({sql:'SELECT app_slug,source_workspace_hash FROM migration_owner; SELECT COUNT(*) AS tasks FROM schedule_manual_tasks;'})});
+console.log(JSON.stringify({subdomain,bindings:settings.bindings.map(b=>({name:b.name,type:b.type,id:b.id,namespace_id:b.namespace_id})),migrations:settings.migration_tag,database:(await db.json()).result},null,2));

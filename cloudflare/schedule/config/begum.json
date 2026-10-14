@@ -11,8 +11,41 @@
     "TRANSFER_ENABLED": "true",
     "FILE_IMPORT_MODE": "disabled"
   },
-  "d1_databases": [{"binding":"DB","database_name":"begum-schedule-db","migrations_dir":"../migrations"}],
-  "durable_objects": {"bindings":[{"name":"TASK_SYNC","class_name":"TaskSync"},{"name":"FILE_STORE","class_name":"FileStore"}]},
-  "migrations": [{"tag":"v1","new_sqlite_classes":["TaskSync"]},{"tag":"v2","new_sqlite_classes":["FileStore"]}],
-  "observability": {"enabled":false}
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "begum-schedule-db",
+      "migrations_dir": "../migrations",
+      "database_id": "952de0a1-ce67-468e-af67-ed221200bb11"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "TASK_SYNC",
+        "class_name": "TaskSync"
+      },
+      {
+        "name": "FILE_STORE",
+        "class_name": "FileStore"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": [
+        "TaskSync"
+      ]
+    },
+    {
+      "tag": "v2",
+      "new_sqlite_classes": [
+        "FileStore"
+      ]
+    }
+  ],
+  "observability": {
+    "enabled": false
+  }
 }
