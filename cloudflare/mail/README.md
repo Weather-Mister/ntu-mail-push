@@ -1,4 +1,8 @@
-# Begüm Cloudflare Mail
+# Cloudflare Mail
+
+Eren uses the same reviewed runtime at `https://eren-mail-data-staging.eren-schedule-a84b7436.workers.dev/eren-mail` in account `a84b743620b21b93c75b87a3648e82d5`; `config/eren.json` deploys to his existing Worker and storage namespaces. The five mailboxes, encryption and pairing secrets, OAuth settings and existing cron remain in place. Both his normal and skeuomorphic pages use the shared mail client.
+
+Both backends separate NTU foreground reads from scheduled sync, avoid speculative NTU downloads in the browser, retain bounded private parsed-message data for 15 minutes, hydrate inline images separately, and retry expired read sessions once. Scheduled sync primes at most one of the first four inbox entries with uncached readers per cycle. Sends and mailbox mutations do not use the read retry. Keep Eren and Begüm's account configurations and secrets separate.
 
 Begüm’s Garden uses `https://begum-mail-api.begum-schedule-fb773613.workers.dev/eren-mail` in her Cloudflare account `fb77361332c979fc8a3e0d25a03d8f69`. This reuses Eren’s existing mail provider implementation, SQLite Durable Object storage, encrypted server credentials, bounded background sync and attachment storage. No R2 or billing setup is required.
 

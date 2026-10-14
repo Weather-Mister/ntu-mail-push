@@ -1,0 +1,22 @@
+{
+  "person": "eren",
+  "accountVerified": true,
+  "worker": "eren-mail-data-staging",
+  "bundleSha256": "a84dbc64521f517a2405002f11ed981bc7248d318e5183533a4b7779c143f960",
+  "sameReviewedBegumBundle": true,
+  "accountsPreserved": 5,
+  "credentialsPreserved": true,
+  "namespaceBindingsPreserved": true,
+  "oauthConfigurationPreserved": true,
+  "schedulesChanged": false,
+  "notificationsChanged": false,
+  "providerWrites": 0,
+  "emailsSent": 0,
+  "bodyCacheMinutes": 15,
+  "backgroundConnectionSeparated": true,
+  "readerPayloadCompacted": true,
+  "expiredReadsRecover": true,
+  "updatedAt": "2026-10-14T07:12:44.144Z",
+  "ntuInboxAndThreePageReadPassed": true,
+  "normalAndSkeuoPagesVerified": true
+}

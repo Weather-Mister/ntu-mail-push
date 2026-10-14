@@ -1,0 +1,49 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "eren-mail-data-staging",
+  "main": "../runtime/worker.mjs",
+  "compatibility_date": "2026-10-13",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "workers_dev": true,
+  "preview_urls": false,
+  "vars": {
+    "APP_SLUG": "eren",
+    "MAIL_MODE": "live",
+    "MAIL_JOBS_ENABLED": "true",
+    "MAIL_BASE_URL": "https://eren-mail-data-staging.eren-schedule-a84b7436.workers.dev/eren-mail",
+    "ALLOWED_ORIGINS": "https://weather-mister.github.io",
+    "MAIL_ONE_CLICK_UNSUBSCRIBE_ENABLED": "false"
+  },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "MAIL_STORE",
+        "class_name": "MailStore"
+      },
+      {
+        "name": "FILE_STORE",
+        "class_name": "MailAttachments"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "mail-v1",
+      "new_sqlite_classes": [
+        "MailStore",
+        "MailAttachments"
+      ]
+    }
+  ],
+  "account_id": "a84b743620b21b93c75b87a3648e82d5",
+  "observability": {
+    "enabled": false
+  },
+  "triggers": {
+    "crons": [
+      "* * * * *"
+    ]
+  }
+}
