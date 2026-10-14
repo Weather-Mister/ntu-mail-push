@@ -1,6 +1,6 @@
 // Private, bounded MIME cache. It never enters browser storage or a public cache.
 export class NtuMessageMemory {
- constructor(ttl=300000,maxEntries=24,maxBytes=24*1024*1024){this.ttl=ttl;this.maxEntries=maxEntries;this.maxBytes=maxBytes;this.entries=new Map();this.bytes=0;}
+ constructor(ttl=900000,maxEntries=24,maxBytes=24*1024*1024){this.ttl=ttl;this.maxEntries=maxEntries;this.maxBytes=maxBytes;this.entries=new Map();this.bytes=0;}
  key(account,id,ref){return JSON.stringify([account.workspace_hash,account.id,id,ref.mailbox,String(ref.uid)]);}
  has(key){const entry=this.entries.get(key);if(entry&&entry.until>Date.now())return true;this.drop(key);return false;}
  get(key){const entry=this.entries.get(key);if(!entry)return null;if(entry.until<=Date.now()){this.drop(key);return null;}this.entries.delete(key);this.entries.set(key,entry);return structuredClone(entry.message);}
