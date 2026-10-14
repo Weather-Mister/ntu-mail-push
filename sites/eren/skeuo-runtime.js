@@ -140,7 +140,7 @@ const academicDates = [
   { id:'academic-statics-quiz-1', date:'2026-10-06', dueAt:'2026-10-06T23:59:59+08:00', title:'Quiz I', course:'Statics', kind:'academic', metaLabel:'QUIZ' },
   { id:'academic-engmath-midterm-1', date:'2026-10-14', dueAt:'2026-10-14T23:59:59+08:00', title:'Midterm 1', course:'Engineering Mathematics', kind:'academic', metaLabel:'EXAM' },
   { id:'academic-materials-midterm-1', date:'2026-10-27', dueAt:'2026-10-27T23:59:59+08:00', title:'Midterm I', course:'Engineering Materials', kind:'academic', metaLabel:'EXAM' },
-  { id:'academic-statics-midterm', date:'2026-10-27', dueAt:'2026-10-27T23:59:59+08:00', title:'Midterm Exam', course:'Statics', kind:'academic', metaLabel:'EXAM' },
+  { id:'academic-statics-midterm', date:'2026-11-03', dueAt:'2026-11-03T23:59:59+08:00', title:'Midterm Exam', course:'Statics', kind:'academic', metaLabel:'EXAM' },
   { id:'academic-psychology-midterm', date:'2026-11-02', dueAt:'2026-11-02T23:59:59+08:00', title:'Midterm Exam', course:'Psychology', kind:'academic', metaLabel:'EXAM' },
   { id:'academic-mechanism-midterm-2', date:'2026-11-11', dueAt:'2026-11-11T23:59:59+08:00', title:'Midterm 2', course:'Mechanism', kind:'academic', metaLabel:'EXAM' },
   { id:'academic-engmath-midterm-2', date:'2026-11-18', dueAt:'2026-11-18T23:59:59+08:00', title:'Midterm 2', course:'Engineering Mathematics', kind:'academic', metaLabel:'EXAM' },
