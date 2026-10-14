@@ -19,10 +19,18 @@ test('PWA asset versions match the new schedule scripts', () => {
   const sw = readFileSync(new URL('sites/eren/sw.js', ROOT), 'utf8');
   const modern = readFileSync(new URL('sites/eren/index.html', ROOT), 'utf8');
   const skeuo = readFileSync(new URL('sites/eren/skeuo-demo.html', ROOT), 'utf8');
-  assert.match(sw, /ntu-schedule-github-v78/);
-  for (const ref of ["app.js?v=112", "skeuo-runtime.js?v=30"]) {
+  assert.match(sw, /ntu-schedule-github-v79/);
+  for (const ref of ["app.js?v=113", "skeuo-runtime.js?v=31"]) {
     assert.ok(sw.includes(ref), ref);
   }
-  assert.ok(modern.includes('./app.js?v=112'));
-  assert.ok(skeuo.includes('./skeuo-runtime.js?v=30'));
+  assert.ok(modern.includes('./app.js?v=113'));
+  assert.ok(skeuo.includes('./skeuo-runtime.js?v=31'));
+});
+
+test('Statics Week 9 and Materials Week 8 midterms stay distinct in both schedule views', () => {
+  for (const path of ['sites/eren/app.js', 'sites/eren/skeuo-runtime.js']) {
+    const source = readFileSync(new URL(path, ROOT), 'utf8');
+    assert.match(source, /academic-materials-midterm-1', date:'2026-10-27', dueAt:'2026-10-27T23:59:59\+08:00'/, path);
+    assert.match(source, /academic-statics-midterm', date:'2026-11-03', dueAt:'2026-11-03T23:59:59\+08:00'/, path);
+  }
 });
