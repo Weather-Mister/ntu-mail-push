@@ -1,0 +1,28 @@
+{
+  "person": "begum",
+  "sourceProject": "evckshjtzikuusnkdnjn",
+  "counts": [
+    {
+      "app": "eren",
+      "tasks": 8,
+      "transfers": 8
+    },
+    {
+      "app": "begum",
+      "tasks": 6,
+      "transfers": 0
+    }
+  ],
+  "triggers": [
+    "migrated_begum_tasks",
+    "migrated_begum_transfers",
+    "migrated_eren_tasks",
+    "migrated_eren_transfers"
+  ],
+  "originalRowsPreserved": true,
+  "staleBegumWritesRejected": true,
+  "erenSafeguardPreserved": true,
+  "mailChanged": false,
+  "notificationWritesChanged": false,
+  "verified": true
+}

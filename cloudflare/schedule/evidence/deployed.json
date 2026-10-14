@@ -16,6 +16,14 @@
   "syntheticDataCleaned": true,
   "mailChanged": false,
   "notificationsChanged": false,
-  "frontendSwitched": false,
-  "checkedAt": "2026-10-14T03:18:37.660Z"
+  "frontendSwitched": true,
+  "checkedAt": "2026-10-14T03:47:29.680Z",
+  "frontendMerged": true,
+  "pullRequest": 84,
+  "mergeSha": "1c1f8a60cb7e882a10f786eb262f0efe69ee279d",
+  "sourceStaleWritesBlocked": true,
+  "pagesVerified": true,
+  "repositoryChecksPassed": true,
+  "widgetUpdated": true,
+  "widgetMacInstallationPending": true
 }
