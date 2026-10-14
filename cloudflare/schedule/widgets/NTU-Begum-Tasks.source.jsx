@@ -26,61 +26,66 @@ export const className = `
   width: ${Math.max(300, Number(WIDTH) || 368)}px;
   height: ${Math.max(250, Number(HEIGHT) || 385)}px;
   pointer-events: auto;
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
   -webkit-font-smoothing: antialiased;
-  color: #3f2f37;
-  .nt-tasks { box-sizing: border-box; height: 100%; width: 100%; display: flex; flex-direction: column; overflow: hidden; padding: 19px; border-radius: 21px; border: 1px solid #efdce5; background: rgba(255,250,253,.94); box-shadow: 0 8px 28px rgba(45,39,31,.10); transition: background .28s ease, border-color .28s ease, box-shadow .28s ease; -webkit-backdrop-filter: blur(28px) saturate(140%); backdrop-filter: blur(28px) saturate(140%); }
+  color: #39513e;
+  .nt-tasks { box-sizing: border-box; position: relative; height: 100%; width: 100%; display: flex; flex-direction: column; overflow: hidden; padding: 19px; border-radius: 22px; border: 1px solid #dce6d1; background: rgba(255,253,247,.97); box-shadow: 0 8px 28px rgba(47,73,43,.12), inset 0 1px 0 rgba(255,255,255,.8); transition: background .28s ease, border-color .28s ease, box-shadow .28s ease; -webkit-backdrop-filter: blur(28px) saturate(120%); backdrop-filter: blur(28px) saturate(120%); }
   .nt-tasks * { box-sizing: border-box; }
-  .nt-eyebrow { margin: 0 0 4px; font-size: 10px; font-weight: 800; color: #8b6f7d; letter-spacing: .13em; }
-  .nt-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
-  .nt-title { font-size: 20px; line-height: 1.1; font-weight: 800; letter-spacing: -.035em; }
-  .nt-count { flex: 0 0 auto; background: #f7dfea; color: #d16f9d; padding: 6px 10px; border-radius: 9px; font-size: 10px; font-weight: 800; }
-  .nt-compose { display: flex; gap: 7px; margin: 0 0 11px; }
-  .nt-compose input { flex: 1; min-width: 0; min-height: 39px; border: 1px solid #efdce5; border-radius: 10px; background: #fbf2f6; color: #3f2f37; padding: 0 11px; font: inherit; font-size: 13px; outline: none; user-select: text; }
-  .nt-compose input:focus { border-color: #d16f9d; box-shadow: 0 0 0 2px rgba(209,111,157,.10); }
-  .nt-compose input::placeholder { color: #99938b; }
-  .nt-compose button { flex: 0 0 auto; min-width: 45px; border: 0; border-radius: 10px; background: #d16f9d; color: white; font-size: 12px; font-weight: 750; cursor: pointer; }
-  .nt-compose button:disabled, .nt-actions button:disabled { opacity: .4; cursor: default; }
-  .nt-list { min-height: 0; flex: 1 1 auto; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #d2cdc6 transparent; padding-right: 3px; }
-  .nt-item { min-height: 40px; display: flex; gap: 9px; align-items: center; border-top: 1px solid #f2dfe7; padding: 8px 0; }
-  .nt-check { width: 20px; height: 20px; flex: 0 0 20px; border: 1.5px solid #d6bbca; border-radius: 6px; background: white; color: #fff; font-size: 13px; line-height: 17px; padding: 0; cursor: pointer; }
-  .nt-check.is-done { background: #d16f9d; border-color: #d16f9d; }
-  .nt-task-text { flex: 1; min-width: 0; overflow-wrap: anywhere; font-size: 13px; font-weight: 550; line-height: 1.4; }
-  .nt-task-text.is-done { color: #928d86; text-decoration: line-through; }
-  .nt-delete { flex: 0 0 26px; height: 26px; border: none; background: transparent; border-radius: 7px; color: #aaa49b; font-size: 20px; line-height: 1; cursor: pointer; }
-  .nt-delete:hover { background: #fceceb; color: #bd6155; }
-  .nt-check:hover { border-color: #d16f9d; }
-  .nt-empty { color: #8b6f7d; text-align: center; margin: auto; padding: 25px 12px; font-size: 13px; line-height: 1.6; }
-  .nt-footer { margin-top: 10px; padding-top: 9px; border-top: 1px solid #f2dfe7; font-size: 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px; color: #8b6f7d; }
+  .nt-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 13px; flex: 0 0 auto; }
+  .nt-heading-copy { min-width: 0; }
+  .nt-eyebrow { margin: 0 0 7px; font-size: 9px; font-weight: 800; color: #7b9271; letter-spacing: .13em; line-height: 1.4; }
+  .nt-title { font-family: 'Fraunces', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif; font-size: 25px; line-height: 1.12; font-weight: 600; letter-spacing: -.055em; }
+  .nt-honey { flex: 0 0 auto; text-align: center; }
+  .nt-jar { display: block; width: 57px; height: 45px; margin: -6px auto 1px; pointer-events: none; }
+  .nt-count { display: block; background: #fff0ca; color: #9b702e; border: 1px solid #f1dca9; padding: 4px 8px; border-radius: 20px; font-size: 9px; line-height: 1.1; font-weight: 800; white-space: nowrap; }
+  .nt-compose { display: flex; gap: 7px; margin: 0 0 10px; flex: 0 0 auto; }
+  .nt-compose input { flex: 1; min-width: 0; min-height: 38px; border: 1px solid #dbe6d2; border-radius: 10px; background: #f9fbf3; color: #39513e; padding: 0 11px; font: inherit; font-size: 12px; outline: none; user-select: text; }
+  .nt-compose input:focus { border-color: #6ca47a; box-shadow: 0 0 0 3px rgba(108,164,122,.13); }
+  .nt-compose input::placeholder { color: #95a38b; }
+  .nt-compose button { flex: 0 0 auto; min-width: 46px; border: 0; border-radius: 10px; background: #457952; color: white; font-family: inherit; font-size: 12px; font-weight: 750; cursor: pointer; }
+  .nt-compose button:hover:not(:disabled) { background: #315f3f; }
+  .nt-tasks button:disabled { opacity: .4; cursor: default; }
+  .nt-tasks button:focus-visible { outline: 2px solid #6ca47a; outline-offset: 3px; }
+  .nt-list { min-height: 0; flex: 1 1 auto; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #c6d8bd transparent; padding-right: 3px; }
+  .nt-item { min-height: 40px; display: flex; gap: 10px; align-items: center; border-bottom: 1px dashed #e1e9d6; padding: 8px 0; }
+  .nt-check { width: 20px; height: 20px; flex: 0 0 20px; border: 1.5px solid #9fbea5; border-radius: 7px; background: #fff; color: #fff; font-size: 13px; line-height: 17px; padding: 0; cursor: pointer; }
+  .nt-check.is-done { background: #6ca47a; border-color: #6ca47a; }
+  .nt-check:hover { border-color: #457952; }
+  .nt-task-text { flex: 1; min-width: 0; overflow-wrap: anywhere; color: #536b58; font-size: 13px; font-weight: 500; line-height: 1.45; }
+  .nt-task-text.is-done { color: #a3b1a3; text-decoration: line-through; }
+  .nt-delete { flex: 0 0 26px; height: 26px; border: none; background: transparent; border-radius: 7px; color: #acb5a8; font-size: 20px; line-height: 1; cursor: pointer; }
+  .nt-delete:hover { background: #fff1ee; color: #bb6f75; }
+  .nt-empty { color: #7b9271; text-align: center; margin: auto; padding: 25px 12px; font-size: 12px; line-height: 1.65; }
+  .nt-footer { margin-top: 10px; padding-top: 10px; border-top: 1px solid #e1e9d6; font-size: 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px; color: #7b9271; flex: 0 0 auto; }
   .nt-live { display: inline-flex; align-items: center; gap: 6px; }
-  .nt-dot { width: 6px; height: 6px; display: inline-block; border-radius: 50%; background: #b6b2ab; }
-  .nt-dot.online { background: #3d9b63; }
-  .nt-open { color: #d16f9d; background: transparent; border: none; font-size: 10px; font-weight: 800; cursor: pointer; padding: 3px 0; white-space: nowrap; }
-  .nt-error { color: #ba544e; font-size: 11px; margin-bottom: 8px; }
-  .nt-setup { color: #8b6f7d; line-height: 1.55; font-size: 13px; }
-  .nt-tasks.is-inactive { background: linear-gradient(145deg,rgba(255,255,255,.62),rgba(243,240,246,.42)); border-color: rgba(255,255,255,.55); box-shadow: inset 0 1px 0 rgba(255,255,255,.65),inset 0 -1px 0 rgba(255,255,255,.16),0 8px 24px rgba(0,0,0,.10); color: #302f38; text-shadow: 0 1px 1px rgba(255,255,255,.35); }
-  .is-inactive .nt-eyebrow, .is-inactive .nt-footer, .is-inactive .nt-open, .is-inactive .nt-empty, .is-inactive .nt-delete, .is-inactive .nt-task-text.is-done { color: #56545f; }
-  .is-inactive .nt-count, .is-inactive .nt-compose button { background: rgba(255,255,255,.30); color: #38363f; }
-  .is-inactive .nt-compose input { background: rgba(255,255,255,.24); border-color: rgba(255,255,255,.4); color: #302f38; }
-  .is-inactive .nt-compose input::placeholder { color: #686671; }
-  .is-inactive .nt-check { background: rgba(255,255,255,.20); border-color: rgba(70,68,78,.5); }
-  .is-inactive .nt-check.is-done { background: rgba(70,68,78,.65); }
-  .is-inactive .nt-item, .is-inactive .nt-footer { border-color: rgba(70,68,78,.14); }
-  .is-inactive .nt-dot.online { background: #56545f; }
+  .nt-dot { width: 6px; height: 6px; display: inline-block; border-radius: 50%; background: #b6bbae; }
+  .nt-dot.online { background: #6ca47a; }
+  .nt-open { color: #457952; background: transparent; border: none; font-family: inherit; font-size: 10px; font-weight: 750; cursor: pointer; padding: 3px 0; white-space: nowrap; }
+  .nt-open:hover { color: #315f3f; text-decoration: underline; text-underline-offset: 3px; }
+  .nt-error { color: #b06468; font-size: 11px; line-height: 1.4; margin-bottom: 8px; }
+  .nt-setup { color: #7b9271; line-height: 1.55; font-size: 13px; }
   .nt-footer-actions { display: flex; gap: 12px; }
+  .nt-tasks.is-inactive { background: linear-gradient(145deg,rgba(255,253,247,.72),rgba(234,241,224,.48)); border-color: rgba(242,248,232,.72); box-shadow: inset 0 1px 0 rgba(255,255,255,.65),0 8px 24px rgba(40,58,35,.11); color: #39513e; }
+  .is-inactive .nt-compose input { background: rgba(249,251,243,.45); border-color: rgba(169,190,155,.5); }
+  .is-inactive .nt-count { background: rgba(255,240,202,.65); }
+  .is-inactive .nt-check { background: rgba(255,255,255,.45); }
+  .is-inactive .nt-check.is-done { background: #6ca47a; }
   @media (prefers-color-scheme: dark) {
-    .nt-tasks.is-inactive { background: linear-gradient(145deg,rgba(60,60,70,.48),rgba(30,30,38,.32)); color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.4); }
-    .is-inactive .nt-eyebrow, .is-inactive .nt-footer, .is-inactive .nt-open, .is-inactive .nt-empty, .is-inactive .nt-delete, .is-inactive .nt-task-text.is-done, .is-inactive .nt-count, .is-inactive .nt-compose button, .is-inactive .nt-compose input { color: rgba(255,255,255,.9); }
-    .is-inactive .nt-compose input::placeholder { color: rgba(255,255,255,.7); }
-    .is-inactive .nt-check { border-color: rgba(255,255,255,.55); }
-    .is-inactive .nt-check.is-done { background: rgba(255,255,255,.3); }
-    .is-inactive .nt-dot.online { background: #fff; }
-    .is-inactive .nt-error { color: #ffd8d2; }
+    .nt-tasks.is-inactive { background: linear-gradient(145deg,rgba(48,65,46,.74),rgba(28,42,29,.60)); border-color: rgba(169,190,155,.28); color: #f4f5e9; }
+    .is-inactive .nt-eyebrow, .is-inactive .nt-footer, .is-inactive .nt-open, .is-inactive .nt-empty, .is-inactive .nt-delete, .is-inactive .nt-setup { color: #c0d1ae; }
+    .is-inactive .nt-task-text, .is-inactive .nt-compose input { color: #f4f5e9; }
+    .is-inactive .nt-task-text.is-done { color: #93a28c; }
+    .is-inactive .nt-compose input { background: rgba(226,240,216,.09); }
+    .is-inactive .nt-compose input::placeholder { color: #aabc9c; }
+    .is-inactive .nt-check { background: rgba(255,255,255,.10); }
+    .is-inactive .nt-check.is-done { background: #6ca47a; }
+    .is-inactive .nt-item, .is-inactive .nt-footer { border-color: rgba(169,190,155,.22); }
+    .is-inactive .nt-count { background: rgba(255,240,202,.15); color: #f2d895; border-color: rgba(241,220,169,.24); }
+    .is-inactive .nt-error { color: #f0b9b9; }
   }
-  @media (prefers-color-scheme: dark) and (prefers-reduced-transparency: reduce) { .nt-tasks.is-inactive { background: #45424a !important; color: #fff !important; } }
+  @media (prefers-reduced-transparency: reduce) { .nt-tasks.is-inactive { background: #eef3e6; } }
+  @media (prefers-color-scheme: dark) and (prefers-reduced-transparency: reduce) { .nt-tasks.is-inactive { background: #2e412f; } }
   @media (prefers-reduced-motion: reduce) { .nt-tasks { transition: none; } }
-  @media (prefers-reduced-transparency: reduce) { .nt-tasks.is-inactive { background: #dad9de; text-shadow: none; color: #302f38; } }
-
 `;
 
 const validateTask = t => t && typeof t.id === 'string' && typeof t.text === 'string' && typeof t.done === 'boolean';
@@ -241,8 +246,15 @@ export const command=async dispatch=>{
   catch{/* Use focus/blur fallback when macOS cannot report the active app. */}
 };
 
+const HoneyJar=()=> <svg className="nt-jar" viewBox="0 0 64 50" aria-hidden="true" focusable="false">
+  <path d="M51 38c1-7 1-15-2-20m2 12c6-1 7-5 7-5-5-1-7 1-7 5m0 5c-5-1-7-4-7-4 5-2 7 0 7 4" fill="#9fbea5" stroke="#7d9c76" strokeWidth="1.4" strokeLinecap="round"/>
+  <g transform="translate(49 17)"><ellipse rx="3.4" ry="6" fill="#edb8bf" transform="rotate(-18) translate(0 -4)"/><ellipse rx="3.4" ry="6" fill="#edb8bf" transform="rotate(72) translate(0 -4)"/><ellipse rx="3.4" ry="6" fill="#edb8bf" transform="rotate(162) translate(0 -4)"/><ellipse rx="3.4" ry="6" fill="#edb8bf" transform="rotate(252) translate(0 -4)"/><circle r="3.2" fill="#f3d47b"/></g>
+  <g transform="rotate(8 25 27)"><rect x="12" y="12" width="25" height="33" rx="8" fill="#fff6dc" stroke="#d8b46c" strokeWidth="1.2"/><path d="M13 25c4 2 8-2 12 0s8 3 11 0v12a7 7 0 0 1-7 7H20a7 7 0 0 1-7-7Z" fill="#efc561"/><rect x="11" y="9" width="27" height="7" rx="3" fill="#9fbea5" stroke="#7d9c76" strokeWidth="1.2"/><path d="M16 10v4m4-4v4m4-4v4m4-4v4m4-4v4" stroke="#dce6d1" strokeWidth="1"/><rect x="17" y="28" width="15" height="11" rx="4" fill="#fff9e9"/><path d="m21 33 2 2 4-4" fill="none" stroke="#9b702e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></g>
+  <g transform="translate(7 8) rotate(-20)"><ellipse cx="-1" cy="-3" rx="3" ry="4" fill="#fffdf7" stroke="#b5c5b0" strokeWidth=".8"/><ellipse cx="3" cy="-3" rx="3" ry="4" fill="#fffdf7" stroke="#b5c5b0" strokeWidth=".8"/><ellipse rx="5.5" ry="3.5" fill="#efc561"/><path d="M-1-3v6m3-6v6" stroke="#7c6c45" strokeWidth="1.3"/><circle cx="5" cy="-.5" r=".8" fill="#7c6c45"/></g>
+</svg>;
+
 export const render=(state,dispatch)=>{
-  if(!state.configured)return <div className={'nt-tasks'+(state.active?' is-active':' is-inactive')}><p className="nt-eyebrow">NTU · BEGÜM</p><div className="nt-title">Manual tasks</div><p className="nt-setup">Set <code>PAIRING_KEY</code> to <b>begum</b> at the top of this file. Save the file, then refresh widgets.</p><button className="nt-open" onClick={openSchedule}>Open schedule ↗</button></div>;
+  if(!state.configured)return <div className={'nt-tasks'+(state.active?' is-active':' is-inactive')}><p className="nt-eyebrow">NTU · BEGÜM</p><div className="nt-title">The honey-do list</div><p className="nt-setup">Set <code>PAIRING_KEY</code> to <b>begum</b> at the top of this file. Save the file, then refresh widgets.</p><button className="nt-open" onClick={openSchedule}>Open schedule ↗</button></div>;
   const active=state.tasks.filter(t=>!t.done).length;
   const error=state.saveError||state.error;
   const add=()=>{
@@ -252,8 +264,7 @@ export const render=(state,dispatch)=>{
     void mutate(dispatch,'create',{id:s.pendingCreate.id,text},()=>dispatch({type:'CLEAR_DRAFT',value:state.draft}));
   };
   return <div ref={element=>attachCard(element)} className={'nt-tasks'+(state.active?' is-active':' is-inactive')}>
-    <p className="nt-eyebrow">TO DO</p>
-    <div className="nt-heading"><div className="nt-title">Manual tasks</div><span className="nt-count">{active} {active===1?'task':'tasks'}</span></div>
+    <div className="nt-heading"><div className="nt-heading-copy"><p className="nt-eyebrow">SWEET LITTLE THINGS</p><div className="nt-title">The honey-do list</div></div><div className="nt-honey"><HoneyJar/><span className="nt-count">{active} {active===1?'task':'tasks'}</span></div></div>
     <div className="nt-compose">
       <input type="text" maxLength={500} placeholder="Add a task…" aria-label="New task" value={state.draft} onChange={e=>dispatch({type:'DRAFT',value:e.target.value})} onKeyDown={e=>{if(e.key==='Enter'&&!e.isComposing&&!(e.nativeEvent&&e.nativeEvent.isComposing)&&e.keyCode!==229){e.preventDefault();add()}}}/>
       <button type="button" onClick={add} disabled={state.busy||!state.draft.trim()}>Add</button>
