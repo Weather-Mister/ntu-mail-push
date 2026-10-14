@@ -79,8 +79,8 @@ test('Garden desktop translation preserves Chinese original and uses isolated de
 
 test('Garden Mail requires its private key even when the public schedule word is paired',async({page})=>{
  await page.addInitScript(()=>{localStorage.setItem('ntu-schedule-begum-pairing-key-v1','begum');localStorage.removeItem('begum-mail-access-key-v1');});
- const keys=[];await page.route('**/functions/v1/eren-mail**',route=>{keys.push(route.request().headers()['x-schedule-key']);const r=new URL(route.request().url()).searchParams.get('route');return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(r==='bootstrap'?{accounts:[],messages:[],preferences:{}}:r==='mail'||r==='cached-mail'?{messages:[],cursor:{},hasMore:false}:r==='accounts'?{accounts:[]}:{configured:true,aiConfigured:true})});});
- await page.route('**/functions/v1/ntu-schedule-api**',route=>route.fulfill({status:200,contentType:'application/json',body:'{"tasks":[],"events":[],"ok":true}'}));
+ const keys=[];await page.route('**/eren-mail**',route=>{keys.push(route.request().headers()['x-schedule-key']);const r=new URL(route.request().url()).searchParams.get('route');return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(r==='bootstrap'?{accounts:[],messages:[],preferences:{}}:r==='mail'||r==='cached-mail'?{messages:[],cursor:{},hasMore:false}:r==='accounts'?{accounts:[]}:{configured:true,aiConfigured:true})});});
+ await page.route(/(?:ntu-schedule-api|begum-schedule-api)/,route=>route.fulfill({status:200,contentType:'application/json',body:'{"tasks":[],"events":[],"ok":true}'}));
  await page.goto('/');await page.locator('#mailDashboardButton').click();await expect(page.locator('#mailxUnlockForm')).toBeVisible();expect(keys).toHaveLength(0);
  await page.locator('#mailxAccessKey').fill('b'.repeat(40));await page.locator('#mailxUnlockForm button').click();await expect(page.locator('#mailxUnlockForm')).toHaveCount(0);
  expect(keys.length).toBeGreaterThan(0);expect(keys.every(k=>k==='b'.repeat(40))).toBeTruthy();
