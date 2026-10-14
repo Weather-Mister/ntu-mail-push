@@ -35,7 +35,7 @@
   function ownCache(){const owner=mailPairing();if(cacheOwner&&cacheOwner!==owner){clearMailCache();state.readVersion++;state.loadVersion++;initialized=false;state.accounts=[];state.messages=[];state.thread=null;}cacheOwner=owner;return owner;}
   function putCache(cache,key,value,limit=20){cache.delete(key);cache.set(key,{value,at:Date.now()});while(cache.size>limit)cache.delete(cache.keys().next().value);}
   async function fetchThread(m,force=false){
-    const key=threadKey(m),cached=threadCache.get(key);if(!force&&cached&&Date.now()-cached.at<45000)return cached.value;
+    const key=threadKey(m),cached=threadCache.get(key);if(!force&&cached&&Date.now()-cached.at<120000)return cached.value;
     if(threadRequests.has(key))return threadRequests.get(key);
     const owner=cacheOwner,epoch=cacheEpoch;const pending=api('thread',null,{accountId:m.accountId,threadId:m.threadId}).then(t=>{if(owner===cacheOwner&&epoch===cacheEpoch&&t.messages.reduce((n,m)=>n+(m.html?.length||0)+(m.text?.length||0),0)<2000000)putCache(threadCache,key,t,8);return t;});threadRequests.set(key,pending);
     try{return await pending;}finally{if(threadRequests.get(key)===pending)threadRequests.delete(key);}
@@ -60,7 +60,7 @@
   }
   function prefetchReaders(){
     if(!dialog.open||navigator.connection?.saveData)return;
-    const targets=state.messages.slice(0,2);
+    const targets=state.messages.filter(m=>providerName(m.accountId)!=='NTU Mail').slice(0,2);
     const run=()=>targets.forEach((m,i)=>setTimeout(()=>{if(dialog.open)fetchThread(m).catch(()=>{});},i*250));
     if('requestIdleCallback'in window)requestIdleCallback(run,{timeout:1200});else setTimeout(run,300);
   }

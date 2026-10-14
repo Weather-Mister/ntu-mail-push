@@ -98,12 +98,12 @@ export class MailStore {
   if(new URL(req.url).hostname==='mail.internal'&&new URL(req.url).pathname==='/tick'&&req.method==='POST') {
    if(runtimeEnv.MAIL_MODE!=='live'||runtimeEnv.MAIL_JOBS_ENABLED!=='true')return new Response(null,{status:403});
    if(this.ticking)return new Response(null,{status:409});this.ticking=true;
-   try{return await withMailContext({env:runtimeEnv,state:this.state,admin:this.admin,origin:''},async()=>Response.json(await tick(this.admin)))}
+   try{return await withMailContext({env:{...runtimeEnv,MAIL_NTU_BACKGROUND:true},state:this.state,admin:this.admin,origin:''},async()=>Response.json(await tick(this.admin)))}
    catch{return Response.json({error:'Mail worker paused; no job is automatically replayed.'},{status:503})}finally{this.ticking=false}
   }
   const currentNonce=req.headers.get('x-mail-approved-test-nonce');
   const connectUntil=req.headers.get('x-mail-approved-connect-until');
-  const requestEnv={...runtimeEnv,MAIL_CONNECT_TESTS_ALLOWED:Number(connectUntil)>Date.now()?'true':'false',MAIL_CONNECT_TEST_UNTIL:connectUntil||'0'};
+  const requestEnv={...runtimeEnv,MAIL_NTU_BACKGROUND:['mail','cached-mail'].includes(routeOf(req)),MAIL_CONNECT_TESTS_ALLOWED:Number(connectUntil)>Date.now()?'true':'false',MAIL_CONNECT_TEST_UNTIL:connectUntil||'0'};
   const testEnv={...requestEnv,MAIL_TESTS_ALLOWED:/^[a-f0-9]{64}$/.test(currentNonce||'')?'true':'false',MAIL_TEST_NONCE:currentNonce||''};
   const blocked=await gate(req,['migration/test-ready','migration/test-send','migration/test-check'].includes(routeOf(req))?testEnv:requestEnv);if(blocked)return blocked;
   if(routeOf(req)==='migration/ntu-read-check')return withMailContext({env:requestEnv,state:this.state,admin:this.admin,origin:''},async()=>{

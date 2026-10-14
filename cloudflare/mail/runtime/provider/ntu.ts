@@ -1,4 +1,7 @@
+import { environment } from '../context.mjs';
+import { ntuSessionKey } from '../ntu-session-key.mjs';
 import { readNtuWithFreshSession,retireNtuSessionWhenIdle } from '../ntu-read-recovery.mjs';
+import { NtuMessageMemory,messageWithoutAttachmentData } from '../ntu-message-memory.mjs';
 import PostalMime from 'postal-mime';
 import { MailError, secret, check, hash, cacheMessages, accountRules, messageView, mapLimit } from './services.ts';
 import { b64url, decodeBody, plainText, header, address } from './domain.mjs';
@@ -7,7 +10,8 @@ const ROOT='https://wmail1.cc.ntu.edu.tw/rc/';
 const MAX_RAW=30*1024*1024;
 const sessions=new Map<string,Roundcube>();
 const pendingSessions=new Map<string,Promise<Roundcube>>();
-export function clearNtuMemory(workspace='') {for(const [key,s] of sessions)if(key.startsWith(workspace)){s.close();sessions.delete(key);}for(const key of pendingSessions.keys())if(key.startsWith(workspace))pendingSessions.delete(key);}
+const messageMemory=new NtuMessageMemory();
+export function clearNtuMemory(workspace='') {messageMemory.clear(workspace);for(const [key,s] of sessions)if(key.startsWith(workspace)){s.close();sessions.delete(key);}for(const key of pendingSessions.keys())if(key.startsWith(workspace))pendingSessions.delete(key);}
 
 // Roundcube returns JSON containing UI commands, not a REST data model. Parse only
 // the command name and JSON arguments. Never eval any provider JavaScript or HTML.
@@ -137,7 +141,7 @@ class Roundcube {
   const rows=result.commands.filter(c=>c.name==='add_message_row').map(c=>({uid:String(c.args[0]),columns:c.args[1]||{},flags:c.args[2]||{}}));
   return {rows,hasMore:page<Number(result.env.pagecount||this.env.pagecount||1),count:Number(result.env.messagecount??this.env.messagecount??0)};
  }
- async raw(ref:any){const params=new URLSearchParams({_task:'mail',_action:'viewsource',_mbox:validFolder(ref.mailbox),_uid:ref.uid,_save:'1',_token:this.env.request_token});const r=await this.fetch('?'+params,{},MAX_RAW);const bytes=new Uint8Array(await r.arrayBuffer());const head=new TextDecoder().decode(bytes.subarray(0,4000));if(!/^[A-Za-z][\w-]*\s*:/m.test(head)||/rcmail\.set_env\(/.test(head))throw new MailError(404,'Message no longer exists in NTU Mail.');return bytes;}
+ async raw(ref:any){const params=new URLSearchParams({_task:'mail',_action:'viewsource',_mbox:validFolder(ref.mailbox),_uid:ref.uid,_save:'1',_token:this.env.request_token});const r=await this.fetch('?'+params,{},MAX_RAW);const bytes=new Uint8Array(await r.arrayBuffer());const head=new TextDecoder().decode(bytes.subarray(0,4000));if(/^\s*(?:<!doctype\b|<html\b)/i.test(head)&&roundcubeEnvironment(head).task==='login')throw new MailError(401,'NTU session expired. Retrying with a fresh connection.','ntu_session_expired');if(!/^[A-Za-z][\w-]*\s*:/m.test(head)||/^\s*(?:<!doctype\b|<html\b)/i.test(head)&&/rcmail\.set_env\(/.test(head))throw new MailError(404,'Message no longer exists in NTU Mail.','ntu_message_missing');return bytes;}
  async find(folder:string,messageId:string){
   const expected=String(messageId||'').trim().replace(/^<|>$/g,'');if(!expected||expected.length>1000||/[\r\n\0]/.test(expected))return [];
   // Roundcube does not support searching a Message-ID header directly. TEXT finds
@@ -172,7 +176,7 @@ class Roundcube {
  }
 }
 export async function ntuSession(admin:any,account:any):Promise<Roundcube>{
- const key=account.workspace_hash+':'+account.id;const current=sessions.get(key);if(current&&Date.now()-current.last<180000)return current;
+ const key=ntuSessionKey(account,environment().MAIL_NTU_BACKGROUND===true);const current=sessions.get(key);if(current&&Date.now()-current.last<180000)return current;
  let pending=pendingSessions.get(key);if(!pending){pending=(async()=>{const value=await secret(admin,account.secret_name);let credentials:any;try{credentials=JSON.parse(value);}catch{}if(!credentials?.username||!credentials?.password)throw new MailError(401,'Reconnect NTU Mail.','reauthorize');const session=new Roundcube(credentials);await session.login();if(sessions.size>=20){const oldest=sessions.keys().next().value!;sessions.get(oldest)?.close();sessions.delete(oldest);}sessions.set(key,session);return session;})();pendingSessions.set(key,pending);}
  try{return await pending;}catch(e){if(e.code==='reauthorize')check(await admin.from('eren_mail_accounts').update({status:'reauthorize',sync_error:'Reconnect NTU Mail'}).eq('id',account.id));throw e;}finally{if(pendingSessions.get(key)===pending)pendingSessions.delete(key);}
 }
@@ -186,7 +190,7 @@ async function metadata(admin:any,account:any,s:Roundcube,rows:any[],folder:stri
  });
 }
 export async function ntuList(admin:any,account:any,filter='inbox',query='',cursor=''){
- return await readNtuWithFreshSession(()=>ntuSession(admin,account),s=>{const key=account.workspace_hash+':'+account.id;if(sessions.get(key)===s)sessions.delete(key);retireNtuSessionWhenIdle(s);},async(s)=>{
+ return await readNtuWithFreshSession(()=>ntuSession(admin,account),s=>{const key=ntuSessionKey(account,environment().MAIL_NTU_BACKGROUND===true);if(sessions.get(key)===s)sessions.delete(key);retireNtuSessionWhenIdle(s);},async(s)=>{
   let page=1,index=0;try{if(cursor){const parsed=JSON.parse(decodeBody(cursor));page=parsed.page;index=parsed.index;if(!Number.isInteger(page)||page<1||page>1000||!Number.isInteger(index)||index<0)throw new Error();}}catch{throw new MailError(400,'Invalid NTU mail page.');}
   const all=['all','starred','codes','low','blocked'].includes(filter);const folders=(all?['INBOX',s.folders.sent,s.folders.archive]:filter==='sent'?[s.folders.sent]:filter==='trash'?[s.folders.trash]:filter==='archived'?[s.folders.archive]:filter==='gmail-drafts'?[s.folders.drafts]:['INBOX']).filter(f=>f!=='Archive'||Object.hasOwn(s.env.mailboxes||{},f));
   if(index>=folders.length)return {messages:[],next:null};const folder=folders[index],flag=filter==='unread'?'UNSEEN':filter==='starred'?'FLAGGED':'';
@@ -195,14 +199,16 @@ export async function ntuList(admin:any,account:any,filter='inbox',query='',curs
   return {messages,next};
  });
 }
-async function fullMessage(admin:any,account:any,s:Roundcube,id:string){
- const ref=await reference(admin,account,id),raw=await s.raw(ref),email=await PostalMime.parse(raw);
+async function fullMessage(admin:any,account:any,s:Roundcube,id:string,attachmentData=false){
+ const ref=await reference(admin,account,id),key=messageMemory.key(account,id,ref),saved=messageMemory.get(key);
+ if(saved){saved.labelIds=ref.labels;saved.providerRef={...saved.providerRef,...ref};delete saved.providerRef.labels;return attachmentData?saved:messageWithoutAttachmentData(saved);}
+ const raw=await s.raw(ref),email=await PostalMime.parse(raw);
  const payload:any={mimeType:'multipart/mixed',headers:email.headers.map(h=>({name:h.key,value:h.value})),parts:[]};
  for(const [name,value] of [['Subject',email.subject],['From',email.from?`${email.from.name||''} <${email.from.address}>`:null],['To',email.to?.map(a=>a.address||'').join(', ')]])if(value){payload.headers=payload.headers.filter(h=>h.name.toLowerCase()!==String(name).toLowerCase());payload.headers.push({name,value});}
  if(email.text)payload.parts.push({partId:'text',mimeType:'text/plain',body:{data:b64url(email.text)}});if(email.html)payload.parts.push({partId:'html',mimeType:'text/html',body:{data:b64url(email.html)}});
  for(const [index,a] of email.attachments.entries()){const bytes=typeof a.content==='string'?Uint8Array.from(atob(a.content),c=>c.charCodeAt(0)):new Uint8Array(a.content);payload.parts.push({partId:'att'+index,filename:a.filename||'attachment',mimeType:a.mimeType,headers:a.contentId?[{name:'Content-ID',value:a.contentId}]:[],body:{attachmentId:'att'+index,size:bytes.length,data:b64url(bytes)}});}
  const message={id,threadId:id,internalDate:String(Date.parse(email.date||'')||0),labelIds:ref.labels,snippet:(email.text||plainText(email.html||'')).trim().slice(0,250),payload,providerRef:{...ref,message_id:email.messageId||header({payload},'Message-ID')}};
- delete message.providerRef.labels;return message;
+ delete message.providerRef.labels;messageMemory.set(key,message);return attachmentData?message:messageWithoutAttachmentData(message);
 }
 async function mutate(admin:any,account:any,s:Roundcube,id:string,action:string){
  const ref=await reference(admin,account,id);const flags:any={read:'read',unread:'unread',star:'flagged',unstar:'unflagged'};
@@ -257,17 +263,20 @@ export async function ntuSend(admin:any,account:any,s:Roundcube,rawEncoded:strin
  return {id:'ntu_sent_'+b64url(email.messageId),warning:confirmed?'':'Delivered through NTU webmail, but saving the Sent copy was not confirmed.'};
 }
 export async function ntuClient(admin:any,account:any){
- const s=await ntuSession(admin,account);
- const api=async(path:string,method='GET',body?:any)=>s.serial(async()=>{
+ const work=async(s:Roundcube,path:string,method='GET',body?:any)=>{
   const url=new URL(path,'https://provider.invalid/'),parts=url.pathname.slice(1).split('/'),id=decodeURIComponent(parts[1]||'');
   if(parts[0]==='threads'&&id){if(method==='GET')return {id,messages:[await fullMessage(admin,account,s,id)]};if(parts[2]==='modify'){const add=body.addLabelIds||[],remove=body.removeLabelIds||[];for(const [label,action] of [['UNREAD',add.includes('UNREAD')?'unread':remove.includes('UNREAD')?'read':null],['STARRED',add.includes('STARRED')?'star':remove.includes('STARRED')?'unstar':null],['INBOX',add.includes('INBOX')?'unarchive':remove.includes('INBOX')?'archive':null]])if(action)await mutate(admin,account,s,id,action);return {};}if(parts[2]==='trash'||parts[2]==='untrash'){await mutate(admin,account,s,id,parts[2]);return {};}}
   if(parts[0]==='messages'&&id==='send'&&method==='POST')return await ntuSend(admin,account,s,body.raw);
   if(parts[0]==='messages'&&id==='batchModify'&&method==='POST'){for(const item of body.ids||[])await mutate(admin,account,s,item,'read');return {};}
-  if(parts[0]==='messages'&&id){const message=await fullMessage(admin,account,s,id);if(parts[2]==='attachments'){const part=message.payload.parts.find(p=>p.partId===decodeURIComponent(parts[3]||''));if(!part)throw new MailError(404,'NTU attachment not found.');return {data:part.body.data};}return message;}
+  if(parts[0]==='messages'&&id){const message=await fullMessage(admin,account,s,id,parts[2]==='attachments');if(parts[2]==='attachments'){const part=message.payload.parts.find(p=>p.partId===decodeURIComponent(parts[3]||''));if(!part)throw new MailError(404,'NTU attachment not found.');return {data:part.body.data};}return message;}
   if(parts[0]==='messages'&&!id){const q=url.searchParams.get('q')||'';if(q.includes('rfc822msgid:')){const rows=await s.find(s.folders.sent,q.split('rfc822msgid:')[1]);return {messages:rows.map(r=>({id:logicalId(s.folders.sent,r.uid)}))};}const list=await s.list('INBOX',1,'',q.includes('is:unread')?'UNSEEN':'');return {messages:list.rows.map(r=>({id:logicalId('INBOX',r.uid)})),nextPageToken:list.hasMore?'2':undefined};}
   throw new MailError(400,'Unsupported NTU mail operation.');
- });
- return Object.assign(api,{mailAccountKey:account.workspace_hash+':'+account.id});
+ };
+ const api=async(path:string,method='GET',body?:any)=>{
+  if(method==='GET')return readNtuWithFreshSession(()=>ntuSession(admin,account),s=>{const key=ntuSessionKey(account,environment().MAIL_NTU_BACKGROUND===true);if(sessions.get(key)===s)sessions.delete(key);retireNtuSessionWhenIdle(s);},s=>work(s,path,method,body));
+  const session=await ntuSession(admin,account);return session.serial(()=>work(session,path,method,body));
+ };
+ return Object.assign(api,{mailAccountKey:ntuSessionKey(account,environment().MAIL_NTU_BACKGROUND===true)});
 }
 export async function connectNtu(admin:any,workspace:string,input:any){
  const username=String(input.username||input.email||'').trim().toLowerCase().replace(/@ntu\.edu\.tw$/i,''),password=input.password;

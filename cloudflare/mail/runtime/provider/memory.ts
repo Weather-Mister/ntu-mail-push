@@ -19,7 +19,7 @@ export class ShortCache {
  }
  deletePrefix(prefix:string){for(const key of this.entries.keys())if(key.startsWith(prefix))this.entries.delete(key);}
 }
-export const threadCache=new ShortCache();
+export const threadCache=new ShortCache(120000);
 export function defer(work:Promise<any>) {
  const pending=work.catch(()=>{}); // Only reconstructible metadata, never sends/rules.
  mailContext().state.waitUntil(pending);
