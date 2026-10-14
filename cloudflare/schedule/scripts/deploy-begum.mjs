@@ -4,6 +4,7 @@ import {randomBytes,createHash} from 'node:crypto';
 import {pathToFileURL} from 'node:url';
 import {personSnapshot,validateSnapshot} from './snapshot.mjs';
 import {parseCoolFeed,fetchCoolFeed} from '../src/cool.mjs';
+import {tokenForBegum} from './connection.mjs';
 const root=resolve(import.meta.dirname,'..');
 export const ACCOUNT_ID='fb77361332c979fc8a3e0d25a03d8f69';
 export function metadata(config,databaseId,owner,signingKey){
@@ -33,14 +34,14 @@ export async function deploy({token,fetcher=fetch}){
     if(!path.startsWith('/accounts/'+ACCOUNT_ID))throw new Error('Only Begüm’s account is permitted');
     const form=body instanceof FormData;
     const result=await fetcher('https://api.cloudflare.com/client/v4'+path,{method,headers:{Authorization:'Bearer '+token,...(!form?{'Content-Type':'application/json'}:{})},...(body?{body:form?body:JSON.stringify(body)}:{}),signal:AbortSignal.timeout(60000)});
-    const data=await result.json();if(!result.ok||!data.success)throw new Error(`Cloudflare operation failed (${result.status}; codes ${(data.errors||[]).map(e=>e.code).join(',')}). Private values are not logged.`);return data.result;
+    const data=await result.json();if(!result.ok||!data.success){const error=new Error(`Cloudflare operation failed (${result.status}; codes ${(data.errors||[]).map(e=>e.code).join(',')}). Private values are not logged.`);error.codes=(data.errors||[]).map(e=>e.code);throw error;}return data.result;
   };
   if((await api('/accounts/'+ACCOUNT_ID)).id!==ACCOUNT_ID)throw new Error('Cloudflare account mismatch');
   const prefix='/accounts/'+ACCOUNT_ID;
   const workers=await api(prefix+'/workers/scripts');if(workers.some(w=>w.id===config.name))throw new Error('Worker already exists; inspect it before updating.');
   const dbs=await api(prefix+'/d1/database?per_page=100');if(dbs.some(d=>d.name==='begum-schedule-db'))throw new Error('Database already exists; inspect it before importing.');
   let subdomain;
-  try{subdomain=(await api(prefix+'/workers/subdomain')).subdomain;}catch(error){throw new Error('Initialize this account’s Workers subdomain in Cloudflare before deploying.');}
+  try{subdomain=(await api(prefix+'/workers/subdomain')).subdomain;}catch(error){if(error.codes.includes(10007))throw new Error('Initialize this account’s Workers subdomain in Cloudflare before deploying.');throw error;}
   if(!subdomain)throw new Error('Workers subdomain has not been initialized.');
   const database=await api(prefix+'/d1/database','POST',{name:'begum-schedule-db',primary_location_hint:'apac'});
   writeFileSync(resolve(root,'evidence/resources.json'),JSON.stringify({accountId:ACCOUNT_ID,databaseId:database.uuid,workerName:config.name,subdomain,createdAt:new Date().toISOString()},null,2));
@@ -84,5 +85,5 @@ export async function deploy({token,fetcher=fetch}){
 }
 if(process.argv[1]&&pathToFileURL(resolve(process.argv[1])).href===import.meta.url){
   if(process.argv[2]!=='--deploy'){console.log(JSON.stringify({accountId:ACCOUNT_ID,worker:'begum-schedule-api',database:'begum-schedule-db',mailExcluded:true,notificationsExcluded:true,frontendSwitchAfterLiveChecks:true,remoteChanges:false}));}
-  else {const privateToken=resolve(root,'.private/cloudflare-token.txt');const token=process.env.BEGUM_CLOUDFLARE_API_TOKEN||(existsSync(privateToken)?readFileSync(privateToken,'utf8').trim():'');console.log(JSON.stringify(await deploy({token}),null,2));}
+  else {console.log(JSON.stringify(await deploy({token:tokenForBegum()}),null,2));}
 }
