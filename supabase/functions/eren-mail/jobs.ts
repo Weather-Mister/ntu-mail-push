@@ -157,7 +157,7 @@ export async function tick(admin:any) {
  if(jobs.length) {
   await deliver(admin,jobs[0]);
  } else {
-  const accounts=check(await admin.from('eren_mail_accounts').select('*').eq('status','active').order('last_sync_attempt_at',{ascending:true,nullsFirst:true}).limit(1));
+  const accounts=check(await admin.from('eren_mail_accounts').select('*').eq('status','active').neq('workspace_hash','47c761387ae6ee604625c24df7c9e57be3d22c4b11df7bcbada85c953467860d').order('last_sync_attempt_at',{ascending:true,nullsFirst:true}).limit(1));
   synced=await mapLimit(accounts,(a:any)=>syncAccount(admin,a),1);
  }
  const expired=check(await admin.from('eren_mail_oauth').select('state_hash,pending_secret').lt('expires_at',started).limit(20));

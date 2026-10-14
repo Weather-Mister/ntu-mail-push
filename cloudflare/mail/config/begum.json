@@ -1,0 +1,50 @@
+{
+  "name": "begum-mail-api",
+  "account_id": "fb77361332c979fc8a3e0d25a03d8f69",
+  "main": "../runtime/worker.mjs",
+  "compatibility_date": "2026-10-13",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "workers_dev": true,
+  "preview_urls": false,
+  "observability": {
+    "enabled": false
+  },
+  "vars": {
+    "APP_SLUG": "begum",
+    "MAIL_MODE": "live",
+    "MAIL_JOBS_ENABLED": "true",
+    "MAIL_ONE_CLICK_UNSUBSCRIBE_ENABLED": "false",
+    "MAIL_BASE_URL": "https://begum-mail-api.begum-schedule-fb773613.workers.dev/eren-mail",
+    "ALLOWED_ORIGINS": "https://weather-mister.github.io",
+    "MAIL_OAUTH_REDIRECT_URI": "https://begum-mail-api.begum-schedule-fb773613.workers.dev/eren-mail/oauth/callback",
+    "MAIL_OAUTH_STATE_PREFIX": "begumCF-"
+  },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "MAIL_STORE",
+        "class_name": "MailStore"
+      },
+      {
+        "name": "FILE_STORE",
+        "class_name": "MailAttachments"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "mail-v1",
+      "new_sqlite_classes": [
+        "MailStore",
+        "MailAttachments"
+      ]
+    }
+  ],
+  "triggers": {
+    "crons": [
+      "* * * * *"
+    ]
+  }
+}

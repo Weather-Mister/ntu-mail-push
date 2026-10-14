@@ -62,6 +62,7 @@ export async function handle(req:Request) {
  const admin=db(),url=new URL(req.url),route=url.searchParams.get('route')||url.pathname.split('/eren-mail/')[1]||'';
  try {
   if(route==='ntu/import'){mustPost(req);return response(await importNtuFromRunner(admin,req));}
+
   if(route==='oauth/callback'&&req.method==='GET')return await oauthCallback(admin,url);
   if(route==='worker') {
    mustPost(req);
@@ -71,6 +72,7 @@ export async function handle(req:Request) {
   }
   if(!['GET','POST'].includes(req.method))throw new MailError(405,'Method not allowed.');
   const workspace=await workspaceFor(req,admin);
+  if(workspace==='47c761387ae6ee604625c24df7c9e57be3d22c4b11df7bcbada85c953467860d')throw new MailError(410,'Garden Mail has moved. Reload the schedule online to continue.','mail_moved');
   await rate(admin,workspace+':api',180);
   let input:any={};
   if(req.method==='POST') {
