@@ -1,0 +1,51 @@
+{
+  "name": "begum-schedule-api",
+  "account_id": "fb77361332c979fc8a3e0d25a03d8f69",
+  "main": "../src/worker.mjs",
+  "compatibility_date": "2026-10-13",
+  "workers_dev": true,
+  "preview_urls": false,
+  "vars": {
+    "APP_SLUG": "begum",
+    "ALLOWED_ORIGINS": "https://weather-mister.github.io,http://127.0.0.1:41416,http://localhost:41416",
+    "TRANSFER_ENABLED": "true",
+    "FILE_IMPORT_MODE": "disabled"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "begum-schedule-db",
+      "migrations_dir": "../migrations",
+      "database_id": "952de0a1-ce67-468e-af67-ed221200bb11"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "TASK_SYNC",
+        "class_name": "TaskSync"
+      },
+      {
+        "name": "FILE_STORE",
+        "class_name": "FileStore"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": [
+        "TaskSync"
+      ]
+    },
+    {
+      "tag": "v2",
+      "new_sqlite_classes": [
+        "FileStore"
+      ]
+    }
+  ],
+  "observability": {
+    "enabled": false
+  }
+}

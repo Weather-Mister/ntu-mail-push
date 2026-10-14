@@ -29,7 +29,7 @@ async function boot(page,options={}){
    }
    if(r==='drafts/attachment/delete')data={ok:true};
    if((r==='modify'||r==='modify-batch')&&options.modifyFail)return route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'Gmail unavailable'})});if(r==='modify-batch'){if(options.modifyDelay)await new Promise(r=>setTimeout(r,options.modifyDelay));data={results:(body.operations||[]).map(op=>op.threadId===options.modifyPartialFailThread?{ok:false,error:'Gmail unavailable'}:{ok:true})};}if(r==='sync')data={synced:0};if(r==='send'){if(options.sendDelay)await new Promise(r=>setTimeout(r,options.sendDelay));data={job:{id:body.id,status:body.sendAt?'pending':'sent'}};}
-  }else if(url.pathname.includes('ntu-schedule-api')||url.origin==='https://eren-schedule-data-staging.eren-schedule-a84b7436.workers.dev'){
+  }else if(url.pathname.includes('ntu-schedule-api')||url.origin==='https://eren-schedule-data-staging.eren-schedule-a84b7436.workers.dev'||url.origin==='https://begum-schedule-api.begum-schedule-fb773613.workers.dev'){
    if(r==='todos/list')data={tasks:[{id:'task1',text:'Existing manual task',done:false}]};
    if(r==='transfer/list')data={items:[{id:'x1',kind:'text',content:'Existing transfer',createdAt:new Date().toISOString()}]};
    if(r==='cool-calendar')data={events:[{id:'cool1',title:'Existing COOL assignment',course:'Engineering Mathematics',dueAt:new Date(Date.now()+86400000).toISOString(),date:new Date().toISOString().slice(0,10),url:'https://cool.ntu.edu.tw/courses/1/assignments/2'}]};

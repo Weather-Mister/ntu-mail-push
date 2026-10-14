@@ -1,0 +1,21 @@
+{
+  "person": "begum",
+  "accountId": "fb77361332c979fc8a3e0d25a03d8f69",
+  "databaseId": "952de0a1-ce67-468e-af67-ed221200bb11",
+  "workerUrl": "https://begum-schedule-api.begum-schedule-fb773613.workers.dev",
+  "tasks": 6,
+  "transfers": 0,
+  "taskParity": true,
+  "coolParity": true,
+  "coolAssignments": 20,
+  "twoDeviceSync": true,
+  "directFileChecksum": true,
+  "chunkedFileChecksum": true,
+  "widgetOriginsAccepted": true,
+  "authenticationVerified": true,
+  "syntheticDataCleaned": true,
+  "mailChanged": false,
+  "notificationsChanged": false,
+  "frontendSwitched": false,
+  "checkedAt": "2026-10-14T03:18:37.660Z"
+}
