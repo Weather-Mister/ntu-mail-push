@@ -1,0 +1,37 @@
+{
+  "person": "begum",
+  "accountId": "fb77361332c979fc8a3e0d25a03d8f69",
+  "mailApiUrl": "https://begum-mail-api.begum-schedule-fb773613.workers.dev/eren-mail",
+  "releaseSha": "eccd96c5ce4b6b6eddae577a7ef9c8d50241e4b0",
+  "fixtureSha": "e0bf1971f56aaf853168dd63bcc3602ebf068d17",
+  "pagesDeployment": 38520217447,
+  "mailChecks": 38520704560,
+  "pagesVerified": true,
+  "ciPassed": true,
+  "imported": {
+    "accounts": 1,
+    "cachedMessages": 1656,
+    "drafts": 1,
+    "preferences": 1,
+    "encryptedSecrets": 8
+  },
+  "rowAndCredentialParity": true,
+  "privateMailKeyPreserved": true,
+  "publicScheduleWordsRejected": true,
+  "liveInboxThreadAndThreePageReadsPassed": true,
+  "aiSyntheticInputPassed": true,
+  "firstScheduledSync": {
+    "accounts": 1,
+    "errors": 0,
+    "pendingOrUncertainJobs": 0
+  },
+  "googleCallback": "https://begum-mail-api.begum-schedule-fb773613.workers.dev/eren-mail/oauth/callback",
+  "googleRedirectAddedByUser": true,
+  "googleConsentNotPerformed": true,
+  "legacySenderClaimsStopped": true,
+  "legacySourceRowsPreserved": true,
+  "notificationsChanged": false,
+  "emailsSent": 0,
+  "providerMailboxMutations": 0,
+  "completedAt": "2026-10-14T06:18:00Z"
+}
