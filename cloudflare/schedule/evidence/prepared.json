@@ -1,0 +1,14 @@
+{
+  "app":"begum",
+  "accountId":"fb77361332c979fc8a3e0d25a03d8f69",
+  "tasksInspected":6,
+  "transfersInspected":0,
+  "passedUnitAndContractChecks":12,
+  "workerCompiled":true,
+  "widgetCompiled":true,
+  "mailChanged":false,
+  "notificationsChanged":false,
+  "productionChanged":false,
+  "remoteDeployment":"pending account authentication",
+  "nativeRuntimeChecks":"blocked by child process permissions"
+}

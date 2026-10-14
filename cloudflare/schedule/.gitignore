@@ -1,0 +1,6 @@
+.private/
+.dev.vars*
+.wrangler/
+node_modules/
+config/*.local.json
+artifacts/

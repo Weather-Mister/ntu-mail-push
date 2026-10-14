@@ -1,0 +1,23 @@
+{
+  "name": "ntu-schedule-cloudflare-migration",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test --test-isolation=none tests/*.test.mjs",
+    "test:runtime": "node --test --test-concurrency=1 tests/*.spec.mjs",
+    "test:browser": "node scripts/browser-check.mjs",
+    "audit:protected": "node scripts/protected-files.mjs",
+    "preview": "node scripts/preview.mjs"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.9",
+    "@playwright/test": "1.58.2",
+    "miniflare": "5.20261006.1-alpha",
+    "wrangler": "4.149.0"
+  },
+  "dependencies": {
+    "postal-mime": "4.0.5",
+    "postcss": "8.5.28",
+    "sanitize-html": "2.18.0"
+  }
+}
