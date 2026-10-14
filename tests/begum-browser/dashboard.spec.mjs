@@ -106,7 +106,7 @@ test('Garden production matches demo layout while every live feature remains con
 
 test('Garden polish has stacked COOL dates, colorful lessons and no clipped day tiles', async ({page},testInfo)=>{
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
- await page.route('**/functions/v1/ntu-schedule-api**',route=>{
+ await page.route(url => url.pathname.includes('/functions/v1/ntu-schedule-api') || url.origin==='https://begum-schedule-api.begum-schedule-fb773613.workers.dev',route=>{
   const kind=new URL(route.request().url()).searchParams.get('route');
   if(kind!=='cool-calendar') return route.fallback();
   return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({events:[
