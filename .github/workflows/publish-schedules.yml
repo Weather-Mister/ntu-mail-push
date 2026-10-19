@@ -1,0 +1,59 @@
+name: Publish Personal Schedules to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "sites/**"
+      - ".github/workflows/publish-schedules.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-personal-schedules
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out schedule source
+        uses: actions/checkout@v4
+
+      - name: Prepare a site-only artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f sites/eren/index.html
+          test -f sites/begum/index.html
+          mkdir -p _pages/sites
+          cp -a sites/. _pages/sites/
+          touch _pages/.nojekyll
+          # Do not publish mailbox state, Python scripts, or GitHub Actions secrets.
+          if find _pages/sites -type f \( -name '.env' -o -name '.env.*' -o -name '*.pem' -o -name '*.key' \) | grep -q .; then
+            echo "Unexpected private configuration in static site; refusing deployment."
+            exit 1
+          fi
+
+      - name: Upload schedule site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _pages
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Deploy both schedules
+        id: deployment
+        uses: actions/deploy-pages@v4
