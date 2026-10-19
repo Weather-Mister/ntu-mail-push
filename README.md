@@ -1,6 +1,6 @@
 # NTU Mail → iPhone Push
 
-This private repo checks NTU Mail once per hour and sends one bundled Web Push notification to the NTU Schedule PWA.
+This repository checks NTU Mail once per hour and sends one bundled Web Push notification to the NTU Schedule PWA.
 
 ## Required GitHub Actions secrets
 
