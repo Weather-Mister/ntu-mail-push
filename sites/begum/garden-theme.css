@@ -1459,3 +1459,26 @@ body{min-width:320px}
   .garden .hero h1{font-size:30px}
   .garden .hero .hero-art{width:calc(100% + 30px);margin-right:-15px;margin-left:-15px}
 }
+
+/* Botanical refresh: artwork and surface finishes only; existing layout is unchanged. */
+:root{--green:#315d40;--forest:#244c35;--leaf:#729b66;--sage:#c5d7ae;--pink:#dc9aab;--honey:#e9b750;--cream:#fffdf4;--border:#d3dfc1}
+html{background:#e3ead2}
+body{background:radial-gradient(ellipse at 5% 0%,#f8edc9 0,transparent 36%),radial-gradient(ellipse at 100% 100%,#b6cea5 0,transparent 45%),#e3ead2}
+.garden{border-color:#acbf98;background:linear-gradient(145deg,#fffdf2,#f5f8eb 65%,#edf3df);box-shadow:0 22px 64px #36552d26,inset 0 0 0 5px #fffdf480}
+.garden .hero{background:radial-gradient(ellipse at 78% 20%,#eef0c7 0,transparent 47%),linear-gradient(110deg,#fff9e7,#edf4dc 72%,#dce9c7);border-bottom-color:#d7e2bd}
+.garden .hero .hero-art{opacity:1;filter:none}
+.garden .hero .hero-art>svg{visibility:hidden}
+.garden .hero .hero-art::before{content:"";position:absolute;inset:0;background:url('./garden-meadow.svg') right bottom/contain no-repeat;pointer-events:none}
+.garden .panel{background-image:url('./garden-sprig.svg'),linear-gradient(140deg,#fffef8,#fbfcf2);background-size:185px auto,100% 100%;background-position:right bottom,center;background-repeat:no-repeat;border-color:#d1dfbf;box-shadow:0 3px 0 #bdcda626,0 8px 20px #3d5c3010}
+.garden .cool-section{background-image:url('./garden-sprig.svg'),linear-gradient(145deg,#fffdf3,#faf4df)}
+.garden :is(.panel-heading,.cool-heading-row,.todo-heading-row,.side-heading){border-color:#cbdab3}
+.garden .section-kicker{color:#69865c}
+.garden .day-tile{background:linear-gradient(#fffef7,#f4f6e8);border-color:#d0ddbb;border-radius:15px 15px 19px 7px}
+.garden .day-tile.active{background:linear-gradient(140deg,#527e50,#315f43);border-color:#426d44;box-shadow:0 4px 0 #a8bf8e60,0 6px 14px #2d553b1c}
+.garden .todo-section .todo-item{border-bottom-color:#c8d9b6}
+.garden .todo-form input{background:#fbfcf2;border-color:#cbdcba;box-shadow:inset 0 2px 3px #496a3520}
+.garden .nav-button{background:linear-gradient(#fffef7,#f1f5e6);border-color:#d0debb;color:#426b48}
+.garden :is(.hub-button,.quick-access-link){border-color:#d0debb;background:linear-gradient(#fffef7,#f1f5e6)}
+.garden :is(.count-pill,.todo-count){background:#f6edca;color:#8a6b32}
+.mailx-topbar,.mailx-compose-head{background:linear-gradient(110deg,#fff6e3,#eaf1d9 70%,#efdae0);border-color:#d4dfbd}
+@media(max-width:790px){.garden .panel{background-size:130px auto,100% 100%}}
