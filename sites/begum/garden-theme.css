@@ -1473,7 +1473,7 @@ body{background:radial-gradient(ellipse at 5% 0%,#f8edc9 0,transparent 36%),radi
 .garden .cool-section{background-image:url('./garden-sprig.svg'),linear-gradient(145deg,#fffdf3,#faf4df)}
 .garden :is(.panel-heading,.cool-heading-row,.todo-heading-row,.side-heading){border-color:#cbdab3}
 .garden .section-kicker{color:#69865c}
-.garden .day-tile{background:linear-gradient(#fffef7,#f4f6e8);border-color:#d0ddbb;border-radius:15px 15px 19px 7px}
+.garden .day-tile{background:linear-gradient(#fffef7,#f4f6e8);border-color:#d0ddbb;border-radius:18px 18px 24px 6px}
 .garden .day-tile.active{background:linear-gradient(140deg,#527e50,#315f43);border-color:#426d44;box-shadow:0 4px 0 #a8bf8e60,0 6px 14px #2d553b1c}
 .garden .todo-section .todo-item{border-bottom-color:#c8d9b6}
 .garden .todo-form input{background:#fbfcf2;border-color:#cbdcba;box-shadow:inset 0 2px 3px #496a3520}
