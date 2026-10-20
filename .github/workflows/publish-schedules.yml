@@ -39,6 +39,27 @@ jobs:
             exit 1
           fi
 
+      - name: Create schedule landing page
+        shell: bash
+        run: |
+          cat > _pages/index.html <<'HTML'
+          <!doctype html>
+          <html lang="en">
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width,initial-scale=1">
+            <title>NTU Schedules</title>
+          </head>
+          <body>
+            <h1>NTU Schedules</h1>
+            <ul>
+              <li><a href="./sites/eren/">Eren's Schedule</a></li>
+              <li><a href="./sites/begum/">Begüm's Garden</a></li>
+            </ul>
+          </body>
+          </html>
+          HTML
+
       - name: Upload schedule site
         uses: actions/upload-pages-artifact@v3
         with:
