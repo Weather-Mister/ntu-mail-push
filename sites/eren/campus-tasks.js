@@ -1,6 +1,6 @@
 // Eren's task link only. Mail, calendar, file transfers and Begüm keep their services.
 (() => {
- if(window.SCHEDULE_MIGRATION?.app!=='eren')return;
+ if(window.SCHEDULE_MIGRATION?.app!=='eren'||location.origin!=='https://weather-mister.github.io')return;
  const campus='https://ntu.campusweek.workers.dev',bridge=campus+'/api/personal-tasks/bridge';
  const routes=new Set(['todos/list','todos/create','todos/update','todos/delete','todos/import']);
  const endpoints=new Set(['https://evckshjtzikuusnkdnjn.supabase.co/functions/v1/ntu-schedule-api',window.SCHEDULE_MIGRATION.apiUrl.replace(/\/$/,'')]);
