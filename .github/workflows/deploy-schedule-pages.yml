@@ -54,6 +54,9 @@ jobs:
           mkdir -p _site/begum
           cp -R sites/eren/. _site/
           cp -R sites/begum/. _site/begum/
+          mkdir -p _site/sites
+          cp -R sites/eren _site/sites/eren
+          cp -R sites/begum _site/sites/begum
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
